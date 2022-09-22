@@ -37,9 +37,23 @@ namespace Magician
         
         void Render()
         {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+            // Clear with colour
+            SDL_SetRenderDrawColor(renderer, 0, 16, 16, 255);
             SDL_RenderClear(renderer);
 
+            // Draw shapes
+            var rect = new SDL_Rect
+            {
+                x = 42,
+                y = 10,
+                w = 64,
+                h = 48,
+            };
+            
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+            SDL_RenderDrawRect(renderer, ref rect);
+
+            // Display
             SDL_RenderPresent(renderer);
         }
 
