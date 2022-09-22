@@ -1,4 +1,4 @@
-﻿using SDL2;
+﻿using static SDL2.SDL;
 
 namespace Magician
 {   
@@ -21,52 +21,52 @@ namespace Magician
             demo.GameLoop();
 
             // Cleanup
-            SDL.SDL_DestroyRenderer(renderer);
-            SDL.SDL_DestroyWindow(win);
-            SDL.SDL_Quit();
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(win);
+            SDL_Quit();
         }
 
         void GameLoop()
         {
             while (!done)
             {
-                SDL.SDL_WaitEvent(out SDL.SDL_Event e);
+                SDL_WaitEvent(out SDL_Event e);
                 Render();
             }
         }
         
         void Render()
         {
-            SDL.SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
-            SDL.SDL_RenderClear(renderer);
+            SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+            SDL_RenderClear(renderer);
 
-            SDL.SDL_RenderPresent(renderer);
+            SDL_RenderPresent(renderer);
         }
 
         void InitSDL()
         {
-            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
+            if (SDL_Init(SDL_INIT_VIDEO) < 0)
             {
-                Console.WriteLine($"Error initializing SDL: {SDL.SDL_GetError()}");
+                Console.WriteLine($"Error initializing SDL: {SDL_GetError()}");
             }
         }
 
         void CreateWindow()
         {
-            win = SDL.SDL_CreateWindow("Test Window", 0, 0, 800, 600, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow("Test Window", 0, 0, 800, 600, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {
-                Console.WriteLine($"Error creating the window: {SDL.SDL_GetError()}");
+                Console.WriteLine($"Error creating the window: {SDL_GetError()}");
             }
         }
 
         void CreateRenderer()
         {
-            renderer = SDL.SDL_CreateRenderer(win, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+            renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
             if (renderer == IntPtr.Zero)
             {
-                Console.WriteLine($"Error creating the renderer: {SDL.SDL_GetError()}");
+                Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
             }
         }
     }
