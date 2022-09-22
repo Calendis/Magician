@@ -13,11 +13,12 @@ namespace Magician
         {
             // Startup
             Console.WriteLine("Abracadabra!");
-            InitSDL();
-            CreateWindow();
-            CreateRenderer();
+            Demo demo = new Demo();
+            demo.InitSDL();
+            demo.CreateWindow();
+            demo.CreateRenderer();
 
-            GameLoop();
+            demo.GameLoop();
 
             // Cleanup
             SDL.SDL_DestroyRenderer(renderer);
@@ -25,15 +26,16 @@ namespace Magician
             SDL.SDL_Quit();
         }
 
-        static void GameLoop()
+        void GameLoop()
         {
             while (!done)
             {
-                Console.WriteLine("game-loopin!");
+                SDL.SDL_WaitEvent(out SDL.SDL_Event e);
+                Console.WriteLine(e);
             }
         }
 
-        static void InitSDL()
+        void InitSDL()
         {
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
             {
@@ -41,7 +43,7 @@ namespace Magician
             }
         }
 
-        static void CreateWindow()
+        void CreateWindow()
         {
             win = SDL.SDL_CreateWindow("Test Window", 0, 0, 800, 600, SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
@@ -51,7 +53,7 @@ namespace Magician
             }
         }
 
-        static void CreateRenderer()
+        void CreateRenderer()
         {
             renderer = SDL.SDL_CreateRenderer(win, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
             if (renderer == IntPtr.Zero)
