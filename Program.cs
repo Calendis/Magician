@@ -31,8 +31,16 @@ namespace Magician
             while (!done)
             {
                 SDL.SDL_WaitEvent(out SDL.SDL_Event e);
-                Console.WriteLine(e);
+                Render();
             }
+        }
+        
+        void Render()
+        {
+            SDL.SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+            SDL.SDL_RenderClear(renderer);
+
+            SDL.SDL_RenderPresent(renderer);
         }
 
         void InitSDL()
