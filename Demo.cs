@@ -35,6 +35,19 @@ namespace Magician
                 new Point(130, 100),
                 new Point(300, 180)
             ));
+            multis.Add(new Multi(
+                new Line(
+                    new Point(10, 250),
+                    new Point(300, 20),
+                    new Color(0x8000ffff)
+                ),
+                new Point(-100, 0, new Color(0xffff00ff)),
+                new Line(
+                    new Point(-200, -200),
+                    new Point(200, -200),
+                    new Color(0xff8000ff)
+                )
+            ));
 
             
             while (!done)
@@ -47,7 +60,8 @@ namespace Magician
         void Render()
         {
             // Clear with colour
-            SDL_SetRenderDrawColor(renderer, 0, 16, 16, 255);
+            SDL_SetRenderDrawColor(renderer,
+            Globals.bgCol.R, Globals.bgCol.G, Globals.bgCol.B, 255);
             SDL_RenderClear(renderer);
 
             // Draw objects

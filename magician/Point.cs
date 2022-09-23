@@ -9,6 +9,12 @@ namespace Magician
             pos[0] = x;
             pos[1] = y;
         }
+        public Point(double x, double y, Color c)
+        {
+            pos[0] = x;
+            pos[1] = y;
+            col = c;
+        }
 
         public Point(double[] pos)
         {

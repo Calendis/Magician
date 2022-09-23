@@ -4,6 +4,7 @@ namespace Magician
     {
         // 32-bit int representing
         private uint col;
+        public uint HexCol => col;
         public byte R => (byte)((col & 0xff000000) >> 24);
         public byte G => (byte)((col & 0x00ff0000) >> 16);
         public byte B => (byte)((col & 0x0000ff00) >> 8);
@@ -31,10 +32,10 @@ namespace Magician
             col = hex;
         }
 
-        /*public Color()
+        public Color()
         {
-            col = 0x00ff00ff;
-        }*/
+            col = Globals.fgCol.HexCol;
+        }
 
         public static int RGBToHSV(byte r, byte g, byte b)
         {

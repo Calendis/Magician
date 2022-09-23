@@ -22,6 +22,13 @@ namespace Magician
             this.p1 = p1;
             filled = true;
         }
+        public Line(Point p0, Point p1, Color c)
+        {
+            this.p0 = p0;
+            this.p1 = p1;
+            filled = true;
+            col = c;
+        }
 
         public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {

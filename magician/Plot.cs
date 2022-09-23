@@ -21,7 +21,7 @@ namespace Magician
             toPlot = new Driver();
             start = 0;
             end = 0;
-            col = new Color(0x00e9f5ff);
+            col = new Color();
         }
 
         public double Evaluate(params double[] x)
