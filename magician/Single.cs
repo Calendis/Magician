@@ -9,11 +9,22 @@ namespace Magician {
         protected double[] pos;
         
         // Convert to Cartesian coordinates
-        public double X {
+        public double X
+        {
             get => Globals.winWidth / 2 + pos[0];
         }
-        public double Y {
+        public double Y
+        {
             get => Globals.winHeight / 2 - pos[1];
+        }
+
+        public double Phase
+        {
+            get => Math.Atan2(Y, X);
+        }
+        public double Magnitude
+        {
+            get => Math.Sqrt(X*X + Y*Y);
         }
 
         // Raw screen coordinates
