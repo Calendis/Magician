@@ -25,6 +25,8 @@ namespace Magician
 
         public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
+            SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, 255);
+            //Console.WriteLine($"{col.R}, {col.G}, {col.B}");
             if (filled)
             {
                 SDL_RenderDrawLine(renderer, (int)p0.X, (int)p0.Y, (int)p1.X, (int)p1.Y);
