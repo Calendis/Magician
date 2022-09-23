@@ -5,6 +5,7 @@ namespace Magician
         private List<Multi> constituents;
         public Multi(params Multi[] cs)
         {
+            pos = new double[]{0, 0};
             constituents = new List<Multi> {this};
             constituents.AddRange(cs);
         }
