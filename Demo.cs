@@ -30,31 +30,15 @@ namespace Magician
         void GameLoop()
         {
             // Game setup
-            multis.Add(new Multi(
-                new Line(
-                    new Point(10, 250),
-                    new Point(300, 20),
-                    new Color(0x8000ffff)
-                ),
-                new Point(-100, 0, new Color(0xffff00ff)),
-                new Line(
-                    new Point(-200, -200),
-                    new Point(200, -200),
-                    new Color(0xff8000ff)
-                )
-            ));
-
-            multis.Add(new Polygon(new Color(0xff00ffff),
-                new Point(140, -60),
-                new Point(200, 40),
-                new Point(260, -60)
-            ));
-
-            multis.Add(new Polygon(
-                new Point(140, 40, new Color(0x927563ff)),
-                new Point(200, 140, new Color(0x134123ff)),
-                new Point(260, 40, new Color(0x123185ff))
-            ));
+            List<Point> points = new List<Point>();
+            int pointCount = 5;
+            double angleIncr = 360 / pointCount;
+            for (int i = 0; i < pointCount; i++)
+            {
+                double deg = angleIncr * i;
+                points.Add(new Point(deg/180*Math.PI, 150, true));
+            }
+            multis.Add(new Polygon(points.ToArray()));
 
             
             while (!done)
