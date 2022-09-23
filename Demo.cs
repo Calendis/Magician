@@ -7,7 +7,8 @@ namespace Magician
         static IntPtr win;
         static IntPtr renderer;
 
-        static bool done = false;
+        bool done = false;
+        List<Multi> multis = new List<Multi>();
         
         static void Main(string[] args)
         {
@@ -28,6 +29,10 @@ namespace Magician
 
         void GameLoop()
         {
+            // Game setup
+            multis.Add(new Point(100, 100));
+
+            
             while (!done)
             {
                 SDL_WaitEvent(out SDL_Event e);
@@ -41,17 +46,11 @@ namespace Magician
             SDL_SetRenderDrawColor(renderer, 0, 16, 16, 255);
             SDL_RenderClear(renderer);
 
-            // Draw shapes
-            var rect = new SDL_Rect
+            // Draw objects
+            foreach(Multi m in multis)
             {
-                x = 42,
-                y = 10,
-                w = 64,
-                h = 48,
-            };
-            
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-            SDL_RenderDrawRect(renderer, ref rect);
+                m.Draw(ref renderer);
+            }
 
             // Display
             SDL_RenderPresent(renderer);
