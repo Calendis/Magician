@@ -7,9 +7,6 @@ namespace Magician
 {
     public interface Map
     {
-        public double evaluate(double x)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract double Evaluate(params double[] x);
     }
 }
