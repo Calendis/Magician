@@ -4,21 +4,16 @@
 */
 
 namespace Magician {
-    class Single
+    abstract class Single
     {
-        public Single(double x, double y)
-        {
-            //
+        protected double[] pos;
+        public double X {
+            get => pos[0];
+        }
+        public double Y {
+            get => pos[1];
         }
 
-        public Single(double Point)
-        {
-            //
-        }
-
-        public Single()
-        {
-            
-        }
+        public abstract void Draw(ref IntPtr renderer);
     }
 }
