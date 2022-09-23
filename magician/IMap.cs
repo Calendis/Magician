@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Magician
 {
-    public interface Map
+    public interface IMap
     {
         public abstract double Evaluate(params double[] x);
     }
