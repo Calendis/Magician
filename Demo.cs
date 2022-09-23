@@ -39,35 +39,19 @@ namespace Magician
                 double deg = angleIncr * i;
                 points.Add(new Point(deg/180*Math.PI, 150, true));
             }
-            multis.Add(new Polygon(points.ToArray()));
-            multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
-            multis.Add(new Plot(0, 0, new Driver(1, (x) => 100*Math.Sin(x[0]/20)), -90, 90, 0.1, new Color(0x20ff90ff)));
-
+            //multis.Add(new Polygon(points.ToArray()));
+            //multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
+            Plot p = new Plot(0, 0, new Driver(1, (x) => 100*Math.Sin(x[0]/20)), -90, 90, 0.1, new Color(0x20ff90ff));
+            multis.Add(p);
+            p.AddDriver(new Driver(1, (x) => x[0], p.SetX));
             
             while (!done)
             {
                 SDL_WaitEvent(out SDL_Event e);
+
+                //p.Drive(r.Next(-100, 100));
+                p.SetX(r.Next(0, 100));
                 Render();
-
-                // Modify polygon
-                
-                int c = multis[0].Constituents.Count;
-                if (c > 5 && r.Next(10) < 5)
-                {
-                    int ri = r.Next(c);
-                    multis[0].Constituents.RemoveAt(ri);
-                    multis[1].Constituents.RemoveAt(ri);
-
-                }
-                else if (r.Next(10) > 5)
-                {
-                    int rx = r.Next(-200, 200);
-                    int ry = r.Next(-200, 200);
-                    Point p0  = new Point(rx, ry);
-                    Point p1  = new Point(rx, ry, new Color(0xff0000ff));                  
-                    multis[0].Constituents.Add(p0);
-                    multis[1].Constituents.Add(p1);
-                }
             }
         }
         

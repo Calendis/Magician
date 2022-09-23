@@ -19,7 +19,15 @@ namespace Magician
         {
             foreach (Multi c in constituents)
             {
-                c.Draw(ref renderer);
+                c.Draw(ref renderer, xOffset, yOffset);
+            }
+        }
+
+        public new void Drive(params double[] x)
+        {
+            foreach (Multi c in constituents)
+            {
+                c.Drive(x);
             }
         }
     }
