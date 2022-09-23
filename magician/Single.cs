@@ -7,23 +7,11 @@ namespace Magician {
     public abstract class Single
     {
         protected double[] pos;
-        
-        // Convert to Cartesian coordinates
-        public double X
+        private List<Driver> drivers = new List<Driver>();
+
+        public void SetX(double x)
         {
-            get => Globals.winWidth / 2 + pos[0];
-            set
-            {
-                pos[0] = value;
-            }
-        }
-        public double Y
-        {
-            get => Globals.winHeight / 2 - pos[1];
-            set
-            {
-                pos[1] = value;
-            }
+            pos[0] = x;
         }
 
         public double Phase
@@ -37,7 +25,15 @@ namespace Magician {
         }
         public double Magnitude
         {
-            get => Math.Sqrt(X*X + Y*Y);
+            get => Math.Sqrt(pos[0]*pos[0] + pos[1]*pos[1]);
+        }
+        public double XCartesian(double offset)
+        {
+            return Globals.winWidth / 2 + pos[0] + offset;
+        }
+        public double YCartesian(double offset)
+        {
+            return Globals.winHeight / 2 - pos[1] - offset;
         }
 
         // Raw screen coordinates
@@ -49,5 +45,18 @@ namespace Magician {
         }
 
         public abstract void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0);
+
+        public void AddDriver(Driver d)
+        {
+            drivers.Add(d);
+        }
+
+        public void Drive(params double[] x)
+        {
+            foreach (Driver d in drivers)
+            {
+                d.Drive(x);
+            }
+        }
     }
 }

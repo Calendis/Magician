@@ -22,13 +22,17 @@ namespace Magician
                 Point p0 = (Point)constituents[i];
                 Point p1 = (Point)constituents[i+1];
                 SDL_SetRenderDrawColor(renderer, p0.Col.R, p0.Col.G, p0.Col.B, 255);
-                SDL_RenderDrawLine(renderer, (int)p0.X, (int)p0.Y, (int)p1.X, (int)p1.Y);
+                SDL_RenderDrawLine(renderer,
+                (int)p0.XCartesian(xOffset), (int)p0.YCartesian(yOffset),
+                (int)p1.XCartesian(xOffset), (int)p1.YCartesian(yOffset));
             }
             
             Point pLast = (Point)constituents[constituents.Count-1];
             Point pFirst = (Point)constituents[0];
             SDL_SetRenderDrawColor(renderer, pLast.Col.R, pLast.Col.G, pLast.Col.B, 255);
-            SDL_RenderDrawLine(renderer, (int)pLast.X, (int)pLast.Y, (int)pFirst.X, (int)pFirst.Y);
+            SDL_RenderDrawLine(renderer,
+            (int)pLast.XCartesian(xOffset), (int)pLast.YCartesian(yOffset),
+            (int)pFirst.XCartesian(xOffset), (int)pFirst.YCartesian(yOffset));
         }
 
         public void SetCol(Color c)

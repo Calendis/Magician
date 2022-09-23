@@ -30,12 +30,14 @@ namespace Magician
             col = c;
         }
 
-        public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
+        public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, 255);
             if (filled)
             {
-                SDL_RenderDrawLine(renderer, (int)p0.X, (int)p0.Y, (int)p1.X, (int)p1.Y);
+                SDL_RenderDrawLine(renderer,
+                (int)p0.XCartesian(xOffset), (int)p0.YCartesian(yOffset),
+                (int)p1.XCartesian(xOffset), (int)p1.YCartesian(yOffset));
                 return;
             }
 

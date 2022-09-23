@@ -66,7 +66,7 @@ namespace Magician
 
         public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
-            Interpolation().Draw(ref renderer, xOffset, yOffset);
+            Interpolation().Draw(ref renderer, pos[0], pos[1]);
         }
     }
 

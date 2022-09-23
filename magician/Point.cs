@@ -37,7 +37,7 @@ namespace Magician
         {
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, 255);
             // TODO: try SDL_RenderDrawPointF. How does it differ?
-            SDL_RenderDrawPoint(renderer, (int)X, (int)Y);
+            SDL_RenderDrawPoint(renderer, (int)XCartesian(xOffset), (int)YCartesian(yOffset));
         }
     }
 }
