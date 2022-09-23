@@ -28,7 +28,12 @@ namespace Magician {
 
         public double Phase
         {
-            get => Math.Atan2(pos[1], pos[0]);
+            get
+            {
+                double p = Math.Atan2(pos[1], pos[0]);
+                p = p < 0 ? p + 2*Math.PI : p;
+                return p;
+            }
         }
         public double Magnitude
         {
