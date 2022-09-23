@@ -30,11 +30,6 @@ namespace Magician
         void GameLoop()
         {
             // Game setup
-            multis.Add(new Point(0, 0));
-            multis.Add(new Line(
-                new Point(130, 100),
-                new Point(300, 180)
-            ));
             multis.Add(new Multi(
                 new Line(
                     new Point(10, 250),
@@ -50,9 +45,9 @@ namespace Magician
             ));
 
             multis.Add(new Polygon(new Color(0xff00ffff),
-                new Point(180, -60),
-                new Point(240, 40),
-                new Point(300, -60)
+                new Point(140, -60),
+                new Point(200, 40),
+                new Point(260, -60)
             ));
 
             
