@@ -4,10 +4,7 @@ namespace Magician
 {
     public class Polygon : Multi
     {
-        public Polygon(params Point[] points) : base(points)
-        {
-            //
-        }
+        public Polygon(params Point[] points) : base(points) {}
 
         public Polygon(Color c, params Point[] points) : base(points)
         {
@@ -32,6 +29,29 @@ namespace Magician
             Point pFirst = (Point)constituents[0];
             SDL_SetRenderDrawColor(renderer, pLast.Col.R, pLast.Col.G, pLast.Col.B, 255);
             SDL_RenderDrawLine(renderer, (int)pLast.X, (int)pLast.Y, (int)pFirst.X, (int)pFirst.Y);
+        }
+
+        public void SetCol(Color c)
+        {
+            foreach (Point p in constituents)
+            {
+                p.Col = c;
+            }
+        }
+    }
+
+    public class NonIntersectPolygon : Polygon
+    {
+        public NonIntersectPolygon(params Point[] points) : base(points) {}
+        public NonIntersectPolygon(Color c, params Point[] points) : base(c, points) {}
+        
+        public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
+        {
+            // Make a copy of constituents
+            List<Multi> constituentsCopy = constituents;
+            constituents = constituentsCopy.OrderBy(c => c.Phase).ToList<Multi>();
+            base.Draw(ref renderer, xOffset, yOffset);
+            constituents = constituentsCopy;
         }
     }
 }
