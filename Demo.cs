@@ -49,6 +49,12 @@ namespace Magician
                 )
             ));
 
+            multis.Add(new Polygon(new Color(0xff00ffff),
+                new Point(180, -60),
+                new Point(240, 40),
+                new Point(300, -60)
+            ));
+
             
             while (!done)
             {
