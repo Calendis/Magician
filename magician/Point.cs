@@ -2,7 +2,7 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    public class Point : Single
+    public class Point : Plot
     {
         public Point(double x, double y)
         {
@@ -18,7 +18,9 @@ namespace Magician
 
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
-            //
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            // TODO: try SDL_RenderDrawPointF. How does it differ?
+            SDL_RenderDrawPoint(renderer, (int)X, (int)Y);
         }
     }
 }
