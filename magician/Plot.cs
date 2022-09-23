@@ -6,6 +6,14 @@ namespace Magician
         private double start;
         private double end;
         protected Color col;
+        public Color Col
+        {
+            get => col;
+            set
+            {
+                col = value;
+            }
+        }
 
         public Plot(Driver d, double start, double end, Color c)
         {
