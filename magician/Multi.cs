@@ -3,6 +3,7 @@ namespace Magician
     public class Multi : Single
     {
         private List<Multi> constituents;
+        protected bool filled = false;
         public Multi(params Multi[] cs)
         {
             pos = new double[]{0, 0};
