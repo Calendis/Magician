@@ -9,6 +9,7 @@ namespace Magician
 
         bool done = false;
         List<Multi> multis = new List<Multi>();
+        Random r = new Random();
         
         static void Main(string[] args)
         {
@@ -31,7 +32,7 @@ namespace Magician
         {
             // Game setup
             List<Point> points = new List<Point>();
-            int pointCount = 5;
+            int pointCount = 12;
             double angleIncr = 360 / pointCount;
             for (int i = 0; i < pointCount; i++)
             {
@@ -45,6 +46,18 @@ namespace Magician
             {
                 SDL_WaitEvent(out SDL_Event e);
                 Render();
+
+                // Modify polygon
+                int c = multis[0].Constituents.Count;
+                if (c > 5 && r.Next(10) < 5)
+                {
+                    multis[0].Constituents.RemoveAt(r.Next(c));
+                }
+                else if (r.Next(10) > 5)
+                {
+                    multis[0].Constituents.Add(
+                        new Point(r.Next(-200, 200), r.Next(-200, 200)));
+                }
             }
         }
         
