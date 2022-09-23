@@ -3,6 +3,10 @@ namespace Magician
     public class Multi : Single
     {
         protected List<Multi> constituents;
+        public List<Multi> Constituents
+        {
+            get => constituents;
+        }
         protected bool filled = false;
         public Multi(params Multi[] cs)
         {
