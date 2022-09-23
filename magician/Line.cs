@@ -15,7 +15,7 @@ namespace Magician
         public Point P1 {
             get => P1;
         }
-
+        
         public Line(Point p0, Point p1)
         {
             this.p0 = p0;
