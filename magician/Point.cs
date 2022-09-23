@@ -2,7 +2,7 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    class Point : Single
+    public class Point : Single
     {
         public Point(double x, double y)
         {
@@ -16,7 +16,7 @@ namespace Magician
             this.pos[1] = pos[1];
         }
 
-        public override void Draw(ref IntPtr renderer)
+        public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             //
         }
