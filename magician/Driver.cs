@@ -5,15 +5,15 @@
 
 namespace Magician
 {
-    class Driver
+    delegate double DriveFunction(params double[] x);
+    class Driver : Map
     {
-        private delegate double driveFunction(double x);
-    }
-
-    class MultiDriver : Driver
-    {
-        // Dimensionality of the MultiDriver
+        private DriveFunction driveFunction;
         private int ins;
-        private int outs;
+        public Driver(int ins, Func<double[], double> df)
+        {
+            this.ins = ins;
+            driveFunction = new DriveFunction(df);
+        }
     }
 }
