@@ -7,10 +7,20 @@ namespace Magician {
     public abstract class Single
     {
         protected double[] pos;
+        
+        // Convert to Cartesian coordinates
         public double X {
-            get => pos[0];
+            get => Globals.winWidth / 2 + pos[0];
         }
         public double Y {
+            get => Globals.winHeight / 2 - pos[1];
+        }
+
+        // Raw screen coordinates
+        public double WindowX {
+            get => pos[0];
+        }
+        public double WindowY {
             get => pos[1];
         }
 
