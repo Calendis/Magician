@@ -30,7 +30,11 @@ namespace Magician
         void GameLoop()
         {
             // Game setup
-            multis.Add(new Point(100, 100));
+            multis.Add(new Point(0, 0));
+            multis.Add(new Line(
+                new Point(130, 100),
+                new Point(300, 180)
+            ));
 
             
             while (!done)
@@ -66,7 +70,7 @@ namespace Magician
 
         void CreateWindow()
         {
-            win = SDL_CreateWindow("Test Window", 0, 0, 800, 600, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow("Test Window", 0, 0, Globals.winWidth, Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {
