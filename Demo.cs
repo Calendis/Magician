@@ -41,6 +41,7 @@ namespace Magician
             }
             multis.Add(new Polygon(points.ToArray()));
             multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
+            multis.Add(new Plot(0, 0, new Driver(1, (x) => 100*Math.Sin(x[0]/20)), -90, 90, 0.1, new Color(0x20ff90ff)));
 
             
             while (!done)
