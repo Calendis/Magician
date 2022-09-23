@@ -12,10 +12,18 @@ namespace Magician {
         public double X
         {
             get => Globals.winWidth / 2 + pos[0];
+            set
+            {
+                pos[0] = value;
+            }
         }
         public double Y
         {
             get => Globals.winHeight / 2 - pos[1];
+            set
+            {
+                pos[1] = value;
+            }
         }
 
         public double Phase
