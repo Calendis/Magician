@@ -40,6 +40,7 @@ namespace Magician
                 points.Add(new Point(deg/180*Math.PI, 150, true));
             }
             multis.Add(new Polygon(points.ToArray()));
+            multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
 
             
             while (!done)
@@ -48,15 +49,23 @@ namespace Magician
                 Render();
 
                 // Modify polygon
+                
                 int c = multis[0].Constituents.Count;
                 if (c > 5 && r.Next(10) < 5)
                 {
-                    multis[0].Constituents.RemoveAt(r.Next(c));
+                    int ri = r.Next(c);
+                    multis[0].Constituents.RemoveAt(ri);
+                    multis[1].Constituents.RemoveAt(ri);
+
                 }
                 else if (r.Next(10) > 5)
                 {
-                    multis[0].Constituents.Add(
-                        new Point(r.Next(-200, 200), r.Next(-200, 200)));
+                    int rx = r.Next(-200, 200);
+                    int ry = r.Next(-200, 200);
+                    Point p0  = new Point(rx, ry);
+                    Point p1  = new Point(rx, ry, new Color(0xff0000ff));                  
+                    multis[0].Constituents.Add(p0);
+                    multis[1].Constituents.Add(p1);
                 }
             }
         }
