@@ -4,10 +4,21 @@ namespace Magician
 {
     public class Point : Plot
     {
-        public Point(double x, double y)
+        public Point(double x, double y, bool phaseMag=false)
         {
-            pos[0] = x;
-            pos[1] = y;
+            if (!phaseMag)
+            {
+                pos[0] = x;
+                pos[1] = y;
+            }
+            else
+            {
+                double phase = x;
+                double mag = y;
+                pos[0] = Math.Cos(phase) * mag;
+                pos[1] = Math.Sin(phase) * mag;
+            }
+            
         }
         public Point(double x, double y, Color c)
         {
