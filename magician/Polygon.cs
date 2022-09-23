@@ -47,10 +47,15 @@ namespace Magician
         
         public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
-            // Make a copy of constituents
+            // Make a copy of constituents to avoid scrambling the order
             List<Multi> constituentsCopy = constituents;
+            
+            // Order by phase to avoid intersecting lines
             constituents = constituentsCopy.OrderBy(c => c.Phase).ToList<Multi>();
+            
             base.Draw(ref renderer, xOffset, yOffset);
+            
+            // Reset the order
             constituents = constituentsCopy;
         }
     }
