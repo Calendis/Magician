@@ -46,5 +46,21 @@ namespace Magician
                 constituents[i].AddDriver(ds[i]);
             }
         }
+
+        public void AddSubDrivers(params Driver[][] dss)
+        {
+            foreach (Driver[] ds in dss)
+            {
+                AddSubDrivers(ds);
+            }
+        }
+
+        public void SetConstituent(int i, Multi m)
+        {
+            Multi c = constituents[i];
+            m.IncrX(c.pos[0]);
+            m.IncrY(c.pos[1]);
+            constituents[i] = m;
+        }
     }
 }
