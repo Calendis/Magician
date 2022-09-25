@@ -25,12 +25,13 @@ namespace Magician
             this.end = end;
             this.dx = dx;
             this.col = c;
+            constituents.AddRange(Interpolation().Constituents);
         }
 
         // Default plot of nothing
         public Plot()
         {
-            toPlot = new Driver();
+            toPlot = null;
             start = 0;
             end = 0;
             col = new Color();
@@ -45,13 +46,19 @@ namespace Magician
         {
             Point p0 = new Point(x, Evaluate(x));
             Point p1 = new Point(x + dx, Evaluate(x + dx));
-            return new Line(p0, p1);
+            Line l = new Line(p0, p1);
+            //l.SetX(pos[0]);
+            //l.SetY(pos[1]);
+            return l;
         }
         private Line interpolate(double x0, double x1)
         {
             Point p0 = new Point(x0, Evaluate(x0));
             Point p1 = new Point(x1, Evaluate(x1));
-            return new Line(p0, p1);
+            Line l = new Line(p0, p1);
+            //l.SetX(pos[0]);
+            //l.SetY(pos[1]);
+            return l;
         }
 
         public Multi Interpolation()
@@ -64,10 +71,11 @@ namespace Magician
             return new Multi(lines.ToArray());
         }
 
+        
         public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
-            Interpolation().Draw(ref renderer, pos[0], pos[1]);
+            base.Draw(ref renderer, pos[0], pos[1]);
         }
+        
     }
-
 }
