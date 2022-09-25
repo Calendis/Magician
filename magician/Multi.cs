@@ -14,7 +14,6 @@ namespace Magician
         }
         public Multi(params Multi[] cs)
         {
-            pos = new double[]{0, 0};
             constituents = new List<Multi> {};
             constituents.AddRange(cs);
         }
@@ -24,7 +23,7 @@ namespace Magician
             foreach (Multi c in constituents)
             {
                 // Make sure constituents are drawn relative to parent Multi
-                c.Draw(ref renderer, xOffset, yOffset);
+                c.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
             }
         }
 
