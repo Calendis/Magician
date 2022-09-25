@@ -70,12 +70,5 @@ namespace Magician
             }
             return new Multi(lines.ToArray());
         }
-
-        
-        public override void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
-        {
-            base.Draw(ref renderer, pos[0], pos[1]);
-        }
-        
     }
 }
