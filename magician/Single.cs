@@ -26,6 +26,26 @@ namespace Magician
         {
             pos[1] += x;
         }
+        public void SetPhase(double x)
+        {
+            double m = Magnitude;
+            pos[0] = m*Math.Cos(x);
+            pos[1] = m*Math.Sin(x);
+        }
+        public void IncrPhase(double x)
+        {
+            SetPhase(Phase + x);
+        }
+        public void SetMagnitude(double x)
+        {
+            double p = Phase;
+            pos[0] = x*Math.Cos(p);
+            pos[1] = x*Math.Sin(p);
+        }
+        public void IncrMagnitude(double x)
+        {
+            SetMagnitude(Magnitude + x);
+        }
 
         public double Phase
         {
@@ -47,6 +67,10 @@ namespace Magician
         public double YCartesian(double offset)
         {
             return Globals.winHeight / 2 - pos[1] - offset;
+        }
+        public Point Point()
+        {
+            return new Point(pos[0], pos[1]);
         }
 
         // Raw screen coordinates
