@@ -35,30 +35,32 @@ namespace Magician
             /*
                 Game setup
             */
-            List<Point> points = new List<Point>();
-            int pointCount = 12;
-            double angleIncr = 360 / pointCount;
-            for (int i = 0; i < pointCount; i++)
+            RegularPolygon rp = new RegularPolygon(5, 100);
+            Multi rpm = rp.Multi();
+
+            for (int i = 0; i < rpm.Count; i++)
             {
-                double deg = angleIncr * i;
-                points.Add(new Point(deg/180*Math.PI, 150, true));
+                Multi rpm2 = new RegularPolygon(5, 70).Multi();
+                for (int j = 0; j < rpm2.Count; j++)
+                {
+                    rpm2.SetConstituent(j, new RegularPolygon(5, 20));
+                    rpm2.Constituents[j].AddDriver(new Driver(x=>0.2, rpm2.Constituents[j].IncrPhase));
+                    rpm2.Constituents[j].AddDriver(new Driver(x=>-Math.Sin(x[0]/10), rpm2.Constituents[j].IncrMagnitude));
+                    rpm2.AddDriver(new Driver((x)=>2, rpm2.IncrPhase));
+                }
+                rpm.SetConstituent(i, rpm2);
             }
-            //multis.Add(new Polygon(points.ToArray()));
-            //multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
             
-            // Define the game objects
-            Plot p = new Plot(0, 0, new Driver((x) => 100*Math.Sin(x[0]/20)), -90, 90, 1, new Color(0x20ff90ff));
-            //Polygon p = new Polygon(new Point(-100, 0), new Point(0, 66), new Point(100, 0));
-            //RegularPolygon p = new RegularPolygon(5, 80);
-            multis.Add(p);
-            
-            Driver[] ds = new Driver[p.Count];
-            for (int i = 0; i < ds.Length; i++)
+            Driver[] subDrivers = new Driver[rpm.Count];
+            Driver[] subDrivers2 = new Driver[rpm.Count];
+            for (int i = 0; i < subDrivers.Length; i++)
             {
-                ds[i] = new Driver(new double[]{i*i}, (x)=>5*Math.Sin(x[0]), p.Constituents[i].IncrY);
+                subDrivers[i] = new Driver((x)=>0.1, rpm.Constituents[i].IncrPhase);
+                subDrivers2[i] = new Driver((x)=>3*Math.Sin(x[0]), rpm.Constituents[i].IncrMagnitude);
             }
-            p.AddSubDrivers(ds);
-            p.AddDriver(new Driver((x)=>Math.Sin(x[0]), p.IncrX));
+            rpm.AddSubDrivers(subDrivers, subDrivers2);
+            //rpm.AddDriver(new Driver((x)=>10*Math.Sin(x[0]), rpm.IncrX));
+            multis.Add(rpm);
                         
             /*
                 Main gameloop
@@ -66,9 +68,7 @@ namespace Magician
             while (!done)
             {
                 SDL_WaitEvent(out _);
-                //Console.WriteLine($"render {frames}");
                 Render();
-                //Console.WriteLine($"drive {frames}");
                 Drive();
             }
         }
