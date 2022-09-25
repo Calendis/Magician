@@ -9,11 +9,14 @@ namespace Magician
     public class Driver : IMap
     {
         private DriveFunction driveFunction;
-        private Action<double> output;
+        private Action<double>? output;
         private int ins;
+        
+        /*
         private int current;
         private int start;
         private int end;
+        */
         
         public Driver(int ins, Func<double[], double> df)
         {
@@ -27,11 +30,22 @@ namespace Magician
             this.output = output;
         }
 
-        // Default "zero-driver"
-        public Driver()
+        // Default identity driver
+        public Driver(Action<double> output)
         {
             ins = 0;
-            driveFunction = new DriveFunction(x => 0);
+            driveFunction = new DriveFunction(x => x[0]);
+            this.output = output;
+        }
+
+        public void SetOutput(Action<double> o)
+        {
+            output =  o;
+        }
+
+        public Action<double> Output
+        {
+            get => output;
         }
 
         public double Evaluate(params double[] x)
@@ -41,7 +55,14 @@ namespace Magician
 
         public void Drive(params double[] x)
         {
-            output(driveFunction(x));
+            if (output is not null)
+            {
+                output(driveFunction(x));
+            }
+            else
+            {
+                Console.WriteLine("ERROR: null output on driver");
+            }
         }
     }
 }
