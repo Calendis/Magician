@@ -47,24 +47,25 @@ namespace Magician
             //multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
             
             // Define the game objects
-            //Plot p = new Plot(0, 0, new Driver(1, (x) => 100*Math.Sin(x[0])), -90, 90, 20, new Color(0x20ff90ff));
+            Plot p = new Plot(0, 0, new Driver((x) => 100*Math.Sin(x[0]/20)), -90, 90, 1, new Color(0x20ff90ff));
             //Polygon p = new Polygon(new Point(-100, 0), new Point(0, 66), new Point(100, 0));
-            RegularPolygon p = new RegularPolygon(5, 80);
+            //RegularPolygon p = new RegularPolygon(5, 80);
             multis.Add(p);
             
             Driver[] ds = new Driver[p.Count];
             for (int i = 0; i < ds.Length; i++)
             {
-                ds[i] = new Driver(new double[]{i}, (x)=>5*Math.Sin(x[0]), p.Constituents[i].IncrY);
+                ds[i] = new Driver(new double[]{i*i}, (x)=>5*Math.Sin(x[0]), p.Constituents[i].IncrY);
             }
             p.AddSubDrivers(ds);
-            p.AddDriver(new Driver((x)=>10*Math.Sin(x[0]), p.IncrX));
+            p.AddDriver(new Driver((x)=>Math.Sin(x[0]), p.IncrX));
                         
             /*
                 Main gameloop
             */
             while (!done)
             {
+                SDL_WaitEvent(out _);
                 //Console.WriteLine($"render {frames}");
                 Render();
                 //Console.WriteLine($"drive {frames}");
