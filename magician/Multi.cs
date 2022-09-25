@@ -8,6 +8,10 @@ namespace Magician
             get => constituents;
         }
         protected bool filled = false;
+        public int Count
+        {
+            get => constituents.Count;
+        }
         public Multi(params Multi[] cs)
         {
             pos = new double[]{0, 0};
@@ -19,15 +23,28 @@ namespace Magician
         {
             foreach (Multi c in constituents)
             {
+                // Make sure constituents are drawn relative to parent Multi
                 c.Draw(ref renderer, xOffset, yOffset);
             }
         }
 
         public new void Drive(params double[] x)
         {
+            foreach (Driver d in drivers)
+            {
+                d.Drive(x);
+            }
             foreach (Multi c in constituents)
             {
                 c.Drive(x);
+            }
+        }
+
+        public void AddSubDrivers(Driver[] ds)
+        {
+            for (int i = 0; i < ds.Length; i++)
+            {
+                constituents[i].AddDriver(ds[i]);
             }
         }
     }
