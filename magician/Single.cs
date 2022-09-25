@@ -3,15 +3,20 @@
     from which more complex kinds of objects are derived
 */
 
-namespace Magician {
+namespace Magician
+{
     public abstract class Single
     {
         protected double[] pos;
-        private List<Driver> drivers = new List<Driver>();
+        protected List<Driver> drivers = new List<Driver>();
 
         public void SetX(double x)
         {
             pos[0] = x;
+        }
+        public void SetY(double x)
+        {
+            pos[1] = x;
         }
 
         public double Phase
@@ -19,13 +24,13 @@ namespace Magician {
             get
             {
                 double p = Math.Atan2(pos[1], pos[0]);
-                p = p < 0 ? p + 2*Math.PI : p;
+                p = p < 0 ? p + 2 * Math.PI : p;
                 return p;
             }
         }
         public double Magnitude
         {
-            get => Math.Sqrt(pos[0]*pos[0] + pos[1]*pos[1]);
+            get => Math.Sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
         }
         public double XCartesian(double offset)
         {
@@ -37,14 +42,16 @@ namespace Magician {
         }
 
         // Raw screen coordinates
-        public double WindowX {
+        public double WindowX
+        {
             get => pos[0];
         }
-        public double WindowY {
+        public double WindowY
+        {
             get => pos[1];
         }
 
-        public abstract void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0);
+        public abstract void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0);
 
         public void AddDriver(Driver d)
         {
