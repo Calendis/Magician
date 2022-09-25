@@ -77,7 +77,7 @@ namespace Magician
             // Clear with colour
             SDL_SetRenderDrawColor(renderer,
             Globals.bgCol.R, Globals.bgCol.G, Globals.bgCol.B, 255);
-            //SDL_RenderClear(renderer);
+            SDL_RenderClear(renderer);
 
             // Draw objects
             foreach(Multi m in multis)
