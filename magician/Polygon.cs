@@ -19,20 +19,25 @@ namespace Magician
             
             for (int i = 0; i < constituents.Count-1; i++)
             {
-                Point p0 = (Point)constituents[i];
-                Point p1 = (Point)constituents[i+1];
+                Point p0 = constituents[i].Point();
+                Point p1 = constituents[i+1].Point();
                 SDL_SetRenderDrawColor(renderer, p0.Col.R, p0.Col.G, p0.Col.B, 255);
                 SDL_RenderDrawLine(renderer,
                 (int)p0.XCartesian(pos[0]+xOffset), (int)p0.YCartesian(pos[1]+yOffset),
                 (int)p1.XCartesian(pos[0]+xOffset), (int)p1.YCartesian(pos[1]+yOffset));
             }
             
-            Point pLast = (Point)constituents[constituents.Count-1];
-            Point pFirst = (Point)constituents[0];
+            Point pLast = constituents[constituents.Count-1].Point();
+            Point pFirst = constituents[0].Point();
             SDL_SetRenderDrawColor(renderer, pLast.Col.R, pLast.Col.G, pLast.Col.B, 255);
             SDL_RenderDrawLine(renderer,
             (int)pLast.XCartesian(pos[0]+xOffset), (int)pLast.YCartesian(pos[1]+yOffset),
             (int)pFirst.XCartesian(pos[0]+xOffset), (int)pFirst.YCartesian(pos[1]+yOffset));
+        }
+
+        public Multi Multi()
+        {
+            return new Multi(constituents.ToArray());
         }
 
         public void SetCol(Color c)
