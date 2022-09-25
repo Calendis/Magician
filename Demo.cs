@@ -10,6 +10,8 @@ namespace Magician
         bool done = false;
         List<Multi> multis = new List<Multi>();
         Random r = new Random();
+        int frames = 0;
+        double timeResolution = 0.1;
         
         static void Main(string[] args)
         {
@@ -30,7 +32,9 @@ namespace Magician
 
         void GameLoop()
         {
-            // Game setup
+            /*
+                Game setup
+            */
             List<Point> points = new List<Point>();
             int pointCount = 12;
             double angleIncr = 360 / pointCount;
@@ -41,17 +45,31 @@ namespace Magician
             }
             //multis.Add(new Polygon(points.ToArray()));
             //multis.Add(new NonIntersectPolygon(new Color(0xff0000ff), points.ToArray()));
+            
+            // Define the game objects
             Plot p = new Plot(0, 0, new Driver(1, (x) => 100*Math.Sin(x[0]/20)), -90, 90, 0.1, new Color(0x20ff90ff));
             multis.Add(p);
-            p.AddDriver(new Driver(1, (x) => x[0], p.SetX));
             
+            Console.WriteLine("Adding drivers...");
+            Driver[] ds = new Driver[p.Count];
+            for (int i = 0; i < ds.Length; i++)
+            {
+                ds[i] = new Driver(1, (x)=>100*Math.Sin(x[0]), p.Constituents[i].SetY);
+            }
+            p.AddSubDrivers(ds);
+            //p.AddDriver(new Driver(1, (x)=>100*Math.Sin(x[0]), p.SetX));
+            
+            Console.WriteLine("done!");
+            
+            /*
+                Main gameloop
+            */
             while (!done)
             {
-                SDL_WaitEvent(out SDL_Event e);
-
-                //p.Drive(r.Next(-100, 100));
-                p.SetX(r.Next(0, 100));
+                //Console.WriteLine($"render {frames}");
                 Render();
+                //Console.WriteLine($"drive {frames}");
+                Drive();
             }
         }
         
@@ -70,6 +88,16 @@ namespace Magician
 
             // Display
             SDL_RenderPresent(renderer);
+
+            frames++;
+        }
+
+        void Drive()
+        {
+            foreach (Multi m in multis)
+            {
+                m.Drive(frames * timeResolution);
+            }
         }
 
         void InitSDL()
