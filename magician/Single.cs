@@ -7,7 +7,7 @@ namespace Magician
 {
     public abstract class Single
     {
-        protected double[] pos;
+        protected double[] pos = new double[]{0,0};
         protected List<Driver> drivers = new List<Driver>();
 
         public void SetX(double x)
@@ -17,6 +17,14 @@ namespace Magician
         public void SetY(double x)
         {
             pos[1] = x;
+        }
+        public void IncrX(double x)
+        {
+            pos[0] += x;
+        }
+        public void IncrY(double x)
+        {
+            pos[1] += x;
         }
 
         public double Phase
