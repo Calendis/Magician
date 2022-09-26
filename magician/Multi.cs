@@ -8,6 +8,15 @@ namespace Magician
             get => constituents;
         }
         protected bool filled = false;
+        protected Color col;
+        public Color Col
+        {
+            get => col;
+            set
+            {
+                col = value;
+            }
+        }
         public int Count
         {
             get => constituents.Count;
@@ -16,6 +25,7 @@ namespace Magician
         {
             constituents = new List<Multi> {};
             constituents.AddRange(cs);
+            col = Globals.fgCol;
         }
 
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
@@ -61,6 +71,46 @@ namespace Magician
             m.IncrX(c.pos[0]);
             m.IncrY(c.pos[1]);
             constituents[i] = m;
+        }
+
+        public void Recurse(Multi m)
+        {
+            for (int i = 0; i < constituents.Count; i++)
+            {
+                SetConstituent(i, m.Copy());
+            }
+        }
+
+        public void Recurse(Polygon p)
+        {
+            for (int i = 0; i < constituents.Count; i++)
+            {
+                SetConstituent(i, p.Copy());
+            }
+        }
+        public void Recurse()
+        {
+            Recurse(this);
+        }
+
+        public Multi Recursed(Multi m)
+        {
+            Recurse(m);
+            return this;
+        }
+        public Multi Recursed(Polygon p)
+        {
+            Recurse(p);
+            return this;
+        }
+        public Multi Recursed()
+        {
+            return Recursed(Copy());
+        }
+
+        public Multi Copy()
+        {
+            return new Multi(constituents.ToArray());
         }
     }
 }

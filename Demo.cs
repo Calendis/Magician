@@ -35,32 +35,26 @@ namespace Magician
             /*
                 Game setup
             */
-            RegularPolygon rp = new RegularPolygon(5, 100);
-            Multi rpm = rp.Multi();
-
-            for (int i = 0; i < rpm.Count; i++)
-            {
-                Multi rpm2 = new RegularPolygon(5, 70).Multi();
-                for (int j = 0; j < rpm2.Count; j++)
-                {
-                    rpm2.SetConstituent(j, new RegularPolygon(5, 20));
-                    rpm2.Constituents[j].AddDriver(new Driver(x=>0.2, rpm2.Constituents[j].IncrPhase));
-                    rpm2.Constituents[j].AddDriver(new Driver(x=>-Math.Sin(x[0]/10), rpm2.Constituents[j].IncrMagnitude));
-                    rpm2.AddDriver(new Driver((x)=>2, rpm2.IncrPhase));
-                }
-                rpm.SetConstituent(i, rpm2);
-            }
             
-            Driver[] subDrivers = new Driver[rpm.Count];
-            Driver[] subDrivers2 = new Driver[rpm.Count];
-            for (int i = 0; i < subDrivers.Length; i++)
-            {
-                subDrivers[i] = new Driver((x)=>0.1, rpm.Constituents[i].IncrPhase);
-                subDrivers2[i] = new Driver((x)=>3*Math.Sin(x[0]), rpm.Constituents[i].IncrMagnitude);
-            }
-            rpm.AddSubDrivers(subDrivers, subDrivers2);
-            //rpm.AddDriver(new Driver((x)=>10*Math.Sin(x[0]), rpm.IncrX));
-            multis.Add(rpm);
+            /*Multi m = new Multi(
+                new Line(new Point(0, 0), new Point(-100, -100)),
+                new Line(new Point(0, 0), new Point(100, 100)),
+                new Line(new Point(0, 0), new Point(100, -100)),
+                new Line(new Point(0, 0), new Point(-100, 100)));*/
+
+            Multi m = new Multi(
+                new Point(0, 0), new Point(-100, -100),
+                new Point(0, 0), new Point(100, 100),
+                new Point(0, 0), new Point(100, -100),
+                new Point(0, 0), new Point(-100, 100));
+            
+            m.Recurse();
+            //Line m = new Line(new Point(0, 0), new Point(100, 100));
+            //Plot m = new Plot(0, 0, new Driver(x => 100*Math.Sin(x[0] / 40)), -50, 50, 0.1, new Color(0xff0000ff));
+            //Multi m = p.Interpolation();
+            //m.AddDriver(new Driver(x => Math.Sin(x[0]), m.IncrX));
+            
+            multis.Add(m);
                         
             /*
                 Main gameloop

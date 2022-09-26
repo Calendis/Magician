@@ -47,6 +47,16 @@ namespace Magician
                 p.Col = c;
             }
         }
+
+        public new Polygon Copy()
+        {
+            Point[] points = new Point[constituents.Count];
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = constituents[i].Point();
+            }
+            return new Polygon(points);
+        }
     }
 
     public class NonIntersectPolygon : Polygon
