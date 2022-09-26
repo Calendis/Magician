@@ -5,7 +5,8 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    public class Line : Plot
+    
+    public class Line : Multi
     {
         private Point p0;
         private Point p1;
@@ -21,6 +22,7 @@ namespace Magician
             this.p0 = p0;
             this.p1 = p1;
             filled = true;
+            col = Globals.fgCol;
         }
         public Line(Point p0, Point p1, Color c)
         {

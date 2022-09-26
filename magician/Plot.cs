@@ -5,15 +5,7 @@ namespace Magician
         protected Driver toPlot;
         private double start;
         private double end;
-        protected Color col;
-        public Color Col
-        {
-            get => col;
-            set
-            {
-                col = value;
-            }
-        }
+        
 
         private double dx;
         public Plot(double x, double y, Driver d, double start, double end, double dx, Color c)

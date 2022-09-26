@@ -2,7 +2,7 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    public class Point : Plot
+    public class Point : Multi
     {
         public Point(double x, double y, bool phaseMag=false)
         {
