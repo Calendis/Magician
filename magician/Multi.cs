@@ -130,8 +130,6 @@ namespace Magician
             for (int i = 0; i < constituents.Count; i++)
             {
                 Multi m2 = m.Copy();
-                Console.WriteLine($"Base: {Count}, {this}");
-                Console.WriteLine($"Recursor: {m2.Count}, {m2}");
                 m2.IncrX(constituents[i].XAbsolute(0));
                 m2.IncrY(constituents[i].YAbsolute(0));
                 SetConstituent(i, m2);
@@ -140,7 +138,7 @@ namespace Magician
 
         public void Recurse()
         {
-            Recurse(this);
+            Recurse(this.Copy());
         }
 
         public Multi Recursed(Multi m)
