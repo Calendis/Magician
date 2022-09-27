@@ -36,11 +36,10 @@ namespace Magician
                 Game setup
             */
             
-            Multi m = Multi.RegularPolygon(3, 80)//;
-            .Driven(new Driver(x => 5*Math.Sin(x[0])), "x+")
-            .Recursed(Multi.RegularPolygon(4, 40))
+            Multi m = Multi.RegularPolygon(5, 120)
+            .Recursed()
+            .Recursed()
             .SubDriven(new Driver(x => 0.02), "phase+");
-                                    
             multis.Add(m);
                         
             /*
