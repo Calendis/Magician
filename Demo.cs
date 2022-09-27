@@ -36,24 +36,11 @@ namespace Magician
                 Game setup
             */
             
-            /*Multi m = new Multi(
-                new Line(new Point(0, 0), new Point(-100, -100)),
-                new Line(new Point(0, 0), new Point(100, 100)),
-                new Line(new Point(0, 0), new Point(100, -100)),
-                new Line(new Point(0, 0), new Point(-100, 100)));*/
-
-            Multi m = new Multi(
-                new Point(0, 0), new Point(-100, -100),
-                new Point(0, 0), new Point(100, 100),
-                new Point(0, 0), new Point(100, -100),
-                new Point(0, 0), new Point(-100, 100));
-            
-            m.Recurse();
-            //Line m = new Line(new Point(0, 0), new Point(100, 100));
-            //Plot m = new Plot(0, 0, new Driver(x => 100*Math.Sin(x[0] / 40)), -50, 50, 0.1, new Color(0xff0000ff));
-            //Multi m = p.Interpolation();
-            //m.AddDriver(new Driver(x => Math.Sin(x[0]), m.IncrX));
-            
+            Multi m = Multi.RegularPolygon(3, 80)//;
+            .Driven(new Driver(x => 5*Math.Sin(x[0])), "x+")
+            .Recursed(Multi.RegularPolygon(4, 40))
+            .SubDriven(new Driver(x => 0.02), "phase+");
+                                    
             multis.Add(m);
                         
             /*
