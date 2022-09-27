@@ -64,9 +64,17 @@ namespace Magician
         {
             return Globals.winWidth / 2 + pos[0] + offset;
         }
+        public double XAbsolute(double offset)
+        {
+            return pos[0] + offset;
+        }
         public double YCartesian(double offset)
         {
             return Globals.winHeight / 2 - pos[1] - offset;
+        }
+        public double YAbsolute(double offset)
+        {
+            return pos[1] + offset;
         }
         public Point Point()
         {
