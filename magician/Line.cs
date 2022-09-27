@@ -24,11 +24,8 @@ namespace Magician
             filled = true;
             col = Globals.fgCol;
         }
-        public Line(Point p0, Point p1, Color c)
+        public Line(Point p0, Point p1, Color c) : this(p0, p1)
         {
-            this.p0 = p0;
-            this.p1 = p1;
-            filled = true;
             col = c;
         }
 

@@ -20,10 +20,8 @@ namespace Magician
             }
             
         }
-        public Point(double x, double y, Color c)
+        public Point(double x, double y, Color c) : this(new double[] {x, y})
         {
-            pos[0] = x;
-            pos[1] = y;
             col = c;
         }
 
@@ -33,11 +31,21 @@ namespace Magician
             this.pos[1] = pos[1];
         }
 
+        public new Point Copy()
+        {
+            return new Point(pos[0], pos[1]);
+        }
+
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, 255);
             // TODO: try SDL_RenderDrawPointF. How does it differ?
             SDL_RenderDrawPoint(renderer, (int)XCartesian(xOffset), (int)YCartesian(yOffset));
+        }
+
+        public override string ToString()
+        {
+            return $"Point({XCartesian(0)}, {YCartesian(0)})";
         }
     }
 }

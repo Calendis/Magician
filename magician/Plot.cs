@@ -1,6 +1,6 @@
 namespace Magician
 {
-    public class Plot : Multi, IMap
+    public class Plot : IMap
     {
         protected Driver toPlot;
         private double start;
@@ -8,6 +8,8 @@ namespace Magician
         
 
         private double dx;
+        private Color col;
+        private double[] pos = new double[2];
         public Plot(double x, double y, Driver d, double start, double end, double dx, Color c)
         {
             pos[0] = x;
@@ -17,16 +19,6 @@ namespace Magician
             this.end = end;
             this.dx = dx;
             this.col = c;
-            constituents.AddRange(Interpolation().Constituents);
-        }
-
-        // Default plot of nothing
-        public Plot()
-        {
-            toPlot = null;
-            start = 0;
-            end = 0;
-            col = new Color();
         }
 
         public double Evaluate(params double[] x)
@@ -38,18 +30,14 @@ namespace Magician
         {
             Point p0 = new Point(x, Evaluate(x));
             Point p1 = new Point(x + dx, Evaluate(x + dx));
-            Line l = new Line(p0, p1);
-            //l.SetX(pos[0]);
-            //l.SetY(pos[1]);
+            Line l = new Line(p0, p1, col);
             return l;
         }
         private Line interpolate(double x0, double x1)
         {
             Point p0 = new Point(x0, Evaluate(x0));
             Point p1 = new Point(x1, Evaluate(x1));
-            Line l = new Line(p0, p1);
-            //l.SetX(pos[0]);
-            //l.SetY(pos[1]);
+            Line l = new Line(p0, p1, col);
             return l;
         }
 
