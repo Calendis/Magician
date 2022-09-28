@@ -35,21 +35,53 @@ namespace Magician
             /*
                 Game setup
             */
+
+            Multi m0 = Multi.RegularPolygon(-400, -200, 6, 80)
+            .Wield()
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            ;
+
+            Multi m1 = Multi.RegularPolygon(-400, 200, 6, 80)
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            .Surround()
+            ;
+
+            Multi m2 = Multi.RegularPolygon(400, -200, 6, 80)
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            .Wield()
+            ;
+
+            Multi m3 = Multi.RegularPolygon(400, 200, 6, 80)
+            .Surround()
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            ;
+
+            m0.Col = Color.YELLOW;
+            m1.Col = Color.RED;
+            m2.Col = Color.GREEN;
+            m3.Col = Color.BLUE;
             
-            Multi m = Multi.RegularPolygon(5, 120)
-            .Recursed()
-            .Recursed()
-            .SubDriven(new Driver(x => 0.02), "phase+");
-            multis.Add(m);
-                        
+            multis.Add(m0);
+            multis.Add(m1);
+            multis.Add(m2);
+            multis.Add(m3);
             /*
                 Main gameloop
             */
             while (!done)
             {
-                SDL_WaitEvent(out _);
+                //SDL_WaitEvent(out SDL_Event events);
+                SDL_PollEvent(out SDL_Event sdlEvent);
                 Render();
                 Drive();
+
+                // Event handling
+                switch (sdlEvent.type)
+                {
+                    case SDL_EventType.SDL_QUIT:
+                        done = true;
+                        break;
+                }
             }
         }
         
@@ -66,10 +98,10 @@ namespace Magician
                 m.Draw(ref renderer);
             }
 
+            frames++;
+
             // Display
             SDL_RenderPresent(renderer);
-
-            frames++;
         }
 
         void Drive()
