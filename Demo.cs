@@ -64,7 +64,7 @@ namespace Magician
             
             multis.Add(m0);
             multis.Add(m1);
-            multis.Add(m2);
+            //multis.Add(m2);
             multis.Add(m3);
             /*
                 Main gameloop

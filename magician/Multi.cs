@@ -153,8 +153,8 @@ namespace Magician
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
                 Multi outerCopy = outer.Copy();
-                outerCopy.IncrX(constituents[i].XAbsolute(0));
-                outerCopy.IncrY(constituents[i].YAbsolute(0));
+                outerCopy.SetX(constituents[i].XAbsolute(0));
+                outerCopy.SetY(constituents[i].YAbsolute(0));
                 
                 // Set that copy as the respective constituent of the Multi
                 innerCopy.constituents[i] = outerCopy;
