@@ -145,44 +145,16 @@ namespace Magician
             return copy;
         }
 
-        public void SetConstituent(int i, Multi m)
-        {
-            m.SetX(constituents[i].XAbsolute(0));
-            m.SetY(constituents[i].YAbsolute(0));
-            m.SetParent(this);
-            constituents[i] = m;
-        }
-
-        /*
-            DEBUG status:
-                The drivers of Multi m are copied correctly
-                The subdrivers (constituents' drivers are not!)
-        */
-        /*
-        public Multi Recursed(Multi m)
-        {
-            Multi m2 = m.Copy();
-            
-            for (int i = 0; i < m.constituents.Count; i++)
-            {
-                Multi c = Copy();
-                c.IncrX(m.constituents[i].XAbsolute(0));
-                c.IncrY(m.constituents[i].YAbsolute(0));
-                m2.SetConstituent(i, c);
-            }
-            return m2;
-        }*/
-
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
-        public Multi Wield(Multi outer)
+        public Multi Wielding(Multi outer)
         {
             Multi innerCopy = Copy();
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
                 Multi outerCopy = outer.Copy();
-                outerCopy.SetX(constituents[i].XAbsolute(0));
-                outerCopy.SetY(constituents[i].YAbsolute(0));
+                outerCopy.IncrX(constituents[i].XAbsolute(0));
+                outerCopy.IncrY(constituents[i].YAbsolute(0));
                 
                 // Set that copy as the respective constituent of the Multi
                 innerCopy.constituents[i] = outerCopy;
@@ -197,27 +169,16 @@ namespace Magician
 
             return innerCopy;
         }
-        public Multi Wield()
-        {
-            return Wield(this);
-        }
-
+        
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
-        public Multi Surround(Multi inner)
+        public Multi Surrounding(Multi inner)
         {
-            return inner.Wield(this);
+            return inner.Wielding(this);
         }
-        public Multi Surround()
-        {
-            return Surround(this);
-        }
-
-        /*
         public Multi Recursed()
         {
-            return Recursed(this);
+            return Wielding(this);
         }
-        */
 
         public Multi Copy()
         {
@@ -238,29 +199,6 @@ namespace Magician
             copy.constituents.AddRange(cs);
             return copy;
         }
-
-        /*
-        public Multi Copy()
-        {            
-            // Copy the constituents
-            Multi[] copiedConstituents = new Multi[constituents.Count];
-            for (int i = 0; i < constituents.Count; i++)
-            {
-                copiedConstituents[i] = constituents[i].Copy();
-            }
-            
-            // Copy the drivers
-            Driver[] copiedDrivers = new Driver[drivers.Count];
-            Multi m2 = new Multi(pos[0], pos[1], col.Copy(), lined, copiedConstituents);
-            for (int i = 0; i < copiedDrivers.Length; i++)
-            {
-                copiedDrivers[i] = drivers[i].CopiedTo(m2);
-            }
-            m2.AddDrivers(copiedDrivers);
-            
-            return m2;
-        }
-        */
 
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
