@@ -9,14 +9,25 @@ namespace Magician
     {
         protected double[] pos = new double[]{0,0};
         protected List<Driver> drivers = new List<Driver>();
+        protected Multi? parent;
 
         public void SetX(double x)
         {
-            pos[0] = x;
+            double parentOffset = 0;
+            if (parent is not null)
+            {
+                parentOffset = parent.XAbsolute(0);
+            }
+            pos[0] = x - parentOffset;
         }
         public void SetY(double x)
         {
-            pos[1] = x;
+            double parentOffset = 0;
+            if (parent is not null)
+            {
+                parentOffset = parent.YAbsolute(0);
+            }
+            pos[1] = x - parentOffset;
         }
         public void IncrX(double x)
         {
@@ -28,9 +39,14 @@ namespace Magician
         }
         public void SetPhase(double x)
         {
+            double parentOffset = 0;
+            if (parent is not null)
+            {
+                parentOffset = parent.Phase;
+            }
             double m = Magnitude;
-            pos[0] = m*Math.Cos(x);
-            pos[1] = m*Math.Sin(x);
+            pos[0] = m*Math.Cos(x - parentOffset);
+            pos[1] = m*Math.Sin(x - parentOffset);
         }
         public void IncrPhase(double x)
         {
@@ -38,9 +54,14 @@ namespace Magician
         }
         public void SetMagnitude(double x)
         {
+            double parentOffset = 0;
+            if (parent is not null)
+            {
+                parentOffset = parent.Phase;
+            }
             double p = Phase;
-            pos[0] = x*Math.Cos(p);
-            pos[1] = x*Math.Sin(p);
+            pos[0] = x*Math.Cos(p - parentOffset);
+            pos[1] = x*Math.Sin(p - parentOffset);
         }
         public void IncrMagnitude(double x)
         {
