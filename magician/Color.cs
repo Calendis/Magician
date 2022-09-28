@@ -8,6 +8,7 @@ namespace Magician
         public byte R => (byte)((col & 0xff000000) >> 24);
         public byte G => (byte)((col & 0x00ff0000) >> 16);
         public byte B => (byte)((col & 0x0000ff00) >> 8);
+        public byte A => (byte)((col & 0x000000ff) >> 0);
         public Color(byte r, byte g, byte b, int a, bool hsv=false)
         {
             // Convert to HSV before setting
@@ -17,8 +18,6 @@ namespace Magician
                 int s;
                 int v;
             }
-
-            Console.WriteLine($"RGB: {r}, {g}, {b}");
 
             col = (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8);
         }
@@ -32,9 +31,9 @@ namespace Magician
             col = hex;
         }
 
-        public Color()
+        public Color Copy()
         {
-            col = Globals.fgCol.HexCol;
+            return new Color(R, G, B, A);
         }
 
         public static int RGBToHSV(byte r, byte g, byte b)
@@ -63,5 +62,29 @@ namespace Magician
             return HSVToRGB(h, s, v);
         }
 
+        public static Color RED
+        {
+            get => new Color(0xff0000ff);
+        }
+
+        public static Color GREEN
+        {
+            get => new Color(0x00ff00ff);
+        }
+
+        public static Color BLUE
+        {
+            get => new Color(0x0000ffff);
+        }
+
+        public static Color YELLOW
+        {
+            get => new Color(0xffff00ff);
+        }
+
+        public override string ToString()
+        {
+            return $"RGBA: {R}, {G}, {B}, {A}";
+        }
     }
 }
