@@ -36,29 +36,28 @@ namespace Magician
                 Game setup
             */
 
-            Multi yellowSquare = Multi.RegularPolygon(0, 0, 4, 40);
+            Multi yellowSquare = Multi.RegularPolygon(0, 0, Color.YELLOW, 4, 40);
             
-            Multi m0 = Multi.RegularPolygon(-400, -200, 6, 80)
+            Multi m0 = Multi.RegularPolygon(-400, 200, 6, 80)
             .Wielding(yellowSquare)
             .SubDriven(new Driver(x => 0.02), "phase+")
             ;
 
-            Multi m1 = Multi.RegularPolygon(-400, 200, 6, 80)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            .Surrounding(yellowSquare)
-            ;
-
-            Multi m2 = Multi.RegularPolygon(400, -200, 6, 80)
+            Multi m1 = Multi.RegularPolygon(400, 200, 6, 80)
             .SubDriven(new Driver(x => 0.02), "phase+")
             .Wielding(yellowSquare)
             ;
 
-            Multi m3 = Multi.RegularPolygon(400, 200, 6, 80)
+            Multi m2 = Multi.RegularPolygon(-400, -200, 6, 80)
             .Surrounding(yellowSquare)
             .SubDriven(new Driver(x => 0.02), "phase+")
             ;
 
-            m0.Col = Color.YELLOW;
+            Multi m3 = Multi.RegularPolygon(400, -200, 6, 80)
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            .Surrounding(yellowSquare)
+            ;
+
             m1.Col = Color.RED;
             m2.Col = Color.GREEN;
             m3.Col = Color.BLUE;
