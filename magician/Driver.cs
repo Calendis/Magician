@@ -14,50 +14,25 @@ namespace Magician
         private double[] offsets;
         private string actionString;
         
-        public Driver(Func<double[], double> df)
-        {
-            this.ins = 1;
-            driveFunction = new DriveFunction(df);
-            offsets = new double[]{0};
-        }
-        public Driver(Func<double[], double> df, Action<double> output) : this(new double[]{0}, df)
-        {
-            this.output = output;
-        }
-        private Driver(double[] offsets, Func<double[], double> df) : this(df)
-        {
-            this.ins = offsets.Length;
-            this.offsets = offsets;
-        }
         // Full constructor
-        public Driver(double[] offsets, Func<double[], double> df, Action<double> output) : this(offsets, df)
+        public Driver(double[] offsets, Func<double[], double> df, Action<double> output)
         {
+            ins = offsets.Length;
+            driveFunction = new DriveFunction(df);
+            this.offsets = offsets;
             this.output = output;
+            actionString = "";
         }
-        // Output from stringmap
-        public Driver(Func<double[], double> df, ref Multi m, string s) : this(new double[]{0}, df)
-        {
-            output = StringMap(m, s);
-        }
+        public Driver(Func<double[], double> df, Action<double> output) : this(new double[]{0}, df, output) {}
+        private Driver(double[] offsets, Func<double[], double> df) : this(offsets, df, null) {}
+        public Driver(Func<double[], double> df) : this(new double[] {0}, df) {}
 
         public Driver(Driver d, Multi m, string s)
         {
-            driveFunction = d.GetDriveFunction();
-            offsets = d.offsets;
+            driveFunction = new DriveFunction(d.GetDriveFunction());
+            offsets = d.offsets.ToArray();
             output = StringMap(m, s);
-            actionString = d.actionString;
-        }
-        public void SetRef(Multi m)
-        {
-            output = StringMap(m, actionString);
-        }
-
-        // Default identity driver
-        public Driver(Action<double> output)
-        {
-            ins = 1;
-            driveFunction = new DriveFunction(x => x[0]);
-            this.output = output;
+            actionString = s;
         }
 
         public void SetOutput(Action<double> o)
@@ -75,21 +50,27 @@ namespace Magician
             return driveFunction(offsetX);
         }
 
-        public DriveFunction GetDriveFunction()
+        public Func<double[], double> GetDriveFunction()
         {
-            return driveFunction;
+            return driveFunction.Invoke;
+            //return driveFunction;
         }
 
         public void Drive(params double[] x)
-        {
+        {            
             if (output is not null)
             {
                 output(Evaluate(x));
             }
             else
             {
-                Console.WriteLine("ERROR: null output on driver");
+                Console.WriteLine($"ERROR: null output on a:({actionString}) driver");
             }
+        }
+
+        public Driver CopiedTo(Multi m)
+        {
+            return new Driver(this, m, actionString);
         }
 
         public static Action<double> StringMap(Multi m, string s)
@@ -118,12 +99,25 @@ namespace Magician
                 case "PHASE+":
                     o = m.IncrPhase;
                     break;
+
+                case "MAGNITUDE":
+                    o = m.SetMagnitude;
+                    break;
+                
+                case "MAGNITUDE+":
+                    o = m.IncrMagnitude;
+                    break;
                 
                 default:
                     Console.WriteLine($"ERROR: Unknown driver string {s}");
                     throw new NotImplementedException();
             }
             return o;
+        }
+
+        public override string ToString()
+        {
+            return $"Driver on s({actionString}), o({output})";
         }
     }
 }
