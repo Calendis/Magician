@@ -203,6 +203,21 @@ namespace Magician
             return copy;
         }
 
+        public Multi Scale(double factor)
+        {
+            foreach (Multi c in constituents)
+            {
+                c.SetMagnitude(c.Magnitude * factor);
+            }
+            return this;
+        }
+
+        public Multi Scaled(double factor)
+        {
+            Multi copy = Copy();
+            return copy.Scale(factor);
+        }
+
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
             List<Point> ps = new List<Point>();
