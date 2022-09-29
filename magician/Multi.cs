@@ -29,6 +29,11 @@ namespace Magician
         {
             get => drivers;
         }
+
+        public bool Lined
+        {
+            set => lined = value;
+        }
         
         public Multi(params Multi[] cs)
         {
@@ -181,6 +186,10 @@ namespace Magician
         public Multi Recursed()
         {
             return Wielding(this);
+        }
+        public Multi Recursed(Func<Multi, Multi> a)
+        {
+            return Wielding(a.Invoke(this));
         }
 
         public Multi Copy()

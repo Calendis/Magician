@@ -36,22 +36,17 @@ namespace Magician
                 Game setup
             */
 
-            Multi baseShape = Multi.RegularPolygon(0, 0, 6, 200)
+            Multi m0 = Multi.RegularPolygon(0, 0, 4, 100)
+            .SubDriven(new Driver(x => 0.02), "phase+")
+            .Recursed(m => m.Scaled(0.5)
+            .Recursed(m0 => m0.Scaled(0.5)
+            .Recursed(m0 => m0.Scaled(0.5))
+            )
+            )
             ;
-            
-            Multi fractal = baseShape
-            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 1))
-            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 2))
-            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 3))
-            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 4))
-            
-            ).SubDriven(new Driver(x => 0.005), "phase+")
-            ).SubDriven(new Driver(x => 0.01), "phase+")
-            ).SubDriven(new Driver(x => 0.02), "phase+")
-            ).SubDriven(new Driver(x => 0.04), "phase+")
-            ;
+            //m0.Lined = false;
 
-            multis.Add(fractal);
+            multis.Add(m0);
             /*
                 Main gameloop
             */
