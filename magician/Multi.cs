@@ -64,8 +64,8 @@ namespace Magician
                 // If lined, draw lines between the constituents as if they were vertices in a polygon
                 if (lined)
                 {
-                    Point p0 = constituents[i].Point();
-                    Point p1 = constituents[i+1].Point();
+                    Point p0 = constituents[i].GetPoint();
+                    Point p1 = constituents[i+1].GetPoint();
                     
                     SDL_SetRenderDrawColor(renderer, r, g, b, a);
                     
@@ -81,8 +81,8 @@ namespace Magician
             
             if (lined && constituents.Count > 0)
             {
-                Point pLast = constituents[constituents.Count-1].Point();
-                Point pFirst = constituents[0].Point();
+                Point pLast = constituents[constituents.Count-1].GetPoint();
+                Point pFirst = constituents[0].GetPoint();
                 
                 SDL_SetRenderDrawColor(renderer, r, g, b, a);                
                 SDL_RenderDrawLine(renderer,
@@ -173,7 +173,10 @@ namespace Magician
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
         public Multi Surrounding(Multi inner)
         {
-            return inner.Wielding(this);
+            Multi thisSurroundingInner = inner.Wielding(this);
+            thisSurroundingInner.SetX(XAbsolute(parent.XAbsolute(0)));
+            thisSurroundingInner.SetY(YAbsolute(parent.YAbsolute(0)));
+            return thisSurroundingInner.Wielding(this);
         }
         public Multi Recursed()
         {

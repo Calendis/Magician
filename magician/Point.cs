@@ -4,6 +4,8 @@ namespace Magician
 {
     public class Point : Multi
     {
+        static Point origin = new Point(0, 0);
+        
         public Point(double x, double y, bool phaseMag=false)
         {
             if (!phaseMag)
@@ -46,6 +48,16 @@ namespace Magician
         public override string ToString()
         {
             return $"Point({XCartesian(0)}, {YCartesian(0)})";
+        }
+
+        public static Point Origin
+        {
+            get => origin;
+            set
+            {
+                origin.SetX(value.XAbsolute(0));
+                origin.SetY(value.YAbsolute(0));
+            }
         }
     }
 }

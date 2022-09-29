@@ -9,7 +9,7 @@ namespace Magician
     {
         protected double[] pos = new double[]{0,0};
         protected List<Driver> drivers = new List<Driver>();
-        protected Multi? parent;
+        protected Multi parent = Point.Origin;
 
         public void SetX(double x)
         {
@@ -97,7 +97,7 @@ namespace Magician
         {
             return pos[1] + offset;
         }
-        public Point Point()
+        public Point GetPoint()
         {
             return new Point(pos[0], pos[1]);
         }
