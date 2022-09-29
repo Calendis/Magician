@@ -36,38 +36,22 @@ namespace Magician
                 Game setup
             */
 
-            Multi yellowSquare = Multi.RegularPolygon(0, 0, Color.YELLOW, 4, 40)
-            .SubDriven(new Driver(x => 5*Math.Sin(x[0])), "magnitude+")
-            .SubDriven(new Driver(x => 0.03), "phase+")
+            Multi baseShape = Multi.RegularPolygon(0, 0, 6, 200)
             ;
             
-            Multi m0 = Multi.RegularPolygon(-400, 200, 6, 80)
-            .Wielding(yellowSquare)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            ;
-
-            Multi m1 = Multi.RegularPolygon(400, 200, 6, 80)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            .Wielding(yellowSquare)
-            ;
-
-            Multi m2 = Multi.RegularPolygon(-400, -200, 6, 80)
-            .Surrounding(yellowSquare)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            ;
-
-            Multi m3 = Multi.RegularPolygon(400, -200, 6, 80)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            .Surrounding(yellowSquare)
-            ;
-
-            m2.Col = Color.RED;
-            m3.Col = Color.BLUE;
+            Multi fractal = baseShape
+            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 1))
+            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 2))
+            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 3))
+            .Wielding(baseShape.Scaled(Math.Pow(1d/Math.Sqrt(6), 4))
             
-            multis.Add(m0);
-            multis.Add(m1);
-            multis.Add(m2);
-            multis.Add(m3);
+            ).SubDriven(new Driver(x => 0.005), "phase+")
+            ).SubDriven(new Driver(x => 0.01), "phase+")
+            ).SubDriven(new Driver(x => 0.02), "phase+")
+            ).SubDriven(new Driver(x => 0.04), "phase+")
+            ;
+
+            multis.Add(fractal);
             /*
                 Main gameloop
             */
