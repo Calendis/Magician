@@ -35,18 +35,23 @@ namespace Magician
             /*
                 Game setup
             */
-
-            Multi m0 = Multi.RegularPolygon(0, 0, 4, 100)
-            .SubDriven(new Driver(x => 0.02), "phase+")
-            .Recursed(m => m.Scaled(0.5)
-            .Recursed(m0 => m0.Scaled(0.5)
-            .Recursed(m0 => m0.Scaled(0.5))
-            )
-            )
+            Multi colShifter = Multi.RegularPolygon(0, 0, new Color(180f, 1, 1, 255), 5, 120)
+            .Driven(new Driver(x => 180*Math.Sin(x[0]/10)+180), "col0")
             ;
-            //m0.Lined = false;
+            //Multi m0 = Multi.RegularPolygon(-250, 0, new Color(0x00ffffff), 4, 120)
+            //.Driven(new Driver(x => 0.02), "phase+")
+            //;
 
-            multis.Add(m0);
+            //Multi m1 = Multi.RegularPolygon(250, 0, new Color(0x00ffffff, true), 6, 60)
+            //;
+
+            //Plot p = new Plot(0, 0, new Driver(x => x[0]*x[0]), -50, 50, 0.1, Color.RED);
+
+            //multis.Add(m0);
+            //multis.Add(m1);
+            multis.Add(colShifter);
+            
+            //multis.Add(p.Interpolation().Wielding(Multi.RegularPolygon(0, 0, 5, 50)));
             /*
                 Main gameloop
             */
