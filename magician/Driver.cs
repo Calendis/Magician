@@ -107,6 +107,38 @@ namespace Magician
                 case "MAGNITUDE+":
                     o = m.IncrMagnitude;
                     break;
+
+                case "COL0":
+                    o = m.SetCol0;
+                    break;
+                
+                case "COL1":
+                    o = m.SetCol1;
+                    break;
+
+                case "COL2":
+                    o = m.SetCol2;
+                    break;
+
+                case "COL3":
+                    o = m.SetCol3;
+                    break;
+
+                case "COL0+":
+                    o = m.IncrCol0;
+                    break;
+                
+                case "COL1+":
+                    o = m.IncrCol1;
+                    break;
+
+                case "COL2+":
+                    o = m.IncrCol2;
+                    break;
+
+                case "COL3+":
+                    o = m.IncrCol3;
+                    break;
                 
                 default:
                     Console.WriteLine($"ERROR: Unknown driver string {s}");
