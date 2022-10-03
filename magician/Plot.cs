@@ -35,6 +35,8 @@ namespace Magician
         }
         private Line interpolate(double x0, double x1)
         {
+            // TODO: Make plots point-based intead of line-based
+            
             Point p0 = new Point(x0, Evaluate(x0));
             Point p1 = new Point(x1, Evaluate(x1));
             Line l = new Line(p0, p1, col);
