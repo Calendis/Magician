@@ -20,6 +20,60 @@ namespace Magician
                 col = value;
             }
         }
+
+        public void SetCol0(double d)
+        {
+            if (!Col.HSV)
+            {
+                Col.R = (byte)d;
+            }
+            else
+            {
+                col.HexCol = Color.HSVToRGB((float)d, 1, 1, col.A);
+            }
+        }
+        public void IncrCol0(double d)
+        {
+            if (!Col.HSV)
+            {
+                Col.R += (byte)d;
+            }
+            else
+            {
+                col.HexCol = Color.HSVToRGB(col.Hue + (float)d, 1, 1, col.A);
+            }
+        }
+        public void SetCol1(double d)
+        {
+            if (!Col.HSV)
+            {
+                Col.G = (byte)d;
+            }
+            else
+            {
+                //
+            }
+        }
+        public void IncrCol1(double d)
+        {
+            Col.G += (byte)d;
+        }
+        public void SetCol2(double d)
+        {
+            Col = new Color(Col.R, Col.G, (byte)d, Col.A, Col.HSV);
+        }
+        public void IncrCol2(double d)
+        {
+            Col.B += (byte)d;
+        }
+        public void SetCol3(double d)
+        {
+            Col = new Color(Col.R, Col.G, Col.B, (byte)d, Col.HSV);
+        }
+        public void IncrCol3(double d)
+        {
+            Col.A += (byte)d;
+        }
         public int Count
         {
             get => constituents.Count;
@@ -174,6 +228,10 @@ namespace Magician
 
             return innerCopy;
         }
+        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
+        {
+            return Wielding(F(outer));
+        }
         
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
         public Multi Surrounding(Multi inner)
@@ -183,13 +241,17 @@ namespace Magician
             thisSurroundingInner.SetY(YAbsolute(parent.YAbsolute(0)));
             return thisSurroundingInner.Wielding(this);
         }
+        public Multi Surrounding (Multi inner, Func<Multi, Multi> F)
+        {
+            return Surrounding(F(inner));
+        }
         public Multi Recursed()
         {
             return Wielding(this);
         }
-        public Multi Recursed(Func<Multi, Multi> a)
+        public Multi Recursed(Func<Multi, Multi> F)
         {
-            return Wielding(a.Invoke(this));
+            return Wielding(F.Invoke(this));
         }
 
         public Multi Copy()
