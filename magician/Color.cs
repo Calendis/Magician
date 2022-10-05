@@ -81,16 +81,17 @@ namespace Magician
             byte g = 0;
             byte b = 0;
             float phase = h % 360;
+            float invSat = 1 - s;
             
             if (phase < 60)
             {
                 r = 255;
-                g = (byte)(phase / 60 * 255);
+                g = HSVSlope(phase);
                 b = 0;
             }
             else if (phase < 120)
             {
-                r = (byte)(255 - (phase-60) / 60 * 255);
+                r = (byte)(255 - HSVSlope(phase-60));
                 g = 255;
                 b = 0;
             }
@@ -98,17 +99,17 @@ namespace Magician
             {
                 r = 0;
                 g = 255;
-                b = (byte)((phase-120) / 60 * 255);
+                b = HSVSlope(phase - 120);
             }
             else if (phase < 240)
             {
                 r = 0;
-                g = (byte)(255 - (phase-180)/ 60 * 255);
+                g = (byte)(255 - HSVSlope(phase - 180));
                 b = 255;
             }
             else if (phase < 300)
             {
-                r = (byte)((phase-240) / 60 * 255);
+                r = HSVSlope(phase - 240);
                 g = 0;
                 b = 255;
             }
@@ -116,13 +117,18 @@ namespace Magician
             {
                 r = 255;
                 g = 0;
-                b = (byte)(255 - (phase-300) / 60 * 255);
+                b = (byte)(255 - HSVSlope(phase - 300));
             }
             else
             {
                 throw new InvalidDataException($"Invalid phase {phase}");
             }
             return (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8) + (uint)(a);
+        }
+
+        private static byte HSVSlope(float x)
+        {
+            return (byte)(x / 60f * 255);
         }
 
         private static float HueFromRGB(byte r, byte g, byte b)
