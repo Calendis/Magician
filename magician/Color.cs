@@ -75,48 +75,101 @@ namespace Magician
             return new Color(R, G, B, A);
         }
 
-        public static uint HSVToRGB(float h, float s, float v, byte a)
+        public static uint HSVToRGB(float h, float s, float l, byte a)
+        {
+            float r, g, b;
+            float c = l * s;
+            float x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            float m = l - c;
+
+            if (h < 60)
+            {
+                r = c;
+                g = x;
+                b = 0;
+            }
+            else if (h < 120)
+            {
+                r = x;
+                g = c;
+                b = 0;
+            }
+            else if (h < 180)
+            {
+                r = 0;
+                g = c;
+                b = x;
+            }
+            else if (h < 240)
+            {
+                r = 0;
+                g = x;
+                b = c;
+            }
+            else if (h < 300)
+            {
+                r = x;
+                g = 0;
+                b = c;
+            }
+            else if (h < 360)
+            {
+                r = c;
+                g = 0;
+                b = x;
+            }
+            else
+            {
+                throw new InvalidDataException($"Invalid phase {h}");
+            }
+            r = 255*(r+m);
+            g = 255*(g+m);
+            b = 255*(b+m);
+
+            return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
+        }
+
+        /*public static uint HSVToRGB(float h, float s, float l, byte a)
         {
             byte r = 0;
             byte g = 0;
             byte b = 0;
             float phase = h % 360;
-            float invSat = 1 - s;
             
             if (phase < 60)
             {
-                r = 255;
+                r = (byte)(255 * l);
                 g = HSVSlope(phase);
-                b = 0;
+                b = (byte)(255 * invSat);
             }
             else if (phase < 120)
             {
-                r = (byte)(255 - HSVSlope(phase-60));
-                g = 255;
-                b = 0;
+                r = (byte)(255 * s * l + HSVSlope(-h + 60, s, l));
+                g = (byte)(255 * l);
+                b = (byte)(255 * invSat);
             }
             else if (phase < 180)
             {
-                r = 0;
-                g = 255;
+                r = (byte)(255 * (1 - s));
+                g = (byte)(255 * l);
                 b = HSVSlope(phase - 120);
             }
             else if (phase < 240)
             {
-                r = 0;
+                r = (byte)(255 * (1 - s));
                 g = (byte)(255 - HSVSlope(phase - 180));
-                b = 255;
+                b = (byte)(255 * l);
             }
             else if (phase < 300)
             {
-                r = HSVSlope(phase - 240);
-                g = 0;
-                b = 255;
+                r = HSVSlope(phase - 240, s, l);
+                g = (byte)(255 * invSat);
+                b = (byte)(255 * l);
             }
             else if (phase < 360)
             {
-                r = 255;
-                g = 0;
+                r = (byte)(255 * l);
+                g = (byte)(255 * invSat);
                 b = (byte)(255 - HSVSlope(phase - 300));
             }
             else
@@ -124,11 +177,21 @@ namespace Magician
                 throw new InvalidDataException($"Invalid phase {phase}");
             }
             return (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8) + (uint)(a);
-        }
-
-        private static byte HSVSlope(float x)
+        }*/
+        /*
+        public static uint HSVToRGBSin(float h, float s, float l, byte a)
         {
-            return (byte)(x / 60f * 255);
+            float r, g, b;
+            r = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*h/360f)+1) / 2f + 255*(1-s);
+            g = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*(h+120)/360f)+1) / 2f + 255*(1-s);
+            b = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*(h+240)/360f)+1) / 2f + 255*(1-s);
+            return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
+        }
+        */
+
+        private static byte HSVSlope(float hue, float saturation, float lightness)
+        {
+            return (byte)((255 * saturation * lightness * hue / 60) + 255*(1 - saturation));
         }
 
         private static float HueFromRGB(byte r, byte g, byte b)
