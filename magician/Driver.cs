@@ -35,6 +35,12 @@ namespace Magician
             actionString = s;
         }
 
+        public string ActionString
+        {
+            get => actionString;
+            set => actionString = value;
+        }
+
         public void SetOutput(Action<double> o)
         {
             output =  o;

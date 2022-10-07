@@ -225,21 +225,25 @@ namespace Magician
             }
         }
 
-        public Multi Driven(Driver d, string s)
+        public Multi Driven(Func<double[], double> df, string s)
         {
             Multi copy = Copy();
-            Driver dc = new Driver(d, copy, s);
-            copy.AddDriver(dc);
+            Action<double> output = Driver.StringMap(copy, s);
+            Driver d = new Driver(df, output);
+            d.ActionString = s;
+            copy.AddDriver(d);
             return copy;
         }
 
-        public Multi SubDriven(Driver d, string s)
+        public Multi SubDriven(Func<double[], double> df, string s)
         {
             Multi copy = Copy();
             foreach(Multi c in copy.constituents)
             {
-                Driver dc = new Driver(d, c, s);
-                c.AddDriver(dc);
+                Action<double> output = Driver.StringMap(c, s);
+                Driver d = new Driver(df, output);
+                d.ActionString = s;
+                c.AddDriver(d);
             }
             return copy;
         }
@@ -296,7 +300,7 @@ namespace Magician
 
         public Multi Copy()
         {
-            Multi copy = new Multi(pos[0], pos[1], col, lined, linedCompleted);
+            Multi copy = new Multi(pos[0], pos[1], col.Copy(), lined, linedCompleted);
             
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
@@ -336,6 +340,26 @@ namespace Magician
             return this;
         }
 
+        // A Multi keeps a reference to its "parent", which is a Multi that has this Multi as
+        // a constituent
+        public void SetParent(Multi m)
+        {
+            parent = m;
+        }
+
+        public override string ToString()
+        {
+            string s = "";
+            foreach (Multi c in constituents)
+            {
+                s += c.GetType() + ": " + c.ToString() + "\n  ";
+            }
+            return s;
+        }
+
+        /*
+        *  Static methods
+        */
         // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
@@ -359,21 +383,9 @@ namespace Magician
             return RegularPolygon(0, 0, sides, magnitude);
         }
 
-        // A Multi keeps a reference to its "parent", which is a Multi that has this Multi as
-        // a constituent
-        public void SetParent(Multi m)
+        public static Action<double> SetCol0(Multi m)
         {
-            parent = m;
-        }
-
-        public override string ToString()
-        {
-            string s = "";
-            foreach (Multi c in constituents)
-            {
-                s += c.GetType() + ": " + c.ToString() + "\n  ";
-            }
-            return s;
+            return m.SetCol0;
         }
     }
 }
