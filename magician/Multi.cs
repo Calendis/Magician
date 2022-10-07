@@ -1,3 +1,7 @@
+/*
+*  A Multi represents a collection of one more more Multis, with some functionality inherited from Single
+*  ALL mathematical objects created in Magician are Multis, even simple objects like Points
+*/
 using static SDL2.SDL;
 
 namespace Magician
@@ -9,20 +13,45 @@ namespace Magician
         {
             get => constituents;
         }
-        protected bool filled = false;
+        // If true, a Multi will be drawn with its constituents connected by lines
+        // This is useful for plots, polygons, etc
         protected bool lined = false;
+        
+        // If true, the last constituent in a Multi will be drawn with a line connecting to the first one
+        // This is desirable for say, a polygon, but undesirable for say, a plot
         protected bool linedCompleted = false;
         protected Color col;
+
+        // Create a multi from a list of multis
+        public Multi(params Multi[] cs)
+        {
+            constituents = new List<Multi> {};
+            constituents.AddRange(cs);
+            foreach (Multi c in constituents)
+            {
+                c.SetParent(this);
+            }
+            col = Globals.fgCol;
+        }
+
+        // Create a multi and define its position, colour, and drawing properties
+        public Multi(double x, double y, Color col, bool lined, bool linedCompleted, params Multi[] cs) : this(cs)
+        {
+            SetX(x);
+            SetY(y);
+            this.col = col;
+            this.lined = lined;
+            this.linedCompleted = linedCompleted;
+        }
+
+        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, false, false, cs) {}
         public Color Col
         {
             get => col;
-            set
-            {
-                col = value;
-            }
+            set => col = value;
         }
 
-        // These setters are sensitive to whether or not the colour is HSL
+        // These setters are sensitive to whether or not the colour is HSL or RGB
         // I write setters here instead of using properties, because I may want to pass these into a Driver
         public void SetCol0(double d)
         {
@@ -32,8 +61,6 @@ namespace Magician
             }
             else
             {
-                //col.HexCol = Color.HSLToRGBHex((int)d, col.Saturation, col.Lightness, col.A);
-                //col = new Color((float)d*0+180, col.Saturation, col.Lightness, col.A, 0*(float)(d-(int)d), disambiguationBool: true);
                 col = new Color(0, col.Saturation, col.Lightness, col.A, (float)d, disambiguationBool: true);
             }
         }
@@ -122,28 +149,6 @@ namespace Magician
         {
             set => lined = value;
         }
-        
-        public Multi(params Multi[] cs)
-        {
-            constituents = new List<Multi> {};
-            constituents.AddRange(cs);
-            foreach (Multi c in constituents)
-            {
-                c.SetParent(this);
-            }
-            col = Globals.fgCol;
-        }
-
-        public Multi(double x, double y, Color col, bool lined, bool linedCompleted, params Multi[] cs) : this(cs)
-        {
-            SetX(x);
-            SetY(y);
-            this.col = col;
-            this.lined = lined;
-            this.linedCompleted = linedCompleted;
-        }
-
-        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, false, false, cs) {}
 
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
@@ -331,6 +336,7 @@ namespace Magician
             return this;
         }
 
+        // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
             List<Point> ps = new List<Point>();
@@ -353,6 +359,8 @@ namespace Magician
             return RegularPolygon(0, 0, sides, magnitude);
         }
 
+        // A Multi keeps a reference to its "parent", which is a Multi that has this Multi as
+        // a constituent
         public void SetParent(Multi m)
         {
             parent = m;

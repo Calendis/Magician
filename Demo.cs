@@ -37,7 +37,7 @@ namespace Magician
             */
             Multi m =
             
-            Multi.RegularPolygon(0, 0, Color.RED.ToHSL(), 6, 90)
+            Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 6, 90)
             .SubDriven(
                 new Driver(x => 0.01), "phase+")
             .Driven(

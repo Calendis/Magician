@@ -1,3 +1,7 @@
+/*
+*  Class for storing and manipulating colour data, with RGBA and HSLA support
+*/
+
 namespace Magician
 {
     public class Color
@@ -5,11 +9,14 @@ namespace Magician
         // 32-bit int representing the colour in RGBA
         private uint col;
         
-        // Lol, I store a uint for the colour value and three floats for precision!
-        // Oh well, the bitwise stuff was fun to write
+        // Lol, I store a uint for the colour value and three additional floats for precision
+        // It makes the bitwise integer math pretty pointless but it was fun to write
         private float[] floatingParts = new float[3];
-        // TODO: actually implement Saturation and Lightness getters
+        
+        // Whether or not the colour is treated as HSL
         bool isHSL = false;
+        
+        // Create a colour from RGBA, and floating parts for more precise RGB
         public Color(byte r, byte g, byte b, byte a, float f0 = 0, float f1 = 0, float f2 = 0)
         {
             isHSL = false;
@@ -19,7 +26,9 @@ namespace Magician
         }
         public Color(byte r, byte g, byte b, byte a, float[] fps) : this(r, g, b, a, fps[0], fps[1], fps[2]) {}
 
-        // Yeah this is awful, but it makes the constructors not ambiguous
+        // Create a colour from HSLA, and floating parts for more precise HSL
+        // This gross constructor has a bool parameter so it's not ambiguous with the other constructor
+        // The disambiguation bool's value is not used
         // I could make a base class for RGBColor and HSLColor, but I don't want to
         public Color(float h, float s, float l, byte a, float f0 = 0, float f1 = 0, float f2 = 0, bool disambiguationBool = true)
         {
@@ -36,6 +45,8 @@ namespace Magician
             col = hex;
         }
 
+        // If the floating parts of the colour are more than 1, return integer parts and
+        // subtract from the floating part so that it is between 0 and 1 again
         private int[] handleFloatOverflow()
         {
             int[] integerParts = new int[3];
@@ -55,6 +66,7 @@ namespace Magician
             return integerParts;
         }
 
+        // A bunch of properties
         public uint HexCol
         {
             get => col;
@@ -82,6 +94,7 @@ namespace Magician
             set => col = (uint)((byte)value) + (col & 0xffffff00);
         }
         public float Hue => HueFromRGB(R, G, B);
+        // TODO: actually implement Saturation and Lightness getters
         public float Saturation => 1;
         public float Lightness => 1;
 
@@ -120,6 +133,7 @@ namespace Magician
             Begin static methods
         */
 
+        // Given HSLA, return RGBA as a 32-bit uint
         public static uint HSLToRGBHex(float h, float s, float l, byte a)
         {
             float r, g, b;
@@ -175,6 +189,8 @@ namespace Magician
 
             return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
         }
+        
+        // Calculate a colour's hue angle from RGB values
         private static float HueFromRGB(byte r, byte g, byte b)
         {
             float h;
@@ -208,27 +224,28 @@ namespace Magician
             return h;
         }
 
-        public static Color RED
+        // Some pre-defined colours
+        public static Color Red
         {
             get => new Color(0xff0000ff);
         }
 
-        public static Color GREEN
+        public static Color Green
         {
             get => new Color(0x00ff00ff);
         }
 
-        public static Color BLUE
+        public static Color Blue
         {
             get => new Color(0x0000ffff);
         }
 
-        public static Color YELLOW
+        public static Color Yellow
         {
             get => new Color(0xffff00ff);
         }
 
-        public static Color CYAN
+        public static Color Cyan
         {
             get => new Color(0x00ffffff);
         }

@@ -1,7 +1,8 @@
 /*
-    A line is defined by two points, and extends infinitely in either
+    A line is defined by two points, and extends infinitely in either direction.
 */
 using static SDL2.SDL;
+
 
 namespace Magician
 {
@@ -21,7 +22,6 @@ namespace Magician
         {
             this.p0 = p0;
             this.p1 = p1;
-            filled = true;
             col = Globals.fgCol;
         }
         public Line(Point p0, Point p1, Color c) : this(p0, p1)
@@ -32,15 +32,12 @@ namespace Magician
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, 255);
-            if (filled)
-            {
-                SDL_RenderDrawLine(renderer,
+            SDL_RenderDrawLine(renderer,
                 (int)p0.XCartesian(xOffset + pos[0]), (int)p0.YCartesian(yOffset + pos[1]),
                 (int)p1.XCartesian(xOffset + pos[0]), (int)p1.YCartesian(yOffset + pos[1]));
                 return;
-            }
 
-            p0.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
+            //p0.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
             p1.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
         }
     }

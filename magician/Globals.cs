@@ -1,3 +1,7 @@
+/*
+*  Class for storing global variables like window and UI values
+*/
+
 namespace Magician
 {
     public static class Globals
