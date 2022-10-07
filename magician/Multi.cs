@@ -22,57 +22,89 @@ namespace Magician
             }
         }
 
+        // These setters are sensitive to whether or not the colour is HSL
+        // I write setters here instead of using properties, because I may want to pass these into a Driver
         public void SetCol0(double d)
         {
-            if (!Col.HSV)
+            if (!Col.IsHSL)
             {
                 Col.R = (byte)d;
             }
             else
             {
-                col.HexCol = Color.HSVToRGB((float)d, 1, 1, col.A);
+                //col.HexCol = Color.HSLToRGBHex((int)d, col.Saturation, col.Lightness, col.A);
+                //col = new Color((float)d*0+180, col.Saturation, col.Lightness, col.A, 0*(float)(d-(int)d), disambiguationBool: true);
+                col = new Color(0, col.Saturation, col.Lightness, col.A, (float)d, disambiguationBool: true);
             }
         }
         public void IncrCol0(double d)
         {
-            if (!Col.HSV)
+            if (!Col.IsHSL)
             {
                 Col.R += (byte)d;
             }
             else
             {
-                Console.WriteLine("HEY LAZY: IMPLEMENT SATURATION AND LIGHTNESS GETTERS!!!");
-                col.HexCol = Color.HSVToRGB((col.Hue + (float)d) % 360, 1, 1, col.A);
+                // TODO: saturation and lightness getters
+                Console.WriteLine("HEY LAZY: \n    IMPLEMENT SATURATION AND LIGHTNESS GETTERS!!!");
+                Console.WriteLine("    HSL SUPPORT IS NOT FINISHED UNTIL YOU DO THIS!!!");
+                
+                col = new Color(col.Hue, col.Saturation, col.Lightness, col.A,
+                (float)d + col.FloatingPart0, col.FloatingPart1, col.FloatingPart2, disambiguationBool: true);
             }
         }
+
         public void SetCol1(double d)
         {
-            if (!Col.HSV)
+            if (!Col.IsHSL)
             {
                 Col.G = (byte)d;
             }
             else
             {
-                //
+                col.HexCol = Color.HSLToRGBHex(col.Hue, (float)d, col.Lightness, col.A);
             }
         }
         public void IncrCol1(double d)
         {
-            Col.G += (byte)d;
+            if (!col.IsHSL)
+            {
+                Col.G += (byte)d;
+            }
+            else
+            {
+                // TODO: incrcol1
+            }
         }
+
         public void SetCol2(double d)
         {
-            Col = new Color(Col.R, Col.G, (byte)d, Col.A, Col.HSV);
+            if (!col.IsHSL)
+            {
+                col.B = (byte)d;
+            }
+            else
+            {
+                col.HexCol = Color.HSLToRGBHex(col.Hue, col.Saturation, (float)d, col.A);
+            }
         }
         public void IncrCol2(double d)
         {
-            Col.B += (byte)d;
+            if (!col.IsHSL)
+            {
+                Col.B += (byte)d;
+            }
+            else
+            {
+                // Todo incrcol2
+            }
         }
-        public void SetCol3(double d)
+
+        public void SetAlpha(double d)
         {
-            Col = new Color(Col.R, Col.G, Col.B, (byte)d, Col.HSV);
+            col.A = (byte)d;
         }
-        public void IncrCol3(double d)
+        public void IncrAlpha(double d)
         {
             Col.A += (byte)d;
         }
@@ -290,6 +322,13 @@ namespace Magician
         {
             Multi copy = Copy();
             return copy.Scale(factor);
+        }
+
+        public Multi Invisible()
+        {
+            lined = false;
+            linedCompleted = false;
+            return this;
         }
 
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)

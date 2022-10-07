@@ -35,14 +35,20 @@ namespace Magician
             /*
                 Game setup
             */
-            Multi m = Multi.RegularPolygon(0, 0, Color.RED.ToHSV(), 6, 200)
+            Multi m =
+            
+            Multi.RegularPolygon(0, 0, Color.YELLOW.ToHSL(), 6, 100)
             .SubDriven(
                 new Driver(x => 0.005), "phase+")
-            .SubDriven(
-                new Driver(x => 1), "col0+")
+            .Driven(
+                new Driver(x => 0.5), "col0+")
             .Surrounding(
-                Multi.RegularPolygon(0, 0, Color.CYAN, 6, 200))
+                Multi.RegularPolygon(0, 0, 6, 100)
+                .Invisible())
+            .SubDriven(new Driver(x => 200*Math.Cos(x[0]*0.005/timeResolution)), "magnitude")
+            .Recursed();
             ;
+
             //Plot p = new Plot(0, 0, new Driver(x => x[0]*x[0]/50), -50, 50, 0.1, Color.RED);            
             //multis.Add(p.Interpolation().SubDriven(new Driver(x => 0.02), "phase+").Surrounding(Multi.RegularPolygon(0, 0, 5, 50).SubDriven(new Driver(x => 0.01), "phase+")));
             
