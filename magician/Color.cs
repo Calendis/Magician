@@ -14,9 +14,8 @@ namespace Magician
         {
             isHSL = false;
             (floatingParts[0], floatingParts[1], floatingParts[2]) = (f0, f1, f2);
-            //int[] integerParts = handleFloatOverflow();
-            //col = (uint)(r + integerParts[0] << 24) + (uint)(g + integerParts[1] << 16) + (uint)(b + integerParts[2]<< 8) + (uint)(a);
-            col = (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8) + (uint)(a);
+            int[] integerParts = handleFloatOverflow();
+            col = (uint)(r + integerParts[0] << 24) + (uint)(g + integerParts[1] << 16) + (uint)(b + integerParts[2]<< 8) + (uint)(a);
         }
         public Color(byte r, byte g, byte b, byte a, float[] fps) : this(r, g, b, a, fps[0], fps[1], fps[2]) {}
 
@@ -27,7 +26,7 @@ namespace Magician
             isHSL = true;
             (floatingParts[0], floatingParts[1], floatingParts[2]) = (f0, f1, f2);
             int[] integerParts = handleFloatOverflow();
-            col = HSLToRGBHex((h + integerParts[0]) % 360, s + integerParts[1], l + integerParts[2], a);
+            col = HSLToRGBHex((h + integerParts[0]), s + integerParts[1], l + integerParts[2], a);
         }
 
         // Create an RGBA colour directly from hex value
@@ -127,6 +126,8 @@ namespace Magician
             float c = l * s;
             float x = c * (1-Math.Abs((h/60f) % 2 - 1));
             float m = l - c;
+
+            h %= 360;
 
             if (h < 60)
             {
