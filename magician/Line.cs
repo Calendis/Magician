@@ -35,10 +35,9 @@ namespace Magician
             SDL_RenderDrawLine(renderer,
                 (int)p0.XCartesian(xOffset + pos[0]), (int)p0.YCartesian(yOffset + pos[1]),
                 (int)p1.XCartesian(xOffset + pos[0]), (int)p1.YCartesian(yOffset + pos[1]));
-                return;
 
             //p0.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
-            p1.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
+            //p1.Draw(ref renderer, xOffset + pos[0], yOffset + pos[1]);
         }
     }
 }
