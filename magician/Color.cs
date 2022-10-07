@@ -53,6 +53,7 @@ namespace Magician
             col = (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8);// + (uint)(a);
         }
 
+        // Yeah this is awful, but it makes the constructors not ambiguous
         public Color(float h, float s, float v, byte a, bool _ = true)
         {
             hsv = true;
@@ -75,12 +76,24 @@ namespace Magician
             return new Color(R, G, B, A);
         }
 
+        public Color ToHSV()
+        {
+            return new Color(R, G, B, A, true);
+        }
+
+        /*
+            Begin static methods
+        */
+
         public static uint HSVToRGB(float h, float s, float l, byte a)
         {
             float r, g, b;
             float c = l * s;
             float x = c * (1-Math.Abs((h/60f) % 2 - 1));
             float m = l - c;
+
+            Console.WriteLine("HSL:");
+            Console.WriteLine($"  {h} {s} {l}");
 
             if (h < 60)
             {
@@ -126,74 +139,11 @@ namespace Magician
             g = 255*(g+m);
             b = 255*(b+m);
 
+            Console.WriteLine("Previous loop's RGB:");
+            Console.WriteLine($"  {r} {g} {b}");
+
             return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
         }
-
-        /*public static uint HSVToRGB(float h, float s, float l, byte a)
-        {
-            byte r = 0;
-            byte g = 0;
-            byte b = 0;
-            float phase = h % 360;
-            
-            if (phase < 60)
-            {
-                r = (byte)(255 * l);
-                g = HSVSlope(phase);
-                b = (byte)(255 * invSat);
-            }
-            else if (phase < 120)
-            {
-                r = (byte)(255 * s * l + HSVSlope(-h + 60, s, l));
-                g = (byte)(255 * l);
-                b = (byte)(255 * invSat);
-            }
-            else if (phase < 180)
-            {
-                r = (byte)(255 * (1 - s));
-                g = (byte)(255 * l);
-                b = HSVSlope(phase - 120);
-            }
-            else if (phase < 240)
-            {
-                r = (byte)(255 * (1 - s));
-                g = (byte)(255 - HSVSlope(phase - 180));
-                b = (byte)(255 * l);
-            }
-            else if (phase < 300)
-            {
-                r = HSVSlope(phase - 240, s, l);
-                g = (byte)(255 * invSat);
-                b = (byte)(255 * l);
-            }
-            else if (phase < 360)
-            {
-                r = (byte)(255 * l);
-                g = (byte)(255 * invSat);
-                b = (byte)(255 - HSVSlope(phase - 300));
-            }
-            else
-            {
-                throw new InvalidDataException($"Invalid phase {phase}");
-            }
-            return (uint)(r << 24) + (uint)(g << 16) + (uint)(b << 8) + (uint)(a);
-        }*/
-        /*
-        public static uint HSVToRGBSin(float h, float s, float l, byte a)
-        {
-            float r, g, b;
-            r = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*h/360f)+1) / 2f + 255*(1-s);
-            g = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*(h+120)/360f)+1) / 2f + 255*(1-s);
-            b = (255*l*s)*(float)(1+Math.Cos(2*Math.PI*(h+240)/360f)+1) / 2f + 255*(1-s);
-            return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
-        }
-        */
-
-        private static byte HSVSlope(float hue, float saturation, float lightness)
-        {
-            return (byte)((255 * saturation * lightness * hue / 60) + 255*(1 - saturation));
-        }
-
         private static float HueFromRGB(byte r, byte g, byte b)
         {
             // Phase is from 0 to 60
@@ -256,6 +206,11 @@ namespace Magician
         public static Color YELLOW
         {
             get => new Color(0xffff00ff);
+        }
+
+        public static Color CYAN
+        {
+            get => new Color(0x00ffffff);
         }
 
         public override string ToString()
