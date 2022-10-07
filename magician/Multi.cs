@@ -11,6 +11,7 @@ namespace Magician
         }
         protected bool filled = false;
         protected bool lined = false;
+        protected bool linedCompleted = false;
         protected Color col;
         public Color Col
         {
@@ -40,7 +41,8 @@ namespace Magician
             }
             else
             {
-                col.HexCol = Color.HSVToRGB(col.Hue + (float)d, 1, 1, col.A);
+                Console.WriteLine("HEY LAZY: IMPLEMENT SATURATION AND LIGHTNESS GETTERS!!!");
+                col.HexCol = Color.HSVToRGB((col.Hue + (float)d) % 360, 1, 1, col.A);
             }
         }
         public void SetCol1(double d)
@@ -100,15 +102,16 @@ namespace Magician
             col = Globals.fgCol;
         }
 
-        public Multi(double x, double y, Color col, bool lined, params Multi[] cs) : this(cs)
+        public Multi(double x, double y, Color col, bool lined, bool linedCompleted, params Multi[] cs) : this(cs)
         {
             SetX(x);
             SetY(y);
             this.col = col;
             this.lined = lined;
+            this.linedCompleted = linedCompleted;
         }
 
-        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, false, cs) {}
+        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, false, false, cs) {}
 
         public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
@@ -138,7 +141,7 @@ namespace Magician
                 c.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
             }
             
-            if (lined && constituents.Count > 0)
+            if (linedCompleted && constituents.Count > 0)
             {
                 Point pLast = constituents[constituents.Count-1].GetPoint();
                 Point pFirst = constituents[0].GetPoint();
@@ -256,7 +259,7 @@ namespace Magician
 
         public Multi Copy()
         {
-            Multi copy = new Multi(pos[0], pos[1], col, lined);
+            Multi copy = new Multi(pos[0], pos[1], col, lined, linedCompleted);
             
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
@@ -299,7 +302,8 @@ namespace Magician
                 double y = magnitude*Math.Sin(angle*i/180*Math.PI);
                 ps.Add(new Point(x, y, col));
             }
-            return new Multi(xOffset, yOffset, col, true, ps.ToArray());
+
+            return new Multi(xOffset, yOffset, col, true, true, ps.ToArray());;
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
