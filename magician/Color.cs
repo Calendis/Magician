@@ -121,7 +121,11 @@ namespace Magician
 
         public Color Copy()
         {
-            return new Color(R, G, B, A);
+            if (!IsHSL)
+            {
+                return new Color(R, G, B, A);
+            }
+            return new Color(Hue, Saturation, Lightness, A, disambiguationBool: true);
         }
 
         public Color ToHSL()
