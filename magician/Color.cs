@@ -92,9 +92,6 @@ namespace Magician
             float x = c * (1-Math.Abs((h/60f) % 2 - 1));
             float m = l - c;
 
-            Console.WriteLine("HSL:");
-            Console.WriteLine($"  {h} {s} {l}");
-
             if (h < 60)
             {
                 r = c;
@@ -138,9 +135,6 @@ namespace Magician
             r = 255*(r+m);
             g = 255*(g+m);
             b = 255*(b+m);
-
-            Console.WriteLine("Previous loop's RGB:");
-            Console.WriteLine($"  {r} {g} {b}");
 
             return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
         }
