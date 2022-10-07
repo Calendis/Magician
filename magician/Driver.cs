@@ -10,27 +10,20 @@ namespace Magician
     {
         protected DriveFunction driveFunction;
         private Action<double>? output;
-        private int ins;
-        private double[] offsets;
         private string actionString;
         
         // Full constructor
-        public Driver(double[] offsets, Func<double[], double> df, Action<double> output)
+        public Driver(Func<double[], double> df, Action<double> output)
         {
-            ins = offsets.Length;
             driveFunction = new DriveFunction(df);
-            this.offsets = offsets;
             this.output = output;
             actionString = "";
         }
-        public Driver(Func<double[], double> df, Action<double> output) : this(new double[]{0}, df, output) {}
-        private Driver(double[] offsets, Func<double[], double> df) : this(offsets, df, null) {}
-        public Driver(Func<double[], double> df) : this(new double[] {0}, df) {}
+        private Driver(Func<double[], double> df) : this(df, null) {}
 
         public Driver(Driver d, Multi m, string s)
         {
             driveFunction = new DriveFunction(d.GetDriveFunction());
-            offsets = d.offsets.ToArray();
             output = StringMap(m, s);
             actionString = s;
         }
@@ -48,12 +41,7 @@ namespace Magician
 
         public double Evaluate(params double[] x)
         {
-            double[] offsetX = new double[x.Length];
-            for (int i = 0; i < x.Length; i++)
-            {
-                offsetX[i] = x[i] + offsets[i];
-            }
-            return driveFunction(offsetX);
+            return driveFunction(x);
         }
 
         public Func<double[], double> GetDriveFunction()
