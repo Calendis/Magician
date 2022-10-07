@@ -37,15 +37,15 @@ namespace Magician
             */
             Multi m =
             
-            Multi.RegularPolygon(0, 0, Color.YELLOW.ToHSL(), 6, 100)
+            Multi.RegularPolygon(0, 0, Color.RED.ToHSL(), 6, 90)
             .SubDriven(
-                new Driver(x => 0.005), "phase+")
+                new Driver(x => 0.01), "phase+")
             .Driven(
-                new Driver(x => 0.5), "col0+")
+                new Driver(x => 180 + 180*Math.Cos(x[0]*0.01/timeResolution)), "col0")
             .Surrounding(
-                Multi.RegularPolygon(0, 0, 6, 100)
+                Multi.RegularPolygon(0, 0, 6, 90)
                 .Invisible())
-            .SubDriven(new Driver(x => 200*Math.Cos(x[0]*0.005/timeResolution)), "magnitude")
+            .SubDriven(new Driver(x => 180*Math.Cos(x[0]*0.01/timeResolution)), "magnitude")
             .Recursed();
             ;
 
