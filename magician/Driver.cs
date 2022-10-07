@@ -121,7 +121,7 @@ namespace Magician
                     break;
 
                 case "COL3":
-                    o = m.SetCol3;
+                    o = m.SetAlpha;
                     break;
 
                 case "COL0+":
@@ -137,7 +137,7 @@ namespace Magician
                     break;
 
                 case "COL3+":
-                    o = m.IncrCol3;
+                    o = m.IncrAlpha;
                     break;
                 
                 default:
