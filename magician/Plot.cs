@@ -26,31 +26,36 @@ namespace Magician
             return toPlot.Evaluate(x);
         }
         
-        private Line interpolate(double x)
+        private Point[] interpolate(double x)
         {
             Point p0 = new Point(x, Evaluate(x));
             Point p1 = new Point(x + dx, Evaluate(x + dx));
-            Line l = new Line(p0, p1, col);
-            return l;
+            //Line l = new Line(p0, p1, col);
+            return new Point[] {p0, p1};
         }
-        private Line interpolate(double x0, double x1)
+        private Point[] interpolate(double x0, double x1)
         {
             // TODO: Make plots point-based intead of line-based
             
             Point p0 = new Point(x0, Evaluate(x0));
             Point p1 = new Point(x1, Evaluate(x1));
-            Line l = new Line(p0, p1, col);
-            return l;
+            //Line l = new Line(p0, p1, col);
+            return new Point[] {p0, p1};
         }
 
         public Multi Interpolation()
         {
-            List<Line> lines = new List<Line>();
+            List<Point> points = new List<Point>();
             for (double x = start; x < end; x+=dx)
             {
-                lines.Add(interpolate(x));
+                Point[] ps = interpolate(x);
+                //points.AddRange(ps);
+                //points.Add(ps[0]);
+                points.Add(ps[1]);
             }
-            return new Multi(lines.ToArray());
+            Multi m = new Multi(points.ToArray());
+            m.Lined = true;
+            return m;
         }
     }
 }
