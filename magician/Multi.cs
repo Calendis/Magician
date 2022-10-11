@@ -16,11 +16,12 @@ namespace Magician
         }
         // If true, a Multi will be drawn with its constituents connected by lines
         // This is useful for plots, polygons, etc
-        protected bool lined = false;
+        protected bool lined;
         
         // If true, the last constituent in a Multi will be drawn with a line connecting to the first one
         // This is desirable for say, a polygon, but undesirable for say, a plot
-        protected bool linedCompleted = false;
+        protected bool linedCompleted;
+        protected bool drawPoint;
         protected Color col;
 
         // Create a multi from a list of multis
@@ -36,7 +37,7 @@ namespace Magician
         }
 
         // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, Color col, bool lined, bool linedCompleted, params Multi[] cs) : this(cs)
+        public Multi(double x, double y, Color col, bool lined, bool linedCompleted, bool drawPoint, params Multi[] cs) : this(cs)
         {
             //SetX(x);
             //SetY(y);
@@ -45,9 +46,10 @@ namespace Magician
             this.col = col;
             this.lined = lined;
             this.linedCompleted = linedCompleted;
+            this.drawPoint = drawPoint;
         }
 
-        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, true, false, cs) {}
+        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, true, false, false, cs) {}
 
         public double XAbsolute(double offset)
         {
@@ -87,6 +89,10 @@ namespace Magician
         public int Count
         {
             get => constituents.Count;
+        }
+        public void Add(Drawable d)
+        {
+            constituents.Add(d);
         }
 
         public List<Driver> Drivers
@@ -144,6 +150,13 @@ namespace Magician
                 // Make sure constituents are drawn relative to parent Multi
                 d.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
             }
+
+            if (drawPoint)
+            {
+                SDL_SetRenderDrawColor(renderer, r, g, b, a);
+                //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
+                SDL_RenderDrawPointF(renderer, (float)((Drawable)this).XCartesian(xOffset), (float)((Drawable)this).YCartesian(yOffset));
+            }
         }
 
         /**/
@@ -184,6 +197,12 @@ namespace Magician
             AddDriver(d);
             return this;
         }
+        public new Multi Driven(Func<double[], double> df)
+        {
+            Driver d = new Driver(df);
+            AddDriver(d);
+            return this;
+        }
 
         public Multi SubDriven(Func<double[], double> df, string s)
         {
@@ -198,9 +217,9 @@ namespace Magician
             return this;
         }
 
-        public Multi Copy()
+        public Drawable Copy()
         {
-            Multi copy = new Multi(pos[0], pos[1], col.Copy(), lined, linedCompleted);
+            Multi copy = new Multi(pos[0], pos[1], col.Copy(), lined, linedCompleted, drawPoint);
             
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
@@ -221,7 +240,7 @@ namespace Magician
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
         public Multi Wielding(Multi outer)
         {
-            Multi innerCopy = Copy();
+            Multi innerCopy = (Multi)Copy();
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
@@ -283,11 +302,10 @@ namespace Magician
 
         public Multi Scaled(double factor)
         {
-            Multi copy = Copy();
+            Multi copy = (Multi)Copy();
             copy.Scale(factor);
             return copy;
         }
-        ////
 
         public Multi Invisible()
         {
@@ -349,7 +367,7 @@ namespace Magician
                 ps.Add(new Point(x, y, col));
             }
 
-            return new Multi(xOffset, yOffset, col, true, true, ps.ToArray());;
+            return new Multi(xOffset, yOffset, col, true, true, false, ps.ToArray());;
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
@@ -426,6 +444,11 @@ namespace Magician
                 case "COL3+":
                     o = m.IncrAlpha;
                     break;
+
+                /*
+                case "NONE":
+                    o = null;
+                    break;*/
                 
                 default:
                     Console.WriteLine($"ERROR: Unknown driver string {s}");

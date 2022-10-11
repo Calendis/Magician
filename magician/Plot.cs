@@ -13,7 +13,7 @@ namespace Magician
         private double dx;
         
         // Create a plot with a defined position, driver, bounds, resolution, and colour
-        public Plot(double x, double y, Driver d, double start, double end, double dx, Color c) : base(x, y, c, true, false)
+        public Plot(double x, double y, Driver d, double start, double end, double dx, Color c) : base(x, y, c, true, false, false)
         {
             //pos[0] = x;
             //pos[1] = y;
@@ -60,7 +60,7 @@ namespace Magician
                 Point[] ps = interpolate(x);
                 points.Add(ps[1]);
             }
-            Multi m = new Multi(pos[0], pos[1], col, true, false, points.ToArray());
+            Multi m = new Multi(pos[0], pos[1], col, true, false, false, points.ToArray());
             return m;
         }
 

@@ -6,34 +6,24 @@ namespace Magician
     {
         static Point origin = new Point(0, 0, parent: null);
         
-        public Point(double x, double y, Drawable? parent=null)
+        public Point(double x, double y, Color c, Drawable? parent=null) : base(x, y, c, false, false, true)
         {
-            pos[0] = x;
-            pos[1] = y;
             this.parent = parent;
         }
-        public Point(double x, double y, Color c) : this(new double[] {x, y})
-        {
-            col = c;
-        }
+        public Point(double x, double y, Color c) : this(x, y, c, null) {}
 
-        public Point(double[] pos) : this(pos[0], pos[1]) {}
+        public Point(double[] pos, Color c) : this(pos[0], pos[1], c) {}
+        public Point(double x, double y, Drawable? parent=null) : this(x, y, Globals.fgCol, parent:parent) {}
 
-        public double XAbsolute(double offset)
-        {
-            return pos[0] + offset;
-        }
-        public double YAbsolute(double offset)
-        {
-            return pos[1] + offset;
-        }
-
+        /*
         public new void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
+            Console.WriteLine("drawing point");
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, col.A);
             // TODO: try SDL_RenderDrawPointF. How does it differ?
             SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
         }
+        */
 
         public override string ToString()
         {
