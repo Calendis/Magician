@@ -12,7 +12,7 @@ namespace Magician
         Random r = new Random();
         int frames = 0;
         int driveDelay = 0;
-        double timeResolution = 0.1;
+        double timeResolution = 0.25;
         
         static void Main(string[] args)
         {
@@ -36,18 +36,25 @@ namespace Magician
             /*
                 What do we want to make?
             */
-            Quantity q = new Quantity(40);
+            Random r = new Random();
+            Multi m = new Multi(0, 0, Color.Green, false, false, false, new Point(0, 0))
+            .SubDriven(x => 0.001, "phase+");
+            Multi borderShape = Multi.RegularPolygon(0, 0, 6, 350);
+            
             mathObjs = new List<Drawable>()
             {
-                
-                new Plot(-100, 100, new Driver(x => q.Driven(x =>
+                m   
+                .Driven(x => 
                 {
-                    return 100*Math.Abs(Math.Sin(x[0]/10));
-                }).Evaluate()*Math.Sin(x[0]/10)), -200, 200, 1, Color.Blue.ToHSL())
-                .Driven(x => 100-x[0], "dx")
-                .Driven(x => -0.17, "y+")
-                .Driven(x => 0.01 + Math.Sin(x[0]/10), "x+")
-                .Driven(x => x[0], "col0"),
+                    int i = r.Next(borderShape.Count);
+                    Point toPoint = borderShape.Constituents[i].GetPoint();
+                    m.Add(m.Constituents[m.Count-1].Copy().Towards(toPoint, 0.66667));
+                    
+                    // This return is useless!
+                    // TODO: make drivers more flexible so that I can avoid this
+                    return 0;
+                })
+                ,
             };
 
 
@@ -107,11 +114,10 @@ namespace Magician
             {
                 SDL_Surface* surf = (SDL_Surface*)surface;
                 SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
-                SDL_SaveBMP(surface, $"saved/{frames}.png");
+                SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
                 SDL_FreeSurface(surface);
-            }
+            }            
             */
-
             frames++;
 
             // Display
