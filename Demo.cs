@@ -8,7 +8,7 @@ namespace Magician
         static IntPtr renderer;
 
         bool done = false;
-        List<Drawable> mathObjs = new List<Drawable>();
+        List<Drawable> mathObjs = new List<Drawa2ble>();
         Random r = new Random();
         int frames = 0;
         int driveDelay = 0;
@@ -90,6 +90,7 @@ namespace Magician
             }
 
             // SAVE FRAME TO IMAGE
+            /*
             IntPtr texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
             IntPtr target = SDL_GetRenderTarget(renderer);
     
@@ -109,7 +110,7 @@ namespace Magician
                 SDL_SaveBMP(surface, $"saved/{frames}.png");
                 SDL_FreeSurface(surface);
             }
-
+            */
 
             frames++;
 
