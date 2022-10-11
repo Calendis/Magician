@@ -4,50 +4,40 @@ namespace Magician
 {
     public class Point : Multi
     {
-        static Point origin = new Point(0, 0);
+        static Point origin = new Point(0, 0, parent: null);
         
-        public Point(double x, double y, bool phaseMag=false)
+        public Point(double x, double y, Drawable? parent=null)
         {
-            if (!phaseMag)
-            {
-                pos[0] = x;
-                pos[1] = y;
-            }
-            else
-            {
-                double phase = x;
-                double mag = y;
-                pos[0] = Math.Cos(phase) * mag;
-                pos[1] = Math.Sin(phase) * mag;
-            }
-            
+            pos[0] = x;
+            pos[1] = y;
+            this.parent = parent;
         }
         public Point(double x, double y, Color c) : this(new double[] {x, y})
         {
             col = c;
         }
 
-        public Point(double[] pos)
+        public Point(double[] pos) : this(pos[0], pos[1]) {}
+
+        public double XAbsolute(double offset)
         {
-            this.pos[0] = pos[0];
-            this.pos[1] = pos[1];
+            return pos[0] + offset;
+        }
+        public double YAbsolute(double offset)
+        {
+            return pos[1] + offset;
         }
 
-        public new Point Copy()
-        {
-            return new Point(pos[0], pos[1]);
-        }
-
-        public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
+        public new void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             SDL_SetRenderDrawColor(renderer, col.R, col.G, col.B, col.A);
             // TODO: try SDL_RenderDrawPointF. How does it differ?
-            SDL_RenderDrawPoint(renderer, (int)XCartesian(xOffset), (int)YCartesian(yOffset));
+            SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
         }
 
         public override string ToString()
         {
-            return $"Point({XCartesian(0)}, {YCartesian(0)})";
+            return $"Point({((Drawable)this).XCartesian(0)}, {((Drawable)this).YCartesian(0)})";
         }
 
         public static Point Origin
@@ -55,8 +45,8 @@ namespace Magician
             get => origin;
             set
             {
-                origin.SetX(value.XAbsolute(0));
-                origin.SetY(value.YAbsolute(0));
+                ((Drawable)origin).SetX(value.XAbsolute(0));
+                ((Drawable)origin).SetY(value.YAbsolute(0));
             }
         }
     }
