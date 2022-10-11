@@ -5,31 +5,36 @@
 
 namespace Magician
 {
-    public class Plot : IMap
+    public class Plot : Multi, IMap, Drawable, Driveable
     {
         protected Driver toPlot;
         private double start;
         private double end;
-        
-
         private double dx;
-        private Color col;
-        private double[] pos = new double[2];
         
         // Create a plot with a defined position, driver, bounds, resolution, and colour
-        public Plot(double x, double y, Driver d, double start, double end, double dx, Color c)
+        public Plot(double x, double y, Driver d, double start, double end, double dx, Color c) : base(x, y, c, true, false)
         {
-            pos[0] = x;
-            pos[1] = y;
+            //pos[0] = x;
+            //pos[1] = y;
             toPlot = d;
             this.start = start;
             this.end = end;
             this.dx = dx;
-            this.col = c;
+            //this.col = c;
+        }
+
+        public void SetDx(double x)
+        {
+            dx = x;
+        }
+        public void IncrDx(double x)
+        {
+            dx += x;
         }
 
         // Get the value of a plot driver given inputs
-        public double Evaluate(params double[] x)
+        public new double Evaluate(params double[] x)
         {
             return toPlot.Evaluate(x);
         }
@@ -55,9 +60,43 @@ namespace Magician
                 Point[] ps = interpolate(x);
                 points.Add(ps[1]);
             }
-            Multi m = new Multi(points.ToArray());
-            m.Lined = true;
+            Multi m = new Multi(pos[0], pos[1], col, true, false, points.ToArray());
             return m;
+        }
+
+        public new void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
+        {
+            Interpolation().Draw(ref renderer, xOffset, yOffset);
+        }
+
+        public new Plot Driven(Func<double[], double> df, string s)
+        {
+            Driver d = new Driver(df);
+            Action<double> output = Plot.StringMap(this, s);
+            d.SetOutput(output);
+            d.ActionString = s;
+            drivers.Add(d);
+            return this;
+        }
+
+        public static Action<double> StringMap(Plot p, String s)
+        {
+            Action<double> o;
+            switch (s)
+            {
+                case "dx":
+                    o = p.SetDx;
+                    break;
+                
+                case "dx+":
+                    o = p.IncrDx;
+                    break;
+                default:
+                    o = Multi.StringMap(p, s);
+                    break;
+            }
+
+            return o;
         }
     }
 }
