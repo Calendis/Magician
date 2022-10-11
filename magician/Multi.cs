@@ -6,10 +6,11 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    public class Multi : Single
+    public class Multi : Quantity, Drawable, Driveable
     {
-        protected List<Multi> constituents;
-        public List<Multi> Constituents
+        protected double[] pos = new double[]{0,0};
+        protected List<Drawable> constituents;
+        public List<Drawable> Constituents
         {
             get => constituents;
         }
@@ -23,9 +24,9 @@ namespace Magician
         protected Color col;
 
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs)
+        public Multi(params Multi[] cs) : base(0)
         {
-            constituents = new List<Multi> {};
+            constituents = new List<Drawable> {};
             constituents.AddRange(cs);
             foreach (Multi c in constituents)
             {
@@ -37,104 +38,52 @@ namespace Magician
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, bool lined, bool linedCompleted, params Multi[] cs) : this(cs)
         {
-            SetX(x);
-            SetY(y);
+            //SetX(x);
+            //SetY(y);
+            pos[0] = x;
+            pos[1] = y;
             this.col = col;
             this.lined = lined;
             this.linedCompleted = linedCompleted;
         }
 
-        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, false, false, cs) {}
+        public Multi(double x, double y, Color col, params Multi[] cs) : this(x, y, col, true, false, cs) {}
+
+        public double XAbsolute(double offset)
+        {
+            return pos[0] + offset;
+        }
+        public double YAbsolute(double offset)
+        {
+            return pos[1] + offset;
+        }
+
         public Color Col
         {
             get => col;
             set => col = value;
         }
 
-        // These setters are sensitive to whether or not the colour is HSL or RGB
-        // I write setters here instead of using properties, because I may want to pass these into a Driver
-        public void SetCol0(double d)
+        public void SetX(double x)
         {
-            if (!Col.IsHSL)
+            double parentOffset = 0;
+            
+            if (Parent() is not null)
             {
-                Col.R = (byte)d;
+                parentOffset = Parent().XAbsolute(0);
             }
-            else
-            {
-                col = new Color(0, col.Saturation, col.Lightness, col.A, (float)d, disambiguationBool: true);
-            }
+            pos[0] = x - parentOffset;
         }
-        public void IncrCol0(double d)
+        public void SetY(double x)
         {
-            if (!Col.IsHSL)
+            double parentOffset = 0;
+            if (Parent() is not null)
             {
-                Col.R += (byte)d;
+                parentOffset = Parent().YAbsolute(0);
             }
-            else
-            {
-                // TODO: saturation and lightness getters
-                Console.WriteLine("HEY LAZY: \n    IMPLEMENT SATURATION AND LIGHTNESS GETTERS!!!");
-                Console.WriteLine("    HSL SUPPORT IS NOT FINISHED UNTIL YOU DO THIS!!!");
-                
-                col = new Color(col.Hue, col.Saturation, col.Lightness, col.A,
-                (float)d + col.FloatingPart0, col.FloatingPart1, col.FloatingPart2, disambiguationBool: true);
-            }
+            pos[1] = x - parentOffset;
         }
 
-        public void SetCol1(double d)
-        {
-            if (!Col.IsHSL)
-            {
-                Col.G = (byte)d;
-            }
-            else
-            {
-                col.HexCol = Color.HSLToRGBHex(col.Hue, (float)d, col.Lightness, col.A);
-            }
-        }
-        public void IncrCol1(double d)
-        {
-            if (!col.IsHSL)
-            {
-                Col.G += (byte)d;
-            }
-            else
-            {
-                // TODO: incrcol1
-            }
-        }
-
-        public void SetCol2(double d)
-        {
-            if (!col.IsHSL)
-            {
-                col.B = (byte)d;
-            }
-            else
-            {
-                col.HexCol = Color.HSLToRGBHex(col.Hue, col.Saturation, (float)d, col.A);
-            }
-        }
-        public void IncrCol2(double d)
-        {
-            if (!col.IsHSL)
-            {
-                Col.B += (byte)d;
-            }
-            else
-            {
-                // Todo incrcol2
-            }
-        }
-
-        public void SetAlpha(double d)
-        {
-            col.A = (byte)d;
-        }
-        public void IncrAlpha(double d)
-        {
-            Col.A += (byte)d;
-        }
         public int Count
         {
             get => constituents.Count;
@@ -150,9 +99,8 @@ namespace Magician
             set => lined = value;
         }
 
-        public override void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
+        public void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
-            
             byte r = col.R;
             byte g = col.G;
             byte b = col.B;
@@ -163,25 +111,26 @@ namespace Magician
                 // If lined, draw lines between the constituents as if they were vertices in a polygon
                 if (lined)
                 {
-                    Point p0 = constituents[i].GetPoint();
-                    Point p1 = constituents[i+1].GetPoint();
+                    Drawable p0 = constituents[i].GetPoint();
+                    Drawable p1 = constituents[i+1].GetPoint();
                     
                     SDL_SetRenderDrawColor(renderer, r, g, b, a);
                     
                     SDL_RenderDrawLine(renderer,
                     (int)p0.XCartesian(pos[0]+xOffset), (int)p0.YCartesian(pos[1]+yOffset),
                     (int)p1.XCartesian(pos[0]+xOffset), (int)p1.YCartesian(pos[1]+yOffset));
+
                 }
                 
                 // Recursively draw the constituents
-                Multi c = constituents[i];
-                c.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
+                Drawable d = constituents[i];
+                d.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
             }
             
             if (linedCompleted && constituents.Count > 0)
             {
-                Point pLast = constituents[constituents.Count-1].GetPoint();
-                Point pFirst = constituents[0].GetPoint();
+                Drawable pLast = constituents[constituents.Count-1].GetPoint();
+                Drawable pFirst = constituents[0].GetPoint();
                 
                 SDL_SetRenderDrawColor(renderer, r, g, b, a);                
                 SDL_RenderDrawLine(renderer,
@@ -190,13 +139,14 @@ namespace Magician
             }
 
             
-            foreach (Multi c in constituents)
+            foreach (Drawable d in constituents)
             {
                 // Make sure constituents are drawn relative to parent Multi
-                c.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
+                d.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
             }
         }
 
+        /**/
         public new void Drive(params double[] x)
         {
             foreach (Driver d in drivers)
@@ -221,81 +171,31 @@ namespace Magician
         {
             for (int i = 0; i < ds.Length; i++)
             {
-                constituents[i].AddDriver(ds[i]);
+                ((Multi)constituents[i]).AddDriver(ds[i]);
             }
         }
 
         public Multi Driven(Func<double[], double> df, string s)
         {
-            Multi copy = Copy();
-            Action<double> output = Driver.StringMap(copy, s);
+            //Multi copy = Copy();
+            Action<double> output = StringMap(this, s);
             Driver d = new Driver(df, output);
             d.ActionString = s;
-            copy.AddDriver(d);
-            return copy;
+            AddDriver(d);
+            return this;
         }
 
         public Multi SubDriven(Func<double[], double> df, string s)
         {
-            Multi copy = Copy();
-            foreach(Multi c in copy.constituents)
+            //Multi copy = Copy();
+            foreach(Multi c in /*copy.*/constituents)
             {
-                Action<double> output = Driver.StringMap(c, s);
+                Action<double> output = StringMap(c, s);
                 Driver d = new Driver(df, output);
                 d.ActionString = s;
                 c.AddDriver(d);
             }
-            return copy;
-        }
-
-        // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
-        public Multi Wielding(Multi outer)
-        {
-            Multi innerCopy = Copy();
-            for (int i = 0; i < Count; i++)
-            {
-                // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy();
-                outerCopy.SetX(constituents[i].XAbsolute(0));
-                outerCopy.SetY(constituents[i].YAbsolute(0));
-                
-                // Set that copy as the respective constituent of the Multi
-                innerCopy.constituents[i] = outerCopy;
-
-                // Copy over drivers from each constituent of the Multi to the outer copy
-                for (int j = 0; j < constituents[i].drivers.Count; j++)
-                {
-                    Driver originalSubDriver = constituents[i].drivers[j];
-                    innerCopy.constituents[i].AddDriver(originalSubDriver.CopiedTo(innerCopy.constituents[i]));
-                }
-            }
-
-            return innerCopy;
-        }
-        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
-        {
-            return Wielding(F(outer));
-        }
-        
-        // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
-        public Multi Surrounding(Multi inner)
-        {
-            Multi thisSurroundingInner = inner.Wielding(this);
-            thisSurroundingInner.SetX(XAbsolute(parent.XAbsolute(0)));
-            thisSurroundingInner.SetY(YAbsolute(parent.YAbsolute(0)));
-            return thisSurroundingInner.Wielding(this);
-        }
-        public Multi Surrounding (Multi inner, Func<Multi, Multi> F)
-        {
-            return Surrounding(F(inner));
-        }
-        public Multi Recursed()
-        {
-            return Wielding(this);
-        }
-        public Multi Recursed(Func<Multi, Multi> F)
-        {
-            return Wielding(F.Invoke(this));
+            return this;
         }
 
         public Multi Copy()
@@ -309,29 +209,85 @@ namespace Magician
             }
 
             // Copy the constituents
-            Multi[] cs = new Multi[Count];
+            Drawable[] cs = new Drawable[Count];
             for (int i = 0; i < Count; i++)
             {
-                cs[i] = constituents[i].Copy();
+                cs[i] = ((Multi)constituents[i]).Copy();
             }
             copy.constituents.AddRange(cs);
             return copy;
         }
 
-        public Multi Scale(double factor)
+        // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
+        public Multi Wielding(Multi outer)
         {
-            foreach (Multi c in constituents)
+            Multi innerCopy = Copy();
+            for (int i = 0; i < Count; i++)
+            {
+                // Make a copy of the outer Multi and position it against the inner Multi
+                Drawable outerCopy = outer.Copy();
+                outerCopy.SetX(constituents[i].XAbsolute(0));
+                outerCopy.SetY(constituents[i].YAbsolute(0));
+                
+                // Set that copy as the respective constituent of the Multi
+                innerCopy.constituents[i] = outerCopy;
+
+                // Copy over drivers from each constituent of the Multi to the outer copy
+                for (int j = 0; j < ((Multi)constituents[i]).drivers.Count; j++)
+                {
+                    Multi c = (Multi)constituents[i];
+                    Driver originalSubDriver = c.drivers[j];
+                    Multi innerCopyC = (Multi)((Multi)innerCopy).constituents[i];
+                    innerCopyC.AddDriver(originalSubDriver.CopiedTo(innerCopyC));
+                }
+            }
+
+            return innerCopy;
+        }
+        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
+        {
+            return Wielding(F(outer));
+        }
+
+        
+        // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
+        public Multi Surrounding(Multi inner)
+        {
+            Drawable thisSurroundingInner = inner.Wielding(this);
+            thisSurroundingInner.SetX(XAbsolute(0));//parent.XAbsolute(0)));
+            thisSurroundingInner.SetY(YAbsolute(0));//(parent.YAbsolute(0)));
+            return ((Multi)thisSurroundingInner).Wielding(this);
+        }
+        public Multi Surrounding (Multi inner, Func<Multi, Multi> F)
+        {
+            return Surrounding(F(inner));
+        }
+        
+        public Multi Recursed()
+        {
+            return Wielding(this);
+        }
+        public Multi Recursed(Func<Multi, Multi> F)
+        {
+            return Wielding(F.Invoke(this));
+        }
+
+        public void Scale(double factor)
+        {
+            foreach (Drawable c in constituents)
             {
                 c.SetMagnitude(c.Magnitude * factor);
+                c.Scale(factor);
             }
-            return this;
         }
 
         public Multi Scaled(double factor)
         {
             Multi copy = Copy();
-            return copy.Scale(factor);
+            copy.Scale(factor);
+            return copy;
         }
+        ////
 
         public Multi Invisible()
         {
@@ -342,6 +298,11 @@ namespace Magician
 
         // A Multi keeps a reference to its "parent", which is a Multi that has this Multi as
         // a constituent
+        public new Drawable Parent()
+        {
+            return parent;
+        }
+        
         public void SetParent(Multi m)
         {
             parent = m;
@@ -350,10 +311,26 @@ namespace Magician
         public override string ToString()
         {
             string s = "";
-            foreach (Multi c in constituents)
+            switch (Count)
             {
-                s += c.GetType() + ": " + c.ToString() + "\n  ";
+                case(0):
+                    s += "Empty Multi";
+                    break;
+                case(1):
+                    s += "Lonely Multi";
+                    break;
+                case(2):
+                    s += $"Point Multi ({constituents[0]}, {constituents[1]})";
+                    break;
+                default:
+                    s += $"{Count}-Multi (";
+                    foreach (Multi m in constituents)
+                    {
+                        s += m.ToString() + "), ";
+                    }
+                    break;
             }
+            s += $" at {((Drawable)this).XCartesian(0)}, {((Drawable)this).YCartesian(0)}";
             return s;
         }
 
@@ -383,9 +360,78 @@ namespace Magician
             return RegularPolygon(0, 0, sides, magnitude);
         }
 
-        public static Action<double> SetCol0(Multi m)
+        public static Action<double> StringMap(Drawable m, string s)
         {
-            return m.SetCol0;
+            Action<double> o;
+            s = s.ToUpper();
+            switch(s)
+            {
+                case "X":
+                    o = m.SetX;
+                    break;
+                case "X+":
+                    o = m.IncrX;
+                    break;
+                
+                case "Y":
+                    o = m.SetY;
+                    break;
+                case "Y+":
+                    o = m.IncrY;
+                    break;
+
+                case "PHASE":
+                    o = m.SetPhase;
+                    break;
+                case "PHASE+":
+                    o = m.IncrPhase;
+                    break;
+
+                case "MAGNITUDE":
+                    o = m.SetMagnitude;
+                    break;
+                
+                case "MAGNITUDE+":
+                    o = m.IncrMagnitude;
+                    break;
+
+                case "COL0":
+                    o = m.SetCol0;
+                    break;
+                
+                case "COL1":
+                    o = m.SetCol1;
+                    break;
+
+                case "COL2":
+                    o = m.SetCol2;
+                    break;
+
+                case "COL3":
+                    o = m.SetAlpha;
+                    break;
+
+                case "COL0+":
+                    o = m.IncrCol0;
+                    break;
+                
+                case "COL1+":
+                    o = m.IncrCol1;
+                    break;
+
+                case "COL2+":
+                    o = m.IncrCol2;
+                    break;
+
+                case "COL3+":
+                    o = m.IncrAlpha;
+                    break;
+                
+                default:
+                    Console.WriteLine($"ERROR: Unknown driver string {s}");
+                    throw new NotImplementedException();
+            }
+            return o;
         }
     }
 }
