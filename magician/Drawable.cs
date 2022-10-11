@@ -7,6 +7,7 @@ namespace Magician
         public abstract Drawable Parent();
         public abstract void SetX(double offset);
         public abstract void SetY(double offset);
+        public abstract Drawable Copy();
         public void IncrX(double x)
         {
             SetX(x + XAbsolute(0));
@@ -75,6 +76,14 @@ namespace Magician
         }
 
         public Color Col {get; set;}
+
+        // Moves the Drawable towards a point by a certain amount
+        public Drawable Towards(Drawable d, double howMuch)
+        {
+            IncrX((-XAbsolute(0) + d.XAbsolute(0)) * howMuch);
+            IncrY((-YAbsolute(0) + d.YAbsolute(0)) * howMuch);
+            return this;
+        }
 
         // These setters are sensitive to whether or not the colour is HSL or RGB
         // I write setters here instead of using properties, because I may want to pass these into a Driver
