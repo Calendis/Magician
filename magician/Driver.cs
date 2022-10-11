@@ -57,7 +57,7 @@ namespace Magician
             }
             else
             {
-                Console.WriteLine($"ERROR: null output on a:({actionString}) driver");
+                Evaluate(x);
             }
         }
 
