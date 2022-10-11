@@ -8,7 +8,7 @@ namespace Magician
         static IntPtr renderer;
 
         bool done = false;
-        List<Drawable> mathObjs = new List<Drawa2ble>();
+        List<Drawable> mathObjs = new List<Drawable>();
         Random r = new Random();
         int frames = 0;
         int driveDelay = 0;
