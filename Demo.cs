@@ -11,6 +11,8 @@ namespace Magician
         List<Drawable> mathObjs = new List<Drawable>();
         Random r = new Random();
         int frames = 0;
+        int stopFrame = -1;
+        bool saveFrames = false;
         int driveDelay = 0;
         double timeResolution = 0.25;
         
@@ -36,29 +38,15 @@ namespace Magician
             /*
                 What do we want to make?
             */
-            Random r = new Random();
-            Multi m = new Multi(0, 0, Color.Green, false, false, false, new Point(0, 0))
-            .SubDriven(x => 0.001, "phase+");
-            Multi borderShape = Multi.RegularPolygon(0, 0, 6, 350);
-            
+            //Multi m = new Plot(-200, 0, new Driver(x => 0), 0, 400, 1, Color.Green.ToHSL()).Interpolation();
+
             mathObjs = new List<Drawable>()
             {
-                m   
-                .Driven(x => 
-                {
-                    int i = r.Next(borderShape.Count);
-                    Point toPoint = borderShape.Constituents[i].GetPoint();
-                    m.Add(m.Constituents[m.Count-1].Copy().Towards(toPoint, 0.66667));
-                    
-                    // This return is useless!
-                    // TODO: make drivers more flexible so that I can avoid this
-                    return 0;
-                })
-                ,
+                Multi.RegularPolygon(0, 0, 5, 100)
+                .Where(c => ((Multi)c)
+                    .Driven(y => c.Phase + 0.02, "phase")
+                )
             };
-
-
-            //multis.Add(m);
             
             /*
                 Main gameloop
@@ -67,7 +55,10 @@ namespace Magician
             {
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
-                Render();
+                if (frames != stopFrame)
+                {
+                    Render();
+                }
                 if (frames > driveDelay)
                 {
                     Drive();
@@ -97,27 +88,29 @@ namespace Magician
             }
 
             // SAVE FRAME TO IMAGE
-            /*
-            IntPtr texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
-            IntPtr target = SDL_GetRenderTarget(renderer);
-    
-            int width, height;
-            SDL_SetRenderTarget(renderer, texture);
-            SDL_QueryTexture(texture, out _, out _, out width, out height);
-            IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
-            SDL_Rect r = new SDL_Rect();
-            r.x = 0;
-            r.y = 0;
-            r.w = Globals.winWidth;
-            r.h = Globals.winHeight;
-            unsafe
+            if (saveFrames)
             {
-                SDL_Surface* surf = (SDL_Surface*)surface;
-                SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
-                SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
-                SDL_FreeSurface(surface);
-            }            
-            */
+                IntPtr texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
+                IntPtr target = SDL_GetRenderTarget(renderer);
+        
+                int width, height;
+                SDL_SetRenderTarget(renderer, texture);
+                SDL_QueryTexture(texture, out _, out _, out width, out height);
+                IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
+                SDL_Rect r = new SDL_Rect();
+                r.x = 0;
+                r.y = 0;
+                r.w = Globals.winWidth;
+                r.h = Globals.winHeight;
+                unsafe
+                {
+                    SDL_Surface* surf = (SDL_Surface*)surface;
+                    SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
+                    SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
+                    SDL_FreeSurface(surface);
+                }     
+            }       
+            
             frames++;
 
             // Display
