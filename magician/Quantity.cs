@@ -8,7 +8,6 @@ namespace Magician
     public class Quantity : IMap, Driveable
     {
         protected List<Driver> drivers = new List<Driver>();
-        protected Drawable parent = Point.Origin;
 
         // Global container for created quantites
         // This can be used to Drive the quantities
@@ -20,11 +19,6 @@ namespace Magician
             this.q = q;
         }
 
-        public Drawable Parent()
-        {
-            return parent;
-        }
-
         public void Set(double x)
         {
             this.q = x;
@@ -32,7 +26,8 @@ namespace Magician
         // Converts to double
         public double Evaluate(params double[] xs)
         {
-            return q;
+            double offset = xs.Length > 0 ? xs[0] : 0;
+            return q + offset;
         }
 
         // Operators
