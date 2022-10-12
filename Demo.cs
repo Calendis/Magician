@@ -41,6 +41,10 @@ namespace Magician
             Multi m = new Plot(-200, 0, new Driver(x => 100*Math.Cos(x[0]/10)), 0, 200, 1, Color.Green.ToHSL()).Interpolation();
             //m.Lined = false;
             Quantity q = new Quantity(1).Driven(x => x[0]);
+            Quantity q2 = new Quantity(0).Driven(x => Math.Abs(Math.Sin(x[0])));
+
+            Quantity.ExtantQuantites.Add(q);
+            Quantity.ExtantQuantites.Add(q2);
             Random r = new Random();
 
             mathObjs = new List<Drawable>() {};
@@ -69,11 +73,18 @@ namespace Magician
                 );*/
                 mathObjs.Add(
                     new Plot(0, 0, new Driver(x => x[0]*x[0]*0.0625), -200, 200, 1, Color.Blue).Interpolation()
+                    //.SubDriven(x => 0.02, "phase+")
+                    
                     .Where(c => ((Multi)c)
                         //.Eject()
                         .Driven(x => -q.Evaluate() + c.YAbsolute(0) + 20*Math.Sin(c.XAbsolute(0)/10+q.Evaluate()), "y")
                     )
-                    .Wielding(Multi.RegularPolygon(0, 0, Color.Blue, 4, 20))
+                    .Wielding(Multi.RegularPolygon(0, 0, Color.Blue, 4, 20)
+                        .Where(c => ((Multi)c)
+                            .Driven(x => q.Evaluate()*0.1 + c.Phase, "phase")
+                            )
+                        )
+                    .Filter(x => Math.Cos(Math.PI*x), q2.Evaluate())
                 );
                 
                 //SDL_WaitEvent(out SDL_Event events);
