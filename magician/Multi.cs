@@ -238,6 +238,16 @@ namespace Magician
                 AddDriver(d);
             }
         }
+
+        public Multi Eject()
+        {
+            drivers.Clear();
+            foreach (Multi m in constituents)
+            {
+                m.Eject();
+            }
+            return this;
+        }
         
         public void AddSubDrivers(Driver[] ds)
         {
@@ -389,6 +399,23 @@ namespace Magician
         public void SetParent(Multi m)
         {
             parent = m;
+        }
+
+        public Multi Prev()
+        {
+            Multi p = (Multi)parent;
+            int i = p.constituents.IndexOf(this);
+            if (i == -1)
+            {
+                throw new InvalidDataException($"{this} not found in parent {parent}");
+            }
+            Console.WriteLine($"Current: {this} is {p.constituents.IndexOf(this)} / {Count} in {p}");
+            return (Multi)p.constituents[p.constituents.IndexOf(this) - 1];
+        }
+        public Multi Next()
+        {
+            Multi p = (Multi)parent;
+            return (Multi)p.constituents[p.constituents.IndexOf(this) + 1];
         }
 
         public override string ToString()
