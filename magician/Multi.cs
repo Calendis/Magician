@@ -178,8 +178,12 @@ namespace Magician
                 {
                     Drawable p0 = constituents[i].GetPoint();
                     Drawable p1 = constituents[i+1].GetPoint();
+                    byte subr = p0.Col.R;
+                    byte subg = p0.Col.G;
+                    byte subb = p0.Col.B;
+                    byte suba = p0.Col.A;
                     
-                    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+                    SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);
                     
                     SDL_RenderDrawLineF(renderer,
                     (float)p0.XCartesian(x.Evaluate()+xOffset), (float)p0.YCartesian(y.Evaluate()+yOffset),
@@ -281,6 +285,10 @@ namespace Magician
 
         public Multi SubDriven(Func<double[], double> df, string s)
         {
+            if (Count == 0)
+            {
+                Console.WriteLine("WARNING: subdriven had no effect!");
+            }
             //Multi copy = Copy();
             foreach(Multi c in /*copy.*/constituents)
             {

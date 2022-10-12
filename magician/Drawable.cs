@@ -72,7 +72,7 @@ namespace Magician
         public abstract double YAbsolute(double offset);
         public Point GetPoint()
         {
-            return new Point(XAbsolute(0), YAbsolute(0));
+            return new Point(XAbsolute(0), YAbsolute(0), Col);
         }
 
         public Color Col {get; set;}

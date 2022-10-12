@@ -38,7 +38,7 @@ namespace Magician
             /*
                 What do we want to make?
             */
-            Multi m = new Plot(-200, 0, new Driver(x => 100*Math.Cos(x[0]/10)), 0, 200, 1, Color.Green.ToHSL()).Interpolation();
+            //Multi m = new Plot(-200, 0, new Driver(x => 100*Math.Cos(x[0]/10)), 0, 200, 1, Color.Green.ToHSL()).Interpolation();
             //m.Lined = false;
             Quantity q = new Quantity(1).Driven(x => x[0]);
             Quantity q2 = new Quantity(0).Driven(x => Math.Abs(Math.Sin(x[0])));
@@ -55,36 +55,13 @@ namespace Magician
             while (!done)
             {
                 mathObjs.Clear();
-                /*
-                mathObjs.Add(m
-                .Where(dr => ((Multi)dr)
-                    .Eject()
-                    .Driven(x => 
-                    {
-                        return dr.XAbsolute(0) / 200;
-                    }, "y+")
-
-                    .Driven(x => 
-                    {
-                        return 10*Math.Sin(x[0]);
-                    }, "x+")
-                    //.Driven(x => q.Evaluate(), "col0")
-                    )
-                );*/
                 mathObjs.Add(
-                    new Plot(0, 0, new Driver(x => x[0]*x[0]*0.0625), -200, 200, 1, Color.Blue).Interpolation()
-                    //.SubDriven(x => 0.02, "phase+")
-                    
-                    .Where(c => ((Multi)c)
-                        //.Eject()
-                        .Driven(x => -q.Evaluate() + c.YAbsolute(0) + 20*Math.Sin(c.XAbsolute(0)/10+q.Evaluate()), "y")
+                    Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 60, 200)
+                    .Where(
+                        c => ((Multi)c)
+                        .Driven(x => 80*c.Phase + 30*Math.Sin(x[0] + c.Phase*q.Evaluate()*0.08), "magnitude")
+                        .Driven(x => 10*c.Phase, "col0")
                     )
-                    .Wielding(Multi.RegularPolygon(0, 0, Color.Blue, 4, 20)
-                        .Where(c => ((Multi)c)
-                            .Driven(x => q.Evaluate()*0.1 + c.Phase, "phase")
-                            )
-                        )
-                    .Filter(x => Math.Cos(Math.PI*x), q2.Evaluate())
                 );
                 
                 //SDL_WaitEvent(out SDL_Event events);
