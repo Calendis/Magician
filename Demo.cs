@@ -35,29 +35,45 @@ namespace Magician
 
         void GameLoop()
         {
-            /*
-                What do we want to make?
-            */
             mathObjs = new List<Drawable>() {};
+            /*
+            *  Pre-loop
+            *  -----------------------------------------------------------------
+            *  Much is possible in the pre-loop, since Drivers will still work
+            *  Use the loop when you need chaotic, state-driven behaviour
+            */
             Quantity q = new Quantity(1).Driven(x => x[0]);
             Quantity.ExtantQuantites.Add(q);
 
-            
+            mathObjs.Add(
+              Multi.RegularPolygon(1, 1, 5, 120)
+              //.Driven(x => Math.Sin(x[0]/10), "y")
+              .SubDriven(x => 0.02, "phase+")
+            );
+
             /*
-                Main gameloop
+            *  Loop
+            *  ----------------------------------------------------------------
+            *  The loop automatically drives and renders the math objects.
+            *  When you want to modulate arguments in a constructor, you will
+            *  need the loop.
             */
             while (!done)
-            {
+            {   
+                
+                /*
                 mathObjs.Clear();
                 mathObjs.Add(
                     Multi.RegularPolygon(0, 100, Color.Red.ToHSL(), 3 + (int)(60*Math.Cos(q.Evaluate()/40)*Math.Cos(q.Evaluate()/40)), 180)
                     .Where(
                         c => ((Multi)c)
-                        .Driven(x => 80*c.Phase + 30*Math.Sin(x[0] + c.Phase*q.Evaluate()*0.08), "magnitude")
-                        .Driven(x => 50*c.Phase, "col0")
+                        .Driven(x => 80*c.Phase.Evaluate() + 30*Math.Sin(x[0] + c.Phase.Evaluate()*q.Evaluate()*0.08), "magnitude")
+                        .Driven(x => 50*c.Phase.Evaluate(), "col0")
                     )
                     .LinedCompleted(false)
                 );
+                */
+                
                 
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
