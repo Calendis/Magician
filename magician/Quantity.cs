@@ -18,6 +18,7 @@ namespace Magician
         public Quantity(double q)
         {
             this.q = q;
+            // TODO: FIX THIS MEMORY LEAK!!
             ExtantQuantites.Add(this);
         }
 
