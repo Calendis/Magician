@@ -54,18 +54,18 @@ namespace Magician
         // Drawable render of a plot
         public Multi Interpolation()
         {
-            //List<Point> points = new List<Point>();
+            List<Point> points = new List<Point>();
             for (double x = start; x < end; x+=dx)
             {
-                //Point[] ps = interpolate(x);
-                //points.Add(ps[1]);
-                Drawable d = interpolate(x)[0];
-                d.Col = col;
-                constituents.Add(d);
+                Point[] ps = interpolate(x);
+                points.Add(ps[0]);
+                //Drawable d = interpolate(x)[0];
+                //d.Col = col;
+                //constituents.Add(d);
             }
-            //Multi m = new Multi(pos[0], pos[1], col, true, false, false, points.ToArray());
-            //return m;
-            return this;
+            Multi m = new Multi(X.Evaluate(), Y.Evaluate(), col, true, false, false, points.ToArray());
+            return m;
+            //return this;
             // TODO: test this implementation to see if it actually works
         }
 
