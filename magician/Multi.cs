@@ -149,9 +149,9 @@ namespace Magician
             return this;
         }
 
-        public Multi Filter(Func<double, double> f)
+        public Multi Filter(Func<double, double> f, double thresh=0)
         {
-            constituents = Constituents(f).ToList();
+            constituents = Constituents(f, thresh).ToList();
             return this;
         }
 
