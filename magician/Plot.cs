@@ -40,15 +40,13 @@ namespace Magician
         }
         
         // Linear interpolation of two values along a plot driver
-        private Point[] interpolate(double x0, double x1)
+        private Multi[] interpolate(double x0, double x1)
         {            
-            Point p0 = new Point(x0, Evaluate(x0));
-            Point p1 = new Point(x1, Evaluate(x1));
-            p0.Col = col;
-            p1.Col = col;
-            return new Point[] {p0, p1};
+            Multi p0 = Multi.Point(x0, Evaluate(x0), col);
+            Multi p1 = Multi.Point(x1, Evaluate(x1), col);
+            return new Multi[] {p0, p1};
         }
-        private Point[] interpolate(double x)
+        private Multi[] interpolate(double x)
         {
             return interpolate(x, x + dx);
         }
@@ -56,21 +54,17 @@ namespace Magician
         // Drawable render of a plot
         public Multi Interpolation()
         {
-            List<Point> points = new List<Point>();
+            List<Multi> points = new List<Multi>();
             for (double x = start; x < end; x+=dx)
             {
-                Point[] ps = interpolate(x);
+                Multi[] ps = interpolate(x);
                 ps[0].Col = col;
                 ps[1].Col = col;
                 points.Add(ps[0]);
-                //Drawable d = interpolate(x)[0];
-                //d.Col = col;
-                //constituents.Add(d);
+
             }
             Multi m = new Multi(X.Evaluate(), Y.Evaluate(), col, true, false, false, points.ToArray());
             return m;
-            //return this;
-            // TODO: test this implementation to see if it actually works
         }
 
         public new void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
