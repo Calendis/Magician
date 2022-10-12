@@ -45,10 +45,18 @@ namespace Magician
             Quantity q = new Quantity(1).Driven(x => x[0]);
             Quantity.ExtantQuantites.Add(q);
 
+            Multi m = Multi.RegularPolygon(1, 1, 5, 120);
+            Multi m2 = m.Copy();
+            m2.Col = Color.Blue;
             mathObjs.Add(
-              Multi.RegularPolygon(1, 1, 5, 120)
+              m
               //.Driven(x => Math.Sin(x[0]/10), "y")
               .SubDriven(x => 0.02, "phase+")
+            );
+            mathObjs.Add(
+              m2
+              //.Driven(x => Math.Sin(x[0]/10), "y")
+              .SubDriven(x => -0.02, "phase+")
             );
 
             /*
