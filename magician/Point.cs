@@ -1,14 +1,22 @@
-using static SDL2.SDL;
-
+/*
+*  A Point is actually a Multi, so for Point-related operations, see Multi
+*/
 namespace Magician
 {
     public class Point : Multi
     {
-        static Point origin = new Point(0, 0, parent: null);
+        static Point origin = new Point(0, 0);
         
         public Point(double x, double y, Color c, Drawable? parent=null) : base(x, y, c, false, false, true)
         {
-            this.parent = parent;
+            if (parent is null)
+            {
+                this.parent = origin;
+            }
+            else
+            {
+                this.parent = parent;
+            }
         }
         public Point(double x, double y, Color c) : this(x, y, c, null) {}
 
