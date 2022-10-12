@@ -1,6 +1,5 @@
 /*
-*  A Multi represents a collection of one more more Multis, with some functionality inherited from Single
-*  ALL mathematical objects created in Magician are Multis, even simple objects like Points
+*  A Multi exists as a point (two quantities), and as a list of constituent Multis that exist relative to the parent
 */
 using static SDL2.SDL;
 
@@ -8,11 +7,50 @@ namespace Magician
 {
     public class Multi : Quantity, Drawable, Driveable
     {
-        protected double[] pos = new double[]{0,0};
-        protected List<Drawable> constituents;
-        public List<Drawable> Constituents
+        //protected double[] pos = new double[]{0,0};
+        protected Quantity x = new Quantity(0);
+        protected Quantity y = new Quantity(0);
+
+        public Drawable this[int key]
         {
-            get => constituents;
+            get => constituents[key];
+            set => constituents[key] = value;
+        }
+        public Quantity X
+        {
+            get => x;
+            set => x = value;
+        }
+        public Quantity Y
+        {
+            get => y;
+            set => y = value;
+        }
+        /*public Quantity Phase
+        {
+            get => 
+        }*/
+        protected List<Drawable> constituents;
+        public IEnumerable<Drawable> Constituents(Func<double, double> truth, double truthThreshold=0)
+        {
+            for (int i = 0; i < constituents.Count; i++)
+            {
+                if (truth.Invoke(i) > truthThreshold)
+                {
+                    yield return constituents[i];
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+        public IEnumerable<Drawable> Constituents()
+        {
+            for (int i = 0; i < constituents.Count; i++)
+                {
+                    yield return constituents[i];
+                }
         }
         // If true, a Multi will be drawn with its constituents connected by lines
         // This is useful for plots, polygons, etc
@@ -41,8 +79,8 @@ namespace Magician
         {
             //SetX(x);
             //SetY(y);
-            pos[0] = x;
-            pos[1] = y;
+            this.x.Set(x);
+            this.y.Set(y);
             this.col = col;
             this.lined = lined;
             this.linedCompleted = linedCompleted;
@@ -53,11 +91,11 @@ namespace Magician
 
         public double XAbsolute(double offset)
         {
-            return pos[0] + offset;
+            return x.Evaluate() + offset;
         }
         public double YAbsolute(double offset)
         {
-            return pos[1] + offset;
+            return y.Evaluate() + offset;
         }
 
         public Color Col
@@ -74,7 +112,7 @@ namespace Magician
             {
                 parentOffset = Parent().XAbsolute(0);
             }
-            pos[0] = x - parentOffset;
+            this.x.Set(x - parentOffset);
         }
         public void SetY(double x)
         {
@@ -83,7 +121,7 @@ namespace Magician
             {
                 parentOffset = Parent().YAbsolute(0);
             }
-            pos[1] = x - parentOffset;
+            this.y.Set(x - parentOffset);
         }
 
         public int Count
@@ -105,6 +143,27 @@ namespace Magician
             set => lined = value;
         }
 
+        public Multi Modify(List<Drawable> cs)
+        {
+            constituents = cs;
+            return this;
+        }
+
+        public Multi Filter(Func<double, double> f)
+        {
+            constituents = Constituents(f).ToList();
+            return this;
+        }
+
+        public Multi Where(Func<Drawable, Drawable> nm)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                constituents[i] = nm(constituents[i]);
+            }
+            return this;
+        }
+
         public void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             byte r = col.R;
@@ -122,15 +181,15 @@ namespace Magician
                     
                     SDL_SetRenderDrawColor(renderer, r, g, b, a);
                     
-                    SDL_RenderDrawLine(renderer,
-                    (int)p0.XCartesian(pos[0]+xOffset), (int)p0.YCartesian(pos[1]+yOffset),
-                    (int)p1.XCartesian(pos[0]+xOffset), (int)p1.YCartesian(pos[1]+yOffset));
+                    SDL_RenderDrawLineF(renderer,
+                    (float)p0.XCartesian(x.Evaluate()+xOffset), (float)p0.YCartesian(y.Evaluate()+yOffset),
+                    (float)p1.XCartesian(x.Evaluate()+xOffset), (float)p1.YCartesian(y.Evaluate()+yOffset));
 
                 }
                 
                 // Recursively draw the constituents
                 Drawable d = constituents[i];
-                d.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
+                d.Draw(ref renderer, xOffset+x.Evaluate(), yOffset+y.Evaluate());
             }
             
             if (linedCompleted && constituents.Count > 0)
@@ -139,16 +198,16 @@ namespace Magician
                 Drawable pFirst = constituents[0].GetPoint();
                 
                 SDL_SetRenderDrawColor(renderer, r, g, b, a);                
-                SDL_RenderDrawLine(renderer,
-                (int)pLast.XCartesian(pos[0]+xOffset), (int)pLast.YCartesian(pos[1]+yOffset),
-                (int)pFirst.XCartesian(pos[0]+xOffset), (int)pFirst.YCartesian(pos[1]+yOffset));
+                SDL_RenderDrawLineF(renderer,
+                (float)pLast.XCartesian(x.Evaluate()+xOffset), (float)pLast.YCartesian(y.Evaluate()+yOffset),
+                (float)pFirst.XCartesian(x.Evaluate()+xOffset), (float)pFirst.YCartesian(y.Evaluate()+yOffset));
             }
 
             
             foreach (Drawable d in constituents)
             {
                 // Make sure constituents are drawn relative to parent Multi
-                d.Draw(ref renderer, xOffset+pos[0], yOffset+pos[1]);
+                d.Draw(ref renderer, xOffset+x.Evaluate(), yOffset+y.Evaluate());
             }
 
             if (drawPoint)
@@ -203,6 +262,12 @@ namespace Magician
             AddDriver(d);
             return this;
         }
+        public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
+        {
+            X = X.Driven(xFunc);
+            Y = Y.Driven(yFunc);
+            return this;
+        }
 
         public Multi SubDriven(Func<double[], double> df, string s)
         {
@@ -219,7 +284,7 @@ namespace Magician
 
         public Drawable Copy()
         {
-            Multi copy = new Multi(pos[0], pos[1], col.Copy(), lined, linedCompleted, drawPoint);
+            Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), lined, linedCompleted, drawPoint);
             
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)

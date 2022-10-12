@@ -30,17 +30,25 @@ namespace Magician
         {
             this.q = x;
         }
-
+        // Converts to double
         public double Evaluate(params double[] xs)
         {
             return q;
         }
 
-        public double Mult(double x)
+        // Operators
+        public Quantity Delta(double x)
         {
-            return x * this.q;
+            q += x;
+            return this;
+        }
+        public Quantity Mult(double x)
+        {
+            q *= x;
+            return this;
         }
 
+        // Driver code
         public void AddDriver(Driver d)
         {
             drivers.Add(d);
