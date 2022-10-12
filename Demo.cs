@@ -38,30 +38,53 @@ namespace Magician
             /*
                 What do we want to make?
             */
-            //Multi m = new Plot(-200, 0, new Driver(x => 0), 0, 400, 1, Color.Green.ToHSL()).Interpolation();
+            Multi m = new Plot(-200, 0, new Driver(x => 100*Math.Cos(x[0]/10)), 0, 200, 1, Color.Green.ToHSL()).Interpolation();
+            //m.Lined = false;
+            Quantity q = new Quantity(1).Driven(x => x[0]);
+            Random r = new Random();
 
-            mathObjs = new List<Drawable>()
-            {
-                Multi.RegularPolygon(0, 0, 5, 100)
-                .Where(c => ((Multi)c)
-                    .Driven(y => c.Phase + 0.02, "phase")
-                )
-            };
+            mathObjs = new List<Drawable>() {};
             
             /*
                 Main gameloop
             */
             while (!done)
             {
+                mathObjs.Clear();
+                /*
+                mathObjs.Add(m
+                .Where(dr => ((Multi)dr)
+                    .Eject()
+                    .Driven(x => 
+                    {
+                        return dr.XAbsolute(0) / 200;
+                    }, "y+")
+
+                    .Driven(x => 
+                    {
+                        return 10*Math.Sin(x[0]);
+                    }, "x+")
+                    //.Driven(x => q.Evaluate(), "col0")
+                    )
+                );*/
+                mathObjs.Add(
+                    new Plot(0, 0, new Driver(x => x[0]*x[0]*0.0625), -200, 200, 1, Color.Blue).Interpolation()
+                    .Where(c => ((Multi)c)
+                        //.Eject()
+                        .Driven(x => -q.Evaluate() + c.YAbsolute(0) + 20*Math.Sin(c.XAbsolute(0)/10+q.Evaluate()), "y")
+                    )
+                    .Wielding(Multi.RegularPolygon(0, 0, Color.Blue, 4, 20))
+                );
+                
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
-                if (frames != stopFrame)
-                {
-                    Render();
-                }
                 if (frames > driveDelay)
                 {
                     Drive();
+                }
+                if (frames != stopFrame)
+                {
+                    Render();
                 }
 
                 // Event handling
