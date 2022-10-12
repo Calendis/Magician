@@ -143,6 +143,12 @@ namespace Magician
             set => lined = value;
         }
 
+        public Multi LinedCompleted(bool b)
+        {
+            linedCompleted = b;
+            return this;
+        }
+
         public Multi Modify(List<Drawable> cs)
         {
             constituents = cs;

@@ -38,16 +38,10 @@ namespace Magician
             /*
                 What do we want to make?
             */
-            //Multi m = new Plot(-200, 0, new Driver(x => 100*Math.Cos(x[0]/10)), 0, 200, 1, Color.Green.ToHSL()).Interpolation();
-            //m.Lined = false;
-            Quantity q = new Quantity(1).Driven(x => x[0]);
-            Quantity q2 = new Quantity(0).Driven(x => Math.Abs(Math.Sin(x[0])));
-
-            Quantity.ExtantQuantites.Add(q);
-            Quantity.ExtantQuantites.Add(q2);
-            Random r = new Random();
-
             mathObjs = new List<Drawable>() {};
+            Quantity q = new Quantity(1).Driven(x => x[0]);
+            Quantity.ExtantQuantites.Add(q);
+
             
             /*
                 Main gameloop
@@ -56,12 +50,13 @@ namespace Magician
             {
                 mathObjs.Clear();
                 mathObjs.Add(
-                    Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 60, 200)
+                    Multi.RegularPolygon(0, 100, Color.Red.ToHSL(), 3 + (int)(60*Math.Cos(q.Evaluate()/40)*Math.Cos(q.Evaluate()/40)), 180)
                     .Where(
                         c => ((Multi)c)
                         .Driven(x => 80*c.Phase + 30*Math.Sin(x[0] + c.Phase*q.Evaluate()*0.08), "magnitude")
-                        .Driven(x => 10*c.Phase, "col0")
+                        .Driven(x => 50*c.Phase, "col0")
                     )
+                    .LinedCompleted(false)
                 );
                 
                 //SDL_WaitEvent(out SDL_Event events);
