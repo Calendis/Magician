@@ -44,6 +44,8 @@ namespace Magician
         {            
             Point p0 = new Point(x0, Evaluate(x0));
             Point p1 = new Point(x1, Evaluate(x1));
+            p0.Col = col;
+            p1.Col = col;
             return new Point[] {p0, p1};
         }
         private Point[] interpolate(double x)
@@ -58,6 +60,8 @@ namespace Magician
             for (double x = start; x < end; x+=dx)
             {
                 Point[] ps = interpolate(x);
+                ps[0].Col = col;
+                ps[1].Col = col;
                 points.Add(ps[0]);
                 //Drawable d = interpolate(x)[0];
                 //d.Col = col;
