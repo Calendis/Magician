@@ -294,7 +294,7 @@ namespace Magician
             {
                 SDL_SetRenderDrawColor(renderer, r, g, b, a);
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(renderer, (float)((Drawable)this).XCartesian(xOffset), (float)((Drawable)this).YCartesian(yOffset));
+                SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
         }
 
@@ -404,7 +404,6 @@ namespace Magician
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
         public Multi Wielding(Multi outer)
         {
-            Multi innerCopy = Copy();
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
@@ -412,20 +411,11 @@ namespace Magician
                 outerCopy.SetX(constituents[i].x.Evaluate());
                 outerCopy.SetY(constituents[i].y.Evaluate());
                 
-                // Set that copy as the respective constituent of the Multi
-                innerCopy.constituents[i] = outerCopy;
-
-                // Copy over drivers from each constituent of the Multi to the outer copy
-                for (int j = 0; j < ((Multi)constituents[i]).drivers.Count; j++)
-                {
-                    Multi c = (Multi)constituents[i];
-                    Driver originalSubDriver = c.drivers[j];
-                    Multi innerCopyC = (Multi)((Multi)innerCopy).constituents[i];
-                    innerCopyC.AddDriver(originalSubDriver.CopiedTo(innerCopyC));
-                }
+                Multi c = constituents[i];
+                constituents[i] = outerCopy;
             }
 
-            return innerCopy;
+            return this;
         }
         public Multi Wielding(Multi outer, Func<Multi, Multi> F)
         {
@@ -436,10 +426,10 @@ namespace Magician
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
         public Multi Surrounding(Multi inner)
         {
-            Multi thisSurroundingInner = inner.Wielding(this);
-            thisSurroundingInner.x.Set(x.Evaluate());
-            thisSurroundingInner.y.Set(y.Evaluate());
-            return thisSurroundingInner.Wielding(this);
+            return inner.Wielding(this);
+            //thisSurroundingInner.x.Set(x.Evaluate());
+            //thisSurroundingInner.y.Set(y.Evaluate());
+            //return thisSurroundingInner;//.Wielding(this);
         }
         public Multi Surrounding (Multi inner, Func<Multi, Multi> F)
         {
@@ -479,24 +469,22 @@ namespace Magician
         }
         */
 
-        /*
         public Multi Prev()
         {
-            Multi p = (Multi)parent;
+            Multi p = parent;
             int i = p.constituents.IndexOf(this);
             if (i == -1)
             {
                 throw new InvalidDataException($"{this} not found in parent {parent}");
             }
-            Console.WriteLine($"Current: {this} is {p.constituents.IndexOf(this)} / {Count} in {p}");
-            return (Multi)p.constituents[p.constituents.IndexOf(this) - 1];
+            i = i == 0 ? p.Count - 1 : i - 1;
+            return (Multi)p.constituents[i];
         }
         public Multi Next()
         {
             Multi p = (Multi)parent;
             return (Multi)p.constituents[p.constituents.IndexOf(this) + 1];
         }
-        */
 
         public override string ToString()
         {
