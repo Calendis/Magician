@@ -36,6 +36,10 @@ namespace Magician
             q += x;
             return this;
         }
+        public Quantity GetDelta(double x)
+        {
+            return new Quantity(q + x);
+        }
         public Quantity Mult(double x)
         {
             q *= x;
