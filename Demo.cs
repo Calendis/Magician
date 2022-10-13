@@ -8,7 +8,7 @@ namespace Magician
         static IntPtr renderer;
 
         bool done = false;
-        List<Drawable> mathObjs = new List<Drawable>();
+        //List<Drawable> mathObjs = new List<Drawable>();
         Random r = new Random();
         int frames = 0;
         int stopFrame = -1;
@@ -35,28 +35,19 @@ namespace Magician
 
         void GameLoop()
         {
-            mathObjs = new List<Drawable>() {};
+            //mathObjs = new List<Drawable>() {};
             /*
             *  Pre-loop
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             *  Use the loop when you need chaotic, state-driven behaviour
             */
-            Quantity q = new Quantity(1).Driven(x => x[0]);
-            Quantity.ExtantQuantites.Add(q);
-
-            Multi m = Multi.RegularPolygon(1, 1, 5, 120);
-            Multi m2 = m.Copy();
-            m2.Col = Color.Blue;
-            mathObjs.Add(
-              m
-              //.Driven(x => Math.Sin(x[0]/10), "y")
-              .SubDriven(x => 0.02, "phase+")
-            );
-            mathObjs.Add(
-              m2
-              //.Driven(x => Math.Sin(x[0]/10), "y")
-              .SubDriven(x => -0.02, "phase+")
+            Multi.Origin.Add(
+                Multi.RegularPolygon(0, 0, Color.Blue.ToHSL(), 3, 120)
+                .Driven(x => -1, "y+")
+                //.SubDriven(x => 1, "col0+")
+                .SubDriven(x => 0.02, "phase+")
+                //Multi.RegularPolygon(0, 0, Color.Blue.ToHSL(), 3, 120).Copy()
             );
 
             /*
@@ -112,10 +103,13 @@ namespace Magician
             SDL_RenderClear(renderer);
 
             // Draw objects
+            /*
             foreach(Drawable d in mathObjs)
             {
                 d.Draw(ref renderer);
             }
+            */
+            Multi.Origin.Draw(ref renderer, 0, 0);
 
             // SAVE FRAME TO IMAGE
             if (saveFrames)
@@ -138,7 +132,7 @@ namespace Magician
                     SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
                     SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
                     SDL_FreeSurface(surface);
-                }     
+                }
             }       
             
             frames++;
@@ -150,10 +144,13 @@ namespace Magician
 
         void Drive()
         {
+            /*
             foreach (Driveable d in mathObjs)
             {
                 d.Drive((frames-driveDelay) * timeResolution);
             }
+            */
+            Multi.Origin.Drive((frames - driveDelay) * timeResolution);
 
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {

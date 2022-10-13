@@ -30,7 +30,7 @@ namespace Magician
                     return x;
                 }
                 // Recursive getting of parent position
-                return x.Delta(((Multi)parent).X.Evaluate());
+                return x.GetDelta(((Multi)parent).X.Evaluate());
             }
             
             set => x = value;
@@ -41,7 +41,7 @@ namespace Magician
         }
         public void IncrX(double offset)
         {
-            X.Delta(offset);
+            x.Delta(offset);
         }
         public Quantity Y
         {
@@ -52,7 +52,7 @@ namespace Magician
                     return y;
                 }
                 // Recursive getting of parent position
-                return y.Delta(((Multi)parent).Y.Evaluate());
+                return y.GetDelta(((Multi)parent).Y.Evaluate());
             }
             set => y = value;
         }
@@ -78,11 +78,11 @@ namespace Magician
                 SetPhase(value.Evaluate());
             }
         }
-        public void SetPhase(double x)
+        public void SetPhase(double offset)
         {
             double m = Magnitude.Evaluate();
-            X.Set(m*Math.Cos(x));
-            Y.Set(m*Math.Sin(x));
+            x.Set(m*Math.Cos(offset));
+            y.Set(m*Math.Sin(offset));
         }
         public void IncrPhase(double offset)
         {
@@ -96,11 +96,11 @@ namespace Magician
                 SetMagnitude(value.Evaluate());
             }
         }
-        public void SetMagnitude(double x)
+        public void SetMagnitude(double offset)
         {
             double p = Phase.Evaluate();
-            SetX(x*Math.Cos(p));
-            SetY(x*Math.Sin(p));
+            SetX(offset*Math.Cos(p));
+            SetY(offset*Math.Sin(p));
         }
         public void IncrMagnitude(double offset)
         {
@@ -114,11 +114,6 @@ namespace Magician
         public double YCartesian(double offset)
         {
             return Globals.winHeight / 2 - Y.Evaluate(offset);
-        }
-
-        public Multi GetPoint()
-        {
-            return Point(x.Evaluate(), y.Evaluate(), Col);
         }
         
         public IEnumerable<Multi> Constituents(Func<double, double> truth, double truthThreshold=0)
@@ -151,12 +146,10 @@ namespace Magician
         protected bool linedCompleted;
         protected bool drawPoint;
         protected Color col;
+        
         // Full constructor
-
         public Multi(Multi parent, double x, double y, Color col, bool lined=false, bool linedCompleted=false, bool drawPoint=true, params Multi[] cs) : base(0)
         {
-            //SetX(x);
-            //SetY(y);
             this.parent = parent;
             this.x.Set(x);
             this.y.Set(y);
@@ -166,10 +159,9 @@ namespace Magician
             this.drawPoint = drawPoint;
 
             constituents = new List<Multi> {};
-            constituents.AddRange(cs);
-            foreach (Multi c in constituents)
+            foreach (Multi c in cs)
             {
-                c.SetParent(this);
+                Add(c);
             }
         }
 
@@ -192,9 +184,18 @@ namespace Magician
         {
             get => constituents.Count;
         }
-        public void Add(Multi d)
+        public void Add(params Multi[] ms)
         {
-            constituents.Add(d);
+            constituents.AddRange(ms);
+            foreach (Multi m in ms)
+            {
+                //m.SetParent(this);
+                m.parent = this;
+            }
+        }
+        public void Remove(Multi m)
+        {
+            constituents.Remove(m);
         }
 
         public List<Driver> Drivers
@@ -246,8 +247,8 @@ namespace Magician
                 // If lined, draw lines between the constituents as if they were vertices in a polygon
                 if (lined)
                 {
-                    Drawable p0 = constituents[i].GetPoint();
-                    Drawable p1 = constituents[i+1].GetPoint();
+                    Drawable p0 = constituents[i];
+                    Drawable p1 = constituents[i+1];
                     byte subr = p0.Col.R;
                     byte subg = p0.Col.G;
                     byte subb = p0.Col.B;
@@ -256,8 +257,8 @@ namespace Magician
                     SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);
                     
                     SDL_RenderDrawLineF(renderer,
-                    (float)p0.XCartesian(x.Evaluate()+xOffset), (float)p0.YCartesian(y.Evaluate()+yOffset),
-                    (float)p1.XCartesian(x.Evaluate()+xOffset), (float)p1.YCartesian(y.Evaluate()+yOffset));
+                    (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
+                    (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
 
                 }
                 
@@ -268,13 +269,18 @@ namespace Magician
             
             if (linedCompleted && constituents.Count > 0)
             {
-                Drawable pLast = constituents[constituents.Count-1].GetPoint();
-                Drawable pFirst = constituents[0].GetPoint();
+                Drawable pLast = constituents[constituents.Count-1];
+                Drawable pFirst = constituents[0];
+
+                byte subr = pLast.Col.R;
+                byte subg = pLast.Col.G;
+                byte subb = pLast.Col.B;
+                byte suba = pLast.Col.A;
                 
-                SDL_SetRenderDrawColor(renderer, r, g, b, a);                
+                SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);                
                 SDL_RenderDrawLineF(renderer,
-                (float)pLast.XCartesian(x.Evaluate()+xOffset), (float)pLast.YCartesian(y.Evaluate()+yOffset),
-                (float)pFirst.XCartesian(x.Evaluate()+xOffset), (float)pFirst.YCartesian(y.Evaluate()+yOffset));
+                (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
+                (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
             }
 
             
@@ -348,8 +354,8 @@ namespace Magician
         }
         public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
         {
-            X = X.Driven(xFunc);
-            Y = Y.Driven(yFunc);
+            x.Driven(xFunc);
+            y.Driven(yFunc);
             return this;
         }
 
@@ -370,34 +376,39 @@ namespace Magician
             return this;
         }
 
-        public Drawable Copy()
+        public Multi Copy()
         {
+            Console.WriteLine("Begincopy");
+            Console.WriteLine($"Copying {this}");
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), lined, linedCompleted, drawPoint);
             
             // Copy the drivers
+            Console.WriteLine("   Copying the drivers...");
             for (int i = 0; i < drivers.Count; i++)
             {
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
+            Console.WriteLine("....Done");
 
             // Copy the constituents
             Multi[] cs = new Multi[Count];
             for (int i = 0; i < Count; i++)
             {
-                cs[i] = ((Multi)constituents[i].Copy());
+                cs[i] = constituents[i].Copy();
             }
-            copy.constituents.AddRange(cs);
+            copy.Add(cs);
+            
             return copy;
         }
 
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
         public Multi Wielding(Multi outer)
         {
-            Multi innerCopy = (Multi)Copy();
+            Multi innerCopy = Copy();
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = (Multi)outer.Copy();
+                Multi outerCopy = outer.Copy();
                 outerCopy.SetX(constituents[i].x.Evaluate());
                 outerCopy.SetY(constituents[i].y.Evaluate());
                 
@@ -426,8 +437,8 @@ namespace Magician
         public Multi Surrounding(Multi inner)
         {
             Multi thisSurroundingInner = inner.Wielding(this);
-            thisSurroundingInner.X.Set(x.Evaluate());
-            thisSurroundingInner.Y.Set(y.Evaluate());
+            thisSurroundingInner.x.Set(x.Evaluate());
+            thisSurroundingInner.y.Set(y.Evaluate());
             return thisSurroundingInner.Wielding(this);
         }
         public Multi Surrounding (Multi inner, Func<Multi, Multi> F)
@@ -461,10 +472,12 @@ namespace Magician
             return this;
         }
         
+        /*
         public void SetParent(Multi m)
         {
             parent = m;
         }
+        */
 
         /*
         public Multi Prev()
@@ -497,7 +510,7 @@ namespace Magician
                     s += "Lonely Multi";
                     break;
                 case(2):
-                    s += $"Point Multi ({constituents[0]}, {constituents[1]})";
+                    s += $"Pair Multi ({constituents[0]}, {constituents[1]})";
                     break;
                 default:
                     s += $"{Count}-Multi (";
@@ -507,17 +520,25 @@ namespace Magician
                     }
                     break;
             }
-            s += $" at {((Drawable)this).XCartesian(0)}, {((Drawable)this).YCartesian(0)}";
+            if (this is null)
+            {
+                s += "nothing";
+            }
+            else if (parent is null)
+            {
+                s += $" Origin at {x.Evaluate()}, {y.Evaluate()}";
+            }
+            else
+            {
+                s += $" at ({x.Evaluate()}, {y.Evaluate()}) relative, ({X.Evaluate()} {Y.Evaluate()}) absolute";
+            }
             return s;
         }
 
         /*
         *  Common types of Multis you might want to create
         */
-        public static Multi Origin
-        {
-            get => Point(null, 0, 0, Globals.fgCol);
-        }
+        public static Multi Origin = Point(null, 0, 0, Globals.fgCol);
         public static Multi Point(Multi parent, double x, double y, Color col)
         {
             return new Multi(parent, x, y, col);
