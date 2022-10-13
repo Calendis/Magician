@@ -10,7 +10,7 @@ namespace Magician
         //protected double[] pos = new double[]{0,0};
         protected Quantity x = new Quantity(0);
         protected Quantity y = new Quantity(0);
-        protected Multi? parent;
+        public Multi? parent;
         protected List<Multi> constituents;
 
         public Multi this[int key]
@@ -252,9 +252,11 @@ namespace Magician
                     byte subr = p0.Col.R;
                     byte subg = p0.Col.G;
                     byte subb = p0.Col.B;
-                    byte suba = p0.Col.A;
+                    byte suba = 50;//p0.Col.A;
+                    SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     
                     SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);
+                    
                     
                     SDL_RenderDrawLineF(renderer,
                     (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
@@ -469,10 +471,18 @@ namespace Magician
         }
         */
 
+        public int Index
+        {
+            get => parent.constituents.IndexOf(this);
+        }
+        public double Normal
+        {
+            get => (double)Index / parent.Count;
+        }
         public Multi Prev()
         {
             Multi p = parent;
-            int i = p.constituents.IndexOf(this);
+            int i = Index;
             if (i == -1)
             {
                 throw new InvalidDataException($"{this} not found in parent {parent}");

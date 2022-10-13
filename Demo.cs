@@ -42,12 +42,19 @@ namespace Magician
             *  Much is possible in the pre-loop, since Drivers will still work
             *  Use the loop when you need chaotic, state-driven behaviour
             */
+            Quantity q = new Quantity(0).Driven(x => 0.0009*(Math.Sin(x[0]/40)));
+            Quantity.ExtantQuantites.Add(q);
             Multi.Origin.Add(
-                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 400, 300)
+                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 1000, 400)
+                .LinedCompleted(false)
                 .Where(
                     c => c
-                    .Driven(x => c.Prev().Phase.Evaluate()*0.0625*0.25 , "phase+")
-                    .Driven(x => c.Phase.Evaluate()/Math.PI*180, "col0")
+                    .Driven(x => 
+                    {
+                        double phaseDelta = (c.Phase.Evaluate() - c.Prev().Phase.Evaluate()) * 0.9941+q.Evaluate();
+                        return c.Prev().Phase.Evaluate() + phaseDelta + 0.02;
+                    }, "phase")
+                    .Driven(x => (c.Phase.Evaluate())/Math.PI*180, "col0")
                 )
             );
 
