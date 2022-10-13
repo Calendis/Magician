@@ -43,11 +43,12 @@ namespace Magician
             *  Use the loop when you need chaotic, state-driven behaviour
             */
             Multi.Origin.Add(
-                Multi.RegularPolygon(0, 0, Color.Blue.ToHSL(), 3, 120)
-                .Driven(x => -1, "y+")
-                //.SubDriven(x => 1, "col0+")
-                .SubDriven(x => 0.02, "phase+")
-                //Multi.RegularPolygon(0, 0, Color.Blue.ToHSL(), 3, 120).Copy()
+                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 400, 300)
+                .Where(
+                    c => c
+                    .Driven(x => c.Prev().Phase.Evaluate()*0.0625*0.25 , "phase+")
+                    .Driven(x => c.Phase.Evaluate()/Math.PI*180, "col0")
+                )
             );
 
             /*
@@ -57,23 +58,9 @@ namespace Magician
             *  When you want to modulate arguments in a constructor, you will
             *  need the loop.
             */
+
             while (!done)
-            {   
-                
-                /*
-                mathObjs.Clear();
-                mathObjs.Add(
-                    Multi.RegularPolygon(0, 100, Color.Red.ToHSL(), 3 + (int)(60*Math.Cos(q.Evaluate()/40)*Math.Cos(q.Evaluate()/40)), 180)
-                    .Where(
-                        c => ((Multi)c)
-                        .Driven(x => 80*c.Phase.Evaluate() + 30*Math.Sin(x[0] + c.Phase.Evaluate()*q.Evaluate()*0.08), "magnitude")
-                        .Driven(x => 50*c.Phase.Evaluate(), "col0")
-                    )
-                    .LinedCompleted(false)
-                );
-                */
-                
-                
+            {       
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames > driveDelay)
