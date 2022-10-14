@@ -13,7 +13,7 @@ namespace Magician
         int stopFrame = -1;
         bool saveFrames = false;
         int driveDelay = 0;
-        double timeResolution = 0.25;
+        double timeResolution = 0.1;
         
         static void Main(string[] args)
         {
@@ -34,7 +34,6 @@ namespace Magician
 
         void GameLoop()
         {
-            //mathObjs = new List<Drawable>() {};
             /*
             *  Pre-loop
             *  -----------------------------------------------------------------
@@ -42,7 +41,6 @@ namespace Magician
             */
             Quantity q = new Quantity(0).Driven(x => 3*(Math.Sin(x[0]/10)+1) +1);
             Quantity.ExtantQuantites.Add(q);
-
             Multi.Origin.Add(
                 Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 100, 100)
                 .LinedCompleted(false)
@@ -66,8 +64,6 @@ namespace Magician
                     )
                 )
             );
-
-            Console.WriteLine($"period: {2*Math.PI/timeResolution}");
 
             /*
             *  Loop
