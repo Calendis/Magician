@@ -13,7 +13,7 @@ namespace Magician
         private string actionString;
         
         // Full constructor
-        public Driver(Func<double[], double> df, Action<double> output)
+        public Driver(Func<double[], double> df, Action<double>? output)
         {
             driveFunction = new DriveFunction(df);
             this.output = output;

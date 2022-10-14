@@ -107,6 +107,12 @@ namespace Magician
             SetMagnitude(Magnitude.Evaluate() + offset);
         }
 
+        public Multi Rotated(double theta)
+        {
+            IncrPhase(theta);
+            return this;
+        }
+
         public double XCartesian(double offset)
         {
             return Globals.winWidth / 2 + X.Evaluate(offset);
@@ -148,7 +154,7 @@ namespace Magician
         protected Color col;
         
         // Full constructor
-        public Multi(Multi parent, double x, double y, Color col, bool lined=false, bool linedCompleted=false, bool drawPoint=true, params Multi[] cs) : base(0)
+        public Multi(Multi? parent, double x, double y, Color col, bool lined=false, bool linedCompleted=false, bool drawPoint=true, params Multi[] cs) : base(0)
         {
             this.parent = parent;
             this.x.Set(x);
@@ -252,7 +258,7 @@ namespace Magician
                     byte subr = p0.Col.R;
                     byte subg = p0.Col.G;
                     byte subb = p0.Col.B;
-                    byte suba = 50;//p0.Col.A;
+                    byte suba = p0.Col.A;
                     SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     
                     SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);
@@ -380,17 +386,13 @@ namespace Magician
 
         public Multi Copy()
         {
-            Console.WriteLine("Begincopy");
-            Console.WriteLine($"Copying {this}");
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), lined, linedCompleted, drawPoint);
             
             // Copy the drivers
-            Console.WriteLine("   Copying the drivers...");
             for (int i = 0; i < drivers.Count; i++)
             {
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
-            Console.WriteLine("....Done");
 
             // Copy the constituents
             Multi[] cs = new Multi[Count];
@@ -473,27 +475,47 @@ namespace Magician
 
         public int Index
         {
-            get => parent.constituents.IndexOf(this);
+            get
+            {
+                if (parent is null)
+                {
+                    return 0;
+                }
+                return parent.constituents.IndexOf(this);
+            }
         }
         public double Normal
         {
-            get => (double)Index / parent.Count;
+            get
+            {
+                if (parent is null)
+                {
+                    return 0;
+                }
+                return (double)Index / parent.Count;
+            }
         }
         public Multi Prev()
         {
+            if (parent is null)
+            {
+                return this;
+            }
             Multi p = parent;
             int i = Index;
-            if (i == -1)
-            {
-                throw new InvalidDataException($"{this} not found in parent {parent}");
-            }
             i = i == 0 ? p.Count - 1 : i - 1;
-            return (Multi)p.constituents[i];
+            return p.constituents[i];
         }
         public Multi Next()
         {
-            Multi p = (Multi)parent;
-            return (Multi)p.constituents[p.constituents.IndexOf(this) + 1];
+            if (parent is null)
+            {
+                return this;
+            }
+            Multi p = parent;
+            int i = Index;
+            i = i == p.Count-1 ? 0 : i + 1;
+            return p.constituents[i];
         }
 
         public override string ToString()
@@ -537,7 +559,7 @@ namespace Magician
         *  Common types of Multis you might want to create
         */
         public static Multi Origin = Point(null, 0, 0, Globals.fgCol);
-        public static Multi Point(Multi parent, double x, double y, Color col)
+        public static Multi Point(Multi? parent, double x, double y, Color col)
         {
             return new Multi(parent, x, y, col);
         }
