@@ -272,7 +272,7 @@ namespace Magician
                 
                 // Recursively draw the constituents
                 Drawable d = constituents[i];
-                d.Draw(ref renderer, xOffset+x.Evaluate(), yOffset+y.Evaluate());
+                d.Draw(ref renderer, xOffset, yOffset);
             }
             
             if (linedCompleted && constituents.Count > 0)
@@ -294,8 +294,7 @@ namespace Magician
             
             foreach (Drawable d in constituents)
             {
-                // Make sure constituents are drawn relative to parent Multi
-                d.Draw(ref renderer, xOffset+x.Evaluate(), yOffset+y.Evaluate());
+                d.Draw(ref renderer, xOffset, yOffset);
             }
 
             if (drawPoint)
@@ -341,7 +340,7 @@ namespace Magician
         {
             for (int i = 0; i < ds.Length; i++)
             {
-                ((Multi)constituents[i]).AddDriver(ds[i]);
+                (constituents[i]).AddDriver(ds[i]);
             }
         }
 
