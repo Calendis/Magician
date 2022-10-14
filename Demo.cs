@@ -8,7 +8,6 @@ namespace Magician
         static IntPtr renderer;
 
         bool done = false;
-        //List<Drawable> mathObjs = new List<Drawable>();
         Random r = new Random();
         int frames = 0;
         int stopFrame = -1;
@@ -40,30 +39,42 @@ namespace Magician
             *  Pre-loop
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
-            *  Use the loop when you need chaotic, state-driven behaviour
             */
-            Quantity q = new Quantity(0).Driven(x => 0.0009*(Math.Sin(x[0]/40)));
+            Quantity q = new Quantity(0).Driven(x => 3*(Math.Sin(x[0]/10)+1) +1);
             Quantity.ExtantQuantites.Add(q);
+
             Multi.Origin.Add(
-                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 1000, 400)
+                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 100, 100)
                 .LinedCompleted(false)
                 .Where(
                     c => c
+                    
                     .Driven(x => 
                     {
-                        double phaseDelta = (c.Phase.Evaluate() - c.Prev().Phase.Evaluate()) * 0.9941+q.Evaluate();
-                        return c.Prev().Phase.Evaluate() + phaseDelta + 0.02;
-                    }, "phase")
+                        return 100*Math.Sin(c.Normal*Math.PI*q.Evaluate());
+                    }, "magnitude")
                     .Driven(x => (c.Phase.Evaluate())/Math.PI*180, "col0")
+                    .Driven(x => c.Normal*2*Math.PI, "phase")
+                )
+                .Surrounding(Multi.RegularPolygon(0, 0, 8, 100))
+                .Invisible()
+                .Where(
+                    c0 => c0
+                    .Where(
+                        c1 => c1
+                        .Driven(x => c0.Phase.Evaluate() + x[0]/10, "phase+")
+                    )
                 )
             );
+
+            Console.WriteLine($"period: {2*Math.PI/timeResolution}");
 
             /*
             *  Loop
             *  ----------------------------------------------------------------
             *  The loop automatically drives and renders the math objects.
             *  When you want to modulate arguments in a constructor, you will
-            *  need the loop.
+            *  need the loop
             */
 
             while (!done)
