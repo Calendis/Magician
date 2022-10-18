@@ -243,10 +243,10 @@ namespace Magician
 
         public void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
-            byte r = col.R;
-            byte g = col.G;
-            byte b = col.B;
-            byte a = col.A;
+            double r = col.R;
+            double g = col.G;
+            double b = col.B;
+            double a = col.A;
             
             for (int i = 0; i < constituents.Count-1; i++)
             {
@@ -255,13 +255,13 @@ namespace Magician
                 {
                     Drawable p0 = constituents[i];
                     Drawable p1 = constituents[i+1];
-                    byte subr = p0.Col.R;
-                    byte subg = p0.Col.G;
-                    byte subb = p0.Col.B;
-                    byte suba = p0.Col.A;
+                    double subr = p0.Col.R;
+                    double subg = p0.Col.G;
+                    double subb = p0.Col.B;
+                    double suba = p0.Col.A;
                     SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     
-                    SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);
+                    SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     
                     
                     SDL_RenderDrawLineF(renderer,
@@ -280,12 +280,12 @@ namespace Magician
                 Drawable pLast = constituents[constituents.Count-1];
                 Drawable pFirst = constituents[0];
 
-                byte subr = pLast.Col.R;
-                byte subg = pLast.Col.G;
-                byte subb = pLast.Col.B;
-                byte suba = pLast.Col.A;
+                double subr = pLast.Col.R;
+                double subg = pLast.Col.G;
+                double subb = pLast.Col.B;
+                double suba = pLast.Col.A;
                 
-                SDL_SetRenderDrawColor(renderer, subr, subg, subb, suba);                
+                SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);                
                 SDL_RenderDrawLineF(renderer,
                 (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
                 (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
@@ -299,7 +299,7 @@ namespace Magician
 
             if (drawPoint)
             {
-                SDL_SetRenderDrawColor(renderer, r, g, b, a);
+                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
                 SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
@@ -570,6 +570,21 @@ namespace Magician
         {
             return Point(x, y, Globals.fgCol);
         }
+        public static Multi Line(Multi p1, Multi p2, Color col)
+        {
+            double x1 = p1.x.Evaluate();
+            double y1 = p1.y.Evaluate();
+            double x2 = p2.x.Evaluate();
+            double y2 = p2.y.Evaluate();
+            
+            return new Multi(x1, y1, col, true, false, false,
+            Point(0, 0, col),
+            Point(x2-x1, y2-y1, col));
+        }
+        public static Multi Line(Multi p1, Multi p2)
+        {
+            return Line(p1, p2, Globals.fgCol);
+        }
         // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
@@ -605,59 +620,66 @@ namespace Magician
                 case "X+":
                     o = m.IncrX;
                     break;
-                
                 case "Y":
                     o = m.SetY;
                     break;
                 case "Y+":
                     o = m.IncrY;
                     break;
-
                 case "PHASE":
                     o = m.SetPhase;
                     break;
                 case "PHASE+":
                     o = m.IncrPhase;
                     break;
-
                 case "MAGNITUDE":
                     o = m.SetMagnitude;
                     break;
-                
                 case "MAGNITUDE+":
                     o = m.IncrMagnitude;
                     break;
-
-                case "COL0":
-                    o = ((Drawable)m).SetCol0;
-                    break;
-                
-                case "COL1":
-                    o = ((Drawable)m).SetCol1;
+                case "R":
+                    o = ((Drawable)m).SetR;
                     break;
 
-                case "COL2":
-                    o = ((Drawable)m).SetCol2;
+                case "G":
+                    o = ((Drawable)m).SetG;
                     break;
-
-                case "COL3":
-                    o = ((Drawable)m).SetAlpha;
+                case "B":
+                    o = ((Drawable)m).SetB;
                     break;
-
-                case "COL0+":
-                    o = ((Drawable)m).IncrCol0;
+                case "A":
+                    o = ((Drawable)m).SetA;
                     break;
-                
-                case "COL1+":
-                    o = ((Drawable)m).IncrCol1;
+                case "H":
+                    o = ((Drawable)m).SetH;
                     break;
-
-                case "COL2+":
-                    o = ((Drawable)m).IncrCol2;
+                case "S":
+                    o = ((Drawable)m).SetS;
                     break;
-
-                case "COL3+":
-                    o = ((Drawable)m).IncrAlpha;
+                case "L":
+                    o = ((Drawable)m).SetL;
+                    break;
+                case "R+":
+                    o = ((Drawable)m).IncrR;
+                    break;
+                case "G+":
+                    o = ((Drawable)m).IncrG;
+                    break;
+                case "B+":
+                    o = ((Drawable)m).IncrB;
+                    break;
+                case "A+":
+                    o = ((Drawable)m).IncrA;
+                    break;
+                case "H+":
+                    o = ((Drawable)m).IncrH;
+                    break;
+                case "S+":
+                    o = ((Drawable)m).IncrS;
+                    break;
+                case "L+":
+                    o = ((Drawable)m).IncrL;
                     break;
 
                 /*
@@ -666,8 +688,7 @@ namespace Magician
                     break;*/
                 
                 default:
-                    Console.WriteLine($"ERROR: Unknown driver string {s}");
-                    throw new NotImplementedException();
+                    throw new NotImplementedException($"Unknown driver string {s}");
             }
             return o;
         }

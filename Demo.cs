@@ -39,31 +39,11 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Quantity q = new Quantity(0).Driven(x => 3*(Math.Sin(x[0]/10)+1) +1);
-            Quantity.ExtantQuantites.Add(q);
             Multi.Origin.Add(
-                Multi.RegularPolygon(0, 0, Color.Red.ToHSL(), 100, 100)
-                .LinedCompleted(false)
-                .Where(
-                    c => c
-                    
-                    .Driven(x => 
-                    {
-                        return 100*Math.Sin(c.Normal*Math.PI*q.Evaluate());
-                    }, "magnitude")
-                    .Driven(x => (c.Phase.Evaluate())/Math.PI*180, "col0")
-                    .Driven(x => c.Normal*2*Math.PI, "phase")
-                )
-                .Surrounding(Multi.RegularPolygon(0, 0, 8, 100))
-                .Invisible()
-                .Where(
-                    c0 => c0
-                    .Where(
-                        c1 => c1
-                        .Driven(x => c0.Phase.Evaluate() + x[0]/10, "phase+")
-                    )
-                )
+                Multi.RegularPolygon(100, 100, new HSLA(180, 1, 0.5f, 255), 4, 120)
+                //.SubDriven(x => 1, "col0+")
             );
+            
 
             /*
             *  Loop
@@ -77,7 +57,7 @@ namespace Magician
             {       
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
-                if (frames > driveDelay)
+                if (frames >= driveDelay)
                 {
                     Drive();
                 }
@@ -100,7 +80,7 @@ namespace Magician
         {
             // Clear with colour)
             SDL_SetRenderDrawColor(renderer,
-            Globals.bgCol.R, Globals.bgCol.G, Globals.bgCol.B, 255);
+            (byte)Globals.bgCol.R, (byte)Globals.bgCol.G, (byte)Globals.bgCol.B, (byte)Globals.bgCol.A);
             SDL_RenderClear(renderer);
 
             // Draw objects

@@ -2,142 +2,193 @@
 *  Class for storing and manipulating colour data, with RGBA and HSLA support
 */
 
+
 namespace Magician
 {
-    public class Color
+    public abstract class Color
     {
-        // 32-bit int representing the colour in RGBA
-        private uint col;
+        /*
+        * Format:
+        * r [0, 255]
+        * g [0, 255]
+        * b [0, 255]
+        * h [0, 2Pi)
+        * s [0, 1]
+        * l [0, 1]
+        * a [0, 255]
+        */
         
-        // Lol, I store a uint for the colour value and three additional floats for precision
-        // It makes the bitwise integer math pretty pointless but it was fun to write
-        private float[] floatingParts = new float[3];
-        
-        // Whether or not the colour is treated as HSL
-        bool isHSL = false;
-        
-        // Create a colour from RGBA, and floating parts for more precise RGB
-        public Color(byte r, byte g, byte b, byte a, float f0 = 0, float f1 = 0, float f2 = 0)
+        protected double a;
+        public abstract double R {get; set;}
+        public abstract double G {get; set;}
+        public abstract double B {get; set;}
+        public abstract double H {get; set;}
+        public abstract double S {get; set;}
+        public abstract double L {get; set;}
+        public abstract Color Copy();
+        public double A {get => a; set => a = value; }
+        public uint Hex()
         {
-            isHSL = false;
-            (floatingParts[0], floatingParts[1], floatingParts[2]) = (f0, f1, f2);
-            int[] integerParts = handleFloatOverflow();
-            col = (uint)(r + integerParts[0] << 24) + (uint)(g + integerParts[1] << 16) + (uint)(b + integerParts[2]<< 8) + (uint)(a);
-        }
-        public Color(byte r, byte g, byte b, byte a, float[] fps) : this(r, g, b, a, fps[0], fps[1], fps[2]) {}
-
-        // Create a colour from HSLA, and floating parts for more precise HSL
-        // This gross constructor has a bool parameter so it's not ambiguous with the other constructor
-        // The disambiguation bool's value is not used
-        // I could make a base class for RGBColor and HSLColor, but I don't want to
-        public Color(float h, float s, float l, byte a, float f0 = 0, float f1 = 0, float f2 = 0, bool disambiguationBool = true)
-        {
-            isHSL = true;
-            (floatingParts[0], floatingParts[1], floatingParts[2]) = (f0, f1, f2);
-            int[] integerParts = handleFloatOverflow();
-            col = HSLToRGBHex((h + integerParts[0]), s + integerParts[1], l + integerParts[2], a);
+            return (uint)((byte)R << 24) + (uint)((byte)G << 16) + (uint)((byte)B << 8) + (uint)(A);
         }
 
-        // Create an RGBA colour directly from hex value
-        public Color(uint hex)
+        // Calculate a colour's hue angle from RGB values
+        protected static double HueFromRGB(double r, double g, double b)
         {
-            isHSL = false;
-            col = hex;
-        }
+            double h;
+            r /= 255f;
+            g /= 255f;
+            b /= 255f;
+            double colMax = Math.Max(r, Math.Max(g, b));
+            double colMin = Math.Min(r, Math.Min(g, b));
 
-        // If the floating parts of the colour are more than 1, return integer parts and
-        // subtract from the floating part so that it is between 0 and 1 again
-        private int[] handleFloatOverflow()
-        {
-            int[] integerParts = new int[3];
-            for(int i = 0; i < floatingParts.Length; i++)
+            if (colMax == r)
             {
-                if (floatingParts[i] >= 1)
-                {
-                    integerParts[i] = (int)floatingParts[i];
-                    floatingParts[i] -= integerParts[i];
-                }
-                else
-                {
-                    integerParts[i] = 0;
-                }
+                h = (g - b) / (colMax - colMin);
+            }
+            else if (colMax == g)
+            {
+                h = 2f + (b - r) / (colMax - colMin);
+            }
+            else if (colMax == b)
+            {
+                h = 4f + (r - g) / (colMax - colMin);
+            }
+            else
+            {
+                throw new InvalidDataException($"Could not get hue from rgb: {r} {g} {b}");
+            }
+            
+            // Convert from 0-1 to 0-2Pi
+            h *= Math.PI / 3;
+            if (h < 0)
+            {
+                h += 2*Math.PI;
+            }
+            return h;
+        }
+
+        protected static double SaturationFromRGB(double r, double g, double b)
+        {
+            double l = LightnessFromRGB(r, g, b);
+            double s;
+            double rf = r / 255;
+            double gf = g / 255;
+            double bf = b / 255;
+            double colMax = Math.Max(rf, Math.Max(gf, bf));
+            double colMin = Math.Min(rf, Math.Min(gf, bf));
+            
+            if (l < 1)
+            {
+                s = (colMax - colMin) / (1 - Math.Abs(2*l - 1));
+            }
+            else if (l == 1)
+            {
+                return 0;
+            }
+            else
+            {
+                throw new InvalidDataException("ERROR: invalid lightness {l}");
+            }
+            
+            return s;
+        }
+
+        protected static double LightnessFromRGB(double r, double g, double b)
+        {
+            float rf = (float)r / 255f;
+            float gf = (float)g / 255f;
+            float bf = (float)b / 255f;
+            float colMax = Math.Max(rf, Math.Max(gf, bf));
+            float colMin = Math.Min(rf, Math.Min(gf, bf));
+            return 0.5f * (colMax + colMin);
+        }
+
+        // TODO: fix Red, Green, Blue FromHSL
+        public static double RedFromHSL(double h, double s, double l)
+        {
+            double c = l * s;
+            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double m = l - c;
+
+            h %= 2*Math.PI;
+
+            if (h < Math.PI/3 || h > 2*Math.PI - Math.PI/3)
+            {
+                return c;
+            }
+            else if (h < Math.PI - Math.PI/3 || h > 2*Math.PI - Math.PI/3)
+            {
+                return x;
+            }
+            else if (h < Math.PI || h > Math.PI)
+            {
+                return 0;
+            }
+            else
+            {
+                throw new InvalidDataException($"Red: invalid phase {h}");
+            }
+        }
+
+        public static double GreenFromHSL(double h, double s, double l)
+        {
+            double c = l * s;
+            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double m = l - c;
+
+            h %= 2*Math.PI;
+
+            if (h < Math.PI/3 || (h < Math.PI + Math.PI/3 && h >= Math.PI))
+            {
+                return x;
+            }
+            else if (h < Math.PI - Math.PI/3 || h < Math.PI)
+            {
+                return c;
+            }
+            else if (h < 2*Math.PI)
+            {
+                return 0;
+            }
+            else
+            {
+                throw new InvalidDataException($"Green: invalid phase {h}");
             }
 
-            return integerParts;
+
         }
 
-        // A bunch of properties
-        public uint HexCol
+        public static double BlueFromHSL(double h, double s, double l)
         {
-            get => col;
-            set => col = value;
-        }
-        public byte R
-        {
-            get => (byte)((col & 0xff000000) >> 24);
-            set => col = (uint)((byte)value << 24) + (col & 0x00ffffff);
+            double c = l * s;
+            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double m = l - c;
 
-        } 
-        public byte G
-        {
-            get => (byte)((col & 0x00ff0000) >> 16);
-            set => col = (uint)((byte)value << 16) + (col & 0xff00ffff);
-        } 
-        public byte B
-        {
-            get => (byte)((col & 0x0000ff00) >> 8);
-            set => col = (uint)((byte)value << 8) + (col & 0xffff00ff);
-        } 
-        public byte A
-        {
-            get => (byte)((col & 0x000000ff) >> 0);
-            set => col = (uint)((byte)value) + (col & 0xffffff00);
-        }
-        public float Hue => HueFromRGB(R, G, B);
-        // TODO: actually implement Saturation and Lightness getters
-        public float Saturation => 1;
-        public float Lightness => 1;
-
-        public float FloatingPart0
-        {
-            get => floatingParts[0];
-            set => floatingParts[0] = value;
-        }
-        public float FloatingPart1
-        {
-            get => floatingParts[1];
-            set => floatingParts[1] = value;
-        }
-        public float FloatingPart2
-        {
-            get => floatingParts[2];
-            set => floatingParts[2] = value;
-        }
-
-        public bool IsHSL
-        {
-            get => isHSL;
-        }
-
-        public Color Copy()
-        {
-            if (!IsHSL)
+            h %= 2*Math.PI;
+            if (h < Math.PI - Math.PI/3)
             {
-                return new Color(R, G, B, A);
+                return 0;
             }
-            return new Color(Hue, Saturation, Lightness, A, disambiguationBool: true);
-        }
-
-        public Color ToHSL()
-        {
-            return new Color(Hue, Saturation, Lightness, A, disambiguationBool: true);
+            else if (h < Math.PI || (h < 2*Math.PI && h > 2*Math.PI - Math.PI/3))
+            {
+                return x;
+            }
+            else if (h < Math.PI + Math.PI/3 || h < 2*Math.PI)
+            {
+                return c;
+            }
+            else
+            {
+                throw new InvalidDataException($"Blue: invalid phase {h}");
+            }
         }
 
         /*
-            Begin static methods
+        * DONT KEEP THIS!
         */
-
-        // Given HSLA, return RGBA as a 32-bit uint
+         // Given HSLA, return RGBA as a 32-bit uint
+        /*
         public static uint HSLToRGBHex(float h, float s, float l, byte a)
         {
             float r, g, b;
@@ -192,71 +243,140 @@ namespace Magician
             b = 255*(b+m);
 
             return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
-        }
-        
-        // Calculate a colour's hue angle from RGB values
-        private static float HueFromRGB(byte r, byte g, byte b)
-        {
-            float h;
-            float rf = (float)r / 255f;
-            float gf = (float)g / 255f;
-            float bf = (float)b / 255f;
-            float colMax = Math.Max(rf, Math.Max(gf, bf)); // TODO: get rid of this recursion
-            float colMin = Math.Min(rf, Math.Min(gf, bf));
+        }*/
+    }
 
-            if (colMax == rf)
+    public class RGBA : Color
+    {
+        double r;
+        double g;
+        double b;
+        public RGBA(double r, double g, double b, double a)
+        {
+            this.r = r;
+            this.g = g;
+            this.b = b;
+            this.a = a;
+        }
+        public RGBA(uint hex)
+        {
+            // 0xff00ff00
+            this.r = hex >> 24;
+            this.g = (hex & 0x00ff0000) >> 16;
+            this.b = (hex & 0x0000ff00) >> 8;
+            this.a = (hex & 0x000000ff);
+        }
+
+        public override double R {get => r; set => r = value; }
+        public override double G {get => g; set => g = value; }
+        public override double B {get => b; set => b = value; }
+        public override double H
+        {
+            get => HueFromRGB(r, g, b);
+            set
             {
-                h = (gf - bf) / (colMax - colMin);
+                HSLA converted = ToHSLA();
+                converted.H = value;
+                R = converted.R;
+                G = converted.G;
+                B = converted.B;
             }
-            else if (colMax == gf)
+        }
+        public override double S
+        {
+            get => SaturationFromRGB(r, g, b);
+            set
             {
-                h = 2f + (bf - rf) / (colMax - colMin);
+                Color converted = ToHSLA();
+                converted.S = value;
+                R = converted.R;
+                G = converted.G;
+                B = converted.B;
             }
-            else if (colMax == bf)
+        }
+        public override double L
+        {
+            get => LightnessFromRGB(r, g, b);
+            set
             {
-                h = 4f + (rf - gf) / (colMax - colMin);
+                Color converted = ToHSLA();
+                converted.L = value;
+                R = converted.R;
+                G = converted.G;
+                B = converted.B;
             }
-            else
+        }
+        public HSLA ToHSLA()
+        {
+            return new HSLA(H, S, L, A);
+        }
+
+        public override RGBA Copy()
+        {
+            return new RGBA(R, G, B, A);
+        }
+    }
+
+    public class HSLA : Color
+    {
+        double h;
+        double s;
+        double l;
+        public HSLA(double h, double s, double l, double a)
+        {
+            this.h = h;
+            this.s = s;
+            this.l = l;
+            this.a = a;
+        }
+        public override double H {get => h; set => h = value;}
+        public override double S {get => s; set => s = value;}
+        public override double L {get => l; set => l = value;}
+        public override double R
+        {
+            get => RedFromHSL(h, s, l);
+            set
             {
-                throw new InvalidDataException($"Could not get hue from rgb: {r} {g} {b}");
+                Color converted = ToRGBA();
+                converted.R = value;
+                H = converted.H;
+                S = converted.S;
+                L = converted.L;
             }
-            h *= 60;
-            if (h < 0)
+        }
+        public override double G
+        {
+            get => GreenFromHSL(h, s, l);
+            set
             {
-                h += 360;
+                Color converted = ToRGBA();
+                converted.G = value;
+                H = converted.H;
+                S = converted.S;
+                L = converted.L;
             }
-            return h;
+        }
+        public override double B
+        {
+            get => BlueFromHSL(h, s, l);
+            set
+            {
+                Color converted = ToRGBA();
+                converted.B = value;
+                H = converted.H;
+                S = converted.S;
+                L = converted.L;
+            }
         }
 
-        // Some pre-defined colours
-        public static Color Red
+        public RGBA ToRGBA()
         {
-            get => new Color(0xff0000ff);
+            return new RGBA(R, G, B, A);
         }
 
-        public static Color Green
+        public override HSLA Copy()
         {
-            get => new Color(0x00ff00ff);
-        }
-
-        public static Color Blue
-        {
-            get => new Color(0x0000ffff);
-        }
-
-        public static Color Yellow
-        {
-            get => new Color(0xffff00ff);
-        }
-
-        public static Color Cyan
-        {
-            get => new Color(0x00ffffff);
-        }
-
-        public override string ToString()
-        {
-            return $"RGBA: {R}, {G}, {B}, {A}";
+            return new HSLA(H, S, L, A);
         }
     }
 }
