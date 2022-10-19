@@ -26,7 +26,7 @@ namespace Magician
         public abstract double S {get; set;}
         public abstract double L {get; set;}
         public abstract Color Copy();
-        public double A {get => a; set => a = value; }
+        public double A {get => a % 256; set => a = value; }
         public uint Hex()
         {
             return (uint)((byte)R << 24) + (uint)((byte)G << 16) + (uint)((byte)B << 8) + (uint)(A);
@@ -107,143 +107,124 @@ namespace Magician
         // TODO: fix Red, Green, Blue FromHSL
         public static double RedFromHSL(double h, double s, double l)
         {
+            double r;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
             h %= 2*Math.PI;
 
-            if (h < Math.PI/3 || h > 2*Math.PI - Math.PI/3)
+            if (h < Math.PI/3)
             {
-                return c;
+                r = c;
             }
-            else if (h < Math.PI - Math.PI/3 || h > 2*Math.PI - Math.PI/3)
+            else if (h < Math.PI - Math.PI/3)
             {
-                return x;
+                r = x;
             }
-            else if (h < Math.PI || h > Math.PI)
+            else if (h < Math.PI)
             {
-                return 0;
+                r = 0;
+            }
+            else if (h < Math.PI + Math.PI/3)
+            {
+                r = 0;
+            }
+            else if (h < 2*Math.PI - Math.PI/3)
+            {
+                r = x;
+            }
+            else if (h < 2*Math.PI)
+            {
+                r = c;
             }
             else
             {
                 throw new InvalidDataException($"Red: invalid phase {h}");
             }
+            return r*255;
         }
 
         public static double GreenFromHSL(double h, double s, double l)
         {
+            double g;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
             h %= 2*Math.PI;
 
-            if (h < Math.PI/3 || (h < Math.PI + Math.PI/3 && h >= Math.PI))
+            if (h < Math.PI/3)
             {
-                return x;
+                g = x;
             }
-            else if (h < Math.PI - Math.PI/3 || h < Math.PI)
+            else if (h < Math.PI - Math.PI/3)
             {
-                return c;
+                g = c;
+            }
+            else if (h < Math.PI)
+            {
+                g = c;
+            }
+            else if (h < Math.PI + Math.PI/3)
+            {
+                g = x;
+            }
+            else if (h < 2*Math.PI - Math.PI/3)
+            {
+                g = 0;
             }
             else if (h < 2*Math.PI)
             {
-                return 0;
+                g = 0;
             }
             else
             {
                 throw new InvalidDataException($"Green: invalid phase {h}");
             }
+            return g*255;
 
 
         }
 
         public static double BlueFromHSL(double h, double s, double l)
         {
+            double b;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/60f) % 2 - 1));
+            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
             h %= 2*Math.PI;
-            if (h < Math.PI - Math.PI/3)
+            if (h < Math.PI/3)
             {
-                return 0;
+                b = 0;
             }
-            else if (h < Math.PI || (h < 2*Math.PI && h > 2*Math.PI - Math.PI/3))
+            else if (h < Math.PI - Math.PI/3)
             {
-                return x;
+                b = 0;
             }
-            else if (h < Math.PI + Math.PI/3 || h < 2*Math.PI)
+            else if (h < Math.PI)
             {
-                return c;
+                b = x;
+            }
+            else if (h < Math.PI + Math.PI/3)
+            {
+                b = c;
+            }
+            else if (h < 2*Math.PI - Math.PI/3)
+            {
+                b = c;
+            }
+            else if (h < 2*Math.PI)
+            {
+                b = x;
             }
             else
             {
                 throw new InvalidDataException($"Blue: invalid phase {h}");
             }
+            return b*255;
         }
-
-        /*
-        * DONT KEEP THIS!
-        */
-         // Given HSLA, return RGBA as a 32-bit uint
-        /*
-        public static uint HSLToRGBHex(float h, float s, float l, byte a)
-        {
-            float r, g, b;
-            float c = l * s;
-            float x = c * (1-Math.Abs((h/60f) % 2 - 1));
-            float m = l - c;
-
-            h %= 360;
-
-            if (h < 60)
-            {
-                r = c;
-                g = x;
-                b = 0;
-            }
-            else if (h < 120)
-            {
-                r = x;
-                g = c;
-                b = 0;
-            }
-            else if (h < 180)
-            {
-                r = 0;
-                g = c;
-                b = x;
-            }
-            else if (h < 240)
-            {
-                r = 0;
-                g = x;
-                b = c;
-            }
-            else if (h < 300)
-            {
-                r = x;
-                g = 0;
-                b = c;
-            }
-            else if (h < 360)
-            {
-                r = c;
-                g = 0;
-                b = x;
-            }
-            else
-            {
-                throw new InvalidDataException($"Invalid phase {h}");
-            }
-            r = 255*(r+m);
-            g = 255*(g+m);
-            b = 255*(b+m);
-
-            return (uint)((byte)r << 24) + (uint)((byte)g << 16) + (uint)((byte)b << 8) + (uint)(a);
-        }*/
     }
 
     public class RGBA : Color
@@ -267,9 +248,9 @@ namespace Magician
             this.a = (hex & 0x000000ff);
         }
 
-        public override double R {get => r; set => r = value; }
-        public override double G {get => g; set => g = value; }
-        public override double B {get => b; set => b = value; }
+        public override double R {get => r%256; set => r = value; }
+        public override double G {get => g%256; set => g = value; }
+        public override double B {get => b%256; set => b = value; }
         public override double H
         {
             get => HueFromRGB(r, g, b);
@@ -329,9 +310,9 @@ namespace Magician
             this.l = l;
             this.a = a;
         }
-        public override double H {get => h; set => h = value;}
-        public override double S {get => s; set => s = value;}
-        public override double L {get => l; set => l = value;}
+        public override double H {get => h%(2*Math.PI); set => h = value;}
+        public override double S {get => s%1; set => s = value;}
+        public override double L {get => l%1; set => l = value;}
         public override double R
         {
             get => RedFromHSL(h, s, l);
