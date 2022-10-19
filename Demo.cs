@@ -40,8 +40,9 @@ namespace Magician
             *  Much is possible in the pre-loop, since Drivers will still work
             */
             Multi.Origin.Add(
-                Multi.RegularPolygon(100, 100, new HSLA(180, 1, 0.5f, 255), 4, 120)
-                //.SubDriven(x => 1, "col0+")
+                Multi.RegularPolygon(100, 100, new HSLA(Math.PI, 1, 1, 255), 4, 120)
+                //.SubDriven(x => 0.02, "h+")
+                .Surrounding(Multi.RegularPolygon(0, 0, new RGBA(0xff0000ff), 3, 30))
             );
             
 
