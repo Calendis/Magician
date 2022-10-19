@@ -296,6 +296,11 @@ namespace Magician
         {
             return new RGBA(R, G, B, A);
         }
+
+        public override string ToString()
+        {
+            return $"RGBA({r}, {g}, {b}, {a})";
+        }
     }
 
     public class HSLA : Color
@@ -311,8 +316,8 @@ namespace Magician
             this.a = a;
         }
         public override double H {get => h%(2*Math.PI); set => h = value;}
-        public override double S {get => s%1; set => s = value;}
-        public override double L {get => l%1; set => l = value;}
+        public override double S {get => s; set => s = value;}
+        public override double L {get => l; set => l = value;}
         public override double R
         {
             get => RedFromHSL(h, s, l);
@@ -358,6 +363,11 @@ namespace Magician
         public override HSLA Copy()
         {
             return new HSLA(H, S, L, A);
+        }
+
+        public override string ToString()
+        {
+            return $"HSLA({h}, {s}, {l}, {a})";
         }
     }
 }
