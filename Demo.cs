@@ -39,10 +39,17 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
+            Multi m = Multi.RegularPolygon(0, 0, new HSLA(Math.PI, 1, 1, 255), 6, 180);
             Multi.Origin.Add(
-                Multi.RegularPolygon(100, 100, new HSLA(Math.PI, 1, 1, 255), 4, 120)
-                //.SubDriven(x => 0.02, "h+")
-                .Surrounding(Multi.RegularPolygon(0, 0, new RGBA(0xff0000ff), 3, 30))
+                m
+                .SubDriven(x => 0.04, "phase+")
+                .SubDriven(x => 0.001, "h+")
+                .Recursed(Multi.Scale)
+                .SubDriven(x => 0.01, "phase+")
+                .SubDriven(x => 0.02, "h+")
+                .Recursed(Multi.Scale)
+                .SubDriven(x => 0.01, "phase+")
+                .SubDriven(x => 0.001, "h+")
             );
             
 
