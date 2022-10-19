@@ -154,6 +154,7 @@ namespace Magician
         protected Color col;
         
         // Full constructor
+        // TODO: make lined, linedCompleted, drawPoint, filled a bitflag int
         public Multi(Multi? parent, double x, double y, Color col, bool lined=false, bool linedCompleted=false, bool drawPoint=true, params Multi[] cs) : base(0)
         {
             this.parent = parent;
@@ -261,7 +262,7 @@ namespace Magician
                     double suba = p0.Col.A;
                     SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     
-                    SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
+                    SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     
                     
                     SDL_RenderDrawLineF(renderer,
@@ -285,7 +286,7 @@ namespace Magician
                 double subb = pLast.Col.B;
                 double suba = pLast.Col.A;
                 
-                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);                
+                SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);                
                 SDL_RenderDrawLineF(renderer,
                 (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
                 (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
@@ -303,6 +304,25 @@ namespace Magician
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
                 SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
+
+            // Rendergeometry test
+            SDL_Vertex[] vs = new SDL_Vertex[Count];
+            for (int i = 0; i < Count; i++)
+            {
+                SDL_FPoint p;
+                p.x = (float)constituents[i].XCartesian(xOffset);
+                p.y = (float)constituents[i].YCartesian(yOffset);
+                vs[i] = new SDL_Vertex();
+                vs[i].position = p;
+                SDL_Color c;
+                c.r = (byte)Col.R;
+                c.g = (byte)Col.G;
+                c.b = (byte)Col.B;
+                c.a = (byte)Col.A;
+                vs[i].color = c;
+            }
+            IntPtr ip = new IntPtr();
+            SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
         }
 
         /**/
@@ -441,11 +461,11 @@ namespace Magician
         
         public Multi Recursed()
         {
-            return Wielding(this);
+            return Wielding(Copy());
         }
         public Multi Recursed(Func<Multi, Multi> F)
         {
-            return Wielding(F.Invoke(this));
+            return Wielding(F.Invoke(Copy()));
         }
 
         public Multi Scaled(double factor)
@@ -465,12 +485,11 @@ namespace Magician
             return this;
         }
         
-        /*
-        public void SetParent(Multi m)
+        // Static multi modifiers
+        public static Multi Scale(Multi m)
         {
-            parent = m;
+            return m.Scaled(1d/Math.Sqrt(3));
         }
-        */
 
         public int Index
         {
