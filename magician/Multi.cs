@@ -483,6 +483,7 @@ namespace Magician
                 return parent.constituents.IndexOf(this);
             }
         }
+        // TODO: rename this
         public double Normal
         {
             get
