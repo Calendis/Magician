@@ -240,7 +240,6 @@ namespace Magician
         }
         public RGBA(uint hex)
         {
-            // 0xff00ff00
             this.r = hex >> 24;
             this.g = (hex & 0x00ff0000) >> 16;
             this.b = (hex & 0x0000ff00) >> 8;
