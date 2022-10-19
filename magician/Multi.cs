@@ -261,7 +261,7 @@ namespace Magician
                     double suba = p0.Col.A;
                     SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     
-                    SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
+                    SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                     
                     
                     SDL_RenderDrawLineF(renderer,
@@ -285,7 +285,7 @@ namespace Magician
                 double subb = pLast.Col.B;
                 double suba = pLast.Col.A;
                 
-                SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);                
+                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);                
                 SDL_RenderDrawLineF(renderer,
                 (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
                 (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
