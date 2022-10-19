@@ -104,7 +104,6 @@ namespace Magician
             return 0.5f * (colMax + colMin);
         }
 
-        // TODO: fix Red, Green, Blue FromHSL
         public static double RedFromHSL(double h, double s, double l)
         {
             double r;
