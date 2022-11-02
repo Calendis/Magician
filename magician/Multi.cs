@@ -122,7 +122,7 @@ namespace Magician
             return Globals.winHeight / 2 - Y.Evaluate(offset);
         }
         
-        public IEnumerable<Multi> Constituents(Func<double, double> truth, double truthThreshold=0)
+        public IEnumerable<Multi> GetConstituents(Func<double, double> truth, double truthThreshold=0)
         {
             for (int i = 0; i < constituents.Count; i++)
             {
@@ -130,19 +130,32 @@ namespace Magician
                 {
                     yield return constituents[i];
                 }
+                // TODO: remove this else block
                 else
                 {
                     continue;
                 }
             }
         }
-        public IEnumerable<Drawable> Constituents()
+        /*
+        public IEnumerable<Drawable> GetConstituents()
         {
             for (int i = 0; i < constituents.Count; i++)
                 {
                     yield return constituents[i];
                 }
         }
+        */
+        // TODO: test this
+        public IEnumerable<Multi> GetConstituents()
+        {
+            return GetConstituents(x=>1, 0);
+        }
+        public List<Multi> Constituents
+        {
+            get => constituents;
+        }
+
         // If true, a Multi will be drawn with its constituents connected by lines
         // This is useful for plots, polygons, etc
         protected bool lined;
@@ -229,7 +242,7 @@ namespace Magician
 
         public Multi Filter(Func<double, double> f, double thresh=0)
         {
-            constituents = Constituents(f, thresh).ToList();
+            constituents = GetConstituents(f, thresh).ToList();
             return this;
         }
 
@@ -305,7 +318,17 @@ namespace Magician
                 SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
 
-            // Rendergeometry test
+            // TODO: Move the following code into the Renderer
+            // Something like Renderer.Triangulize(Multi)
+            // Eventually move SDL drawing into the Renderer
+            Renderer.Geo.ConstructTrapezoids();
+            
+            // RenderGeometry test
+            Multi startPoint = constituents[0];
+            Multi[] pointGroup = new Multi[4];
+            //List<Multi> cs2 = constituents;
+            //cs2.RemoveAt(0);
+            /*
             SDL_Vertex[] vs = new SDL_Vertex[Count];
             for (int i = 0; i < Count; i++)
             {
@@ -321,8 +344,10 @@ namespace Magician
                 c.a = (byte)Col.A;
                 vs[i].color = c;
             }
-            IntPtr ip = new IntPtr();
-            SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
+            */
+            
+            //IntPtr ip = new IntPtr();
+            //SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
         }
 
         /**/
@@ -476,6 +501,25 @@ namespace Magician
                 c.Scaled(factor);
             }
             return this;
+        }
+
+        /*
+        * Groups a Multi by pairs of vertices
+        */
+        public List<Multi> Edges()
+        {
+            List<Multi> edges = new List<Multi>();
+            for (int i = 0; i < Count - 1; i++)
+            {
+                Multi pN = constituents[i];
+                Multi pN1 = constituents[i+1];
+                edges.Add(new Multi(pN, pN1));
+            }
+            // Add final edge
+            Multi epLast = constituents[Count - 1];
+            Multi ep0 = constituents[0];
+            edges.Add(new Multi(epLast, ep0));
+            return edges;
         }
 
         public Multi Invisible()
@@ -656,6 +700,18 @@ namespace Magician
         public static Multi Star(int sides, double innerRadius, double outerRadius)
         {
             return Star(0, 0, sides, innerRadius, outerRadius);
+        }
+
+        // Find intersection of two line segments
+        public static Multi Intersection(double x0, double y0, double x1, double y1)
+        {
+            return new Multi();
+        }
+        // Find all intersections of two Multis
+        public static Multi Intersection(Multi p0, Multi p1)
+        {
+            throw new NotImplementedException("Intersection of Multi");
+            return new Multi();
         }
 
         public static Action<double> StringMap(Multi m, string s)
