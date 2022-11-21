@@ -26,40 +26,40 @@ namespace Renderer
             return (int)Math.Ceiling(n / v);
         }
 
-        public static bool GreaterThan(double[] p0, double[] p1)
+        public static bool GreaterThan(Point_t p0, Point_t p1)
         {
-            double x0 = p0[0];
-            double y0 = p0[1];
-            double x1 = p1[0];
-            double y1 = p1[1];
+            double x0 = p0.x;
+            double y0 = p0.y;
+            double x1 = p1.x;
+            double y1 = p1.y;
             return y0 > y1 ? true : (y0 < y1 ? false : (x0 > x1 ? true : false));
         }
 
-        public static bool GreaterThanEqTo(double[] p0, double[] p1)
+        public static bool GreaterThanEqTo(Point_t p0, Point_t p1)
         {
-            double x0 = p0[0];
-            double y0 = p0[1];
-            double x1 = p1[0];
-            double y1 = p1[1];
+            double x0 = p0.x;
+            double y0 = p0.y;
+            double x1 = p1.x;
+            double y1 = p1.y;
             return y0 > y1 ? true : (y0 < y1 ? false : (x0 > x1 ? true : true));
         }
 
-        public static bool EqualTo(double[] p0, double[] p1)
+        public static bool EqualTo(Point_t p0, Point_t p1)
         {
-            return (p0[0] == p1[0] && p0[1] == p1[1]);
+            return p0.x == p1.x && p0.y == p1.y;
         }
 
         // Is vertex v left of Segment segs[segnum]? Handles degenerate cases when both of
         // the vertices have the same y-coord., etc.
-        public static bool IsLeftOf(int segnum, double[] v)
+        public static bool IsLeftOf(int segnum, Point_t v)
         {
             Segment s = Geo.segs[segnum];
             double area;
             if (GreaterThan(s.p1, s.p0))  // Segment going upwards
             {
-                if (s.p1[1] == v[1])
+                if (s.p1.y == v.y)
                 {
-                    if (v[0] < s.p1[0])
+                    if (v.x < s.p1.x)
                     {
                         area = 1;
                     }
@@ -68,9 +68,9 @@ namespace Renderer
                         area = -1;
                     }
                 }
-                else if (s.p0[1] == v[1])
+                else if (s.p0.y == v.y)
                 {
-                    if (v[0] < s.p0[0])
+                    if (v.x < s.p0.x)
                     {
                         area = 1;
                     }
@@ -86,9 +86,9 @@ namespace Renderer
             }
             else
             {
-                if (s.p1[1] == v[1])
+                if (s.p1.y == v.y)
                 {
-                    if (v[0] < s.p1[0])
+                    if (v.x < s.p1.x)
                     {
                         area = 1;
                     }
@@ -97,9 +97,9 @@ namespace Renderer
                         area = -1;
                     }
                 }
-                else if (s.p0[1] == v[1])
+                else if (s.p0.y == v.y)
                 {
-                    if (v[0] < s.p0[0])
+                    if (v.x < s.p0.x)
                     {
                         area = 1;
                     }
@@ -116,12 +116,48 @@ namespace Renderer
             return area > 0;
         }
 
-        public static double Cross(double[] v0, double[] v1, double[] v2)
+        public static double Cross(Point_t v0, Point_t v1, Point_t v2)
         {
-            return (v1[0] - v0[0]) * (v2[1] - v0[1]) - (v1[1] - v0[1]) * (v2[0] - v0[0]);
+            return (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
         }
+
+        public static double Dot(Point_t v0, Point_t v1)
+        {
+            return v0.x*v1.x + v0.y*v1.y;
+        }
+
+        public static double GetAngle(Point_t vp0, Point_t vpnext, Point_t vp1)
+        {
+            Point_t v0, v1;
+
+            v0.x = vpnext.x - vp0.x;
+            v0.y = vpnext.y - vp0.y;
+
+            v1.x = vp1.x - vp0.x;
+            v1.y = vp1.y - vp0.y;
+
+            if (CrossSine(v0, v1) >= 0) /* sine is positive */
+                return Dot(v0, v1) / Length(v0) / Length(v1);
+            else
+                return (-1.0 * Dot(v0, v1) / Length(v0) / Length(v1) - 2);
+        }
+
+        public static double CrossSine(Point_t v0, Point_t v1)
+        {
+            return v0.x*v1.y - v1.x*v0.y;
+        }
+
+        public static double Length(Point_t v0)
+        {
+            return Math.Sqrt(v0.x*v0.x + v0.y*v0.y);
+        }
+
     }
 
+    /*
+    *  The big-daddy renderer class. Geo handles importing of data from a Multi
+    *  and, using Siedel's algorithm, its division into triangles.
+    */
     public static class Geo
     {
 
@@ -137,6 +173,29 @@ namespace Renderer
         static int choose_idx = 1;
         public static int segnum = 0;
 
+        ////
+
+        static Vertexchain[] vertices;
+        static Monchain[] mchain;
+        static int[] mon;
+        static bool[] visited;
+        static int chain_idx, op_idx, mon_idx;
+
+        const int SP_SIMPLE_LRUP = 1;
+        const int SP_SIMPLE_LRDN = 2;
+        const int SP_2UP_2DN = 3;
+        const int SP_2UP_LEFT = 4;
+        const int SP_2UP_RIGHT = 5;
+        const int SP_2DN_LEFT = 6;
+        const int SP_2DN_RIGHT = 7;
+        const int SP_NOSPLIT = -1;
+
+        const int TR_FROM_UP = 1;
+        const int TR_FROM_DN = 2;
+
+        const int TRI_LHS = 1;
+        const int TRY_RHS = 2;
+
         // Initialize arrays and read segments from Multi
         public static void Load(Magician.Multi m)
         {
@@ -144,46 +203,541 @@ namespace Renderer
             MAX_NODES = 8 * MAX_SEGMENTS;
             MAX_TRAPEZOIDS = 4 * MAX_SEGMENTS;
 
-            segs = new Segment[MAX_SEGMENTS];
+            segs = new Segment[MAX_SEGMENTS + 1];
             // nodes set in InitQueryStructure
             // trapezoids set in InitQueryStructure
+            // vertices set in MonotonateTrapezoids
 
-            List<Magician.Multi> edges = m.Edges();
-            int i = 1;  // The original indexed its segments at 1 for some reason
-            int last = MAX_SEGMENTS;
-            foreach (Magician.Multi seg in edges)
+            int i = 1;
+            int first = i;  // Currently, I only support one contour
+            int last = MAX_SEGMENTS;  // Max index. The array is of size MAX_SEGMENTS+1
+
+            for (int j = 0; j < MAX_SEGMENTS; j++)
             {
-                // Sort the edge top-to-bottom, with ties broken left-to-right (lexicographic sort)
-                // TODO: test if this sort is even necessary
-                seg.Constituents.Sort(new Comparison<Magician.Multi>((m1, m2) =>
+
+                double x0 = m.Constituents[i - 1].X.Evaluate();
+                double y0 = m.Constituents[i - 1].Y.Evaluate();
+                segs[i].p0 = new Point_t();
+                segs[i].p0.x = x0;
+                segs[i].p0.y = y0;
+
+                if (i == last)
                 {
-                    return m1.Y.Evaluate() > m2.Y.Evaluate() ? 1 : (m1.Y.Evaluate() < m2.Y.Evaluate() ? -1 : (m1.X.Evaluate() < m2.X.Evaluate() ? 1 : -1));
-                }));
-
-                segs[i].next = i + 1;
-                segs[i].prev = last;
-                segs[last].p1 = segs[i].p0;
+                    segs[i].next = first;
+                    segs[i].prev = i - 1;
+                    segs[i - 1].p1 = segs[i].p0;
+                }
+                else if (i == first)
+                {
+                    segs[i].next = i + 1;
+                    segs[i].prev = last;
+                    segs[last].p1 = segs[i].p0;
+                }
+                else
+                {
+                    segs[i].prev = i - 1;
+                    segs[i].next = i + 1;
+                    segs[i - 1].p1 = segs[i].p0;
+                }
                 segs[i].isInserted = false;
-
                 i++;
             }
-            Initialize();
-            ConstructTrapezoids();
-            //MonotonateTrapezoids();
-            //TriangulateMonotonePolygons();
+
+            // Make sure the root node is instantiated
+            // However, it should remain empty
+            segs[0].isInserted = false;
+            segs[0].next = 0;
+            segs[0].prev = 0;
+            segs[0].p0 = new Point_t();
+            segs[0].p1 = new Point_t();
+
+            int n = i - 1;
+            Initialize(n);
+            ConstructTrapezoids(n);
+            MonotonateTrapezoids(n);
+            //TriangulateMonotonePolygons(m, nmonopoly, op);
+            //Console.WriteLine("Load successful!");
 
         }
 
-        public static void Initialize()
+        public static void Initialize(int n)
         {
-            for (int i = 0; i < segs.Length; i++)
+            q_idx = 0;
+            tr_idx = 0;
+            choose_idx = 0;
+            for (int i = 1; i <= n; i++)
             {
                 segs[i].isInserted = false;
             }
             Random r = new Random();
             // TODO: ensure this shuffle works
-            segs.ToList<Segment>().Sort((s0, s1) => r.Next(1) == 1 ? 1 : -1);
+            segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : -1);
         }
+
+        public static int MonotonateTrapezoids(int n)
+        {
+            int i;
+            int tr_start;
+            vertices = new Vertexchain[MAX_SEGMENTS + 1];
+            mchain = new Monchain[MAX_TRAPEZOIDS + 1];
+            mon = new int[MAX_SEGMENTS + 1];
+            visited = new bool[MAX_TRAPEZOIDS + 1];
+            //chain_idx, op_idx, mon_idx
+
+            /* First locate a trapezoid which lies inside the polygon */
+            /* and which is triangular */
+            for (i = 0; i < MAX_TRAPEZOIDS + 1; i++)
+                if (InsidePolygon(trapezoids[i]))
+                    break;
+            tr_start = i-1;
+
+            /* Initialise the mon data-structure and start spanning all the */
+            /* trapezoids within the polygon */
+
+            for (i = 1; i <= n; i++)
+            {
+                mchain[i].prev = segs[i].prev;
+                mchain[i].next = segs[i].next;
+                mchain[i].vnum = i;
+                vertices[i].pt = segs[i].p0;
+                unsafe
+                {
+                    vertices[i].vnext[0] = segs[i].next; /* next vertex */
+                    vertices[i].vpos[0] = i;            /* locn. of next vertex */
+                }
+                vertices[i].nextfree = 1;
+            }
+
+            chain_idx = n;
+            mon_idx = 0;
+            mon[0] = 1; /* position of any vertex in the first */
+            /* chain  */
+            //
+
+            /* traverse the polygon */
+            if (trapezoids[tr_start].u0 > 0)
+                TraversePolygon(0, tr_start, trapezoids[tr_start].u0, TR_FROM_UP);
+            else if (trapezoids[tr_start].d0 > 0)
+                TraversePolygon(0, tr_start, trapezoids[tr_start].d0, TR_FROM_DN);
+
+            /* return the number of polygons created */
+            return newmon();
+        }
+
+        static int newmon()
+        {
+            return ++mon_idx;
+        }
+
+        static int TraversePolygon(int mcur, int trnum, int from, int dir)
+        {
+            Trapezoid t = trapezoids[trnum];
+            int howsplit, mnew;
+            int v0, v1, v0next, v1next;
+            int retval = 0, tmp;
+            bool do_switch = false;
+
+            if ((trnum <= 0) || visited[trnum])
+                return 0;
+
+            visited[trnum] = true;
+
+            /* We have much more information available here. */
+            /* rseg: goes upwards   */
+            /* lseg: goes downwards */
+
+            /* Initially assume that dir = TR_FROM_DN (from the left) */
+            /* Switch v0 and v1 if necessary afterwards */
+
+            /* special cases for triangles with cusps at the opposite ends. */
+            /* take care of this first */
+            if ((t.u0 <= 0) && (t.u1 <= 0))
+            {
+                //
+                if ((t.d0 > 0) && (t.d1 > 0)) /* downward opening triangle */
+                {
+                    v0 = trapezoids[t.d1].lSeg;
+                    v1 = t.lSeg;
+                    if (from == t.d1)
+                    {
+                        do_switch = true;
+                        mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                        TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                    }
+                    else
+                    {
+                        mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                        TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                    }
+                }
+                else
+                {
+                    retval = SP_NOSPLIT; /* Just traverse all neighbours */
+                    TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                    TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                    TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                    TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                }
+            }
+            else if ((t.d0 <= 0) && (t.d1 <= 0))
+            {
+                if ((t.u0 > 0) && (t.u1 > 0)) /* upward opening triangle */
+                {
+                    v0 = t.rSeg;
+                    v1 = trapezoids[t.u0].rSeg;
+                    if (from == t.u1)
+                    {
+                        do_switch = true;
+                        mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                        TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                    }
+                    else
+                    {
+                        mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                        TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                    }
+                }
+                else
+                {
+                    retval = SP_NOSPLIT; /* Just traverse all neighbours */
+                    TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                    TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                    TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                    TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                }
+            }
+            else if ((t.u0 > 0) && (t.u1 > 0))
+            {
+                if ((t.d0 > 0) && (t.d1 > 0)) /* downward + upward cusps */
+                {
+                    v0 = trapezoids[t.d1].lSeg;
+                    v1 = trapezoids[t.u0].rSeg;
+                    retval = SP_2UP_2DN;
+                    if (((dir == TR_FROM_DN) && (t.d1 == from)) ||
+                        ((dir == TR_FROM_UP) && (t.u1 == from)))
+                    {
+                        do_switch = true;
+                        mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                        TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                        TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                        TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                    }
+                    else
+                    {
+                        mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                        TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                        TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                        TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                    }
+                }
+                else /* only downward cusp */
+                {
+                    if (Alg.EqualTo(t.lo, segs[t.lSeg].p1))
+                    {
+                        v0 = trapezoids[t.u0].rSeg;
+                        v1 = segs[t.lSeg].next;
+
+                        retval = SP_2UP_LEFT;
+                        if ((dir == TR_FROM_UP) && (t.u0 == from))
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                        }
+                    }
+                    else
+                    {
+                        v0 = t.rSeg;
+                        v1 = trapezoids[t.u0].rSeg;
+                        retval = SP_2UP_RIGHT;
+                        if ((dir == TR_FROM_UP) && (t.u1 == from))
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                        }
+                    }
+                }
+            }
+            else if ((t.u0 > 0) || (t.u1 > 0))
+            {
+                if ((t.d0 > 0) && (t.d1 > 0)) /* only upward cusp */
+                {
+                    if (Alg.EqualTo(t.hi, segs[t.lSeg].p0))
+                    {
+                        v0 = trapezoids[t.d1].lSeg;
+                        v1 = t.lSeg;
+                        retval = SP_2DN_LEFT;
+                        if (!((dir == TR_FROM_DN) && (t.d0 == from)))
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                        }
+                    }
+                    else
+                    {
+                        v0 = trapezoids[t.d1].lSeg;
+                        v1 = segs[t.rSeg].next;
+
+                        retval = SP_2DN_RIGHT;
+                        if ((dir == TR_FROM_DN) && (t.d1 == from))
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                        }
+                    }
+                }
+                else
+                {
+                    if (Alg.EqualTo(t.hi, segs[t.lSeg].p0) &&
+                        Alg.EqualTo(t.lo, segs[t.rSeg].p0))
+                    {
+                        v0 = t.rSeg;
+                        v1 = t.lSeg;
+                        retval = SP_SIMPLE_LRDN;
+                        if (dir == TR_FROM_UP)
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                        }
+                    }
+                    else if (Alg.EqualTo(t.hi, segs[t.rSeg].p1) &&
+                             Alg.EqualTo(t.lo, segs[t.lSeg].p1))
+                    {
+                        v0 = segs[t.rSeg].next;
+                        v1 = segs[t.lSeg].next;
+
+                        retval = SP_SIMPLE_LRUP;
+                        if (dir == TR_FROM_UP)
+                        {
+                            do_switch = true;
+                            mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                        }
+                        else
+                        {
+                            mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                            TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                        }
+                    }
+                    else /* no split possible */
+                    {
+                        retval = SP_NOSPLIT;
+                        TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                        TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                        TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                        TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                    }
+                }
+            }
+
+            return retval;
+        }
+
+        static int MakeNewMonotonePoly(int mcur, int v0, int v1)
+        {
+            int p, q, ip, iq;
+            int mnew = newmon();
+            int i, j, nf0, nf1;
+            Vertexchain vp0, vp1;
+
+            vp0 = vertices[v0];
+            vp1 = vertices[v1];
+
+            GetVertexPositions(v0, v1, out ip, out iq);
+
+            unsafe
+            {
+                p = vp0.vpos[ip];
+                q = vp1.vpos[iq];
+            }
+
+            /* At this stage, we have got the positions of v0 and v1 in the */
+            /* desired chain. Now modify the linked lists */
+
+            i = NewChainElement(); /* for the new list */
+            j = NewChainElement();
+
+            mchain[i].vnum = v0;
+            mchain[j].vnum = v1;
+
+            mchain[i].next = mchain[p].next;
+            mchain[mchain[p].next].prev = i;
+            mchain[i].prev = j;
+            mchain[j].next = i;
+            mchain[j].prev = mchain[q].prev;
+            mchain[mchain[q].prev].next = j;
+
+            mchain[p].next = q;
+            mchain[q].prev = p;
+
+            nf0 = vp0.nextfree;
+            nf1 = vp1.nextfree;
+
+            unsafe
+            {
+                vp0.vnext[ip] = v1;
+                vp0.vpos[nf0] = i;
+                vp0.vnext[nf0] = mchain[mchain[i].next].vnum;
+                vp1.vpos[nf1] = j;
+                vp1.vnext[nf1] = v0;
+            }
+            vp0.nextfree++;
+            vp1.nextfree++;
+
+            mon[mcur] = p;
+            mon[mnew] = i;
+            return mnew;
+        }
+
+        /* (v0, v1) is the new diagonal to be added to the polygon. Find which */
+        /* chain to use and return the positions of v0 and v1 in p and q */
+        static int GetVertexPositions(int v0, int v1, out int ip, out int iq)
+        {
+            Vertexchain vp0, vp1;
+            int i;
+            double angle, temp;
+            int tp=0, tq=0;
+
+            vp0 = vertices[v0];
+            vp1 = vertices[v1];
+
+            /* p is identified as follows. Scan from (v0, v1) rightwards till */
+            /* you hit the first segment starting from v0. That chain is the */
+            /* chain of our interest */
+
+            angle = -4.0;
+            for (i = 0; i < 4; i++)
+            {
+                unsafe
+                {
+                    if (vp0.vnext[i] <= 0)
+                        continue;
+                    if ((temp = Alg.GetAngle(vp0.pt, (vertices[vp0.vnext[i]].pt), vp1.pt)) >
+                        angle)
+                    {
+                        angle = temp;
+                        tp = i;
+                    }
+                }
+            }
+            ip = tp;
+
+            /* Do similar actions for q */
+
+            angle = -4.0;
+            for (i = 0; i < 4; i++)
+            {
+                unsafe
+                {
+                    if (vp1.vnext[i] <= 0)
+                        continue;
+                    if ((temp = Alg.GetAngle(vp1.pt, (vertices[vp1.vnext[i]].pt), vp0.pt)) >
+                        angle)
+                    {
+                        angle = temp;
+                        tq = i;
+                    }
+                }
+            }
+            iq = tq;
+            return 0;
+        }
+
+        static int NewChainElement()
+        {
+            return ++chain_idx;
+        }
+
+        /* Is a trapezoid inside the polygon? */
+        static bool InsidePolygon(Trapezoid t)
+        {
+            int rseg = t.rSeg;
+            if (t.state == false)
+                return false;
+
+            if (t.lSeg <= 0 || t.rSeg <= 0)
+                return false;
+
+            if (((t.u0 <= 0) && (t.u1 <= 0)) ||
+                ((t.d0 <= 0) && (t.d1 <= 0)))
+                return Alg.GreaterThan(segs[rseg].p1, segs[rseg].p0);
+
+            return false;
+
+        }
+
+        /////////
 
         // Increments q_idx and returns for use as an indexer
         public static int NewNode()
@@ -194,6 +748,9 @@ namespace Renderer
         // Increments and returns tr_idx
         public static int NewTrapezoid()
         {
+            trapezoids[tr_idx].lSeg = -1;
+            trapezoids[tr_idx].rSeg = -1;
+            trapezoids[tr_idx].state = true;
             return tr_idx++;
         }
 
@@ -211,17 +768,19 @@ namespace Renderer
             q_idx = tr_idx = 1;
             Segment s = segs[segnum];
 
-            // The initial trapezoids:
-            /*
-            * 0: middle left
-            * 1: middle right
-            * 2: bottommost
-            * 3: topmost
-            */
-
             // Define the initial 7 nodes, with the first being the root
+            query = new Node[MAX_NODES + 1];
+            trapezoids = new Trapezoid[MAX_TRAPEZOIDS + 1];
+            // Initialize all trapezoids
+            foreach (Trapezoid tr in trapezoids)
+                for (int k = 0; k < trapezoids.Length; k++)
+                {
+                    trapezoids[k] = new Trapezoid();
+                }
+
             i1 = NewNode();
             query[i1].kind = NodeKind.Y_NODE;
+            //query[i1].pY = Alg.GreaterThan(s.p0, s.p1) ? s.p0 : (s.p0.x > s.p1.x ? s.p0 : s.p1);
             query[i1].pY = Alg.GreaterThan(s.p0, s.p1) ? s.p0 : s.p1;
             root = i1;
 
@@ -252,6 +811,13 @@ namespace Renderer
             query[i7].parent = i5;
 
             // Define the initial 4 trapezoids in the trapezoidation
+            // The initial trapezoids:
+            /*
+            * 0: middle left
+            * 1: middle right
+            * 2: bottommost
+            * 3: topmost
+            */
             t1 = NewTrapezoid();
             t2 = NewTrapezoid();
             t3 = NewTrapezoid();
@@ -259,10 +825,10 @@ namespace Renderer
 
             trapezoids[t1].hi = trapezoids[t2].hi = trapezoids[t4].lo = query[i1].pY;
             trapezoids[t1].lo = trapezoids[t2].lo = trapezoids[t3].hi = query[i3].pY;
-            trapezoids[t4].hi[1] = Double.PositiveInfinity;
-            trapezoids[t4].hi[0] = Double.PositiveInfinity;
-            trapezoids[t3].lo[1] = Double.NegativeInfinity;
-            trapezoids[t3].lo[0] = Double.NegativeInfinity;
+            trapezoids[t4].hi.y = Double.PositiveInfinity;
+            trapezoids[t4].hi.x = Double.PositiveInfinity;
+            trapezoids[t3].lo.y = Double.NegativeInfinity;
+            trapezoids[t3].lo.x = Double.NegativeInfinity;
             trapezoids[t1].rSeg = trapezoids[t2].lSeg = segnum;
             trapezoids[t1].u0 = trapezoids[t2].u0 = t4;
             trapezoids[t1].d0 = trapezoids[t2].d0 = t3;
@@ -287,7 +853,7 @@ namespace Renderer
             return root;
         }
 
-        public static void ConstructTrapezoids()
+        public static void ConstructTrapezoids(int nseg)
         {
 
             /*
@@ -298,54 +864,49 @@ namespace Renderer
             /*
             * Set the roots of all segments to the initial root
             */
-            for (int i = 0; i < segs.Length; i++)
+            for (int i = 1; i <= nseg; i++)
             {
-                segs[i].root0 = segs[1].root1 = root;
+                segs[i].root0 = segs[i].root1 = root;
             }
 
             /*
             * Add the remaining segments into the trapezoidation
             */
-            int logstarN = Renderer.Alg.Logstar(segs.Length);
-            for (int h = 1; h < logstarN; h++)
+            int logstarN = Renderer.Alg.Logstar(nseg);
+            // Idk
+            for (int h = 1; h <= logstarN; h++)
             {
-                // Idk
-                for (int i = Renderer.Alg.N(segs.Length, h - 1) + 1; i <= Renderer.Alg.N(segs.Length, h); i++)
+                for (int i = Renderer.Alg.N(nseg, h - 1) + 1; i <= Renderer.Alg.N(nseg, h); i++)
                 {
                     AddSegment(ChooseSegment());
                 }
 
                 // Find a new root for the segment endpoints
-                for (int i = 1; i <= segs.Length; i++)
+                for (int i = 1; i <= nseg; i++)
                 {
                     FindNewRoots(i);
                 }
             }
 
-            for (int i = Alg.N(segs.Length, Alg.Logstar(segs.Length)) + 1; i <= segs.Length; i++)
+            for (int i = Alg.N(nseg, Alg.Logstar(nseg)) + 1; i <= nseg; i++)
             {
                 AddSegment(ChooseSegment());
             }
-
-
-            /*
-            * End of trapezoidation code
-            */
         }
 
         static void AddSegment(int segnum)
         {
             Segment s = segs[segnum];
             int tu, tl, sk, tfirst, tlast, tnext;
-            int tfirstr=0, tlastr=0;
+            int tfirstr = 0, tlastr = 0;
             int tfirstl, tlastl;
             int i1, i2, t, t1, t2, tn;
-            double[] tpt;  // Top point?
+            Point_t tpt;  // Top point?
             int tritop = 0, tribot = 0;
             bool isSwapped = false;
             int tmpTriSeg;
 
-            if (Alg.GreaterThan(s.p0, s.p1))
+            if (Alg.GreaterThan(s.p1, s.p0))
             {
                 // Swap points
                 tpt = s.p0;
@@ -364,34 +925,42 @@ namespace Renderer
             {
                 int tmp_d;
                 tu = LocateEndpoint(s.p0, s.p1, s.root0);
-
                 tl = NewTrapezoid();
+
                 trapezoids[tl].state = true;
                 trapezoids[tl] = trapezoids[tu];
-                trapezoids[tu].lo[1] = trapezoids[tl].hi[1] = s.p0[1];
-                trapezoids[tu].lo[0] = trapezoids[tl].hi[0] = s.p0[0];
+                trapezoids[tu].lo.y = trapezoids[tl].hi.y = s.p0.y;
+                trapezoids[tu].lo.x = trapezoids[tl].hi.x = s.p0.x;
                 trapezoids[tu].d0 = tl;
                 trapezoids[tu].d1 = 0;
                 trapezoids[tl].u0 = tu;
                 trapezoids[tl].u1 = 0;
 
                 if (((tmp_d = trapezoids[tl].d0) > 0) && (trapezoids[tmp_d].u0 == tu))
+                {
                     trapezoids[tmp_d].u0 = tl;
+                }
                 if (((tmp_d = trapezoids[tl].d0) > 0) && (trapezoids[tmp_d].u1 == tu))
+                {
                     trapezoids[tmp_d].u1 = tl;
-
+                }
                 if (((tmp_d = trapezoids[tl].d1) > 0) && (trapezoids[tmp_d].u0 == tu))
+                {
                     trapezoids[tmp_d].u0 = tl;
+                }
                 if (((tmp_d = trapezoids[tl].d1) > 0) && (trapezoids[tmp_d].u1 == tu))
+                {
                     trapezoids[tmp_d].u1 = tl;
+                }
 
                 // Update the query and obtain the sinks for the trapezoids
                 i1 = NewNode();
                 i2 = NewNode();
                 sk = trapezoids[tu].sink;
+
                 query[sk].kind = NodeKind.Y_NODE;
                 query[sk].pY = s.p0;
-                query[sk].segnum = segnum;
+                query[sk].segnum = segnum;  // not necessary according to original?
                 query[sk].left = i2;
                 query[sk].right = i1;
 
@@ -407,6 +976,7 @@ namespace Renderer
                 trapezoids[tl].sink = i2;
                 tfirst = tl;
             }
+
             // p0 already present in existing segment
             // Get the topmost intersecting trapezoid
             else
@@ -422,8 +992,8 @@ namespace Renderer
                 tl = NewTrapezoid();
                 trapezoids[tl].state = true;
                 trapezoids[tl] = trapezoids[tu];
-                trapezoids[tu].lo[1] = trapezoids[tl].hi[1] = s.p1[1];
-                trapezoids[tu].lo[0] = trapezoids[tl].hi[0] = s.p1[0];
+                trapezoids[tu].lo.y = trapezoids[tl].hi.y = s.p1.y;
+                trapezoids[tu].lo.x = trapezoids[tl].hi.x = s.p1.x;
                 trapezoids[tu].d0 = tl;
                 trapezoids[tu].d1 = 0;
                 trapezoids[tl].u0 = tu;
@@ -469,11 +1039,12 @@ namespace Renderer
                 tribot = 1;
             }
 
+            // While start
             t = tfirst;
             while (t > 0 && Alg.GreaterThanEqTo(trapezoids[t].lo, trapezoids[tlast].lo))
             {
                 int t_sav, tn_sav;
-                sk = Geo.trapezoids[t].sink;
+                sk = trapezoids[t].sink;
                 i1 = NewNode();
                 i2 = NewNode();
 
@@ -488,22 +1059,23 @@ namespace Renderer
 
                 query[i2].kind = NodeKind.S_NODE; /* right trapezoid (allocate new) */
                 query[i2].trnum = tn = NewTrapezoid();
-                tn = query[i2].trnum;
-                Geo.trapezoids[tn].state = true;
+                //tn = query[i2].trnum;  // TODO: delete?
+                trapezoids[tn].state = true;
                 query[i2].parent = sk;
 
                 if (t == tfirst)
                     tfirstr = tn;
-                if (Geo.trapezoids[t].lo == Geo.trapezoids[tlast].lo)
+                if (Alg.EqualTo(trapezoids[t].lo, trapezoids[tlast].lo))
                     tlastr = tn;
-                Geo.trapezoids[tn] = Geo.trapezoids[t];
-                Geo.trapezoids[t].sink = i1;
-                Geo.trapezoids[tn].sink = i2;
+
+                trapezoids[tn] = trapezoids[t];
+                trapezoids[t].sink = i1;
+                trapezoids[tn].sink = i2;
                 t_sav = t;
                 tn_sav = tn;
 
                 // Impossible case
-                if (Geo.trapezoids[t].d0 <= 0 && Geo.trapezoids[t].d1 <= 0)
+                if (trapezoids[t].d0 <= 0 && trapezoids[t].d1 <= 0)
                 {
                     throw new InvalidDataException("Horror in AddSegment!");
                 }
@@ -573,8 +1145,8 @@ namespace Renderer
                         }
                     }
 
-                    if ((trapezoids[t].lo[1] == trapezoids[tlast].lo[1]) &&
-                        (trapezoids[t].lo[0] == trapezoids[tlast].lo[0]) &&
+                    if ((trapezoids[t].lo.y == trapezoids[tlast].lo.y) &&
+                        (trapezoids[t].lo.x == trapezoids[tlast].lo.x) &&
                         tribot == 1)
                     { /* bottom forms a triangle */
 
@@ -681,8 +1253,8 @@ namespace Renderer
                         }
                     }
 
-                    if (trapezoids[t].lo[1] == trapezoids[tlast].lo[1] &&
-                        trapezoids[t].lo[0] == trapezoids[tlast].lo[0] &&
+                    if (trapezoids[t].lo.y == trapezoids[tlast].lo.y &&
+                        trapezoids[t].lo.x == trapezoids[tlast].lo.x &&
                         tribot == 1)
                     { /* bottom forms a triangle */
                         int tmpseg;
@@ -735,23 +1307,23 @@ namespace Renderer
                 {
                     int tmpseg = trapezoids[trapezoids[t].d0].rSeg;
                     double y0, yt;
-                    double[] tmppt = { 0, 0 };
+                    Point_t tmppt = new Point_t();
                     //int tnext, i_d0, i_d1;
                     int i_d0, i_d1;
 
                     i_d0 = i_d1 = 0;
-                    if (trapezoids[t].lo[1] == s.p0[1])
+                    if (trapezoids[t].lo.y == s.p0.y)
                     {
-                        if (trapezoids[t].lo[0] > s.p0[0])
+                        if (trapezoids[t].lo.x > s.p0.x)
                             i_d0 = 1;
                         else
                             i_d1 = 1;
                     }
                     else
                     {
-                        tmppt[1] = y0 = trapezoids[t].lo[1];
-                        yt = (y0 - s.p0[1]) / (s.p1[1] - s.p0[1]);
-                        tmppt[0] = s.p0[0] + yt * (s.p1[0] - s.p0[0]);
+                        tmppt.y = y0 = trapezoids[t].lo.y;
+                        yt = (y0 - s.p0.y) / (s.p1.y - s.p0.y);
+                        tmppt.x = s.p0.x + yt * (s.p1.x - s.p0.x);
 
                         if (!Alg.GreaterThanEqTo(tmppt, trapezoids[t].lo))
                             i_d0 = 1;
@@ -824,8 +1396,8 @@ namespace Renderer
                         }
                     }
 
-                    if (trapezoids[t].lo[1] == trapezoids[tlast].lo[1] &&
-                        trapezoids[t].lo[0] == trapezoids[tlast].lo[0] && tribot == 1)
+                    if (trapezoids[t].lo.y == trapezoids[tlast].lo.y &&
+                        trapezoids[t].lo.x == trapezoids[tlast].lo.x && tribot == 1)
                     {
                         /* this case arises only at the lowest trapezoid.. i.e.
                             tlast, if the lower endpoint of the segment is
@@ -923,7 +1495,7 @@ namespace Renderer
                                 trapezoids[trapezoids[t].d1].u0 = t;
                             else if (trapezoids[trapezoids[t].d1].u1 == tnext)
                                 trapezoids[trapezoids[t].d1].u1 = t;
-                        
+
                         trapezoids[t].lo = trapezoids[tnext].lo;
                         trapezoids[tnext].state = false;
                     }
@@ -952,9 +1524,11 @@ namespace Renderer
             }
         }
 
-        static int LocateEndpoint(double[] v, double[] vo, int r)
+        static int LocateEndpoint(Point_t v, Point_t vo, int r)
         {
+            //Console.WriteLine("  LocateEndpoint!");
             Node rNode = query[r];
+
             switch (rNode.kind)
             {
                 case NodeKind.S_NODE:
@@ -979,18 +1553,20 @@ namespace Renderer
                     {
                         return LocateEndpoint(v, vo, rNode.left);  // Below
                     }
+
                 case NodeKind.X_NODE:
-                    if (Alg.EqualTo(v, segs[rNode.segnum].p0) || Alg.EqualTo(v, segs[rNode.segnum].p1))
+                    if (Alg.EqualTo(v, segs[rNode.segnum].p0) ||
+                        Alg.EqualTo(v, segs[rNode.segnum].p1))
                     {
-                        if (v[1] == vo[1])  // Horizontal segment
+                        if (v.y == vo.y)  // Horizontal segment
                         {
-                            if (vo[0] < v[0])
+                            if (vo.x < v.x)
                             {
-                                return LocateEndpoint(v, vo, rNode.left);
+                                return LocateEndpoint(v, vo, rNode.left);  // Left
                             }
                             else
                             {
-                                return LocateEndpoint(v, vo, rNode.right);
+                                return LocateEndpoint(v, vo, rNode.right);  // Right
                             }
                         }
                         else if (Alg.IsLeftOf(rNode.segnum, vo))
@@ -1010,24 +1586,23 @@ namespace Renderer
                     {
                         return LocateEndpoint(v, vo, rNode.right);
                     }
+
                 default:
                     throw new InvalidDataException("Horror in LocateEndpoint!");
             }
         }
-        static int FindNewRoots(int segnum)
+        static void FindNewRoots(int segnum)
         {
             Segment s = segs[segnum];
             if (s.isInserted)
             {
-                return 0;
+                return;
             }
             s.root0 = LocateEndpoint(s.p0, s.p1, s.root0);
             s.root0 = trapezoids[s.root0].sink;
 
             s.root1 = LocateEndpoint(s.p1, s.p0, s.root1);
             s.root1 = trapezoids[s.root1].sink;
-            
-            return 0;
         }
     }
 
@@ -1043,7 +1618,7 @@ namespace Renderer
         public NodeKind kind;
         public int segnum;
         public int trnum;
-        public double[] pY;
+        public Point_t pY;
         public int parent;
         public int left, right;
     }
@@ -1052,20 +1627,79 @@ namespace Renderer
     public struct Trapezoid
     {
         public int rSeg, lSeg;
-        public double[] hi, lo;
+        public Point_t hi, lo;
         public int u0, u1;  // Up to two adjacent trapezoids above
         public int d0, d1;  // Up to two adjacent trapezoids below
         public int sink;
         public int usave, uside;  // Unknown
         public bool state;  // Inside or outside?
+
+        public Trapezoid()
+        {
+            rSeg = 0;
+            lSeg = 0;
+            hi = new Point_t();
+            lo = new Point_t();
+            u0 = 0;
+            u1 = 0;
+            d0 = 0;
+            d1 = 0;
+            sink = 0;
+            usave = 0;
+            uside = 0;
+            state = false;
+        }
     }
 
     public struct Segment
     {
-        public double[] p0, p1;  // Start and end points
+        public Point_t p0, p1;  // Start and end points
         public bool isInserted;
         public int root0, root1;
         public int next;
         public int prev;
+    }
+
+    public struct Point_t
+    {
+        public double x, y;
+        public Point_t()
+        {
+            x = 0;
+            y = 0;
+        }
+    }
+
+    public struct Vertexchain
+    {
+        public Point_t pt;
+        public unsafe fixed int vnext[4];
+        public unsafe fixed int vpos[4];
+        public int nextfree;
+        public Vertexchain()
+        {
+            pt = new Point_t();
+            unsafe
+            {
+                vnext[0] = 0;
+                vnext[1] = 0;
+            }
+            nextfree = 0;
+        }
+    }
+
+    public struct Monchain
+    {
+        public int vnum;
+        public int next;
+        public int prev;
+        public int marked;
+        public Monchain()
+        {
+            vnum = 0;
+            next = 0;
+            prev = 0;
+            marked = 0;
+        }
     }
 }
