@@ -318,14 +318,15 @@ namespace Magician
                 SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
 
-            // TODO: Move the following code into the Renderer
-            // Something like Renderer.Triangulize(Multi)
-            // Eventually move SDL drawing into the Renderer
-            Renderer.Geo.ConstructTrapezoids();
+            // Export into the Renderer
+            if (Count >= 3)
+            {
+                //Renderer.Geo.Load(this);
+            }
             
             // RenderGeometry test
-            Multi startPoint = constituents[0];
-            Multi[] pointGroup = new Multi[4];
+            //Multi startPoint = constituents[0];
+            //Multi[] pointGroup = new Multi[4];
             //List<Multi> cs2 = constituents;
             //cs2.RemoveAt(0);
             /*
@@ -508,6 +509,10 @@ namespace Magician
         */
         public List<Multi> Edges()
         {
+            if (Count < 2)
+            {
+                throw new InvalidDataException($"cannot get edges of {this}");
+            }
             List<Multi> edges = new List<Multi>();
             for (int i = 0; i < Count - 1; i++)
             {
@@ -613,7 +618,7 @@ namespace Magician
             }
             else
             {
-                s += $" at ({x.Evaluate()}, {y.Evaluate()}) relative, ({X.Evaluate()} {Y.Evaluate()}) absolute";
+                s += $" at ({x.Evaluate()}, {y.Evaluate()}) relative";
             }
             return s;
         }
@@ -711,7 +716,6 @@ namespace Magician
         public static Multi Intersection(Multi p0, Multi p1)
         {
             throw new NotImplementedException("Intersection of Multi");
-            return new Multi();
         }
 
         public static Action<double> StringMap(Multi m, string s)
