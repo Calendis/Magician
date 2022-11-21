@@ -19,6 +19,7 @@ namespace Magician
         {
             // Startup
             Console.WriteLine("Abracadabra!");
+
             Demo demo = new Demo();
             demo.InitSDL();
             demo.CreateWindow();
@@ -39,11 +40,18 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Multi.Origin.Add(
-                Multi.Star(0, 0, new HSLA(Math.PI, 1, 1, 255), 6, 45, 180)
+            Multi.Origin.Modify(new List<Multi>
+            {
+                Multi.Point(10, 24),
+                Multi.Point(21, 11),
+                Multi.Point(1, 12),
+                Multi.Point(9, 15)
+            }
             );
-            
 
+            Multi.Origin.LinedCompleted(true).Lined = true;
+            Multi.Origin.SubDriven(x => 0.2, "magnitude+");
+            
             /*
             *  Loop
             *  ----------------------------------------------------------------
