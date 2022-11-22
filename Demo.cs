@@ -1,9 +1,10 @@
 ﻿using static SDL2.SDL;
 
 namespace Magician
-{   
-    class Demo {
-        
+{
+    class Demo
+    {
+
         static IntPtr win;
         static IntPtr renderer;
 
@@ -14,7 +15,7 @@ namespace Magician
         bool saveFrames = false;
         int driveDelay = 0;
         double timeResolution = 0.1;
-        
+
         static void Main(string[] args)
         {
             // Startup
@@ -40,18 +41,14 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Multi.Origin.Modify(new List<Multi>
-            {
-                Multi.Point(10, 24),
-                Multi.Point(21, 11),
-                Multi.Point(1, 12),
-                Multi.Point(9, 15)
-            }
-            );
+            Quantity q = new Quantity(9000).Driven(x => 75-50*Math.Sin(x[0]));
+            Quantity w = new Quantity(11);
+            Quantity e = new Quantity(0).Driven(x => 40*Math.Sin(x[0]/40));
+            w.Driven(x => w.Evaluate()+0.4);
+            Quantity.ExtantQuantites.Add(q);
+            Quantity.ExtantQuantites.Add(w);
+            Quantity.ExtantQuantites.Add(e);
 
-            Multi.Origin.LinedCompleted(true).Lined = true;
-            Multi.Origin.SubDriven(x => 0.2, "magnitude+");
-            
             /*
             *  Loop
             *  ----------------------------------------------------------------
@@ -61,7 +58,19 @@ namespace Magician
             */
 
             while (!done)
-            {       
+            {
+
+                Multi.Origin.Modify(new List<Multi>
+                {
+                    Multi.Point(-30, q.Evaluate()),
+                    Multi.Point(w.Evaluate(), 11),
+                    Multi.Point(-10+e.Evaluate(), 12),
+                    Multi.Point(w.Evaluate()-10, 25)
+                });
+                Multi.Origin.Constituents[0].Col = new RGBA(0xff000000);
+                Multi.Origin.Constituents[1].Col = new RGBA(0xffff0000);
+                Multi.Origin.Constituents[2].Col = new RGBA(0x00ff0000);
+                Multi.Origin.Constituents[3].Col = new RGBA(0x00ffff00);
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
@@ -82,7 +91,7 @@ namespace Magician
                 }
             }
         }
-        
+
         void Render()
         {
             // Clear with colour)
@@ -104,7 +113,7 @@ namespace Magician
             {
                 IntPtr texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
                 IntPtr target = SDL_GetRenderTarget(renderer);
-        
+
                 int width, height;
                 SDL_SetRenderTarget(renderer, texture);
                 SDL_QueryTexture(texture, out _, out _, out width, out height);
@@ -121,8 +130,8 @@ namespace Magician
                     SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
                     SDL_FreeSurface(surface);
                 }
-            }       
-            
+            }
+
             frames++;
 
             // Display
@@ -142,7 +151,7 @@ namespace Magician
 
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
-                Quantity.ExtantQuantites[i].Drive((frames-driveDelay) * timeResolution);
+                Quantity.ExtantQuantites[i].Drive((frames - driveDelay) * timeResolution);
             }
         }
 
