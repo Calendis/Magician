@@ -35,6 +35,15 @@ namespace Renderer
             return y0 > y1 ? true : (y0 < y1 ? false : (x0 > x1 ? true : false));
         }
 
+        public static bool LessThan(Point_t p0, Point_t p1)
+        {
+            double x0 = p0.x;
+            double y0 = p0.y;
+            double x1 = p1.x;
+            double y1 = p1.y;
+            return y0 < y1 ? true : (y0 > y1 ? false : (x0 < x1 ? true : false));
+        }
+
         public static bool GreaterThanEqTo(Point_t p0, Point_t p1)
         {
             double x0 = p0.x;
@@ -123,7 +132,7 @@ namespace Renderer
 
         public static double Dot(Point_t v0, Point_t v1)
         {
-            return v0.x*v1.x + v0.y*v1.y;
+            return v0.x * v1.x + v0.y * v1.y;
         }
 
         public static double GetAngle(Point_t vp0, Point_t vpnext, Point_t vp1)
@@ -144,12 +153,12 @@ namespace Renderer
 
         public static double CrossSine(Point_t v0, Point_t v1)
         {
-            return v0.x*v1.y - v1.x*v0.y;
+            return v0.x * v1.y - v1.x * v0.y;
         }
 
         public static double Length(Point_t v0)
         {
-            return Math.Sqrt(v0.x*v0.x + v0.y*v0.y);
+            return Math.Sqrt(v0.x * v0.x + v0.y * v0.y);
         }
 
     }
@@ -194,10 +203,10 @@ namespace Renderer
         const int TR_FROM_DN = 2;
 
         const int TRI_LHS = 1;
-        const int TRY_RHS = 2;
+        const int TRI_RHS = 2;
 
         // Initialize arrays and read segments from Multi
-        public static void Load(Magician.Multi m)
+        public static List<int[]> Triangulate(Magician.Multi m)
         {
             MAX_SEGMENTS = m.Count;
             MAX_NODES = 8 * MAX_SEGMENTS;
@@ -252,12 +261,24 @@ namespace Renderer
             segs[0].p1 = new Point_t();
 
             int n = i - 1;
+            //int[][] op = new int[MAX_SEGMENTS][] {};
+            List<int[]> op = new List<int[]>();
+            for (int k = 0; k < MAX_TRAPEZOIDS; k++)
+            {
+                op.Add(new int[3]);
+            }
             Initialize(n);
             ConstructTrapezoids(n);
-            MonotonateTrapezoids(n);
-            //TriangulateMonotonePolygons(m, nmonopoly, op);
+            int nmonopoly = MonotonateTrapezoids(n);
+            int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
             //Console.WriteLine("Load successful!");
-
+            /*
+            for (int k = 0; k < ntriangles; k++)
+            {
+                Console.WriteLine($"Triangle #{k}: {op[k][0]},{op[k][1]},{op[k][2]}");
+            }
+            */
+            return op;
         }
 
         public static void Initialize(int n)
@@ -272,6 +293,150 @@ namespace Renderer
             Random r = new Random();
             // TODO: ensure this shuffle works
             segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : -1);
+        }
+
+        public static int TriangulateMonotonePolygons(int nvert, int nmonopoly, List<int[]> op)
+        {
+            int i;
+            Point_t ymax, ymin;
+            int p, vfirst, posmax, posmin, v;
+            int vcount;
+            bool processed;
+
+            op_idx = 0;
+            for (i = 0; i < nmonopoly; i++)
+            {
+                vcount = 1;
+                processed = false;
+                vfirst = mchain[mon[i]].vnum;
+                ymax = ymin = vertices[vfirst].pt;
+                posmax = posmin = mon[i];
+                mchain[mon[i]].marked = false;
+                p = mchain[mon[i]].next;
+                while ((v = mchain[p].vnum) != vfirst)
+                {
+                    if (mchain[p].marked)
+                    {
+                        processed = true;
+                        break; /* break from while */
+                    }
+                    else
+                        mchain[p].marked = true;
+
+                    if (Alg.GreaterThan(vertices[v].pt, ymax))
+                    {
+                        ymax = vertices[v].pt;
+                        posmax = p;
+                    }
+                    if (Alg.LessThan(vertices[v].pt, ymin))
+                    {
+                        ymin = vertices[v].pt;
+                        posmin = p;
+                    }
+                    p = mchain[p].next;
+                    vcount++;
+                }
+
+                if (processed) /* Go to next polygon */
+                    continue;
+
+                if (vcount == 3) /* already a triangle */
+                {
+                    op[op_idx] = new int[3];
+                    op[op_idx][0] = mchain[p].vnum;
+                    op[op_idx][1] = mchain[mchain[p].next].vnum;
+                    op[op_idx][2] = mchain[mchain[p].prev].vnum;
+                    op_idx++;
+                }
+                else /* triangulate the polygon */
+                {
+                    v = mchain[mchain[posmax].next].vnum;
+                    if (Alg.EqualTo(vertices[v].pt, ymin))
+                    { /* LHS is a single line */
+                        TriangulateSinglePolygon(nvert, posmax, TRI_LHS, op);
+                    }
+                    else
+                        TriangulateSinglePolygon(nvert, posmax, TRI_RHS, op);
+                }
+            }
+            return op_idx;
+        }
+
+        static int TriangulateSinglePolygon(int nvert, int posmax, int side, List<int[]> op)
+        {
+            int v;
+            int[] rc = new int[MAX_SEGMENTS];
+            int ri = 0;
+            int endv, tmp, vpos;
+
+            // RHS is a single segment
+            if (side == TRI_RHS)
+            {
+                rc[0] = mchain[posmax].vnum;
+                tmp = mchain[posmax].next;
+                rc[1] = mchain[tmp].vnum;
+                ri = 1;
+
+                vpos = mchain[tmp].next;
+                v = mchain[vpos].vnum;
+
+                if ((endv = mchain[mchain[posmax].prev].vnum) == 0)
+                    endv = nvert;
+            }
+            // LHS is a single segment
+            else
+            {
+                tmp = mchain[posmax].next;
+                rc[0] = mchain[tmp].vnum;
+                tmp = mchain[tmp].next;
+                rc[1] = mchain[tmp].vnum;
+                ri = 1;
+
+                vpos = mchain[tmp].next;
+                v = mchain[vpos].vnum;
+
+                endv = mchain[posmax].vnum;
+            }
+
+            while (v != endv || ri > 1)
+            {
+                if (ri > 0) /* reflex chain is non-empty */
+                {
+                    if (Alg.Cross(vertices[v].pt, vertices[rc[ri - 1]].pt, vertices[rc[ri]].pt) >
+                        0)
+                    { /* convex corner: cut if off */
+                        //op[op_idx] = new int[3];
+                        op[op_idx][0] = rc[ri - 1];
+                        op[op_idx][1] = rc[ri];
+                        op[op_idx][2] = v;
+                        op_idx++;
+                        ri--;
+                    }
+                    else /* non-convex */
+                    {      /* add v to the chain */
+                        ri++;
+                        Console.WriteLine($"ri: {rc[0]}, {rc[1]}, {rc[2]}");
+                        rc[ri] = v;
+                        vpos = mchain[vpos].next;
+                        v = mchain[vpos].vnum;
+                    }
+                }
+                else /* reflex-chain empty: add v to the */
+                {      /* reflex chain and advance it  */
+                    rc[++ri] = v;
+                    vpos = mchain[vpos].next;
+                    v = mchain[vpos].vnum;
+                }
+            }
+
+            /* reached the bottom vertex. Add in the triangle formed */
+            op[op_idx][0] = rc[ri - 1];
+            op[op_idx][1] = rc[ri];
+            op[op_idx][2] = v;
+            op_idx++;
+            ri--;
+
+            return 0;
         }
 
         public static int MonotonateTrapezoids(int n)
@@ -289,7 +454,7 @@ namespace Renderer
             for (i = 0; i < MAX_TRAPEZOIDS + 1; i++)
                 if (InsidePolygon(trapezoids[i]))
                     break;
-            tr_start = i-1;
+            tr_start = i - 1;
 
             /* Initialise the mon data-structure and start spanning all the */
             /* trapezoids within the polygon */
@@ -491,6 +656,8 @@ namespace Renderer
             {
                 if ((t.d0 > 0) && (t.d1 > 0)) /* only upward cusp */
                 {
+
+                    int mlsg = t.lSeg == -1 ? 0 : t.lSeg;
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0))
                     {
                         v0 = trapezoids[t.d1].lSeg;
@@ -541,6 +708,7 @@ namespace Renderer
                 }
                 else
                 {
+                    int mlsg = t.lSeg == -1 ? 0 : t.lSeg;
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0) &&
                         Alg.EqualTo(t.lo, segs[t.rSeg].p0))
                     {
@@ -667,7 +835,7 @@ namespace Renderer
             Vertexchain vp0, vp1;
             int i;
             double angle, temp;
-            int tp=0, tq=0;
+            int tp = 0, tq = 0;
 
             vp0 = vertices[v0];
             vp1 = vertices[v1];
@@ -1693,13 +1861,13 @@ namespace Renderer
         public int vnum;
         public int next;
         public int prev;
-        public int marked;
+        public bool marked;
         public Monchain()
         {
             vnum = 0;
             next = 0;
             prev = 0;
-            marked = 0;
+            marked = false;
         }
     }
 }
