@@ -322,7 +322,7 @@ namespace Magician
             if (Count >= 3)
             {
                 List<int[]> vertices = Renderer.Geo.Triangulate(this);
-                Console.WriteLine("Render complete");
+                //Console.WriteLine("Render complete");
                 // RenderGeometry test
                 //Multi startPoint = constituents[0];
                 //Multi[] pointGroup = new Multi[4];
@@ -331,45 +331,63 @@ namespace Magician
 
                 foreach (int[] v in vertices)
                 {
-                    //Console.WriteLine($"  {v[0]}, {v[1]}, {v[2]}");
+                    Console.WriteLine($"verts: {v[0]}, {v[1]}, {v[2]}");
                 }
 
-                SDL_Vertex[] vs = new SDL_Vertex[vertices.Count / 3 + 1];
-                for (int i = 0; i < vertices.Count; i+=3)
+                int numTriangles = (Count-2);
+                SDL_Vertex[] vs = new SDL_Vertex[numTriangles*3];
+                for (int i = 0; i < numTriangles; i++)
                 {
+                    Console.WriteLine($"i: {i}");
                     int[] vertexIndices = vertices[i];
+                    int tri0 = vertexIndices[0];
+                    int tri1 = vertexIndices[1];
+                    int tri2 = vertexIndices[2];
+                    Console.WriteLine($"tris: {tri0}, {tri1}, {tri2}");
                     // If all vertex indices are 0, we're done
+                    /*
                     if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                         break;
+                    */
 
                     SDL_FPoint p0, p1, p2;
                     //p.x = (float)constituents[i].XCartesian
                     //p.y = (float)constituents[i].YCartesian(yOffset);
-                    p0.x = (float)constituents[vertexIndices[0] - 1].XCartesian(xOffset);
-                    p0.y = (float)constituents[vertexIndices[0] - 1].YCartesian(yOffset);
-                    p1.x = (float)constituents[vertexIndices[1] - 1].XCartesian(xOffset);
-                    p1.y = (float)constituents[vertexIndices[1] - 1].YCartesian(yOffset);
-                    p2.x = (float)constituents[vertexIndices[2] - 1].XCartesian(xOffset);
-                    p2.y = (float)constituents[vertexIndices[2] - 1].YCartesian(yOffset);
+                    p0.x = (float)constituents[tri0 - 1].XCartesian(xOffset);
+                    p0.y = (float)constituents[tri0 - 1].YCartesian(yOffset);
+                    p1.x = (float)constituents[tri1 - 1].XCartesian(xOffset);
+                    p1.y = (float)constituents[tri1 - 1].YCartesian(yOffset);
+                    p2.x = (float)constituents[tri2 - 1].XCartesian(xOffset);
+                    p2.y = (float)constituents[tri2 - 1].YCartesian(yOffset);
 
-                    vs[i] = new SDL_Vertex();
-                    vs[i].position = p0;
-                    vs[i + 1] = new SDL_Vertex();
-                    vs[i + 1].position = p1;
-                    vs[i + 2] = new SDL_Vertex();
-                    vs[i + 2].position = p2;
+                    vs[3*i] = new SDL_Vertex();
+                    vs[3*i].position.x = p0.x;
+                    vs[3*i].position.y = p0.y;
+                    vs[3*i + 1] = new SDL_Vertex();
+                    vs[3*i + 1].position.x = p1.x;
+                    vs[3*i + 1].position.y = p1.y;
+                    vs[3*i + 2] = new SDL_Vertex();
+                    vs[3*i + 2].position.x = p2.x;
+                    vs[3*i + 2].position.y = p2.y;
 
                     SDL_Color c;
                     c.r = (byte)Col.R;
                     c.g = (byte)Col.G;
                     c.b = (byte)Col.B;
                     c.a = (byte)Col.A;
-                    vs[i].color = c;
-                    vs[i+1].color = c;
-                    vs[i+2].color = c;
+                    vs[3*i].color = c;
+                    vs[3*i+1].color = c;
+                    vs[3*i+2].color = c;
                 }
 
                 IntPtr ip = new IntPtr();
+                Console.WriteLine("--------------------------------");
+                foreach (SDL_Vertex v in vs)
+                {
+                    Console.WriteLine($"x, y: {v.position.x}, {v.position.y}");
+                }
+                Console.WriteLine("================================");
+
                 SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
             }
 

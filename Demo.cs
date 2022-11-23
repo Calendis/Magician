@@ -41,13 +41,12 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Quantity q = new Quantity(9000).Driven(x => 75-50*Math.Sin(x[0]));
-            Quantity w = new Quantity(11);
-            Quantity e = new Quantity(0).Driven(x => 40*Math.Sin(x[0]/40));
-            w.Driven(x => w.Evaluate()+0.4);
-            Quantity.ExtantQuantites.Add(q);
-            Quantity.ExtantQuantites.Add(w);
-            Quantity.ExtantQuantites.Add(e);
+            Multi.Origin.Add(
+                Multi.Point(30, 30),
+                Multi.Point(130, 30),
+                Multi.Point(130, 130),
+                Multi.Point(30, 130)
+            );
 
             /*
             *  Loop
@@ -59,18 +58,6 @@ namespace Magician
 
             while (!done)
             {
-
-                Multi.Origin.Modify(new List<Multi>
-                {
-                    Multi.Point(-30, q.Evaluate()),
-                    Multi.Point(w.Evaluate(), 11),
-                    Multi.Point(-10+e.Evaluate(), 12),
-                    Multi.Point(w.Evaluate()-10, 25)
-                });
-                Multi.Origin.Constituents[0].Col = new RGBA(0xff000000);
-                Multi.Origin.Constituents[1].Col = new RGBA(0xffff0000);
-                Multi.Origin.Constituents[2].Col = new RGBA(0x00ff0000);
-                Multi.Origin.Constituents[3].Col = new RGBA(0x00ffff00);
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)

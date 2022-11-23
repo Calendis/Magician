@@ -180,7 +180,7 @@ namespace Renderer
         static int q_idx;
         static int tr_idx;
         static int choose_idx = 1;
-        public static int segnum = 0;
+        public static int segnum;
 
         ////
 
@@ -208,14 +208,10 @@ namespace Renderer
         // Initialize arrays and read segments from Multi
         public static List<int[]> Triangulate(Magician.Multi m)
         {
+            Initialize(m.Count);
             MAX_SEGMENTS = m.Count;
             MAX_NODES = 8 * MAX_SEGMENTS;
             MAX_TRAPEZOIDS = 4 * MAX_SEGMENTS;
-
-            segs = new Segment[MAX_SEGMENTS + 1];
-            // nodes set in InitQueryStructure
-            // trapezoids set in InitQueryStructure
-            // vertices set in MonotonateTrapezoids
 
             int i = 1;
             int first = i;  // Currently, I only support one contour
@@ -252,14 +248,6 @@ namespace Renderer
                 i++;
             }
 
-            // Make sure the root node is instantiated
-            // However, it should remain empty
-            segs[0].isInserted = false;
-            segs[0].next = 0;
-            segs[0].prev = 0;
-            segs[0].p0 = new Point_t();
-            segs[0].p1 = new Point_t();
-
             int n = i - 1;
             //int[][] op = new int[MAX_SEGMENTS][] {};
             List<int[]> op = new List<int[]>();
@@ -267,7 +255,7 @@ namespace Renderer
             {
                 op.Add(new int[3]);
             }
-            Initialize(n);
+
             ConstructTrapezoids(n);
             int nmonopoly = MonotonateTrapezoids(n);
             int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
@@ -283,16 +271,21 @@ namespace Renderer
 
         public static void Initialize(int n)
         {
-            q_idx = 0;
-            tr_idx = 0;
-            choose_idx = 0;
+            segs = new Segment[n + 1];
+            // nodes set in InitQueryStructure
+            // trapezoids set in InitQueryStructure
+            // vertices set in MonotonateTrapezoids
+            q_idx = 1;
+            tr_idx = 1;
+            choose_idx = 1;
             for (int i = 1; i <= n; i++)
             {
+                segs[i] = new Segment();
                 segs[i].isInserted = false;
             }
             Random r = new Random();
             // TODO: ensure this shuffle works
-            segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : -1);
+            //segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : -1);
         }
 
         public static int TriangulateMonotonePolygons(int nvert, int nmonopoly, List<int[]> op)
@@ -400,6 +393,10 @@ namespace Renderer
 
             while (v != endv || ri > 1)
             {
+                /*
+                if (ri >= MAX_SEGMENTS-1)
+                    break;
+                */
                 if (ri > 0) /* reflex chain is non-empty */
                 {
                     if (Alg.Cross(vertices[v].pt, vertices[rc[ri - 1]].pt, vertices[rc[ri]].pt) >
@@ -415,7 +412,6 @@ namespace Renderer
                     else /* non-convex */
                     {      /* add v to the chain */
                         ri++;
-                        Console.WriteLine($"ri: {rc[0]}, {rc[1]}, {rc[2]}");
                         rc[ri] = v;
                         vpos = mchain[vpos].next;
                         v = mchain[vpos].vnum;
@@ -931,6 +927,7 @@ namespace Renderer
 
         public static int InitialQueryStructure(int segnum)
         {
+            Console.WriteLine($"InitialQueryStructure! segnum: {segnum}");
             int i1, i2, i3, i4, i5, i6, i7, root;
             int t1, t2, t3, t4;
             q_idx = tr_idx = 1;
@@ -1017,6 +1014,7 @@ namespace Renderer
             query[i7].trnum = t2;
 
             // Congrats, you just added the first segment of the trapezoidation!
+            Console.WriteLine("END OF InitialQueryStructure");
             s.isInserted = true;
             return root;
         }
@@ -1024,6 +1022,7 @@ namespace Renderer
         public static void ConstructTrapezoids(int nseg)
         {
 
+            Console.WriteLine("ConstructTrapezoids!");
             /*
             * Initialize Trapezoidation tree / query structure
             */
@@ -1036,6 +1035,7 @@ namespace Renderer
             {
                 segs[i].root0 = segs[i].root1 = root;
             }
+            SegsCheckpoint();
 
             /*
             * Add the remaining segments into the trapezoidation
@@ -1044,8 +1044,10 @@ namespace Renderer
             // Idk
             for (int h = 1; h <= logstarN; h++)
             {
+                Console.WriteLine($" h: {h}");
                 for (int i = Renderer.Alg.N(nseg, h - 1) + 1; i <= Renderer.Alg.N(nseg, h); i++)
                 {
+                    Console.WriteLine($"  i: {i}");
                     AddSegment(ChooseSegment());
                 }
 
@@ -1060,6 +1062,7 @@ namespace Renderer
             {
                 AddSegment(ChooseSegment());
             }
+            Console.WriteLine("END OF ConstructTrapezoids");
         }
 
         static void AddSegment(int segnum)
@@ -1074,8 +1077,11 @@ namespace Renderer
             bool isSwapped = false;
             int tmpTriSeg;
 
+            Console.WriteLine($"  AddSegment, segnum: {segnum}");
+            //TrapezoidCheckpoint();
             if (Alg.GreaterThan(s.p1, s.p0))
             {
+                Console.WriteLine("   s.p1 greater than s.p0");
                 // Swap points
                 tpt = s.p0;
                 s.p0 = s.p1;
@@ -1091,6 +1097,7 @@ namespace Renderer
 
             if (isSwapped ? !IsInserted(segnum, 2) : !IsInserted(segnum, 1))
             {
+                Console.WriteLine("isSwapped 2 1");
                 int tmp_d;
                 tu = LocateEndpoint(s.p0, s.p1, s.root0);
                 tl = NewTrapezoid();
@@ -1106,18 +1113,22 @@ namespace Renderer
 
                 if (((tmp_d = trapezoids[tl].d0) > 0) && (trapezoids[tmp_d].u0 == tu))
                 {
+                    Console.WriteLine("    case 1 within");
                     trapezoids[tmp_d].u0 = tl;
                 }
                 if (((tmp_d = trapezoids[tl].d0) > 0) && (trapezoids[tmp_d].u1 == tu))
                 {
+                    Console.WriteLine("    case 2 within");
                     trapezoids[tmp_d].u1 = tl;
                 }
                 if (((tmp_d = trapezoids[tl].d1) > 0) && (trapezoids[tmp_d].u0 == tu))
                 {
+                    Console.WriteLine("    case 3 within");
                     trapezoids[tmp_d].u0 = tl;
                 }
                 if (((tmp_d = trapezoids[tl].d1) > 0) && (trapezoids[tmp_d].u1 == tu))
                 {
+                    Console.WriteLine("    case 4 within");
                     trapezoids[tmp_d].u1 = tl;
                 }
 
@@ -1143,6 +1154,7 @@ namespace Renderer
                 trapezoids[tu].sink = i1;
                 trapezoids[tl].sink = i2;
                 tfirst = tl;
+                Console.WriteLine("END OF isSwapped 2 1");
             }
 
             // p0 already present in existing segment
@@ -1152,6 +1164,7 @@ namespace Renderer
                 tfirst = LocateEndpoint(s.p0, s.p1, s.root0);
                 tritop = 1;
             }
+
 
             if (isSwapped ? !IsInserted(segnum, 1) : !IsInserted(segnum, 2))
             {
@@ -1215,6 +1228,10 @@ namespace Renderer
                 sk = trapezoids[t].sink;
                 i1 = NewNode();
                 i2 = NewNode();
+                if (i2 >= MAX_NODES)
+                {
+                    break;
+                }
 
                 query[sk].kind = NodeKind.X_NODE;
                 query[sk].segnum = segnum;
@@ -1622,6 +1639,7 @@ namespace Renderer
             MergeTrapezoids(segnum, tfirstl, tlastl, 1);
             MergeTrapezoids(segnum, tfirstr, tlastr, 2);
             segs[segnum].isInserted = true;
+            Console.WriteLine($"..END OF AddSegment");
         }
 
         public static void MergeTrapezoids(int segnum, int tfirst, int tlast, int side)
@@ -1772,6 +1790,46 @@ namespace Renderer
             s.root1 = LocateEndpoint(s.p1, s.p0, s.root1);
             s.root1 = trapezoids[s.root1].sink;
         }
+
+        static void TrapezoidCheckpoint()
+        {
+            Console.WriteLine("  TRAPEZOID CHECKPOINT");
+            Console.WriteLine($"  MAX_TRAPEZOIDS: {MAX_TRAPEZOIDS}");
+            int k;
+            for (k = 0; k < MAX_TRAPEZOIDS; k++)
+            {
+                Console.WriteLine("   TRAPEZOID");
+                Console.WriteLine($"    rlsegs: {trapezoids[k].rSeg}, {trapezoids[k].lSeg}");
+                Console.WriteLine($"    hi: {trapezoids[k].hi.x}, {trapezoids[k].hi.y}");
+                Console.WriteLine($"    lo: {trapezoids[k].lo.x}, {trapezoids[k].lo.y}");
+                Console.WriteLine($"    u01: {trapezoids[k].u0}, {trapezoids[k].u1}");
+                Console.WriteLine($"    d01: {trapezoids[k].d0}, {trapezoids[k].d1}");
+                Console.WriteLine($"    sink: {trapezoids[k].sink}");
+                Console.WriteLine($"    usaveside: {trapezoids[k].usave}, {trapezoids[k].uside}");
+                Console.WriteLine($"    state: {trapezoids[k].state}");
+                Console.WriteLine("...");
+            }
+            Console.WriteLine("..END OF TRAPEZOID CHECKPOINT");
+        }
+
+        static void SegsCheckpoint()
+        {
+            Console.WriteLine("  SEGS CHECKPOINT");
+            Console.WriteLine($"  MAX_SEGMENTS: {MAX_SEGMENTS}");
+            int k;
+            for (k = 0; k < MAX_SEGMENTS + 1; k++)
+            {
+                Console.WriteLine("   SEGMENT");
+                Console.WriteLine($"    p0: {segs[k].p0.x}, {segs[k].p0.y}");
+                Console.WriteLine($"    p1: {segs[k].p1.x}, {segs[k].p1.y}");
+                Console.WriteLine($"    inserted: {(segs[k].isInserted ? 1 : 0)}");
+                Console.WriteLine($"    roots: {segs[k].root0}, {segs[k].root1}");
+                Console.WriteLine($"    next: {segs[k].next}");
+                Console.WriteLine($"    prev: {segs[k].prev}");
+                Console.WriteLine("...");
+            }
+            Console.WriteLine("..END OF SEGS CHECKPOINT");
+        }
     }
 
     public enum NodeKind
@@ -1819,6 +1877,7 @@ namespace Renderer
         }
     }
 
+
     public struct Segment
     {
         public Point_t p0, p1;  // Start and end points
@@ -1826,6 +1885,17 @@ namespace Renderer
         public int root0, root1;
         public int next;
         public int prev;
+
+        public Segment()
+        {
+            p0 = new Point_t();
+            p1 = new Point_t();
+            isInserted = false;
+            root0 = 0;
+            root1 = 0;
+            next = 0;
+            prev = 0;
+        }
     }
 
     public struct Point_t
