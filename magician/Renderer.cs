@@ -450,7 +450,7 @@ namespace Renderer
             for (i = 0; i < MAX_TRAPEZOIDS + 1; i++)
                 if (InsidePolygon(trapezoids[i]))
                     break;
-            tr_start = i - 1;
+            tr_start = i;
 
             /* Initialise the mon data-structure and start spanning all the */
             /* trapezoids within the polygon */
@@ -475,11 +475,24 @@ namespace Renderer
             /* chain  */
             //
 
+            Console.WriteLine("Pre-traverse!");
+            // The C version had undefined behaviour here
+            // There are a few instances of this throughout but I tried to correct them
+            if (tr_start == MAX_TRAPEZOIDS + 1)
+            {
+                return newmon();
+            }
             /* traverse the polygon */
             if (trapezoids[tr_start].u0 > 0)
+            {
+                Console.WriteLine(" condition 1");
                 TraversePolygon(0, tr_start, trapezoids[tr_start].u0, TR_FROM_UP);
+            }
             else if (trapezoids[tr_start].d0 > 0)
+            {
+                Console.WriteLine(" condition 2 ");
                 TraversePolygon(0, tr_start, trapezoids[tr_start].d0, TR_FROM_DN);
+            }
 
             /* return the number of polygons created */
             return newmon();
@@ -492,11 +505,23 @@ namespace Renderer
 
         static int TraversePolygon(int mcur, int trnum, int from, int dir)
         {
+            Console.WriteLine("TraversePolygon!");
+            Console.WriteLine($" mcur: {mcur}");
+            Console.WriteLine($" trnum: {trnum}");
+            Console.WriteLine($" from: {from}");
+            Console.WriteLine($" dir: {dir}");
+            // The original c code has undefined behaviour here >:(
+            if (trnum == -1)
+            {
+                trnum = MAX_TRAPEZOIDS;
+            }
+
             Trapezoid t = trapezoids[trnum];
             int howsplit, mnew;
             int v0, v1, v0next, v1next;
             int retval = 0, tmp;
             bool do_switch = false;
+
 
             if ((trnum <= 0) || visited[trnum])
                 return 0;
@@ -648,12 +673,22 @@ namespace Renderer
                     }
                 }
             }
-            else if ((t.u0 > 0) || (t.u1 > 0))
+            else if ((t.u0 > 0) || (t.u1 > 0)) /* no downward cusp */
             {
+                Console.WriteLine(" No downward cusp");
+                Console.WriteLine(" CURRENT TRAPEZOID:");
+
+                Console.WriteLine($"  rlsegs: {t.rSeg}, {t.lSeg}");
+                Console.WriteLine($"  hi: {t.hi.x}, {t.hi.y}");
+                Console.WriteLine($"  lo: {t.lo.x}, {t.lo.y}");
+                Console.WriteLine($"  u01: {t.u0}, {t.u1}");
+                Console.WriteLine($"  d01: {t.d0}, {t.d1}");
+                Console.WriteLine($"  sink: {t.sink}");
+                Console.WriteLine($"  usaveside: {t.usave}, {t.uside}");
+                Console.WriteLine($"  state: {t.state}");
+
                 if ((t.d0 > 0) && (t.d1 > 0)) /* only upward cusp */
                 {
-
-                    int mlsg = t.lSeg == -1 ? 0 : t.lSeg;
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0))
                     {
                         v0 = trapezoids[t.d1].lSeg;
@@ -704,7 +739,6 @@ namespace Renderer
                 }
                 else
                 {
-                    int mlsg = t.lSeg == -1 ? 0 : t.lSeg;
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0) &&
                         Alg.EqualTo(t.lo, segs[t.rSeg].p0))
                     {
@@ -764,6 +798,8 @@ namespace Renderer
                     }
                 }
             }
+
+            Console.WriteLine("END OF TraversePolygon");
 
             return retval;
         }
@@ -1013,9 +1049,11 @@ namespace Renderer
             query[i6].trnum = t1;
             query[i7].trnum = t2;
 
+            s.isInserted = true;
+            segs[segnum] = s;
             // Congrats, you just added the first segment of the trapezoidation!
             Console.WriteLine("END OF InitialQueryStructure");
-            s.isInserted = true;
+
             return root;
         }
 
@@ -1027,6 +1065,7 @@ namespace Renderer
             * Initialize Trapezoidation tree / query structure
             */
             int root = Renderer.Geo.InitialQueryStructure(ChooseSegment());
+            Console.WriteLine($"root: {root}");
 
             /*
             * Set the roots of all segments to the initial root
@@ -1035,7 +1074,6 @@ namespace Renderer
             {
                 segs[i].root0 = segs[i].root1 = root;
             }
-            SegsCheckpoint();
 
             /*
             * Add the remaining segments into the trapezoidation
@@ -1078,7 +1116,6 @@ namespace Renderer
             int tmpTriSeg;
 
             Console.WriteLine($"  AddSegment, segnum: {segnum}");
-            //TrapezoidCheckpoint();
             if (Alg.GreaterThan(s.p1, s.p0))
             {
                 Console.WriteLine("   s.p1 greater than s.p0");
@@ -1221,16 +1258,18 @@ namespace Renderer
             }
 
             // While start
-            t = tfirst;
+            t = tfirst; /* topmost trapezoid */
+            Console.WriteLine($"   t->tfirst: {t}->{tfirst}");
             while (t > 0 && Alg.GreaterThanEqTo(trapezoids[t].lo, trapezoids[tlast].lo))
             {
                 int t_sav, tn_sav;
                 sk = trapezoids[t].sink;
                 i1 = NewNode();
                 i2 = NewNode();
+                Console.WriteLine("   Inner while");
                 if (i2 >= MAX_NODES)
                 {
-                    break;
+                    //break;
                 }
 
                 query[sk].kind = NodeKind.X_NODE;
@@ -1249,15 +1288,25 @@ namespace Renderer
                 query[i2].parent = sk;
 
                 if (t == tfirst)
+                {
+                    Console.WriteLine("    t is tfirst");
                     tfirstr = tn;
+                }
                 if (Alg.EqualTo(trapezoids[t].lo, trapezoids[tlast].lo))
+                {
+                    Console.WriteLine("    t lo is tlast lo");
                     tlastr = tn;
+                }
 
                 trapezoids[tn] = trapezoids[t];
+
                 trapezoids[t].sink = i1;
                 trapezoids[tn].sink = i2;
                 t_sav = t;
                 tn_sav = tn;
+                Console.WriteLine("   Pre-horror:");
+                Console.WriteLine($"    tn, t: {tn}, {t}");
+                Console.WriteLine($"    d01: {trapezoids[t].d0}, {trapezoids[t].d1}");
 
                 // Impossible case
                 if (trapezoids[t].d0 <= 0 && trapezoids[t].d1 <= 0)
@@ -1371,7 +1420,7 @@ namespace Renderer
                         trapezoids[trapezoids[t].d0].u0 = t;
                         trapezoids[trapezoids[t].d0].u1 = tn;
                     }
-
+                    Console.WriteLine($"   t->d0: {t}->{trapezoids[t].d0}");
                     t = trapezoids[t].d0;
                 }
 
@@ -1485,6 +1534,7 @@ namespace Renderer
                         trapezoids[trapezoids[t].d1].u1 = tn;
                     }
 
+                    Console.WriteLine($"t->d1: {t}->{trapezoids[t].d1}");
                     t = trapezoids[t].d1;
                 }
                 // Two trapezoids below
@@ -1496,9 +1546,11 @@ namespace Renderer
                     //int tnext, i_d0, i_d1;
                     int i_d0, i_d1;
 
+                    Console.WriteLine("   resetting i_d0, i_d1");
                     i_d0 = i_d1 = 0;
                     if (trapezoids[t].lo.y == s.p0.y)
                     {
+                        Console.WriteLine("    t lo y == s p0 y");
                         if (trapezoids[t].lo.x > s.p0.x)
                             i_d0 = 1;
                         else
@@ -1506,14 +1558,19 @@ namespace Renderer
                     }
                     else
                     {
+                        Console.WriteLine("    t lo y NOT s p0 y");
                         tmppt.y = y0 = trapezoids[t].lo.y;
                         yt = (y0 - s.p0.y) / (s.p1.y - s.p0.y);
                         tmppt.x = s.p0.x + yt * (s.p1.x - s.p0.x);
 
-                        if (!Alg.GreaterThanEqTo(tmppt, trapezoids[t].lo))
+                        if (Alg.LessThan(tmppt, trapezoids[t].lo))
+                        {
                             i_d0 = 1;
+                        }
                         else
+                        {
                             i_d1 = 1;
+                        }
                     }
 
                     /* check continuity from the top so that the lower-neighbour */
@@ -1522,6 +1579,7 @@ namespace Renderer
                     if ((trapezoids[t].u0 > 0) &&
                         (trapezoids[t].u1 > 0))
                     {  /* continuation of a chain from abv. */
+                        Console.WriteLine("   cont. of a chain from above");
                         if (trapezoids[t].usave > 0) /* three upper neighbours */
                         {
                             if (trapezoids[t].uside == 1)
@@ -1560,9 +1618,11 @@ namespace Renderer
                     { /* fresh seg. or upward cusp */
                         int tmp_u = trapezoids[t].u0;
                         int td0, td1;
+                        Console.WriteLine("    fresh seg or upward cusp");
                         if (((td0 = trapezoids[tmp_u].d0) > 0) &&
                             ((td1 = trapezoids[tmp_u].d1) > 0))
                         { /* upward cusp */
+                            Console.WriteLine("     upward cusp");
                             if ((trapezoids[td0].rSeg > 0) && !Alg.IsLeftOf(trapezoids[td0].rSeg, s.p1))
                             {
                                 trapezoids[t].u0 = trapezoids[t].u1 = trapezoids[tn].u1 = -1;
@@ -1576,6 +1636,8 @@ namespace Renderer
                         }
                         else /* fresh segment */
                         {
+                            Console.WriteLine("     fresh seg");
+                            Console.WriteLine($"     i_d0, i_d1: {i_d0}, {i_d1}");
                             trapezoids[trapezoids[t].u0].d0 = t;
                             trapezoids[trapezoids[t].u0].d1 = tn;
                         }
@@ -1588,6 +1650,7 @@ namespace Renderer
                             tlast, if the lower endpoint of the segment is
                             already inserted in the structure */
 
+                        Console.WriteLine("    lowest case");
                         trapezoids[trapezoids[t].d0].u0 = t;
                         trapezoids[trapezoids[t].d0].u1 = -1;
                         trapezoids[trapezoids[t].d1].u0 = tn;
@@ -1601,6 +1664,7 @@ namespace Renderer
                     else if (i_d0 == 1)
                     /* intersecting d0 */
                     {
+                        Console.WriteLine("    intersecting in d0");
                         trapezoids[trapezoids[t].d0].u0 = t;
                         trapezoids[trapezoids[t].d0].u1 = tn;
                         trapezoids[trapezoids[t].d1].u0 = tn;
@@ -1615,6 +1679,7 @@ namespace Renderer
                     }
                     else /* intersecting d1 */
                     {
+                        Console.WriteLine("    intersecting in d1");
                         trapezoids[trapezoids[t].d0].u0 = t;
                         trapezoids[trapezoids[t].d0].u1 = -1;
                         trapezoids[trapezoids[t].d1].u0 = t;
@@ -1628,9 +1693,11 @@ namespace Renderer
 
                         tnext = trapezoids[t].d1;
                     }
-
+                    //TrapezoidCheckpoint();
+                    Console.WriteLine($"t->tnext: {t}->{tnext}");
                     t = tnext;
                 }
+                Console.WriteLine("   Horror averted!");
                 trapezoids[t_sav].rSeg = trapezoids[tn_sav].lSeg = segnum;
             }
             // while end
@@ -1638,6 +1705,7 @@ namespace Renderer
             tlastl = tlast;
             MergeTrapezoids(segnum, tfirstl, tlastl, 1);
             MergeTrapezoids(segnum, tfirstr, tlastr, 2);
+            //segs[segnum] = s;  // This line may fix things
             segs[segnum].isInserted = true;
             Console.WriteLine($"..END OF AddSegment");
         }
@@ -1647,7 +1715,6 @@ namespace Renderer
             int t, tnext;
             bool cond;
             int ptnext;
-
             t = tfirst;
             while (t > 0 && Alg.GreaterThanEqTo(trapezoids[t].lo, trapezoids[tlast].lo))
             {
@@ -1789,6 +1856,7 @@ namespace Renderer
 
             s.root1 = LocateEndpoint(s.p1, s.p0, s.root1);
             s.root1 = trapezoids[s.root1].sink;
+            segs[segnum] = s;
         }
 
         static void TrapezoidCheckpoint()

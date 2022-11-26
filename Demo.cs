@@ -42,11 +42,13 @@ namespace Magician
             *  Much is possible in the pre-loop, since Drivers will still work
             */
             Multi.Origin.Add(
-                Multi.Point(30, 30),
-                Multi.Point(130, 30),
-                Multi.Point(130, 130),
-                Multi.Point(30, 130)
+                Multi.Point(-100, 0),
+                Multi.Point(100, 0),
+                Multi.Point(120, 80),
+                Multi.Point(0, 100),
+                Multi.Point(-120, 80)
             );
+            //Multi.Origin.SubDriven(x => 0.02, "phase+");
 
             /*
             *  Loop
