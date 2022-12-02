@@ -257,6 +257,7 @@ namespace Renderer
             }
 
             ConstructTrapezoids(n);
+            TrapezoidCheckpoint();
             int nmonopoly = MonotonateTrapezoids(n);
             int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
             //Console.WriteLine("Load successful!");
@@ -362,9 +363,12 @@ namespace Renderer
             int ri = 0;
             int endv, tmp, vpos;
 
+            Console.WriteLine("TriangulateSinglePolygon!");
+
             // RHS is a single segment
             if (side == TRI_RHS)
             {
+                Console.WriteLine(" side == TRI_RHS");
                 rc[0] = mchain[posmax].vnum;
                 tmp = mchain[posmax].next;
                 rc[1] = mchain[tmp].vnum;
@@ -374,11 +378,15 @@ namespace Renderer
                 v = mchain[vpos].vnum;
 
                 if ((endv = mchain[mchain[posmax].prev].vnum) == 0)
+                {
+                    Console.WriteLine("  endv = nvert");
                     endv = nvert;
+                }
             }
             // LHS is a single segment
             else
             {
+                Console.WriteLine(" side == TRI_LHS");
                 tmp = mchain[posmax].next;
                 rc[0] = mchain[tmp].vnum;
                 tmp = mchain[tmp].next;
@@ -393,10 +401,14 @@ namespace Renderer
 
             while (v != endv || ri > 1)
             {
-                /*
-                if (ri >= MAX_SEGMENTS-1)
-                    break;
-                */
+
+                Console.WriteLine($"ri: {ri}");
+                if (ri >= MAX_SEGMENTS - 1)
+                {
+                    Console.WriteLine($" ri >= {MAX_SEGMENTS - 1}");
+                    return 0;
+                }
+
                 if (ri > 0) /* reflex chain is non-empty */
                 {
                     if (Alg.Cross(vertices[v].pt, vertices[rc[ri - 1]].pt, vertices[rc[ri]].pt) >
@@ -437,6 +449,7 @@ namespace Renderer
 
         public static int MonotonateTrapezoids(int n)
         {
+            Console.WriteLine("MonotonateTrapezoids!");
             int i;
             int tr_start;
             vertices = new Vertexchain[MAX_SEGMENTS + 1];
@@ -476,10 +489,12 @@ namespace Renderer
             //
 
             Console.WriteLine("Pre-traverse!");
+            Console.WriteLine($" tr_start: {tr_start}");
             // The C version had undefined behaviour here
             // There are a few instances of this throughout but I tried to correct them
-            if (tr_start == MAX_TRAPEZOIDS + 1)
+            if (tr_start > MAX_TRAPEZOIDS)
             {
+                Console.WriteLine($" UNDEFINED: tr_start is {tr_start} (too large)");
                 return newmon();
             }
             /* traverse the polygon */
@@ -510,22 +525,19 @@ namespace Renderer
             Console.WriteLine($" trnum: {trnum}");
             Console.WriteLine($" from: {from}");
             Console.WriteLine($" dir: {dir}");
-            // The original c code has undefined behaviour here >:(
-            if (trnum == -1)
-            {
-                trnum = MAX_TRAPEZOIDS;
-            }
 
-            Trapezoid t = trapezoids[trnum];
             int howsplit, mnew;
             int v0, v1, v0next, v1next;
             int retval = 0, tmp;
             bool do_switch = false;
 
-
-            if ((trnum <= 0) || visited[trnum])
+            // The original c code has undefined behaviour here >:(
+            if (trnum <= 0 || visited[trnum])
+            {
                 return 0;
+            }
 
+            Trapezoid t = trapezoids[trnum];
             visited[trnum] = true;
 
             /* We have much more information available here. */
@@ -548,22 +560,30 @@ namespace Renderer
                     {
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        Console.WriteLine(" tp1");
                         TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                        Console.WriteLine(" tp2");
                         TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
                     }
                     else
                     {
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        Console.WriteLine(" tp3");
                         TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                        Console.WriteLine(" tp4");
                         TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                     }
                 }
                 else
                 {
                     retval = SP_NOSPLIT; /* Just traverse all neighbours */
+                    Console.WriteLine(" tp5");
                     TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                    Console.WriteLine(" tp6");
                     TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                    Console.WriteLine(" tp7");
                     TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                    Console.WriteLine(" tp8");
                     TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                 }
             }
@@ -577,22 +597,30 @@ namespace Renderer
                     {
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        Console.WriteLine(" tp9");
                         TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp10");
                         TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                     }
                     else
                     {
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        Console.WriteLine(" tp11");
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp12");
                         TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
                     }
                 }
                 else
                 {
                     retval = SP_NOSPLIT; /* Just traverse all neighbours */
+                    Console.WriteLine(" tp13");
                     TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                    Console.WriteLine(" tp14");
                     TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                    Console.WriteLine(" tp15");
                     TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                    Console.WriteLine(" tp16");
                     TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                 }
             }
@@ -608,17 +636,25 @@ namespace Renderer
                     {
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                        Console.WriteLine(" tp17");
                         TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp18");
                         TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                        Console.WriteLine(" tp19");
                         TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp20");
                         TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
                     }
                     else
                     {
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                        Console.WriteLine(" tp21");
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp22");
                         TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                        Console.WriteLine(" tp23");
                         TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                        Console.WriteLine(" tp24");
                         TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                     }
                 }
@@ -634,17 +670,25 @@ namespace Renderer
                         {
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            Console.WriteLine(" tp25");
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            Console.WriteLine(" tp26");
                             TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp27");
                             TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
+                            Console.WriteLine(" tp28");
                             TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                         }
                         else
                         {
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            Console.WriteLine(" tp29");
                             TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            Console.WriteLine(" tp30");
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp31");
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp32");
                             TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                         }
                     }
@@ -657,17 +701,25 @@ namespace Renderer
                         {
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
+                            Console.WriteLine(" tp33");
                             TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
+                            Console.WriteLine(" tp34");
                             TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp35");
                             TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp36");
                             TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                         }
                         else
                         {
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
+                            Console.WriteLine(" tp37");
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
+                            Console.WriteLine(" tp38");
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp39");
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
+                            Console.WriteLine(" tp40");
                             TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
                         }
                     }
@@ -800,6 +852,7 @@ namespace Renderer
             }
 
             Console.WriteLine("END OF TraversePolygon");
+            //trapezoids[trnum] = t;
 
             return retval;
         }
@@ -966,7 +1019,7 @@ namespace Renderer
             Console.WriteLine($"InitialQueryStructure! segnum: {segnum}");
             int i1, i2, i3, i4, i5, i6, i7, root;
             int t1, t2, t3, t4;
-            q_idx = tr_idx = 1;
+            //q_idx = tr_idx = 1;
             Segment s = segs[segnum];
 
             // Define the initial 7 nodes, with the first being the root
@@ -1049,8 +1102,8 @@ namespace Renderer
             query[i6].trnum = t1;
             query[i7].trnum = t2;
 
-            s.isInserted = true;
-            segs[segnum] = s;
+            //s.isInserted = true;
+            segs[segnum].isInserted = true;// = s;
             // Congrats, you just added the first segment of the trapezoidation!
             Console.WriteLine("END OF InitialQueryStructure");
 
@@ -1060,7 +1113,7 @@ namespace Renderer
         public static void ConstructTrapezoids(int nseg)
         {
 
-            Console.WriteLine("ConstructTrapezoids!");
+            Console.WriteLine($"ConstructTrapezoids! nseg: {nseg}");
             /*
             * Initialize Trapezoidation tree / query structure
             */
@@ -1134,7 +1187,7 @@ namespace Renderer
 
             if (isSwapped ? !IsInserted(segnum, 2) : !IsInserted(segnum, 1))
             {
-                Console.WriteLine("isSwapped 2 1");
+                Console.WriteLine("   isSwapped 2 1");
                 int tmp_d;
                 tu = LocateEndpoint(s.p0, s.p1, s.root0);
                 tl = NewTrapezoid();
@@ -1191,13 +1244,14 @@ namespace Renderer
                 trapezoids[tu].sink = i1;
                 trapezoids[tl].sink = i2;
                 tfirst = tl;
-                Console.WriteLine("END OF isSwapped 2 1");
+                Console.WriteLine("...END OF isSwapped 2 1");
             }
 
             // p0 already present in existing segment
             // Get the topmost intersecting trapezoid
             else
             {
+                Console.WriteLine("   2 1 else");
                 tfirst = LocateEndpoint(s.p0, s.p1, s.root0);
                 tritop = 1;
             }
@@ -1205,6 +1259,7 @@ namespace Renderer
 
             if (isSwapped ? !IsInserted(segnum, 1) : !IsInserted(segnum, 2))
             {
+                Console.WriteLine("   isSwapped 1 2");
                 int tmp_d;
                 tu = LocateEndpoint(s.p1, s.p0, s.root1);
                 tl = NewTrapezoid();
@@ -1248,11 +1303,13 @@ namespace Renderer
                 trapezoids[tu].sink = i1;
                 trapezoids[tl].sink = i2;
                 tlast = tu;
+                Console.WriteLine("...END OF isSwapped 1 2");
             }
             // p1 already present in existing segment
             // get bottommost intersecting trapezoid
             else
             {
+                Console.WriteLine("   1 2 else");
                 tlast = LocateEndpoint(s.p1, s.p0, s.root1);
                 tribot = 1;
             }
@@ -1299,7 +1356,6 @@ namespace Renderer
                 }
 
                 trapezoids[tn] = trapezoids[t];
-
                 trapezoids[t].sink = i1;
                 trapezoids[tn].sink = i2;
                 t_sav = t;
@@ -1697,7 +1753,6 @@ namespace Renderer
                     Console.WriteLine($"t->tnext: {t}->{tnext}");
                     t = tnext;
                 }
-                Console.WriteLine("   Horror averted!");
                 trapezoids[t_sav].rSeg = trapezoids[tn_sav].lSeg = segnum;
             }
             // while end
@@ -1705,7 +1760,7 @@ namespace Renderer
             tlastl = tlast;
             MergeTrapezoids(segnum, tfirstl, tlastl, 1);
             MergeTrapezoids(segnum, tfirstr, tlastr, 2);
-            //segs[segnum] = s;  // This line may fix things
+            segs[segnum] = s;  // This line may fix things
             segs[segnum].isInserted = true;
             Console.WriteLine($"..END OF AddSegment");
         }

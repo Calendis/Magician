@@ -41,14 +41,36 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
+            int b = 50;  // base
+            int a = 100;  // additional
+
             Multi.Origin.Add(
-                Multi.Point(-100, 0),
-                Multi.Point(100, 0),
-                Multi.Point(120, 80),
-                Multi.Point(0, 100),
-                Multi.Point(-120, 80)
+                
+                Multi.Point(84.7, 53.2),
+                Multi.Point(-53.2, 84.7),
+                Multi.Point(-84.7, -53.2),
+                Multi.Point(53.2, -84.7)
+                //Multi.Star(8, 50, 100).SubDriven(x => 0.02, "phase+")
+                /*
+                Multi.Point(40.0, 0.0),
+                Multi.Point(73.9, 30.6),
+                Multi.Point(28.3, 28.3),
+                Multi.Point(30.6, 73.9),
+                Multi.Point(0.0, 40.0),
+                Multi.Point(-30.6, 73.9),
+                Multi.Point(-28.3, 28.3),
+                Multi.Point(-73.9, 30.6),
+                Multi.Point(-40.0, 0.0),
+                Multi.Point(-73.9, -30.6),
+                Multi.Point(-28.3, -28.3),
+                Multi.Point(-30.6, -73.9),
+                Multi.Point(0.0, -40.0),
+                Multi.Point(30.6, -73.9),
+                Multi.Point(28.3, -28.3),
+                Multi.Point(73.9, -30.6)
+                */
             );
-            //Multi.Origin.SubDriven(x => 0.02, "phase+");
+            //Multi.Origin.SubDriven(x => 0.03, "phase+");
 
             /*
             *  Loop
@@ -89,12 +111,6 @@ namespace Magician
             SDL_RenderClear(renderer);
 
             // Draw objects
-            /*
-            foreach(Drawable d in mathObjs)
-            {
-                d.Draw(ref renderer);
-            }
-            */
             Multi.Origin.Draw(ref renderer, 0, 0);
 
             // SAVE FRAME TO IMAGE

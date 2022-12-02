@@ -364,10 +364,21 @@ namespace Magician
                         vs[3 * i + 2].position.y = p2.y;
 
                         SDL_Color c;
+                        /*
                         c.r = (byte)Col.R;
                         c.g = (byte)Col.G;
                         c.b = (byte)Col.B;
                         c.a = (byte)Col.A;
+                        */
+                        Random rnd = new Random(i);
+                        byte rndRed = (byte)rnd.Next(256);
+                        byte rndGrn = (byte)rnd.Next(256);
+                        byte rndBlu = (byte)rnd.Next(256);
+                        c.r = rndRed;
+                        c.g = rndGrn;
+                        c.b = rndBlu;
+                        c.a = (byte)Col.A;
+
                         vs[3 * i].color = c;
                         vs[3 * i + 1].color = c;
                         vs[3 * i + 2].color = c;
@@ -375,6 +386,7 @@ namespace Magician
 
                     IntPtr ip = new IntPtr();
                     SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
+                    throw new Exception("Manual exit.");
                 }
                 catch (System.Exception)
                 {
