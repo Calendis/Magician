@@ -41,16 +41,18 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            int b = 50;  // base
-            int a = 100;  // additional
 
             Multi.Origin.Add(
                 
-                Multi.Point(84.7, 53.2),
-                Multi.Point(-53.2, 84.7),
+                /*
+                Multi.Point(84.7, 83.2),
+                Multi.Point(-63.2, 64.7),
                 Multi.Point(-84.7, -53.2),
                 Multi.Point(53.2, -84.7)
-                //Multi.Star(8, 50, 100).SubDriven(x => 0.02, "phase+")
+                */
+                
+                Multi.Star(8, 50, 100).SubDriven(x => 0.02, "phase+")
+                
                 /*
                 Multi.Point(40.0, 0.0),
                 Multi.Point(73.9, 30.6),

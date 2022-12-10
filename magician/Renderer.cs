@@ -257,7 +257,7 @@ namespace Renderer
             }
 
             ConstructTrapezoids(n);
-            TrapezoidCheckpoint();
+            SegsCheckpoint();
             int nmonopoly = MonotonateTrapezoids(n);
             int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
             //Console.WriteLine("Load successful!");
@@ -520,11 +520,9 @@ namespace Renderer
 
         static int TraversePolygon(int mcur, int trnum, int from, int dir)
         {
-            Console.WriteLine("TraversePolygon!");
-            Console.WriteLine($" mcur: {mcur}");
-            Console.WriteLine($" trnum: {trnum}");
-            Console.WriteLine($" from: {from}");
-            Console.WriteLine($" dir: {dir}");
+            
+            Console.WriteLine($"TraversePolygon! trnum: {trnum}");
+
 
             int howsplit, mnew;
             int v0, v1, v0next, v1next;
@@ -551,175 +549,155 @@ namespace Renderer
             /* take care of this first */
             if ((t.u0 <= 0) && (t.u1 <= 0))
             {
-                //
+                Console.WriteLine(" u0 <= 0 and u1 <= 0");
                 if ((t.d0 > 0) && (t.d1 > 0)) /* downward opening triangle */
                 {
+                    Console.WriteLine("  downward opening triangle");
                     v0 = trapezoids[t.d1].lSeg;
                     v1 = t.lSeg;
                     if (from == t.d1)
                     {
+                        Console.WriteLine("   from == d1");
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
-                        Console.WriteLine(" tp1");
                         TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
-                        Console.WriteLine(" tp2");
                         TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
                     }
                     else
                     {
+                        Console.WriteLine("   from != d1");
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
-                        Console.WriteLine(" tp3");
                         TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                        Console.WriteLine(" tp4");
                         TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                     }
                 }
                 else
                 {
+                    Console.WriteLine("  NOT downward opening triangle");
                     retval = SP_NOSPLIT; /* Just traverse all neighbours */
-                    Console.WriteLine(" tp5");
                     TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                    Console.WriteLine(" tp6");
                     TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                    Console.WriteLine(" tp7");
                     TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                    Console.WriteLine(" tp8");
                     TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                 }
             }
             else if ((t.d0 <= 0) && (t.d1 <= 0))
             {
+                Console.WriteLine(" d0 <= 0 and d1 <= 0");
                 if ((t.u0 > 0) && (t.u1 > 0)) /* upward opening triangle */
                 {
+                    Console.WriteLine("  upward opening triangle");
                     v0 = t.rSeg;
                     v1 = trapezoids[t.u0].rSeg;
                     if (from == t.u1)
                     {
+                        Console.WriteLine("   from == u1");
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
-                        Console.WriteLine(" tp9");
                         TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp10");
                         TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                     }
                     else
                     {
+                       Console.WriteLine("   from != u1");
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
-                        Console.WriteLine(" tp11");
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp12");
                         TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
                     }
                 }
                 else
                 {
+                    Console.WriteLine("  NOT upward opening triangle");
                     retval = SP_NOSPLIT; /* Just traverse all neighbours */
-                    Console.WriteLine(" tp13");
                     TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                    Console.WriteLine(" tp14");
                     TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                    Console.WriteLine(" tp15");
                     TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                    Console.WriteLine(" tp16");
                     TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                 }
             }
             else if ((t.u0 > 0) && (t.u1 > 0))
             {
+                Console.WriteLine(" u0 > 0 and u1 > 0");
                 if ((t.d0 > 0) && (t.d1 > 0)) /* downward + upward cusps */
                 {
+                    Console.WriteLine("  downward and upward cusps");
                     v0 = trapezoids[t.d1].lSeg;
                     v1 = trapezoids[t.u0].rSeg;
                     retval = SP_2UP_2DN;
                     if (((dir == TR_FROM_DN) && (t.d1 == from)) ||
                         ((dir == TR_FROM_UP) && (t.u1 == from)))
                     {
+                        Console.WriteLine("   dir cond 1");
                         do_switch = true;
                         mnew = MakeNewMonotonePoly(mcur, v1, v0);
-                        Console.WriteLine(" tp17");
                         TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp18");
                         TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
-                        Console.WriteLine(" tp19");
                         TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp20");
                         TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
                     }
                     else
                     {
+                        Console.WriteLine("   not dir cond 1");
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
-                        Console.WriteLine(" tp21");
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp22");
                         TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                        Console.WriteLine(" tp23");
                         TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
-                        Console.WriteLine(" tp24");
                         TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                     }
                 }
                 else /* only downward cusp */
                 {
+                    Console.WriteLine("  only downward cusp!");
                     if (Alg.EqualTo(t.lo, segs[t.lSeg].p1))
                     {
+                        Console.WriteLine("   t lo == segs[t.lseg].p1");
                         v0 = trapezoids[t.u0].rSeg;
                         v1 = segs[t.lSeg].next;
 
                         retval = SP_2UP_LEFT;
                         if ((dir == TR_FROM_UP) && (t.u0 == from))
                         {
+                            Console.WriteLine("    dir == from up and u0 == from");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
-                            Console.WriteLine(" tp25");
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                            Console.WriteLine(" tp26");
                             TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp27");
                             TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
-                            Console.WriteLine(" tp28");
                             TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
                         }
                         else
                         {
+                            Console.WriteLine("    dir != from up or u0 != from");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
-                            Console.WriteLine(" tp29");
                             TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                            Console.WriteLine(" tp30");
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp31");
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp32");
                             TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                         }
                     }
                     else
                     {
+                        Console.WriteLine("   t lo != segs[t.lseg].p1");
                         v0 = t.rSeg;
                         v1 = trapezoids[t.u0].rSeg;
                         retval = SP_2UP_RIGHT;
                         if ((dir == TR_FROM_UP) && (t.u1 == from))
                         {
+                            Console.WriteLine("    dir == from up and u1 == from");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
-                            Console.WriteLine(" tp33");
                             TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
-                            Console.WriteLine(" tp34");
                             TraversePolygon(mnew, t.d1, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp35");
                             TraversePolygon(mnew, t.d0, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp36");
                             TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
                         }
                         else
                         {
+                            Console.WriteLine("    dir != from up or u1 != from");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
-                            Console.WriteLine(" tp37");
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
-                            Console.WriteLine(" tp38");
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp39");
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
-                            Console.WriteLine(" tp40");
                             TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
                         }
                     }
@@ -727,27 +705,20 @@ namespace Renderer
             }
             else if ((t.u0 > 0) || (t.u1 > 0)) /* no downward cusp */
             {
-                Console.WriteLine(" No downward cusp");
-                Console.WriteLine(" CURRENT TRAPEZOID:");
-
-                Console.WriteLine($"  rlsegs: {t.rSeg}, {t.lSeg}");
-                Console.WriteLine($"  hi: {t.hi.x}, {t.hi.y}");
-                Console.WriteLine($"  lo: {t.lo.x}, {t.lo.y}");
-                Console.WriteLine($"  u01: {t.u0}, {t.u1}");
-                Console.WriteLine($"  d01: {t.d0}, {t.d1}");
-                Console.WriteLine($"  sink: {t.sink}");
-                Console.WriteLine($"  usaveside: {t.usave}, {t.uside}");
-                Console.WriteLine($"  state: {t.state}");
+                Console.WriteLine(" no downward cusp");
 
                 if ((t.d0 > 0) && (t.d1 > 0)) /* only upward cusp */
                 {
+                    Console.WriteLine("  only upward cusp");
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0))
                     {
+                        Console.WriteLine("   hi == segs[t.lseg].p0");
                         v0 = trapezoids[t.d1].lSeg;
                         v1 = t.lSeg;
                         retval = SP_2DN_LEFT;
                         if (!((dir == TR_FROM_DN) && (t.d0 == from)))
                         {
+                            Console.WriteLine("    dir == from and f0 == from");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
                             TraversePolygon(mcur, t.u1, trnum, TR_FROM_DN);
@@ -757,6 +728,7 @@ namespace Renderer
                         }
                         else
                         {
+                            Console.WriteLine("    dir != or and f0 != from");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
                             TraversePolygon(mnew, t.u0, trnum, TR_FROM_DN);
@@ -766,12 +738,14 @@ namespace Renderer
                     }
                     else
                     {
+                        Console.WriteLine("  hi != segs[t.lseg].p0");
                         v0 = trapezoids[t.d1].lSeg;
                         v1 = segs[t.rSeg].next;
 
                         retval = SP_2DN_RIGHT;
                         if ((dir == TR_FROM_DN) && (t.d1 == from))
                         {
+                            Console.WriteLine("   dir == from and d1 == from");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
@@ -781,6 +755,7 @@ namespace Renderer
                         }
                         else
                         {
+                            Console.WriteLine("   dir != from or d1 != from");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
@@ -791,14 +766,29 @@ namespace Renderer
                 }
                 else
                 {
+                    
+                    Console.WriteLine(" NO cusp");
+                    Console.WriteLine($" L: {segs[t.lSeg].p0.x}, {segs[t.lSeg].p0.y}");
+                    Console.WriteLine($" R: {segs[t.rSeg].p0.x}, {segs[t.rSeg].p0.y}");
+                    Console.WriteLine($" rseg: {t.rSeg}");
+
+                    Console.WriteLine($" Hi: {t.hi.x}, {t.hi.y}");
+                    Console.WriteLine($" Lo: {t.lo.x}, {t.lo.y}");
+
+                    Console.WriteLine($" {Alg.EqualTo(t.hi, segs[t.lSeg].p0)}");
+                    Console.WriteLine($" {Alg.EqualTo(t.lo, segs[t.rSeg].p0)}");
+                    
+
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0) &&
                         Alg.EqualTo(t.lo, segs[t.rSeg].p0))
                     {
+                        Console.WriteLine("  hi == segs[t.lseg].p0 and lo == rseg");
                         v0 = t.rSeg;
                         v1 = t.lSeg;
                         retval = SP_SIMPLE_LRDN;
                         if (dir == TR_FROM_UP)
                         {
+                            Console.WriteLine("   dir == from up");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
@@ -808,6 +798,7 @@ namespace Renderer
                         }
                         else
                         {
+                            Console.WriteLine("   dir != from up");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
@@ -815,15 +806,18 @@ namespace Renderer
                             TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
                         }
                     }
+                    // DEBUG: The condition taken by the C code
                     else if (Alg.EqualTo(t.hi, segs[t.rSeg].p1) &&
                              Alg.EqualTo(t.lo, segs[t.lSeg].p1))
                     {
+                        Console.WriteLine("  hi == segs[t.rseg].p1 and lo == lseg");
                         v0 = segs[t.rSeg].next;
                         v1 = segs[t.lSeg].next;
 
                         retval = SP_SIMPLE_LRUP;
                         if (dir == TR_FROM_UP)
                         {
+                            Console.WriteLine("   dir == from up");
                             do_switch = true;
                             mnew = MakeNewMonotonePoly(mcur, v1, v0);
                             TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
@@ -833,6 +827,7 @@ namespace Renderer
                         }
                         else
                         {
+                            Console.WriteLine("   dir != from up");
                             mnew = MakeNewMonotonePoly(mcur, v0, v1);
                             TraversePolygon(mcur, t.d1, trnum, TR_FROM_UP);
                             TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
@@ -842,6 +837,7 @@ namespace Renderer
                     }
                     else /* no split possible */
                     {
+                        Console.WriteLine("  no split possible");
                         retval = SP_NOSPLIT;
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
                         TraversePolygon(mcur, t.d0, trnum, TR_FROM_UP);
@@ -859,6 +855,7 @@ namespace Renderer
 
         static int MakeNewMonotonePoly(int mcur, int v0, int v1)
         {
+            Console.WriteLine("   MakeNewMonotonePoly!");
             int p, q, ip, iq;
             int mnew = newmon();
             int i, j, nf0, nf1;
@@ -969,6 +966,7 @@ namespace Renderer
 
         static int NewChainElement()
         {
+            Console.WriteLine($"#####: {chain_idx}");
             return ++chain_idx;
         }
 
@@ -1145,6 +1143,7 @@ namespace Renderer
                 // Find a new root for the segment endpoints
                 for (int i = 1; i <= nseg; i++)
                 {
+                    Console.WriteLine($"  newroot i: {i}");
                     FindNewRoots(i);
                 }
             }
@@ -1171,18 +1170,24 @@ namespace Renderer
             Console.WriteLine($"  AddSegment, segnum: {segnum}");
             if (Alg.GreaterThan(s.p1, s.p0))
             {
-                Console.WriteLine("   s.p1 greater than s.p0");
+                Console.WriteLine("   s.p1 greater THAN s.p0");
                 // Swap points
                 tpt = s.p0;
                 s.p0 = s.p1;
                 s.p1 = tpt;
+                //segs[segnum].p0 = s.p1;
+                //segs[segnum].p1 = tpt;
 
                 // Swap roots
                 int tmp;
                 tmp = s.root0;
                 s.root0 = s.root1;
                 s.root1 = tmp;
+                //segs[segnum].root0 = s.root1;
+                //segs[segnum].root1 = tmp;
                 isSwapped = true;
+
+                //segs[segnum] = s;
             }
 
             if (isSwapped ? !IsInserted(segnum, 2) : !IsInserted(segnum, 1))
@@ -1758,30 +1763,38 @@ namespace Renderer
             // while end
             tfirstl = tfirst;
             tlastl = tlast;
+            Console.WriteLine($"  Pre-merge: {segnum}, {tfirstl}, {tlastl}, {tfirstr}, {tlastr}");
             MergeTrapezoids(segnum, tfirstl, tlastl, 1);
             MergeTrapezoids(segnum, tfirstr, tlastr, 2);
-            segs[segnum] = s;  // This line may fix things
+            //segs[segnum] = s;  // This line may fix things
             segs[segnum].isInserted = true;
             Console.WriteLine($"..END OF AddSegment");
         }
 
         public static void MergeTrapezoids(int segnum, int tfirst, int tlast, int side)
         {
+            Console.WriteLine("MergeTrapezoids!");
             int t, tnext;
             bool cond;
             int ptnext;
             t = tfirst;
             while (t > 0 && Alg.GreaterThanEqTo(trapezoids[t].lo, trapezoids[tlast].lo))
             {
+                Console.WriteLine($" side : {side}");
                 if (side == 1)
+                {
                     cond = ((((tnext = trapezoids[t].d0) > 0) && (trapezoids[tnext].rSeg == segnum)) ||
                             (((tnext = trapezoids[t].d1) > 0) && (trapezoids[tnext].rSeg == segnum)));
+                }
                 else
+                {
                     cond = ((((tnext = trapezoids[t].d0) > 0) && (trapezoids[tnext].lSeg == segnum)) ||
                             (((tnext = trapezoids[t].d1) > 0) && (trapezoids[tnext].lSeg == segnum)));
+                }
 
                 if (cond)
                 {
+                    Console.WriteLine(" cond");
                     if (trapezoids[t].lSeg == trapezoids[tnext].lSeg &&
                         trapezoids[t].rSeg == trapezoids[tnext].rSeg)
                     {
@@ -1805,6 +1818,7 @@ namespace Renderer
                                 trapezoids[trapezoids[t].d1].u1 = t;
 
                         trapezoids[t].lo = trapezoids[tnext].lo;
+                        Console.WriteLine($"  invalidating trapezoid {tnext}");
                         trapezoids[tnext].state = false;
                     }
                     else
@@ -1814,6 +1828,7 @@ namespace Renderer
                 }
                 else
                 {
+                    Console.WriteLine(" not cond");
                     t = tnext;
                 }
             }
@@ -1922,17 +1937,23 @@ namespace Renderer
             for (k = 0; k < MAX_TRAPEZOIDS; k++)
             {
                 Console.WriteLine("   TRAPEZOID");
-                Console.WriteLine($"    rlsegs: {trapezoids[k].rSeg}, {trapezoids[k].lSeg}");
-                Console.WriteLine($"    hi: {trapezoids[k].hi.x}, {trapezoids[k].hi.y}");
-                Console.WriteLine($"    lo: {trapezoids[k].lo.x}, {trapezoids[k].lo.y}");
-                Console.WriteLine($"    u01: {trapezoids[k].u0}, {trapezoids[k].u1}");
-                Console.WriteLine($"    d01: {trapezoids[k].d0}, {trapezoids[k].d1}");
-                Console.WriteLine($"    sink: {trapezoids[k].sink}");
-                Console.WriteLine($"    usaveside: {trapezoids[k].usave}, {trapezoids[k].uside}");
-                Console.WriteLine($"    state: {trapezoids[k].state}");
-                Console.WriteLine("...");
+                Console.WriteLine(TrapToString(k));
             }
             Console.WriteLine("..END OF TRAPEZOID CHECKPOINT");
+        }
+
+        static string TrapToString(int k)
+        {
+            string trapString = "";
+            trapString += $"    rlsegs: {trapezoids[k].rSeg}, {trapezoids[k].lSeg}\n";
+            trapString += $"    hi: {trapezoids[k].hi.x}, {trapezoids[k].hi.y}\n";
+            trapString += $"    lo: {trapezoids[k].lo.x}, {trapezoids[k].lo.y}\n";
+            trapString += $"    u01: {trapezoids[k].u0}, {trapezoids[k].u1}\n";
+            trapString += $"    d01: {trapezoids[k].d0}, {trapezoids[k].d1}\n";
+            trapString += $"    sink: {trapezoids[k].sink}\n";
+            trapString += $"    usaveside: {trapezoids[k].usave}, {trapezoids[k].uside}\n";
+            trapString += $"    state: {trapezoids[k].state}";
+            return trapString;
         }
 
         static void SegsCheckpoint()
