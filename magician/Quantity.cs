@@ -21,7 +21,12 @@ namespace Magician
 
         public void Set(double x)
         {
-            this.q = x;
+            q = x;
+        }
+
+        public void Incr(double x)
+        {
+            q += x;
         }
         // Converts to double
         public double Evaluate(params double[] xs)

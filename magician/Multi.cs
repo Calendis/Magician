@@ -12,22 +12,21 @@ namespace Magician
         INNER = (short)0b0010,
         FULL = (short)0b1110,
         PLOT = (short)0b1000,
-        POINT =(short) 0b0001
+        POINT = (short)0b0001
     }
-    
+
     public class Multi : Quantity, Drawable, Driveable
     {
-        //protected double[] pos = new double[]{0,0};
-        protected Quantity x = new Quantity(0);
-        protected Quantity y = new Quantity(0);
-        public Multi? parent;
-        protected List<Multi> constituents;
-
+        Quantity x = new Quantity(0);
+        Quantity y = new Quantity(0);
+        Multi? parent;
+        List<Multi> constituents;
         public Multi this[int key]
         {
             get => constituents[key];
             set => constituents[key] = value;
         }
+
         /*
         *  Positional Properties and Methods
         */
@@ -45,14 +44,17 @@ namespace Magician
 
             set => x = value;
         }
+        
+        
         public void SetX(double offset)
         {
-            x.Set(offset);
+            SetX(this, offset);
         }
         public void IncrX(double offset)
         {
-            x.Delta(offset);
+            Translate(this, offset, 0);
         }
+        
         public Quantity Y
         {
             get
@@ -66,14 +68,16 @@ namespace Magician
             }
             set => y = value;
         }
+        
         public void SetY(double offset)
         {
-            y.Set(offset);
+            SetY(this, offset);
         }
         public void IncrY(double offset)
         {
-            y.Delta(offset);
+            Translate(this, 0, offset);
         }
+        
 
         public Quantity Phase
         {
@@ -90,36 +94,32 @@ namespace Magician
         }
         public void SetPhase(double offset)
         {
-            double m = Magnitude.Evaluate();
-            x.Set(m * Math.Cos(offset));
-            y.Set(m * Math.Sin(offset));
+            RotateTo(this, offset);
         }
         public void IncrPhase(double offset)
         {
-            SetPhase(Phase.Evaluate() + offset);
+            Rotate(this, offset);
         }
         public Quantity Magnitude
         {
             get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate()));
             set
             {
-                SetMagnitude(value.Evaluate());
+                ScaleTo(this, value.Evaluate());
             }
         }
         public void SetMagnitude(double offset)
         {
-            double p = Phase.Evaluate();
-            SetX(offset * Math.Cos(p));
-            SetY(offset * Math.Sin(p));
+            ScaleTo(this, offset);
         }
         public void IncrMagnitude(double offset)
         {
-            SetMagnitude(Magnitude.Evaluate() + offset);
+            ScaleShift(this, offset);
         }
-
+        
         public Multi Rotated(double theta)
         {
-            IncrPhase(theta);
+            Rotate(this, theta);
             return this;
         }
 
@@ -132,6 +132,68 @@ namespace Magician
             return Globals.winHeight / 2 - Y.Evaluate(offset);
         }
 
+        DrawMode drawMode;
+        protected Color col;
+
+        // Full constructor
+        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
+        {
+            this.parent = parent;
+            this.x.Set(x);
+            this.y.Set(y);
+            this.col = col;
+            this.drawMode = dm;
+
+            constituents = new List<Multi> { };
+            foreach (Multi c in cs)
+            {
+                Add(c);
+            }
+        }
+
+        // Create a multi and define its position, colour, and drawing properties
+        public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
+        : this(Multi.Origin, x, y, col, dm, cs) { }
+
+        public Multi(double x, double y) : this(x, y, Globals.fgCol) { }
+
+        // Create a multi from a list of multis
+        public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, DrawMode.FULL, cs) { }
+
+        public Color Col
+        {
+            get => col;
+            set => col = value;
+        }
+
+        public int Count
+        {
+            get => constituents.Count;
+        }
+        public void Add(params Multi[] ms)
+        {
+            constituents.AddRange(ms);
+            foreach (Multi m in ms)
+            {
+                //m.SetParent(this);
+                m.parent = this;
+            }
+        }
+        public void Remove(Multi m)
+        {
+            constituents.Remove(m);
+        }
+
+        public List<Driver> Drivers
+        {
+            get => drivers;
+        }
+
+        public Multi Modify(List<Multi> cs)
+        {
+            constituents = cs;
+            return this;
+        }
         public IEnumerable<Multi> GetConstituents(Func<double, double> truth, double truthThreshold = 0)
         {
             for (int i = 0; i < constituents.Count; i++)
@@ -174,69 +236,6 @@ namespace Magician
         // This is desirable for say, a polygon, but undesirable for say, a plot
         //protected bool linedCompleted;
         //protected bool drawPoint;
-        DrawMode drawMode;
-        protected Color col;
-
-        // Full constructor
-        // TODO: make lined, linedCompleted, drawPoint, filled a bitflag int
-        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
-        {
-            this.parent = parent;
-            this.x.Set(x);
-            this.y.Set(y);
-            this.col = col;
-            this.drawMode = dm;
-
-            constituents = new List<Multi> { };
-            foreach (Multi c in cs)
-            {
-                Add(c);
-            }
-        }
-
-        // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, Color col, DrawMode dm=DrawMode.FULL, params Multi[] cs)
-        : this(Multi.Origin, x, y, col, dm, cs) { }
-
-        public Multi(double x, double y) : this(x, y, Globals.fgCol) { }
-
-        // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, DrawMode.FULL, cs) { }
-
-        public Color Col
-        {
-            get => col;
-            set => col = value;
-        }
-
-        public int Count
-        {
-            get => constituents.Count;
-        }
-        public void Add(params Multi[] ms)
-        {
-            constituents.AddRange(ms);
-            foreach (Multi m in ms)
-            {
-                //m.SetParent(this);
-                m.parent = this;
-            }
-        }
-        public void Remove(Multi m)
-        {
-            constituents.Remove(m);
-        }
-
-        public List<Driver> Drivers
-        {
-            get => drivers;
-        }
-
-        public Multi Modify(List<Multi> cs)
-        {
-            constituents = cs;
-            return this;
-        }
 
         public Multi Filter(Func<double, double> f, double thresh = 0)
         {
@@ -333,10 +332,10 @@ namespace Magician
                         int tri1 = vertexIndices[1];
                         int tri2 = vertexIndices[2];
                         // If all vertex indices are 0, we're done
-                        
+
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             continue;
-                        
+
 
                         SDL_FPoint p0, p1, p2;
                         //p.x = (float)constituents[i].XCartesian
@@ -363,7 +362,7 @@ namespace Magician
                         c.g = (byte)Col.G;
                         c.b = (byte)Col.B;
                         c.a = (byte)Col.A;
-                        
+
                         // Randomly-coloured triangles for debugging
                         /*
                         Random rnd = new Random(i);
@@ -501,7 +500,7 @@ namespace Magician
         }
 
         // Add both multis to a new parent Multi
-        public Multi Adjoin(Multi m, double xOffset=0, double yOffset=0)
+        public Multi Adjoin(Multi m, double xOffset = 0, double yOffset = 0)
         {
             Multi nm = new Multi(xOffset, yOffset);
             nm.Add(this, m);
@@ -589,12 +588,6 @@ namespace Magician
         {
             drawMode = DrawMode.INVISIBLE;
             return this;
-        }
-
-        // Static multi modifiers
-        public static Multi Scale(Multi m)
-        {
-            return m.Scaled(1d / Math.Sqrt(3));
         }
 
         public int Index
@@ -859,5 +852,57 @@ namespace Magician
             }
             return o;
         }
+
+        /*
+        *
+        * static void Multi methods
+        * eventually, Multi's instance methods should reference these
+        *
+        */
+
+        public static void SetX(Multi m, double x)
+        {
+            m.x.Set(x);
+        }
+        public static void SetY(Multi m, double y)
+        {
+            m.y.Set(y);
+        }
+
+        public static void Translate(Multi m, double x, double y)
+        {
+            m.x.Incr(x);
+            m.y.Incr(y);
+        }
+
+        public static void RotateTo(Multi m, double theta)
+        {
+            double mag = m.Magnitude.Evaluate();
+            m.x.Set(mag * Math.Cos(theta));
+            m.y.Set(mag * Math.Sin(theta));
+        }
+        
+        public static void Rotate(Multi m, double theta)
+        {
+            RotateTo(m , theta+m.Phase.Evaluate());
+        }
+
+        public static void ScaleTo(Multi m, double mag)
+        {
+            double ph = m.Phase.Evaluate();
+            SetX(m, mag*Math.Cos(ph));
+            SetY(m, mag*Math.Sin(ph));
+        }
+
+        public static void ScaleShift(Multi m, double mag)
+        {
+            ScaleTo(m, mag+m.Magnitude.Evaluate());
+        }
+
+        public static void Scale(Multi m, double mag)
+        {
+            ScaleTo(m, mag*m.Magnitude.Evaluate());
+        }
     }
+
 }
