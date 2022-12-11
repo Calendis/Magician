@@ -43,46 +43,9 @@ namespace Magician
             */
 
             Multi.Origin.Add(
-                
-                // Quad test
-                /*
-                Multi.Point(84.7, 83.2),
-                Multi.Point(-63.2, 64.7),
-                Multi.Point(-84.7, -53.2),
-                Multi.Point(53.2, -84.7)
-                */
-
-                // Pentagon test
-                /*
-                Multi.Point(-22.9, -97.3),
-                Multi.Point(22.9, 97.3),
-                Multi.Point(-50.4, 135.1),
-                Multi.Point(-97.3, 22.9),
-                Multi.Point(-105.3, -98.5)
-                */
-                
-                Multi.Star(8, 100, 200).SubDriven(x => 0.01, "phase+")
-                
-                /*
-                Multi.Point(40.0, 0.0),
-                Multi.Point(73.9, 30.6),
-                Multi.Point(28.3, 28.3),
-                Multi.Point(30.6, 73.9),
-                Multi.Point(0.0, 40.0),
-                Multi.Point(-30.6, 73.9),
-                Multi.Point(-28.3, 28.3),
-                Multi.Point(-73.9, 30.6),
-                Multi.Point(-40.0, 0.0),
-                Multi.Point(-73.9, -30.6),
-                Multi.Point(-28.3, -28.3),
-                Multi.Point(-30.6, -73.9),
-                Multi.Point(0.0, -40.0),
-                Multi.Point(30.6, -73.9),
-                Multi.Point(28.3, -28.3),
-                Multi.Point(73.9, -30.6)
-                */
+                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 5, 66, 100)
+                .SubDriven(x => 0.02, "phase+")
             );
-            //Multi.Origin.SubDriven(x => 0.03, "phase+");
 
             /*
             *  Loop

@@ -5,19 +5,19 @@
 
 namespace Magician
 {
-    public class Plot : Multi, IMap, Drawable, Driveable
+    public class Plot : Multi, Drawable, Driveable
     {
-        protected Driver toPlot;
+        protected IMap toPlot;
         private double start;
         private double end;
         private double dx;
         
         // Create a plot with a defined position, driver, bounds, resolution, and colour
-        public Plot(double x, double y, Driver d, double start, double end, double dx, Color c) : base(x, y, c, true, false, false)
+        public Plot(double x, double y, IMap im, double start, double end, double dx, Color c) : base(x, y, c, DrawMode.PLOT)
         {
             //pos[0] = x;
             //pos[1] = y;
-            toPlot = d;
+            toPlot = im;
             this.start = start;
             this.end = end;
             this.dx = dx;
@@ -63,7 +63,7 @@ namespace Magician
                 points.Add(ps[0]);
 
             }
-            Multi m = new Multi(X.Evaluate(), Y.Evaluate(), col, true, false, false, points.ToArray());
+            Multi m = new Multi(X.Evaluate(), Y.Evaluate(), col, DrawMode.PLOT, points.ToArray());
             return m;
         }
 

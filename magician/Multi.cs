@@ -5,6 +5,16 @@ using static SDL2.SDL;
 
 namespace Magician
 {
+    public enum DrawMode
+    {
+        INVISIBLE = (short)0b0000,
+        OUTER = (short)0b1100,
+        INNER = (short)0b0010,
+        FULL = (short)0b1110,
+        PLOT = (short)0b1000,
+        POINT =(short) 0b0001
+    }
+    
     public class Multi : Quantity, Drawable, Driveable
     {
         //protected double[] pos = new double[]{0,0};
@@ -30,7 +40,7 @@ namespace Magician
                     return x;
                 }
                 // Recursive getting of parent position
-                return x.GetDelta(((Multi)parent).X.Evaluate());
+                return x.GetDelta(parent.X.Evaluate());
             }
 
             set => x = value;
@@ -52,7 +62,7 @@ namespace Magician
                     return y;
                 }
                 // Recursive getting of parent position
-                return y.GetDelta(((Multi)parent).Y.Evaluate());
+                return y.GetDelta(parent.Y.Evaluate());
             }
             set => y = value;
         }
@@ -158,25 +168,24 @@ namespace Magician
 
         // If true, a Multi will be drawn with its constituents connected by lines
         // This is useful for plots, polygons, etc
-        protected bool lined;
+        //protected bool lined;
 
         // If true, the last constituent in a Multi will be drawn with a line connecting to the first one
         // This is desirable for say, a polygon, but undesirable for say, a plot
-        protected bool linedCompleted;
-        protected bool drawPoint;
+        //protected bool linedCompleted;
+        //protected bool drawPoint;
+        DrawMode drawMode;
         protected Color col;
 
         // Full constructor
         // TODO: make lined, linedCompleted, drawPoint, filled a bitflag int
-        public Multi(Multi? parent, double x, double y, Color col, bool lined = false, bool linedCompleted = false, bool drawPoint = true, params Multi[] cs) : base(0)
+        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
         {
             this.parent = parent;
             this.x.Set(x);
             this.y.Set(y);
             this.col = col;
-            this.lined = lined;
-            this.linedCompleted = linedCompleted;
-            this.drawPoint = drawPoint;
+            this.drawMode = dm;
 
             constituents = new List<Multi> { };
             foreach (Multi c in cs)
@@ -186,13 +195,13 @@ namespace Magician
         }
 
         // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, Color col, bool lined = false, bool linedCompleted = false, bool drawPoint = true, params Multi[] cs)
-        : this(Multi.Origin, x, y, col, lined, linedCompleted, drawPoint, cs) { }
+        public Multi(double x, double y, Color col, DrawMode dm=DrawMode.FULL, params Multi[] cs)
+        : this(Multi.Origin, x, y, col, dm, cs) { }
 
         public Multi(double x, double y) : this(x, y, Globals.fgCol) { }
 
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, false, false, true, cs) { }
+        public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, DrawMode.FULL, cs) { }
 
         public Color Col
         {
@@ -221,17 +230,6 @@ namespace Magician
         public List<Driver> Drivers
         {
             get => drivers;
-        }
-
-        public bool Lined
-        {
-            set => lined = value;
-        }
-
-        public Multi LinedCompleted(bool b)
-        {
-            linedCompleted = b;
-            return this;
         }
 
         public Multi Modify(List<Multi> cs)
@@ -265,7 +263,7 @@ namespace Magician
             for (int i = 0; i < constituents.Count - 1; i++)
             {
                 // If lined, draw lines between the constituents as if they were vertices in a polygon
-                if (lined)
+                if ((drawMode & DrawMode.PLOT) > 0)
                 {
                     Drawable p0 = constituents[i];
                     Drawable p1 = constituents[i + 1];
@@ -289,7 +287,7 @@ namespace Magician
                 d.Draw(ref renderer, xOffset, yOffset);
             }
 
-            if (linedCompleted && constituents.Count > 0)
+            if (((drawMode & DrawMode.FULL) >= DrawMode.FULL) && constituents.Count > 0)
             {
                 Drawable pLast = constituents[constituents.Count - 1];
                 Drawable pFirst = constituents[0];
@@ -311,7 +309,7 @@ namespace Magician
                 d.Draw(ref renderer, xOffset, yOffset);
             }
 
-            if (drawPoint)
+            if ((drawMode & DrawMode.POINT) > 0)
             {
                 SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
@@ -319,7 +317,7 @@ namespace Magician
             }
 
             // And finally
-            if (Count >= 3)
+            if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
             {
                 /* Entering the wild and wacky world of the Renderer! Prepare to crash */
                 try
@@ -476,7 +474,7 @@ namespace Magician
 
         public Multi Copy()
         {
-            Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), lined, linedCompleted, drawPoint);
+            Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
 
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
@@ -493,6 +491,21 @@ namespace Magician
             copy.Add(cs);
 
             return copy;
+        }
+
+        // Create a new Multi with the constituents of both Multis
+        public Multi FlatAdjoin(Multi m)
+        {
+            constituents.AddRange(m.constituents);
+            return this;
+        }
+
+        // Add both multis to a new parent Multi
+        public Multi Adjoin(Multi m, double xOffset=0, double yOffset=0)
+        {
+            Multi nm = new Multi(xOffset, yOffset);
+            nm.Add(this, m);
+            return nm;
         }
 
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
@@ -574,8 +587,7 @@ namespace Magician
 
         public Multi Invisible()
         {
-            lined = false;
-            linedCompleted = false;
+            drawMode = DrawMode.INVISIBLE;
             return this;
         }
 
@@ -696,7 +708,7 @@ namespace Magician
             double x2 = p2.x.Evaluate();
             double y2 = p2.y.Evaluate();
 
-            return new Multi(x1, y1, col, true, false, false,
+            return new Multi(x1, y1, col, DrawMode.PLOT,
             Point(0, 0, col),
             Point(x2 - x1, y2 - y1, col));
         }
@@ -716,7 +728,7 @@ namespace Magician
                 ps.Add(Point(x, y, col));
             }
 
-            return new Multi(xOffset, yOffset, col, true, true, false, ps.ToArray());
+            return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
@@ -741,7 +753,7 @@ namespace Magician
                 ps.Add(Point(outerX, outerY, col));
             }
 
-            return new Multi(xOffset, yOffset, col, true, true, false, ps.ToArray());
+            return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
         }
         public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
         {
