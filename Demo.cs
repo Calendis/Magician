@@ -4,7 +4,6 @@ namespace Magician
 {
     class Demo
     {
-
         static IntPtr win;
         static IntPtr renderer;
 
@@ -58,7 +57,6 @@ namespace Magician
             *  When you want to modulate arguments in a constructor, you will
             *  need the loop
             */
-
             while (!done)
             {
                 //SDL_WaitEvent(out SDL_Event events);
@@ -125,20 +123,12 @@ namespace Magician
 
         void Drive()
         {
-            /*
-            foreach (Driveable d in mathObjs)
-            {
-                d.Drive((frames-driveDelay) * timeResolution);
-            }
-            */
             Multi.Origin.Go((frames - driveDelay) * timeResolution);
-
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
                 Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
             }
         }
-
         void InitSDL()
         {
             if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -146,7 +136,6 @@ namespace Magician
                 Console.WriteLine($"Error initializing SDL: {SDL_GetError()}");
             }
         }
-
         void CreateWindow()
         {
             win = SDL_CreateWindow("Test Window", 0, 0, Globals.winWidth, Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
@@ -156,7 +145,6 @@ namespace Magician
                 Console.WriteLine($"Error creating the window: {SDL_GetError()}");
             }
         }
-
         void CreateRenderer()
         {
             renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);

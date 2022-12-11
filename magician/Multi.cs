@@ -103,9 +103,7 @@ namespace Magician
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
         : this(Multi.Origin, x, y, col, dm, cs) { }
-
         public Multi(double x, double y) : this(x, y, Globals.fgCol) { }
-
         // Create a multi from a list of multis
         public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, DrawMode.FULL, cs) { }
 
@@ -166,6 +164,13 @@ namespace Magician
         public double YCartesian(double offset)
         {
             return Globals.winHeight / 2 - Y.Evaluate(offset);
+        }
+
+        public Multi Positioned(double x, double y)
+        {
+            SetX(x);
+            SetY(y);
+            return this;
         }
 
         public Multi Rotated(double theta)
@@ -298,7 +303,6 @@ namespace Magician
             return Wielding(F(outer));
         }
 
-
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
         public Multi Surrounding(Multi inner)
         {
@@ -341,7 +345,6 @@ namespace Magician
             drawMode = dm;
             return this;
         }
-
         public int Index
         {
             get
@@ -365,9 +368,7 @@ namespace Magician
                 return (double)Index / parent.Count;
             }
         }
-
         public int Count => constituents.Count;
-
         public bool IsReadOnly => false;
 
         public Multi Prev()
@@ -410,12 +411,11 @@ namespace Magician
                     double subg = p0.Col.G;
                     double subb = p0.Col.B;
                     double suba = p0.Col.A;
+
                     SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-
                     SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
-
-
                     SDL_RenderDrawLineF(renderer,
+                    
                     (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
                     (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
 
