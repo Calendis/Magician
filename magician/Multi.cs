@@ -426,7 +426,7 @@ namespace Magician
                 d.Draw(ref renderer, xOffset, yOffset);
             }
 
-            if (((drawMode & DrawMode.FULL) >= DrawMode.FULL) && constituents.Count > 0)
+            if (((drawMode & DrawMode.FULL) > DrawMode.PLOT) && constituents.Count > 0)
             {
                 Drawable pLast = constituents[constituents.Count - 1];
                 Drawable pFirst = constituents[0];
@@ -575,7 +575,7 @@ namespace Magician
         */
 
         // The Origin is the eventual parent Multi for all Multis
-        public static Multi Origin = Point(null, 0, 0, Globals.fgCol);
+        public static Multi Origin = Point(null, 0, 0, Globals.fgCol).DrawFlags(DrawMode.INVISIBLE);
 
         // Create a point
         public static Multi Point(Multi? parent, double x, double y, Color col)

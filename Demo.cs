@@ -45,9 +45,10 @@ namespace Magician
             Quantity.ExtantQuantites.Add(theta);
 
             Multi.Origin.Add(
-                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 8, 66, 100)
+                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 16, 66, 100)
                 .Where(m => m.Phase.Evaluate() <= Math.PI)
                 .Sub(m => Multi.Drive(m, x => 0.02, "phase+"))
+                .DrawFlags(DrawMode.POINT | DrawMode.PLOT)
             );
 
             /*
