@@ -41,9 +41,13 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
+            Quantity theta = new Quantity(0).Driven(x => x[0]);
+            Quantity.ExtantQuantites.Add(theta);
 
             Multi.Origin.Add(
-                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 6, 66, 100)
+                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 8, 66, 100)
+                .Where(m => m.Phase.Evaluate() <= Math.PI)
+                .Sub(m => Multi.Drive(m, x => 0.02, "phase+"))
             );
 
             /*
@@ -126,11 +130,11 @@ namespace Magician
                 d.Drive((frames-driveDelay) * timeResolution);
             }
             */
-            Multi.Origin.Drive((frames - driveDelay) * timeResolution);
+            Multi.Origin.Go((frames - driveDelay) * timeResolution);
 
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
-                Quantity.ExtantQuantites[i].Drive((frames - driveDelay) * timeResolution);
+                Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
             }
         }
 

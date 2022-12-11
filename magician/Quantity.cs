@@ -52,16 +52,16 @@ namespace Magician
         }
 
         // Driver code
-        public void AddDriver(Driver d)
+        protected void AddDriver(Driver d)
         {
             drivers.Add(d);
         }
 
-        public void Drive(params double[] x)
+        public void Go(params double[] x)
         {
             foreach (Driver d in drivers)
             {
-                d.Drive(x);
+                d.Go(x);
             }
         }
 

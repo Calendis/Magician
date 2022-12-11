@@ -49,7 +49,7 @@ namespace Magician
             return driveFunction.Invoke;
         }
 
-        public void Drive(params double[] x)
+        public void Go(params double[] x)
         {            
             if (output is not null)
             {

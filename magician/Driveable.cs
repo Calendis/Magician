@@ -2,6 +2,6 @@ namespace Magician
 {
     public interface Driveable
     {
-        public abstract void Drive(params double[] x);
+        public abstract void Go(params double[] x);
     }
 }

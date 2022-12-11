@@ -21,6 +21,7 @@ namespace Magician
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
         Multi? parent;
+        // Multis are recursive, positioned relative to the parent
         List<Multi> constituents;
         public Multi this[int key]
         {
@@ -124,63 +125,7 @@ namespace Magician
             constituents = cs;
             return this;
         }
-        public IEnumerable<Multi> GetConstituents(Func<double, double> truth, double truthThreshold = 0)
-        {
-            for (int i = 0; i < constituents.Count; i++)
-            {
-                if (truth.Invoke(i) > truthThreshold)
-                {
-                    yield return constituents[i];
-                }
-                // TODO: remove this else block
-                else
-                {
-                    continue;
-                }
-            }
-        }
-        /*
-        public IEnumerable<Drawable> GetConstituents()
-        {
-            for (int i = 0; i < constituents.Count; i++)
-                {
-                    yield return constituents[i];
-                }
-        }
-        */
-        // TODO: test this
-        public IEnumerable<Multi> GetConstituents()
-        {
-            return GetConstituents(x => 1, 0);
-        }
 
-        // If true, a Multi will be drawn with its constituents connected by lines
-        // This is useful for plots, polygons, etc
-        //protected bool lined;
-
-        // If true, the last constituent in a Multi will be drawn with a line connecting to the first one
-        // This is desirable for say, a polygon, but undesirable for say, a plot
-        //protected bool linedCompleted;
-        //protected bool drawPoint;
-
-        /*
-        public Multi Filter(Func<double, double> f, double thresh = 0)
-        {
-            constituents = GetConstituents(f, thresh).ToList();
-            return this;
-        }
-        */
-
-        /*
-        public Multi Where(Func<Multi, Multi> nm)
-        {
-            for (int i = 0; i < Count; i++)
-            {
-                constituents[i] = nm(constituents[i]);
-            }
-            return this;
-        }
-        */
         public void SetX(double offset)
         {
             SetX(this, offset);
@@ -236,23 +181,15 @@ namespace Magician
         }
 
 
-        public new void Drive(params double[] x)
+        public new void Go(params double[] x)
         {
             foreach (Driver d in drivers)
             {
-                d.Drive(x);
+                d.Go(x);
             }
             foreach (Multi c in constituents)
             {
-                c.Drive(x);
-            }
-        }
-
-        public void AddDrivers(Driver[] ds)
-        {
-            foreach (Driver d in ds)
-            {
-                AddDriver(d);
+                c.Go(x);
             }
         }
 
@@ -266,50 +203,20 @@ namespace Magician
             return this;
         }
 
-        public void AddSubDrivers(Driver[] ds)
-        {
-            for (int i = 0; i < ds.Length; i++)
-            {
-                (constituents[i]).AddDriver(ds[i]);
-            }
-        }
-
         public Multi Driven(Func<double[], double> df, string s)
         {
-            //Multi copy = Copy();
-            Action<double> output = StringMap(this, s);
-            Driver d = new Driver(df, output);
-            d.ActionString = s;
-            AddDriver(d);
+            Drive(this, df, s);
             return this;
         }
         public new Multi Driven(Func<double[], double> df)
         {
-            Driver d = new Driver(df);
-            AddDriver(d);
+            Drive(this, new Driver(df));
             return this;
         }
         public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
         {
             x.Driven(xFunc);
             y.Driven(yFunc);
-            return this;
-        }
-
-        public Multi SubDriven(Func<double[], double> df, string s)
-        {
-            if (Count == 0)
-            {
-                Console.WriteLine("WARNING: subdriven had no effect!");
-            }
-            //Multi copy = Copy();
-            foreach (Multi c in this)
-            {
-                Action<double> output = StringMap(c, s);
-                Driver d = new Driver(df, output);
-                d.ActionString = s;
-                c.AddDriver(d);
-            }
             return this;
         }
 
@@ -347,6 +254,27 @@ namespace Magician
             Multi nm = new Multi(xOffset, yOffset);
             nm.Add(this, m);
             return nm;
+        }
+
+        public Multi Where(Func<Multi, bool> predicate)
+        {
+            return Modify(constituents.Where(predicate).ToList());
+        }
+
+        public Multi Sub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        {
+            if (truth is null)
+            {
+                truth = x => 1;
+            }
+            foreach (Multi c in this)
+            {
+                if (truth.Invoke(c.Index) >= threshold)
+                {
+                    action.Invoke(c);
+                }
+            }
+            return this;
         }
 
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
@@ -853,6 +781,20 @@ namespace Magician
             ScaleTo(m, mag*m.Magnitude.Evaluate());
         }
 
+        public static void Drive(Multi m, Driver d)
+        {
+            m.AddDriver(d);
+        }
+        public static void Drive(Multi m, Func<double[], double> df, string s)
+        {
+            Action<double> output = StringMap(m, s);
+            Driver d = new Driver(df, output);
+            d.ActionString = s;
+            Drive(m, d);
+        }
+
+        // Interface methods
+
         public IEnumerator<Multi> GetEnumerator()
         {
             return ((IEnumerable<Multi>)constituents).GetEnumerator();
@@ -891,6 +833,7 @@ namespace Magician
         {
             return constituents.Remove(item);
         }
+
     }
 
 }
