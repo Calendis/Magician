@@ -386,7 +386,7 @@ namespace Magician
 
                     IntPtr ip = new IntPtr();
                     SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
-                    throw new Exception("Manual exit.");
+                    //throw new Exception("Manual exit.");
                 }
                 catch (System.Exception)
                 {

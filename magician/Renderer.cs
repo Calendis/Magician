@@ -257,7 +257,7 @@ namespace Renderer
             }
 
             ConstructTrapezoids(n);
-            SegsCheckpoint();
+            //SegsCheckpoint();
             int nmonopoly = MonotonateTrapezoids(n);
             int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
             //Console.WriteLine("Load successful!");
@@ -297,9 +297,18 @@ namespace Renderer
             int vcount;
             bool processed;
 
+            Console.WriteLine("TriangulateMonotonePolygons!");
+            Console.Write("mon: ");
+            for (int k = 0; k < MAX_SEGMENTS + 1; k++)
+            {
+                Console.Write($"{mon[k]}, ");
+            }
+            Console.Write("\n");
+
             op_idx = 0;
             for (i = 0; i < nmonopoly; i++)
             {
+                Console.WriteLine($" i: {i}");
                 vcount = 1;
                 processed = false;
                 vfirst = mchain[mon[i]].vnum;
@@ -307,6 +316,9 @@ namespace Renderer
                 posmax = posmin = mon[i];
                 mchain[mon[i]].marked = false;
                 p = mchain[mon[i]].next;
+
+                Console.WriteLine($" {vfirst}, {ymax.x}, {ymax.y}, {p}");
+
                 while ((v = mchain[p].vnum) != vfirst)
                 {
                     if (mchain[p].marked)
@@ -449,7 +461,7 @@ namespace Renderer
 
         public static int MonotonateTrapezoids(int n)
         {
-            Console.WriteLine("MonotonateTrapezoids!");
+            Console.WriteLine($"MonotonateTrapezoids! n: {n}");
             int i;
             int tr_start;
             vertices = new Vertexchain[MAX_SEGMENTS + 1];
@@ -460,7 +472,7 @@ namespace Renderer
 
             /* First locate a trapezoid which lies inside the polygon */
             /* and which is triangular */
-            for (i = 0; i < MAX_TRAPEZOIDS + 1; i++)
+            for (i = 1; i < MAX_TRAPEZOIDS + 1; i++)
                 if (InsidePolygon(trapezoids[i]))
                     break;
             tr_start = i;
@@ -488,7 +500,6 @@ namespace Renderer
             /* chain  */
             //
 
-            Console.WriteLine("Pre-traverse!");
             Console.WriteLine($" tr_start: {tr_start}");
             // The C version had undefined behaviour here
             // There are a few instances of this throughout but I tried to correct them
@@ -509,6 +520,15 @@ namespace Renderer
                 TraversePolygon(0, tr_start, trapezoids[tr_start].d0, TR_FROM_DN);
             }
 
+
+            Console.WriteLine("END OF MonotonateTrapezoids!");
+            Console.WriteLine("mchain:");
+            int k;
+            for (k = 0; k < MAX_TRAPEZOIDS + 1; k++)
+            {
+                Console.WriteLine(MonchainToString(k));
+            }
+
             /* return the number of polygons created */
             return newmon();
         }
@@ -520,7 +540,7 @@ namespace Renderer
 
         static int TraversePolygon(int mcur, int trnum, int from, int dir)
         {
-            
+
             Console.WriteLine($"TraversePolygon! trnum: {trnum}");
 
 
@@ -599,7 +619,7 @@ namespace Renderer
                     }
                     else
                     {
-                       Console.WriteLine("   from != u1");
+                        Console.WriteLine("   from != u1");
                         mnew = MakeNewMonotonePoly(mcur, v0, v1);
                         TraversePolygon(mcur, t.u0, trnum, TR_FROM_DN);
                         TraversePolygon(mnew, t.u1, trnum, TR_FROM_DN);
@@ -766,7 +786,7 @@ namespace Renderer
                 }
                 else
                 {
-                    
+
                     Console.WriteLine(" NO cusp");
                     Console.WriteLine($" L: {segs[t.lSeg].p0.x}, {segs[t.lSeg].p0.y}");
                     Console.WriteLine($" R: {segs[t.rSeg].p0.x}, {segs[t.rSeg].p0.y}");
@@ -777,7 +797,7 @@ namespace Renderer
 
                     Console.WriteLine($" {Alg.EqualTo(t.hi, segs[t.lSeg].p0)}");
                     Console.WriteLine($" {Alg.EqualTo(t.lo, segs[t.rSeg].p0)}");
-                    
+
 
                     if (Alg.EqualTo(t.hi, segs[t.lSeg].p0) &&
                         Alg.EqualTo(t.lo, segs[t.rSeg].p0))
@@ -896,11 +916,16 @@ namespace Renderer
 
             unsafe
             {
-                vp0.vnext[ip] = v1;
-                vp0.vpos[nf0] = i;
-                vp0.vnext[nf0] = mchain[mchain[i].next].vnum;
-                vp1.vpos[nf1] = j;
-                vp1.vnext[nf1] = v0;
+                //vp0.vnext[ip] = v1;
+                //vp0.vpos[nf0] = i;
+                //vp0.vnext[nf0] = mchain[mchain[i].next].vnum;
+                //vp1.vpos[nf1] = j;
+                //vp1.vnext[nf1] = v0;
+                vertices[v0].vnext[ip] = v1;
+                vertices[v0].vpos[nf0] = i;
+                vertices[v0].vnext[nf0] = mchain[mchain[i].next].vnum;
+                vertices[v1].vpos[nf1] = j;
+                vertices[v1].vnext[nf1] = v0;
             }
             vp0.nextfree++;
             vp1.nextfree++;
@@ -966,7 +991,6 @@ namespace Renderer
 
         static int NewChainElement()
         {
-            Console.WriteLine($"#####: {chain_idx}");
             return ++chain_idx;
         }
 
@@ -1186,8 +1210,6 @@ namespace Renderer
                 //segs[segnum].root0 = s.root1;
                 //segs[segnum].root1 = tmp;
                 isSwapped = true;
-
-                //segs[segnum] = s;
             }
 
             if (isSwapped ? !IsInserted(segnum, 2) : !IsInserted(segnum, 1))
@@ -1954,6 +1976,11 @@ namespace Renderer
             trapString += $"    usaveside: {trapezoids[k].usave}, {trapezoids[k].uside}\n";
             trapString += $"    state: {trapezoids[k].state}";
             return trapString;
+        }
+
+        static string MonchainToString(int k)
+        {
+            return $" MCHAIN {k}\n  vnum: {mchain[k].vnum}\n  prev: {mchain[k].prev}\n  next: {mchain[k].next}\n  marked: {mchain[k].marked}";
         }
 
         static void SegsCheckpoint()

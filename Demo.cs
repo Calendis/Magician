@@ -44,14 +44,24 @@ namespace Magician
 
             Multi.Origin.Add(
                 
+                // Quad test
                 /*
                 Multi.Point(84.7, 83.2),
                 Multi.Point(-63.2, 64.7),
                 Multi.Point(-84.7, -53.2),
                 Multi.Point(53.2, -84.7)
                 */
+
+                // Pentagon test
+                /*
+                Multi.Point(-22.9, -97.3),
+                Multi.Point(22.9, 97.3),
+                Multi.Point(-50.4, 135.1),
+                Multi.Point(-97.3, 22.9),
+                Multi.Point(-105.3, -98.5)
+                */
                 
-                Multi.Star(8, 50, 100).SubDriven(x => 0.02, "phase+")
+                Multi.Star(60, 100, 200).SubDriven(x => 0.01, "phase+")
                 
                 /*
                 Multi.Point(40.0, 0.0),
