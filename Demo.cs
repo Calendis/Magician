@@ -61,7 +61,7 @@ namespace Magician
                 Multi.Point(-105.3, -98.5)
                 */
                 
-                Multi.Star(60, 100, 200).SubDriven(x => 0.01, "phase+")
+                Multi.Star(8, 100, 200).SubDriven(x => 0.01, "phase+")
                 
                 /*
                 Multi.Point(40.0, 0.0),

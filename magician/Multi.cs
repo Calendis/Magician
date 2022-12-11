@@ -325,18 +325,15 @@ namespace Magician
                 try
                 {
                     List<int[]> vertices = Renderer.Geo.Triangulate(this);
-                    Console.WriteLine(this);
                     int numTriangles = (Count - 2);
                     SDL_Vertex[] vs = new SDL_Vertex[numTriangles * 3];
                     // Assemble the triangles from the renderer into vertices for SDL
                     for (int i = 0; i < numTriangles; i++)
                     {
-                        Console.WriteLine($"i: {i}");
                         int[] vertexIndices = vertices[i];
                         int tri0 = vertexIndices[0];
                         int tri1 = vertexIndices[1];
                         int tri2 = vertexIndices[2];
-                        Console.WriteLine($"tris: {tri0}, {tri1}, {tri2}");
                         // If all vertex indices are 0, we're done
                         
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
@@ -364,12 +361,13 @@ namespace Magician
                         vs[3 * i + 2].position.y = p2.y;
 
                         SDL_Color c;
-                        /*
                         c.r = (byte)Col.R;
                         c.g = (byte)Col.G;
                         c.b = (byte)Col.B;
                         c.a = (byte)Col.A;
-                        */
+                        
+                        // Randomly-coloured triangles for debugging
+                        /*
                         Random rnd = new Random(i);
                         byte rndRed = (byte)rnd.Next(256);
                         byte rndGrn = (byte)rnd.Next(256);
@@ -378,6 +376,7 @@ namespace Magician
                         c.g = rndGrn;
                         c.b = rndBlu;
                         c.a = (byte)Col.A;
+                        */
 
                         vs[3 * i].color = c;
                         vs[3 * i + 1].color = c;
@@ -386,12 +385,11 @@ namespace Magician
 
                     IntPtr ip = new IntPtr();
                     SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
-                    //throw new Exception("Manual exit.");
                 }
                 catch (System.Exception)
                 {
                     Console.WriteLine($"Bad Omen: failed to render {this}");
-                    throw;
+                    //throw;
                 }
 
             }
