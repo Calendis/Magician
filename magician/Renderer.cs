@@ -232,8 +232,8 @@ namespace Renderer
             for (int j = 0; j < MAX_SEGMENTS; j++)
             {
 
-                double x0 = m.Constituents[i - 1].X.Evaluate();
-                double y0 = m.Constituents[i - 1].Y.Evaluate();
+                double x0 = m[i - 1].X.Evaluate();
+                double y0 = m[i - 1].Y.Evaluate();
                 segs[i].p0 = new Point_t();
                 segs[i].p0.x = x0;
                 segs[i].p0.y = y0;

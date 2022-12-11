@@ -1,6 +1,7 @@
 /*
 *  A Multi exists as a point (two quantities), and as a list of constituent Multis that exist relative to the parent
 */
+using System.Collections;
 using static SDL2.SDL;
 
 namespace Magician
@@ -15,7 +16,7 @@ namespace Magician
         POINT = (short)0b0001
     }
 
-    public class Multi : Quantity, Drawable, Driveable
+    public class Multi : Quantity, Drawable, Driveable, ICollection<Multi>
     {
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
@@ -28,7 +29,7 @@ namespace Magician
         }
 
         /*
-        *  Positional Properties and Methods
+        *  Positional Properties
         */
         public Quantity X
         {
@@ -44,17 +45,6 @@ namespace Magician
 
             set => x = value;
         }
-        
-        
-        public void SetX(double offset)
-        {
-            SetX(this, offset);
-        }
-        public void IncrX(double offset)
-        {
-            Translate(this, offset, 0);
-        }
-        
         public Quantity Y
         {
             get
@@ -68,17 +58,6 @@ namespace Magician
             }
             set => y = value;
         }
-        
-        public void SetY(double offset)
-        {
-            SetY(this, offset);
-        }
-        public void IncrY(double offset)
-        {
-            Translate(this, 0, offset);
-        }
-        
-
         public Quantity Phase
         {
             get
@@ -92,14 +71,6 @@ namespace Magician
                 SetPhase(value.Evaluate());
             }
         }
-        public void SetPhase(double offset)
-        {
-            RotateTo(this, offset);
-        }
-        public void IncrPhase(double offset)
-        {
-            Rotate(this, offset);
-        }
         public Quantity Magnitude
         {
             get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate()));
@@ -107,29 +78,6 @@ namespace Magician
             {
                 ScaleTo(this, value.Evaluate());
             }
-        }
-        public void SetMagnitude(double offset)
-        {
-            ScaleTo(this, offset);
-        }
-        public void IncrMagnitude(double offset)
-        {
-            ScaleShift(this, offset);
-        }
-        
-        public Multi Rotated(double theta)
-        {
-            Rotate(this, theta);
-            return this;
-        }
-
-        public double XCartesian(double offset)
-        {
-            return Globals.winWidth / 2 + X.Evaluate(offset);
-        }
-        public double YCartesian(double offset)
-        {
-            return Globals.winHeight / 2 - Y.Evaluate(offset);
         }
 
         DrawMode drawMode;
@@ -164,24 +112,6 @@ namespace Magician
         {
             get => col;
             set => col = value;
-        }
-
-        public int Count
-        {
-            get => constituents.Count;
-        }
-        public void Add(params Multi[] ms)
-        {
-            constituents.AddRange(ms);
-            foreach (Multi m in ms)
-            {
-                //m.SetParent(this);
-                m.parent = this;
-            }
-        }
-        public void Remove(Multi m)
-        {
-            constituents.Remove(m);
         }
 
         public List<Driver> Drivers
@@ -223,10 +153,6 @@ namespace Magician
         {
             return GetConstituents(x => 1, 0);
         }
-        public List<Multi> Constituents
-        {
-            get => constituents;
-        }
 
         // If true, a Multi will be drawn with its constituents connected by lines
         // This is useful for plots, polygons, etc
@@ -237,12 +163,15 @@ namespace Magician
         //protected bool linedCompleted;
         //protected bool drawPoint;
 
+        /*
         public Multi Filter(Func<double, double> f, double thresh = 0)
         {
             constituents = GetConstituents(f, thresh).ToList();
             return this;
         }
+        */
 
+        /*
         public Multi Where(Func<Multi, Multi> nm)
         {
             for (int i = 0; i < Count; i++)
@@ -251,7 +180,290 @@ namespace Magician
             }
             return this;
         }
+        */
+        public void SetX(double offset)
+        {
+            SetX(this, offset);
+        }
+        public void IncrX(double offset)
+        {
+            Translate(this, offset, 0);
+        }
+        public void SetY(double offset)
+        {
+            SetY(this, offset);
+        }
+        public void IncrY(double offset)
+        {
+            Translate(this, 0, offset);
+        }
+        public void SetPhase(double offset)
+        {
+            RotateTo(this, offset);
+        }
+        public void IncrPhase(double offset)
+        {
+            Rotate(this, offset);
+        }
+        public void SetMagnitude(double offset)
+        {
+            ScaleTo(this, offset);
+        }
+        public void IncrMagnitude(double offset)
+        {
+            ScaleShift(this, offset);
+        }
 
+        public double XCartesian(double offset)
+        {
+            return Globals.winWidth / 2 + X.Evaluate(offset);
+        }
+        public double YCartesian(double offset)
+        {
+            return Globals.winHeight / 2 - Y.Evaluate(offset);
+        }
+
+        public Multi Rotated(double theta)
+        {
+            Rotate(this, theta);
+            return this;
+        }
+
+        public Multi Scaled(double mag)
+        {
+            Scale(this, mag);
+            return this;
+        }
+
+
+        public new void Drive(params double[] x)
+        {
+            foreach (Driver d in drivers)
+            {
+                d.Drive(x);
+            }
+            foreach (Multi c in constituents)
+            {
+                c.Drive(x);
+            }
+        }
+
+        public void AddDrivers(Driver[] ds)
+        {
+            foreach (Driver d in ds)
+            {
+                AddDriver(d);
+            }
+        }
+
+        public Multi Eject()
+        {
+            drivers.Clear();
+            foreach (Multi m in constituents)
+            {
+                m.Eject();
+            }
+            return this;
+        }
+
+        public void AddSubDrivers(Driver[] ds)
+        {
+            for (int i = 0; i < ds.Length; i++)
+            {
+                (constituents[i]).AddDriver(ds[i]);
+            }
+        }
+
+        public Multi Driven(Func<double[], double> df, string s)
+        {
+            //Multi copy = Copy();
+            Action<double> output = StringMap(this, s);
+            Driver d = new Driver(df, output);
+            d.ActionString = s;
+            AddDriver(d);
+            return this;
+        }
+        public new Multi Driven(Func<double[], double> df)
+        {
+            Driver d = new Driver(df);
+            AddDriver(d);
+            return this;
+        }
+        public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
+        {
+            x.Driven(xFunc);
+            y.Driven(yFunc);
+            return this;
+        }
+
+        public Multi SubDriven(Func<double[], double> df, string s)
+        {
+            if (Count == 0)
+            {
+                Console.WriteLine("WARNING: subdriven had no effect!");
+            }
+            //Multi copy = Copy();
+            foreach (Multi c in this)
+            {
+                Action<double> output = StringMap(c, s);
+                Driver d = new Driver(df, output);
+                d.ActionString = s;
+                c.AddDriver(d);
+            }
+            return this;
+        }
+
+        public Multi Copy()
+        {
+            Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
+
+            // Copy the drivers
+            for (int i = 0; i < drivers.Count; i++)
+            {
+                copy.drivers.Add(drivers[i].CopiedTo(copy));
+            }
+
+            // Copy the constituents
+            Multi[] cs = new Multi[Count];
+            for (int i = 0; i < Count; i++)
+            {
+                cs[i] = constituents[i].Copy();
+            }
+            copy.Add(cs);
+
+            return copy;
+        }
+
+        // Create a new Multi with the constituents of both Multis
+        public Multi FlatAdjoin(Multi m)
+        {
+            constituents.AddRange(m.constituents);
+            return this;
+        }
+
+        // Add both multis to a new parent Multi
+        public Multi Adjoin(Multi m, double xOffset = 0, double yOffset = 0)
+        {
+            Multi nm = new Multi(xOffset, yOffset);
+            nm.Add(this, m);
+            return nm;
+        }
+
+        // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
+        public Multi Wielding(Multi outer)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                // Make a copy of the outer Multi and position it against the inner Multi
+                Multi outerCopy = outer.Copy();
+                outerCopy.SetX(constituents[i].x.Evaluate());
+                outerCopy.SetY(constituents[i].y.Evaluate());
+
+                Multi c = constituents[i];
+                constituents[i] = outerCopy;
+            }
+
+            return this;
+        }
+        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
+        {
+            return Wielding(F(outer));
+        }
+
+
+        // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
+        public Multi Surrounding(Multi inner)
+        {
+            return inner.Wielding(this);
+            //thisSurroundingInner.x.Set(x.Evaluate());
+            //thisSurroundingInner.y.Set(y.Evaluate());
+            //return thisSurroundingInner;//.Wielding(this);
+        }
+        public Multi Surrounding(Multi inner, Func<Multi, Multi> F)
+        {
+            return Surrounding(F(inner));
+        }
+
+        public Multi Recursed()
+        {
+            return Wielding(Copy());
+        }
+        public Multi Recursed(Func<Multi, Multi> F)
+        {
+            return Wielding(F.Invoke(Copy()));
+        }
+
+        public Multi SubScaled(double factor)
+        {
+            foreach (Multi c in constituents)
+            {
+                Scale(c, factor);
+            }
+            return this;
+        }
+
+        public Multi Invisible()
+        {
+            drawMode = DrawMode.INVISIBLE;
+            return this;
+        }
+
+        public Multi DrawFlags(DrawMode dm)
+        {
+            drawMode = dm;
+            return this;
+        }
+
+        public int Index
+        {
+            get
+            {
+                if (parent is null)
+                {
+                    return 0;
+                }
+                return parent.constituents.IndexOf(this);
+            }
+        }
+        // TODO: rename this
+        public double Normal
+        {
+            get
+            {
+                if (parent is null)
+                {
+                    return 0;
+                }
+                return (double)Index / parent.Count;
+            }
+        }
+
+        public int Count => constituents.Count;
+
+        public bool IsReadOnly => false;
+
+        public Multi Prev()
+        {
+            if (parent is null)
+            {
+                return this;
+            }
+            Multi p = parent;
+            int i = Index;
+            i = i == 0 ? p.Count - 1 : i - 1;
+            return p.constituents[i];
+        }
+        public Multi Next()
+        {
+            if (parent is null)
+            {
+                return this;
+            }
+            Multi p = parent;
+            int i = Index;
+            i = i == p.Count - 1 ? 0 : i + 1;
+            return p.constituents[i];
+        }
         public void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
             double r = col.R;
@@ -393,249 +605,6 @@ namespace Magician
 
         }
 
-        /**/
-        public new void Drive(params double[] x)
-        {
-            foreach (Driver d in drivers)
-            {
-                d.Drive(x);
-            }
-            foreach (Multi c in constituents)
-            {
-                c.Drive(x);
-            }
-        }
-
-        public void AddDrivers(Driver[] ds)
-        {
-            foreach (Driver d in ds)
-            {
-                AddDriver(d);
-            }
-        }
-
-        public Multi Eject()
-        {
-            drivers.Clear();
-            foreach (Multi m in constituents)
-            {
-                m.Eject();
-            }
-            return this;
-        }
-
-        public void AddSubDrivers(Driver[] ds)
-        {
-            for (int i = 0; i < ds.Length; i++)
-            {
-                (constituents[i]).AddDriver(ds[i]);
-            }
-        }
-
-        public Multi Driven(Func<double[], double> df, string s)
-        {
-            //Multi copy = Copy();
-            Action<double> output = StringMap(this, s);
-            Driver d = new Driver(df, output);
-            d.ActionString = s;
-            AddDriver(d);
-            return this;
-        }
-        public new Multi Driven(Func<double[], double> df)
-        {
-            Driver d = new Driver(df);
-            AddDriver(d);
-            return this;
-        }
-        public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
-        {
-            x.Driven(xFunc);
-            y.Driven(yFunc);
-            return this;
-        }
-
-        public Multi SubDriven(Func<double[], double> df, string s)
-        {
-            if (Count == 0)
-            {
-                Console.WriteLine("WARNING: subdriven had no effect!");
-            }
-            //Multi copy = Copy();
-            foreach (Multi c in /*copy.*/constituents)
-            {
-                Action<double> output = StringMap(c, s);
-                Driver d = new Driver(df, output);
-                d.ActionString = s;
-                c.AddDriver(d);
-            }
-            return this;
-        }
-
-        public Multi Copy()
-        {
-            Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
-
-            // Copy the drivers
-            for (int i = 0; i < drivers.Count; i++)
-            {
-                copy.drivers.Add(drivers[i].CopiedTo(copy));
-            }
-
-            // Copy the constituents
-            Multi[] cs = new Multi[Count];
-            for (int i = 0; i < Count; i++)
-            {
-                cs[i] = constituents[i].Copy();
-            }
-            copy.Add(cs);
-
-            return copy;
-        }
-
-        // Create a new Multi with the constituents of both Multis
-        public Multi FlatAdjoin(Multi m)
-        {
-            constituents.AddRange(m.constituents);
-            return this;
-        }
-
-        // Add both multis to a new parent Multi
-        public Multi Adjoin(Multi m, double xOffset = 0, double yOffset = 0)
-        {
-            Multi nm = new Multi(xOffset, yOffset);
-            nm.Add(this, m);
-            return nm;
-        }
-
-        // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
-        public Multi Wielding(Multi outer)
-        {
-            for (int i = 0; i < Count; i++)
-            {
-                // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy();
-                outerCopy.SetX(constituents[i].x.Evaluate());
-                outerCopy.SetY(constituents[i].y.Evaluate());
-
-                Multi c = constituents[i];
-                constituents[i] = outerCopy;
-            }
-
-            return this;
-        }
-        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
-        {
-            return Wielding(F(outer));
-        }
-
-
-        // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
-        public Multi Surrounding(Multi inner)
-        {
-            return inner.Wielding(this);
-            //thisSurroundingInner.x.Set(x.Evaluate());
-            //thisSurroundingInner.y.Set(y.Evaluate());
-            //return thisSurroundingInner;//.Wielding(this);
-        }
-        public Multi Surrounding(Multi inner, Func<Multi, Multi> F)
-        {
-            return Surrounding(F(inner));
-        }
-
-        public Multi Recursed()
-        {
-            return Wielding(Copy());
-        }
-        public Multi Recursed(Func<Multi, Multi> F)
-        {
-            return Wielding(F.Invoke(Copy()));
-        }
-
-        public Multi Scaled(double factor)
-        {
-            foreach (Multi c in constituents)
-            {
-                c.SetMagnitude(c.Magnitude.Evaluate() * factor);
-                c.Scaled(factor);
-            }
-            return this;
-        }
-
-        /*
-        * Groups a Multi by pairs of vertices
-        */
-        public List<Multi> Edges()
-        {
-            if (Count < 2)
-            {
-                throw new InvalidDataException($"cannot get edges of {this}");
-            }
-            List<Multi> edges = new List<Multi>();
-            for (int i = 0; i < Count - 1; i++)
-            {
-                Multi pN = constituents[i];
-                Multi pN1 = constituents[i + 1];
-                edges.Add(new Multi(pN, pN1));
-            }
-            // Add final edge
-            Multi epLast = constituents[Count - 1];
-            Multi ep0 = constituents[0];
-            edges.Add(new Multi(epLast, ep0));
-            return edges;
-        }
-
-        public Multi Invisible()
-        {
-            drawMode = DrawMode.INVISIBLE;
-            return this;
-        }
-
-        public int Index
-        {
-            get
-            {
-                if (parent is null)
-                {
-                    return 0;
-                }
-                return parent.constituents.IndexOf(this);
-            }
-        }
-        // TODO: rename this
-        public double Normal
-        {
-            get
-            {
-                if (parent is null)
-                {
-                    return 0;
-                }
-                return (double)Index / parent.Count;
-            }
-        }
-        public Multi Prev()
-        {
-            if (parent is null)
-            {
-                return this;
-            }
-            Multi p = parent;
-            int i = Index;
-            i = i == 0 ? p.Count - 1 : i - 1;
-            return p.constituents[i];
-        }
-        public Multi Next()
-        {
-            if (parent is null)
-            {
-                return this;
-            }
-            Multi p = parent;
-            int i = Index;
-            i = i == p.Count - 1 ? 0 : i + 1;
-            return p.constituents[i];
-        }
-
         public override string ToString()
         {
             string s = "";
@@ -757,17 +726,6 @@ namespace Magician
             return Star(0, 0, sides, innerRadius, outerRadius);
         }
 
-        // Find intersection of two line segments
-        public static Multi Intersection(double x0, double y0, double x1, double y1)
-        {
-            return new Multi();
-        }
-        // Find all intersections of two Multis
-        public static Multi Intersection(Multi p0, Multi p1)
-        {
-            throw new NotImplementedException("Intersection of Multi");
-        }
-
         public static Action<double> StringMap(Multi m, string s)
         {
             Action<double> o;
@@ -842,11 +800,6 @@ namespace Magician
                     o = ((Drawable)m).IncrL;
                     break;
 
-                /*
-                case "NONE":
-                    o = null;
-                    break;*/
-
                 default:
                     throw new NotImplementedException($"Unknown driver string {s}");
             }
@@ -854,12 +807,8 @@ namespace Magician
         }
 
         /*
-        *
         * static void Multi methods
-        * eventually, Multi's instance methods should reference these
-        *
         */
-
         public static void SetX(Multi m, double x)
         {
             m.x.Set(x);
@@ -902,6 +851,45 @@ namespace Magician
         public static void Scale(Multi m, double mag)
         {
             ScaleTo(m, mag*m.Magnitude.Evaluate());
+        }
+
+        public IEnumerator<Multi> GetEnumerator()
+        {
+            return ((IEnumerable<Multi>)constituents).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)constituents).GetEnumerator();
+        }
+
+        public void Add(Multi item)
+        {
+            constituents.Add(item);
+        }
+        public void Add(params Multi[] items)
+        {
+            constituents.AddRange(items);
+        }
+
+        public void Clear()
+        {
+            constituents.Clear();
+        }
+
+        public bool Contains(Multi item)
+        {
+            return constituents.Contains(item);
+        }
+
+        public void CopyTo(Multi[] array, int arrayIndex)
+        {
+            constituents.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
+        }
+
+        public bool Remove(Multi item)
+        {
+            return constituents.Remove(item);
         }
     }
 

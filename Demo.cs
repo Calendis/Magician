@@ -43,8 +43,7 @@ namespace Magician
             */
 
             Multi.Origin.Add(
-                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 5, 66, 100)
-                .SubDriven(x => 0.02, "phase+")
+                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 6, 66, 100)
             );
 
             /*
