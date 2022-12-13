@@ -106,34 +106,33 @@ namespace Magician
 
         public static double RedFromHSL(double h, double s, double l)
         {
+            double hh = h % (2*Math.PI);
             double r;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
+            double x = c * (1-Math.Abs((hh/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
-            h %= 2*Math.PI;
-
-            if (h < Math.PI/3)
+            if (hh < Math.PI/3)
             {
                 r = c;
             }
-            else if (h < Math.PI - Math.PI/3)
+            else if (hh < Math.PI - Math.PI/3)
             {
                 r = x;
             }
-            else if (h < Math.PI)
+            else if (hh < Math.PI)
             {
                 r = 0;
             }
-            else if (h < Math.PI + Math.PI/3)
+            else if (hh < Math.PI + Math.PI/3)
             {
                 r = 0;
             }
-            else if (h < 2*Math.PI - Math.PI/3)
+            else if (hh < 2*Math.PI - Math.PI/3)
             {
                 r = x;
             }
-            else if (h < 2*Math.PI)
+            else if (hh < 2*Math.PI)
             {
                 r = c;
             }
@@ -146,34 +145,33 @@ namespace Magician
 
         public static double GreenFromHSL(double h, double s, double l)
         {
+            double hh = h % (2*Math.PI);
             double g;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
+            double x = c * (1-Math.Abs((hh/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
-            h %= 2*Math.PI;
-
-            if (h < Math.PI/3)
+            if (hh < Math.PI/3)
             {
                 g = x;
             }
-            else if (h < Math.PI - Math.PI/3)
+            else if (hh < Math.PI - Math.PI/3)
             {
                 g = c;
             }
-            else if (h < Math.PI)
+            else if (hh < Math.PI)
             {
                 g = c;
             }
-            else if (h < Math.PI + Math.PI/3)
+            else if (hh < Math.PI + Math.PI/3)
             {
                 g = x;
             }
-            else if (h < 2*Math.PI - Math.PI/3)
+            else if (hh < 2*Math.PI - Math.PI/3)
             {
                 g = 0;
             }
-            else if (h < 2*Math.PI)
+            else if (hh < 2*Math.PI)
             {
                 g = 0;
             }
@@ -182,39 +180,37 @@ namespace Magician
                 throw new InvalidDataException($"Green: invalid phase {h}");
             }
             return g*255;
-
-
         }
 
         public static double BlueFromHSL(double h, double s, double l)
         {
+            double hh = h % (2*Math.PI);
             double b;
             double c = l * s;
-            double x = c * (1-Math.Abs((h/(Math.PI/3f)) % 2 - 1));
+            double x = c * (1-Math.Abs((hh/(Math.PI/3f)) % 2 - 1));
             double m = l - c;
 
-            h %= 2*Math.PI;
-            if (h < Math.PI/3)
+            if (hh < Math.PI/3)
             {
                 b = 0;
             }
-            else if (h < Math.PI - Math.PI/3)
+            else if (hh < Math.PI - Math.PI/3)
             {
                 b = 0;
             }
-            else if (h < Math.PI)
+            else if (hh < Math.PI)
             {
                 b = x;
             }
-            else if (h < Math.PI + Math.PI/3)
+            else if (hh < Math.PI + Math.PI/3)
             {
                 b = c;
             }
-            else if (h < 2*Math.PI - Math.PI/3)
+            else if (hh < 2*Math.PI - Math.PI/3)
             {
                 b = c;
             }
-            else if (h < 2*Math.PI)
+            else if (hh < 2*Math.PI)
             {
                 b = x;
             }
@@ -233,10 +229,10 @@ namespace Magician
         double b;
         public RGBA(double r, double g, double b, double a)
         {
-            this.r = r;
-            this.g = g;
-            this.b = b;
-            this.a = a;
+            this.r = Math.Abs(r) % 256;
+            this.g = Math.Abs(g) % 256;;
+            this.b = Math.Abs(b) % 256;;
+            this.a = Math.Abs(a) % 256;;
         }
         public RGBA(uint hex)
         {
@@ -246,9 +242,9 @@ namespace Magician
             this.a = (hex & 0x000000ff);
         }
 
-        public override double R {get => r%256; set => r = value; }
-        public override double G {get => g%256; set => g = value; }
-        public override double B {get => b%256; set => b = value; }
+        public override double R {get => r; set => r = value; }
+        public override double G {get => g; set => g = value; }
+        public override double B {get => b; set => b = value; }
         public override double H
         {
             get => HueFromRGB(r, g, b);
@@ -308,12 +304,12 @@ namespace Magician
         double l;
         public HSLA(double h, double s, double l, double a)
         {
-            this.h = h;
-            this.s = s;
-            this.l = l;
-            this.a = a;
+            this.h = Math.Abs(h) % (2*Math.PI);
+            this.s = Math.Abs(s);
+            this.l = Math.Abs(l);
+            this.a = Math.Abs(a) % 256;
         }
-        public override double H {get => h%(2*Math.PI); set => h = value;}
+        public override double H {get => h; set => h = value;}
         public override double S {get => s; set => s = value;}
         public override double L {get => l; set => l = value;}
         public override double R
