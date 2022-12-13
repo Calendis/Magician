@@ -29,10 +29,19 @@ namespace Magician
             q += x;
         }
         // Converts to double
-        public double Evaluate(params double[] xs)
+        public double Evaluate(double offset=0)
         {
-            double offset = xs.Length > 0 ? xs[0] : 0;
             return q + offset;
+        }
+
+        public double[] Evaluate(double[] offsets)
+        {
+            double[] outputs = new double[offsets.Length];
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                outputs[i] = q + outputs[i];
+            }
+            return outputs;
         }
 
         // Operators

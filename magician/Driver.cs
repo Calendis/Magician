@@ -5,27 +5,38 @@
 
 namespace Magician
 {
-    public delegate double DriveFunction(params double[] x);
+    public delegate double[] DriveFunction(params double[] x);
     public class Driver : IMap, Driveable
     {
         protected DriveFunction driveFunction;
-        private Action<double>? output;
+        private Action<double[]>? output;
         private string actionString;
         
         // Full constructor
         public Driver(Func<double[], double> df, Action<double>? output)
+        {
+            // don't think about this one too much
+            driveFunction = new DriveFunction(new Func<double[], double[]>(x => new double[]{df.Invoke(x)}));
+            if (output is not null)
+            {
+                this.output = new Action<double[]>(x => output.Invoke(x[0]));
+            }
+            actionString = "";
+        }
+        public Driver(Func<double[], double[]> df, Action<double[]>? output)
         {
             driveFunction = new DriveFunction(df);
             this.output = output;
             actionString = "";
         }
         public Driver(Func<double[], double> df) : this(df, null) {}
+        public Driver(Func<double[], double[]> df) : this(df, null) {}
 
         // Used for making copies of Drivers
         public Driver(Driver d, Multi m, string s)
         {
             driveFunction = new DriveFunction(d.GetDriveFunction());
-            output = Multi.StringMap(m, s);
+            output = new Action<double[]>(x => Multi.StringMap(m, s).Invoke(x[0]));
             actionString = s;
         }
 
@@ -35,19 +46,29 @@ namespace Magician
             set => actionString = value;
         }
 
-        public void SetOutput(Action<double> o)
+        public void SetOutput(Action<double[]> o)
         {
             output =  o;
         }
 
-        public double Evaluate(params double[] x)
+        public void SetOutput(Action<double> o)
+        {
+            output = new Action<double[]>(x => o.Invoke(x[0]));
+        }
+
+        public double[] Evaluate(params double[] x)
         {
             return driveFunction(x);
         }
 
-        public Func<double[], double> GetDriveFunction()
+        public double Evaluate(double x)
         {
-            return new Func<double[], double>(driveFunction);
+            return driveFunction(x)[0];
+        }
+
+        public Func<double[], double[]> GetDriveFunction()
+        {
+            return new Func<double[], double[]>(driveFunction);
         }
 
         public void Go(params double[] x)

@@ -34,17 +34,19 @@ namespace Magician
         }
 
         // Get the value of a plot driver given inputs
-        public new double Evaluate(params double[] x)
+        public new double[] Evaluate(params double[] x)
         {
             return toPlot.Evaluate(x);
         }
         
         // Linear interpolation of two values along a plot driver
-        private Multi[] interpolate(double x0, double x1)
+        private Multi[] interpolate(double t0, double t1)
         {            
-            Multi p0 = Multi.Point(x0, Evaluate(x0), col);
-            Multi p1 = Multi.Point(x1, Evaluate(x1), col);
-            return new Multi[] {p0, p1};
+            double[] p0 = Evaluate(t0);
+            double[] p1 = Evaluate(t1);
+            Multi mp0 = Multi.Point(p0[0], p0[1], col);
+            Multi mp1 = Multi.Point(p1[0], p1[1], col);
+            return new Multi[] {mp0, mp1};
         }
         private Multi[] interpolate(double x)
         {
@@ -55,9 +57,9 @@ namespace Magician
         public Multi Interpolation()
         {
             List<Multi> points = new List<Multi>();
-            for (double x = start; x < end; x+=dx)
+            for (double t = start; t < end; t+=dx)
             {
-                Multi[] ps = interpolate(x);
+                Multi[] ps = interpolate(t);
                 ps[0].Col = col;
                 ps[1].Col = col;
                 points.Add(ps[0]);
@@ -70,16 +72,6 @@ namespace Magician
         public new void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0)
         {
             Interpolation().Draw(ref renderer, xOffset, yOffset);
-        }
-
-        public new Plot Driven(Func<double[], double> df, string s)
-        {
-            Driver d = new Driver(df);
-            Action<double> output = Plot.StringMap(this, s);
-            d.SetOutput(output);
-            d.ActionString = s;
-            drivers.Add(d);
-            return this;
         }
 
         public static Action<double> StringMap(Plot p, String s)
