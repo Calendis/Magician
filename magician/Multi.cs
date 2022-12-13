@@ -265,7 +265,7 @@ namespace Magician
 
         public Multi Where(Func<Multi, bool> predicate)
         {
-            return Modify(constituents.Where(predicate).ToList());
+            return Modify(constituents.Where(predicate).ToArray());
         }
 
         public Multi Sub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
