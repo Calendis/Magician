@@ -40,13 +40,6 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Multi seed = Multi.RegularPolygon(0, 0, new RGBA(255, 255, 0, 100), 3, 40)
-            .Sub(m => m.Driven(x => 0.02, "phase+"))
-            .Surrounding(Multi.RegularPolygon(6, 100));
-
-            Multi.Origin.Add(
-                seed
-            );
 
             /*
             *  Loop
