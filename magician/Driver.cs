@@ -21,6 +21,7 @@ namespace Magician
         }
         public Driver(Func<double[], double> df) : this(df, null) {}
 
+        // Used for making copies of Drivers
         public Driver(Driver d, Multi m, string s)
         {
             driveFunction = new DriveFunction(d.GetDriveFunction());
@@ -46,7 +47,7 @@ namespace Magician
 
         public Func<double[], double> GetDriveFunction()
         {
-            return driveFunction.Invoke;
+            return new Func<double[], double>(driveFunction);
         }
 
         public void Go(params double[] x)
