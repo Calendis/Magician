@@ -121,7 +121,7 @@ namespace Magician
                 {
                     SDL_Surface* surf = (SDL_Surface*)surface;
                     SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
-                    SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D3")}.bmp");
+                    SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D4")}.bmp");
                     SDL_FreeSurface(surface);
                 }
             }
