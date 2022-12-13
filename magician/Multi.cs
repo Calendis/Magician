@@ -2,6 +2,7 @@
 *  A Multi exists as a point (two quantities), and as a list of constituent Multis that exist relative to the parent
 */
 using System.Collections;
+using System.Runtime.Serialization;
 using static SDL2.SDL;
 
 namespace Magician
@@ -286,6 +287,11 @@ namespace Magician
             }
             foreach (Multi c in this)
             {
+                if (c.index is null)
+                {
+                    //Console.WriteLine($"Indexing {this}");
+                    CreateIndex(this);
+                }
                 if (truth.Invoke(c.Index) >= threshold)
                 {
                     action.Invoke(c);
@@ -361,17 +367,20 @@ namespace Magician
             drawMode = dm;
             return this;
         }
+        int? index = null;
         public int Index
         {
             get
             {
-                if (parent is null)
+                if (index is null)
                 {
-                    return 0;
+                    throw new NullIndexException($"{this} had null index! Did you remember to call CreateIndex on the parent Multi before getting the index?");
                 }
-                return parent.constituents.IndexOf(this);
+                return (int)index;
             }
         }
+        
+
         // TODO: rename this
         public double Normal
         {
@@ -826,6 +835,21 @@ namespace Magician
             m.Col = c;
         }
 
+        public static void Write(Multi m, double d)
+        {
+            m.q = d;
+        }
+
+        // Indexes the constituents of a Multi in the internal values of the constituents
+        // This is useful because getting the index using IndexOf is too expensive
+        public static void CreateIndex(Multi m)
+        {
+            for (int i = 0; i < m.Count; i++)
+            {
+                m[i].index = i;
+            }
+        }
+
         // Interface methods
 
         public IEnumerator<Multi> GetEnumerator()
@@ -869,4 +893,23 @@ namespace Magician
 
     }
 
+    [Serializable]
+    internal class NullIndexException : Exception
+    {
+        public NullIndexException()
+        {
+        }
+
+        public NullIndexException(string? message) : base(message)
+        {
+        }
+
+        public NullIndexException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected NullIndexException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
 }
