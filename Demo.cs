@@ -57,7 +57,7 @@ namespace Magician
             while (!done)
             {
                 // Modulators
-                double h = Math.PI*2*Math.Sin(frames*timeResolution*0.03);
+                double h = Math.PI*2*Math.Sin(frames*timeResolution*0.09);
                 sin = new Driver(x => 120*Math.Sin(x[0]/50 + (double)frames/40));
                 
                 // A group of 5-pointed stars in a sinusoidal pattern, rotating, and shifting through hue
