@@ -20,7 +20,7 @@ namespace Magician
     {
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
-        Multi? parent;
+        public Multi? parent;
         // Multis are recursive, positioned relative to the parent
         List<Multi> constituents;
         public Multi this[int key]
@@ -118,9 +118,10 @@ namespace Magician
             get => drivers;
         }
 
-        public Multi Modify(List<Multi> cs)
+        public Multi Modify(params Multi[] cs)
         {
-            constituents = cs;
+            constituents.Clear();
+            constituents.AddRange(cs);
             return this;
         }
 
@@ -168,8 +169,8 @@ namespace Magician
 
         public Multi Positioned(double x, double y)
         {
-            SetX(x);
-            SetY(y);
+            SetX(this, x);
+            SetY(this, y);
             return this;
         }
 
@@ -182,6 +183,12 @@ namespace Magician
         public Multi Scaled(double mag)
         {
             Scale(this, mag);
+            return this;
+        }
+
+        public Multi Colored(Color c)
+        {
+            SetColor(this, c);
             return this;
         }
 
@@ -228,20 +235,15 @@ namespace Magician
         public Multi Copy()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
+            copy.parent = parent;
 
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
             {
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
-
-            // Copy the constituents
-            Multi[] cs = new Multi[Count];
-            for (int i = 0; i < Count; i++)
-            {
-                cs[i] = constituents[i].Copy();
-            }
-            copy.Add(cs);
+            constituents.ForEach(m => m.Copy());
+            copy.Add(constituents.ToArray());
 
             return copy;
         }
@@ -400,6 +402,7 @@ namespace Magician
             double b = col.B;
             double a = col.A;
 
+            // For each constituent, draw something!
             for (int i = 0; i < constituents.Count - 1; i++)
             {
                 // If lined, draw lines between the constituents as if they were vertices in a polygon
@@ -422,8 +425,8 @@ namespace Magician
                 }
 
                 // Recursively draw the constituents
-                Drawable d = constituents[i];
-                d.Draw(ref renderer, xOffset, yOffset);
+                Multi d = this[i];
+                d.Draw(ref renderer, ((Multi)d).X.Evaluate(xOffset), ((Multi)d).Y.Evaluate(yOffset));
             }
 
             if (((drawMode & DrawMode.FULL) > DrawMode.PLOT) && constituents.Count > 0)
@@ -445,7 +448,8 @@ namespace Magician
 
             foreach (Drawable d in constituents)
             {
-                d.Draw(ref renderer, xOffset, yOffset);
+                //d.Draw(ref renderer, xOffset, yOffset);
+                d.Draw(ref renderer, ((Multi)d).X.Evaluate(xOffset), ((Multi)d).Y.Evaluate(yOffset));
             }
 
             if ((drawMode & DrawMode.POINT) > 0)
@@ -791,6 +795,11 @@ namespace Magician
             Driver d = new Driver(df, output);
             d.ActionString = s;
             Drive(m, d);
+        }
+
+        public static void SetColor(Multi m, Color c)
+        {
+            m.Col = c;
         }
 
         // Interface methods
