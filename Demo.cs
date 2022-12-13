@@ -43,12 +43,9 @@ namespace Magician
             Quantity theta = new Quantity(0).Driven(x => x[0]);
             Quantity.ExtantQuantites.Add(theta);
 
-            Multi.Origin.Add(
-                Multi.Star(0, 0, new RGBA(255, 255, 30, 255), 16, 66, 100)
-                .Where(m => m.Phase.Evaluate() <= Math.PI)
-                .Sub(m => Multi.Drive(m, x => 0.02, "phase+"))
-                .DrawFlags(DrawMode.POINT | DrawMode.PLOT)
-            );
+            Driver sin = new Driver(x=>0);
+            Multi squareWave = new Multi();
+
 
             /*
             *  Loop
@@ -59,6 +56,21 @@ namespace Magician
             */
             while (!done)
             {
+                // Modulators
+                double h = Math.PI*2*Math.Sin(frames*timeResolution*0.03);
+                sin = new Driver(x => 120*Math.Sin(x[0]/50 + (double)frames/40));
+                
+                // A group of 5-pointed stars in a sinusoidal pattern, rotating, and shifting through hue
+                squareWave = ((IMap)sin).MultisAlong(-600, 600, 40, new Driver(x=>1), 0,
+                    Multi.Star(5, 10, 20)
+                        .Sub(m => m.Rotated((double)frames/90))
+                        )
+                    .Sub(m => m.Colored(new HSLA(h+(double)m.Index/10, 1, 1, 255)))
+                        ;
+                
+                // Add our Multi
+                Multi.Origin.Modify(squareWave.DrawFlags(0));
+                
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
