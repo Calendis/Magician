@@ -310,12 +310,15 @@ namespace Magician
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy();
-                outerCopy.SetX(constituents[i].x.Evaluate());
-                outerCopy.SetY(constituents[i].y.Evaluate());
+                Multi outerCopy = outer.Copy().Positioned(this[i].X.Evaluate(), this[i].Y.Evaluate());
 
-                Multi c = constituents[i];
-                constituents[i] = outerCopy;
+                // Copy the drivers to the new multi
+                foreach (Driver d in this[i].drivers)
+                {
+                    outerCopy.AddDriver(d.CopiedTo(outerCopy));
+                }
+
+                this[i] = outerCopy;
             }
 
             return this;

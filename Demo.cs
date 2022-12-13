@@ -40,8 +40,9 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-            Multi seed = Multi.RegularPolygon(0, 0, new RGBA(0, 0, 0, 100), 6, 190)
-            .DrawFlags(DrawMode.INNER);
+            Multi seed = Multi.RegularPolygon(0, 0, new RGBA(255, 255, 0, 100), 3, 40)
+            .Sub(m => m.Driven(x => 0.02, "phase+"))
+            .Surrounding(Multi.RegularPolygon(6, 100));
 
             Multi.Origin.Add(
                 seed
@@ -56,15 +57,6 @@ namespace Magician
             */
             while (!done)
             {   
-                Multi smallCopy = Multi.Origin[0].Copy()
-                .DeepSub(m => m.Scaled(0.3333333));
-                if (frames <= 4)
-                {
-                    Multi.Origin[0]
-                    .Colored(new RGBA(0, 0, 255-Math.Pow(2, frames), 100))
-                    .Sub(m => m.Modify(smallCopy));
-                }
-                
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
                 {
