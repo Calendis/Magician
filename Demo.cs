@@ -44,7 +44,7 @@ namespace Magician
             Quantity.ExtantQuantites.Add(theta);
 
             Driver sin = new Driver(x=>0);
-            Multi squareWave = new Multi();
+            Multi starWave = new Multi();
 
 
             /*
@@ -61,15 +61,13 @@ namespace Magician
                 sin = new Driver(x => 120*Math.Sin(x[0]/50 + (double)frames/40));
                 
                 // A group of 5-pointed stars in a sinusoidal pattern, rotating, and shifting through hue
-                squareWave = ((IMap)sin).MultisAlong(-600, 600, 40, new Driver(x=>1), 0,
+                starWave = ((IMap)sin).MultisAlong(-600, 600, 40, new Driver(x=>1), 0,
                     Multi.Star(5, 10, 20)
-                        .Sub(m => m.Rotated((double)frames/90))
-                        )
-                    .Sub(m => m.Colored(new HSLA(h+(double)m.Index/10, 1, 1, 255)))
-                        ;
+                        .Sub(m => m.Rotated((double)frames/90)))
+                    .Sub(m => m.Colored(new HSLA(h+(double)m.Index/10, 1, 1, 255)));
                 
                 // Add our Multi
-                Multi.Origin.Modify(squareWave.DrawFlags(0));
+                Multi.Origin.Modify(starWave.DrawFlags(0));
                 
                 //SDL_WaitEvent(out SDL_Event events);
                 SDL_PollEvent(out SDL_Event sdlEvent);
