@@ -40,6 +40,16 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
+            Multi squares = ((IMap)new Driver(x => 50*Math.Sin(x[0]/100))).MultisAlong(-300, 300, 60,
+                Multi.RegularPolygon(0, 0, new HSLA(0, 1, 1, 100), 4, 50/Math.Sqrt(2))
+                    .DrawFlags(DrawMode.INNER)
+                    .Sub(m => m.Rotated(Math.PI/4))
+                ).Sub(m => m.Colored(new HSLA(m.Normal*2*Math.PI, 1, 1, 100)))
+            ;
+
+            Multi test = Multi.Star(5, 60, 110).Sub(m => m.Driven(x => 0.02, "phase+"));
+
+            Plot p = new Plot(0, 0, new Driver(t => new double[] {200*Math.Cos(3*t[0]), 200*Math.Sin(2*t[0])}), 0, 2*Math.PI, 0.1, new RGBA(0, 255, 0, 255));
 
             /*
             *  Loop
@@ -50,6 +60,21 @@ namespace Magician
             */
             while (!done)
             {   
+                // Modulators
+                double ph = (double)frames/80;
+                
+                // Construct the animation
+                Multi m = ((IMap) new Driver(t => new double[] {200*Math.Cos(3*t[0]+ph), 200*Math.Sin(2*t[0]+ph)}))
+                .MultisAlong(0, 2*Math.PI, 0.08,
+                    Multi.RegularPolygon(6, 25)
+                    .Sub(m => m.Rotated(m.Normal*2*Math.PI + ph))
+                    .DrawFlags(DrawMode.INNER)
+                )
+                .Sub(m => m.Colored(new HSLA(m.Normal*2*Math.PI, 1, 1, 100)));
+
+                // Add the Multi
+                Multi.Origin.Modify(m);
+                
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
                 {
