@@ -9,11 +9,12 @@ namespace Magician
     public enum DrawMode
     {
         INVISIBLE = (short)0b0000,
-        OUTER = (short)0b1100,
-        INNER = (short)0b0010,
-        FULL = (short)0b1110,
         PLOT = (short)0b1000,
-        POINT = (short)0b0001
+        CONNECTED = (short)0b0100,
+        INNER = (short)0b0010,
+        POINT = (short)0b0001,
+        OUTER = (short)0b1100,
+        FULL = (short)0b1110,
     }
 
     public class Multi : Quantity, Drawable, Driveable, ICollection<Multi>
@@ -96,7 +97,7 @@ namespace Magician
             constituents = new List<Multi> { };
             foreach (Multi c in cs)
             {
-                Add(c);
+                Add(c.Copy());
             }
         }
 
@@ -186,6 +187,12 @@ namespace Magician
             return this;
         }
 
+        public Multi ScaleShifted(double mag)
+        {
+            ScaleShift(this, mag);
+            return this;
+        }
+
         public Multi Colored(Color c)
         {
             SetColor(this, c);
@@ -242,8 +249,11 @@ namespace Magician
             {
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
-            constituents.ForEach(m => m.Copy());
-            copy.Add(constituents.ToArray());
+            // Copy the constituents
+            foreach (Multi c in this)
+            {
+                copy.Add(c.Copy());
+            }
 
             return copy;
         }
@@ -280,6 +290,16 @@ namespace Magician
                 {
                     action.Invoke(c);
                 }
+            }
+            return this;
+        }
+
+        public Multi DeepSub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        {
+            Sub(action, truth, threshold);
+            foreach (Multi c in this)
+            {
+                c.DeepSub(action, truth, threshold);
             }
             return this;
         }
@@ -327,15 +347,6 @@ namespace Magician
             return Wielding(F.Invoke(Copy()));
         }
 
-        public Multi SubScaled(double factor)
-        {
-            foreach (Multi c in constituents)
-            {
-                Scale(c, factor);
-            }
-            return this;
-        }
-
         public Multi Invisible()
         {
             drawMode = DrawMode.INVISIBLE;
@@ -371,6 +382,18 @@ namespace Magician
             }
         }
         public int Count => constituents.Count;
+        public int DeepCount
+        {
+            get
+            {
+                int x = Count;
+                foreach (Multi c in this)
+                {
+                    x += c.DeepCount;
+                }
+                return x;
+            }
+        }
         public bool IsReadOnly => false;
 
         public Multi Prev()
@@ -397,15 +420,23 @@ namespace Magician
         }
         public void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
         {
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             double r = col.R;
             double g = col.G;
             double b = col.B;
             double a = col.A;
 
-            // For each constituent, draw something!
+            // If the flag is set, draw the relative origin
+            if ((drawMode & DrawMode.POINT) > 0)
+            {
+                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
+                //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
+                SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+            }
+
+            // If lined, draw lines between the constituents as if they were vertices in a polygon
             for (int i = 0; i < constituents.Count - 1; i++)
             {
-                // If lined, draw lines between the constituents as if they were vertices in a polygon
                 if ((drawMode & DrawMode.PLOT) > 0)
                 {
                     Drawable p0 = constituents[i];
@@ -415,7 +446,6 @@ namespace Magician
                     double subb = p0.Col.B;
                     double suba = p0.Col.A;
 
-                    SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
                     SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(renderer,
                     
@@ -423,13 +453,10 @@ namespace Magician
                     (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
 
                 }
-
-                // Recursively draw the constituents
-                Multi d = this[i];
-                d.Draw(ref renderer, ((Multi)d).X.Evaluate(xOffset), ((Multi)d).Y.Evaluate(yOffset));
             }
 
-            if (((drawMode & DrawMode.FULL) > DrawMode.PLOT) && constituents.Count > 0)
+            // If the Multi is a closed shape, connect the first and last constituent with a line
+            if ((drawMode & DrawMode.CONNECTED) > 0 && constituents.Count > 0)
             {
                 Drawable pLast = constituents[constituents.Count - 1];
                 Drawable pFirst = constituents[0];
@@ -446,20 +473,14 @@ namespace Magician
             }
 
 
+            // Draw each constituent
             foreach (Drawable d in constituents)
             {
-                //d.Draw(ref renderer, xOffset, yOffset);
                 d.Draw(ref renderer, ((Multi)d).X.Evaluate(xOffset), ((Multi)d).Y.Evaluate(yOffset));
             }
 
-            if ((drawMode & DrawMode.POINT) > 0)
-            {
-                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-                //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
-            }
 
-            // And finally
+            // If the flag is set, and there are at least 3 constituents, fill the shape
             if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
             {
                 /* Entering the wild and wacky world of the Renderer! Prepare to crash */
