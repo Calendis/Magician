@@ -176,6 +176,12 @@ namespace Magician
             return this;
         }
 
+        public Multi Translated(double x, double y)
+        {
+            Translate(this, x, y);
+            return this;
+        }
+
         public Multi Rotated(double theta)
         {
             Rotate(this, theta);
@@ -264,6 +270,13 @@ namespace Magician
         {
             constituents.AddRange(m.constituents);
             return this;
+        }
+
+        // Flat adjoining on a particular constituent
+        public void AddAt(Multi m, int n)
+        {
+            m.Translated(this[n].X.Evaluate(), this[n].Y.Evaluate());
+            Add(m);
         }
 
         // Add both multis to a new parent Multi
@@ -443,7 +456,7 @@ namespace Magician
             {
                 SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+                SDL_RenderDrawPointF(renderer, (float)XCartesian(0), (float)YCartesian(0));
             }
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
@@ -617,11 +630,11 @@ namespace Magician
         // Create a point
         public static Multi Point(Multi? parent, double x, double y, Color col)
         {
-            return new Multi(parent, x, y, col);
+            return new Multi(parent, x, y, col).DrawFlags(DrawMode.POINT);
         }
         public static Multi Point(double x, double y, Color col)
         {
-            return new Multi(x, y, col);
+            return new Multi(x, y, col).DrawFlags(DrawMode.POINT);
         }
         public static Multi Point(double x, double y)
         {
