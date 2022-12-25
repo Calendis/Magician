@@ -15,8 +15,8 @@ namespace Magician
         // Create a plot with a defined position, driver, bounds, resolution, and colour
         public Plot(double x, double y, IMap im, double start, double end, double dx, Color c) : base(x, y, c, DrawMode.PLOT)
         {
-            //pos[0] = x;
-            //pos[1] = y;
+            X.Set(x);
+            Y.Set(y);
             toPlot = im;
             this.start = start;
             this.end = end;
