@@ -30,12 +30,12 @@ namespace Magician
         }
 
         public virtual double Evaluate(double x) {return s[(int)x];}
-        public double[] Evaluate(double[] offsets)
+        public virtual double[] Evaluate(double[] offsets)
         {
             double[] outputs = new double[offsets.Length];
             for (int i = 0; i < offsets.Length; i++)
             {
-                outputs[i] = Evaluate(i) + outputs[i];
+                outputs[i] = Evaluate(offsets[i]) + outputs[i];
             }
             return outputs;
         }
@@ -110,7 +110,7 @@ namespace Magician
         public override double Evaluate(double x)
         {
             double y = 0;
-            for (int i = 0; i < s.Length; i++)
+            for (int i = 0; i < Count; i++)
             {
                 y += Math.Pow(x, i);
             }
