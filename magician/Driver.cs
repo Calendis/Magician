@@ -15,7 +15,7 @@ namespace Magician
         // Full constructor
         public Driver(Func<double[], double> df, Action<double>? output)
         {
-            // don't think about this one too much
+            // converts driver with one output to multi-output format
             driveFunction = new DriveFunction(new Func<double[], double[]>(x => new double[]{df.Invoke(x)}));
             if (output is not null)
             {
@@ -82,9 +82,6 @@ namespace Magician
                 Evaluate(x);
             }
         }
-
-        // This acts as function composition
-        //public Driver Driven(Driver d)
 
         public Driver CopiedTo(Multi m)
         {
