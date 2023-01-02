@@ -44,6 +44,17 @@ namespace Magician
         {            
             double[] p0 = Evaluate(t0);
             double[] p1 = Evaluate(t1);
+            
+            if (p0.Count() < 2)
+            {
+                p0 = new double[]{t0, p0[0]};
+            }
+            if (p1.Count() < 2)
+            {
+                p1 = new double[]{t1, p1[0]};
+            }
+
+
             Multi mp0 = Multi.Point(p0[0], p0[1], col);
             Multi mp1 = Multi.Point(p1[0], p1[1], col);
             return new Multi[] {mp0, mp1};
