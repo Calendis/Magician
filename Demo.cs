@@ -41,7 +41,17 @@ namespace Magician
             *  Much is possible in the pre-loop, since Drivers will still work
             */
 
-
+            // Graph sin(x)
+            Console.WriteLine("Creating plot...");
+            Plot pl0 = new Plot(0, 0, new Driver(x => Math.Sin(x[0])), -10, 10, 0.1, new RGBA(0xffff00ff));
+            Console.WriteLine("Adding interpolation...");
+            Multi.Origin.Add(pl0.Interpolation());
+            
+            // Graph x^2 + 1
+            /*Console.WriteLine("Creating plot...");
+            Plot pl1 = new Plot(0, 0, new Polynomial(1, 0, 1), -5, 5, 0.1, new RGBA(0x00ff00ff));
+            Console.WriteLine("Adding interpolation...");
+            Multi.Origin.Add(pl1.Interpolation());*/
 
             /*
             *  Loop
