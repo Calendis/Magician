@@ -40,18 +40,16 @@ namespace Magician
             *  -----------------------------------------------------------------
             *  Much is possible in the pre-loop, since Drivers will still work
             */
-
-            // Graph sin(x)
-            Console.WriteLine("Creating plot...");
-            Multi pl0 = ((IMap)new Driver(x => 80*Math.Sin(x[0]/10))).Plot(0, 0, -200, 200, 2, new RGBA(0xffff00ff));
-            Console.WriteLine("Adding interpolation...");
-            Multi.Origin.Add(pl0);
+            List<Multi> lines = new List<Multi>();
             
-            // Graph x^2 + 1
-            Console.WriteLine("Creating plot...");
-            Multi pl1 = ((IMap)new Polynomial(1, 0, 1)).Plot(0, 0, -200, 200, 2, new RGBA(0x00ff00ff));
-            Console.WriteLine("Adding interpolation...");
-            Multi.Origin.Add(pl1);
+            Multi.Origin.Add(Multi.Line(
+                Multi.Point(80, -200).DrawFlags(DrawMode.INVISIBLE),
+                Multi.Point(80, -100).DrawFlags(DrawMode.INVISIBLE),
+                new RGBA(0xff00ffff)
+            ));
+
+            Multi.Origin.Add(Multi.RegularPolygon(300, 100, new RGBA(0x55d000ff), 5, 100)
+            .Sub(m => m.Driven(x => 0.01, "phase+")));
 
             /*
             *  Loop
