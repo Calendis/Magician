@@ -16,6 +16,7 @@ namespace Magician
         POINT = (short)0b0001,
         OUTER = (short)0b1100,
         FULL = (short)0b1110,
+        OUTERP = (short)0b1101
     }
 
     public class Multi : Quantity, Drawable, Driveable, ICollection<Multi>
@@ -222,10 +223,12 @@ namespace Magician
         public Multi Eject()
         {
             drivers.Clear();
+            /*
             foreach (Multi m in constituents)
             {
                 m.Eject();
             }
+            */
             return this;
         }
 
@@ -302,7 +305,6 @@ namespace Magician
             {
                 if (c.index is null)
                 {
-                    //Console.WriteLine($"Indexing {this}");
                     CreateIndex(this);
                 }
                 if (truth.Invoke(c.Index) >= threshold)
@@ -443,7 +445,7 @@ namespace Magician
             i = i == p.Count - 1 ? 0 : i + 1;
             return p.constituents[i];
         }
-        public void Draw(ref IntPtr renderer, double xOffset = 0, double yOffset = 0)
+        public void Draw(ref IntPtr renderer, double xOffset, double yOffset)
         {
             SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             double r = col.R;
@@ -464,8 +466,8 @@ namespace Magician
             {
                 if ((drawMode & DrawMode.PLOT) > 0)
                 {
-                    Drawable p0 = constituents[i];
-                    Drawable p1 = constituents[i + 1];
+                    Multi p0 = constituents[i];
+                    Multi p1 = constituents[i + 1];
                     double subr = p0.Col.R;
                     double subg = p0.Col.G;
                     double subb = p0.Col.B;
@@ -483,8 +485,8 @@ namespace Magician
             // If the Multi is a closed shape, connect the first and last constituent with a line
             if ((drawMode & DrawMode.CONNECTED) > 0 && constituents.Count > 0)
             {
-                Drawable pLast = constituents[constituents.Count - 1];
-                Drawable pFirst = constituents[0];
+                Multi pLast = constituents[constituents.Count - 1];
+                Multi pFirst = constituents[0];
 
                 double subr = pLast.Col.R;
                 double subg = pLast.Col.G;
@@ -498,12 +500,15 @@ namespace Magician
             }
 
 
-            // Draw each constituent
-            foreach (Drawable d in constituents)
+            // Draw each constituent recursively            
+            foreach (Multi m in this)
             {
-                d.Draw(ref renderer, ((Multi)d).X.Evaluate(xOffset), ((Multi)d).Y.Evaluate(yOffset));
+                if (m.Count > 0)
+                {
+                    m.Draw(ref renderer, X.Evaluate(m.X.Evaluate(xOffset)), Y.Evaluate(m.Y.Evaluate(yOffset)));
+                }
             }
-
+            
 
             // If the flag is set, and there are at least 3 constituents, fill the shape
             if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)

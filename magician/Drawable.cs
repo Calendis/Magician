@@ -4,8 +4,10 @@ namespace Magician
     {
         public abstract void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0);
         public abstract Color Col {get; set;}
+        /*
         public abstract double XCartesian(double offset);
         public abstract double YCartesian(double offset);
+        */
 
         // Setter accessors for colour
         public void SetR(double r)
