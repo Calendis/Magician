@@ -52,7 +52,7 @@ namespace Magician
                     }
                 }
             }
-            m.parent = Multi.Origin;
+            m.parent = Geo.Origin;
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
 
@@ -87,8 +87,8 @@ namespace Magician
             }
 
 
-            Multi mp0 = Multi.Point(p0[0], p0[1]);
-            Multi mp1 = Multi.Point(p1[0], p1[1]);
+            Multi mp0 = Geo.Point(p0[0], p0[1]);
+            Multi mp1 = Geo.Point(p1[0], p1[1]);
             return new Multi[] {mp0, mp1};
         }
     }

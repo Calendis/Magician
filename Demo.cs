@@ -42,13 +42,13 @@ namespace Magician
             */
             List<Multi> lines = new List<Multi>();
             
-            Multi.Origin.Add(Multi.Line(
-                Multi.Point(80, -200).DrawFlags(DrawMode.INVISIBLE),
-                Multi.Point(80, -100).DrawFlags(DrawMode.INVISIBLE),
+            Geo.Origin.Add(Geo.Line(
+                Geo.Point(80, -200).DrawFlags(DrawMode.INVISIBLE),
+                Geo.Point(80, -100).DrawFlags(DrawMode.INVISIBLE),
                 new RGBA(0xff00ffff)
             ));
 
-            Multi.Origin.Add(Multi.RegularPolygon(300, 100, new RGBA(0x55d000ff), 5, 100)
+            Geo.Origin.Add(Geo.RegularPolygon(300, 100, new RGBA(0x55d000ff), 5, 100)
             .Sub(m => m.Driven(x => 0.01, "phase+")));
 
             /*
@@ -89,7 +89,7 @@ namespace Magician
             SDL_RenderClear(renderer);
 
             // Draw objects
-            Multi.Origin.Draw(ref renderer, 0, 0);
+            Geo.Origin.Draw(ref renderer, 0, 0);
 
             // SAVE FRAME TO IMAGE
             if (saveFrames)
@@ -124,7 +124,7 @@ namespace Magician
 
         void Drive()
         {
-            Multi.Origin.Go((frames - driveDelay) * timeResolution);
+            Geo.Origin.Go((frames - driveDelay) * timeResolution);
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
                 Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
