@@ -19,7 +19,7 @@ namespace Magician
         OUTERP = (short)0b1101
     }
 
-    public class Multi : Quantity, Drawable, Driveable, ICollection<Multi>
+    public class Multi : Quantity, IDrawable, IDriveable, ICollection<Multi>
     {
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
@@ -447,7 +447,6 @@ namespace Magician
         }
         public void Draw(ref IntPtr renderer, double xOffset, double yOffset)
         {
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             double r = col.R;
             double g = col.G;
             double b = col.B;
@@ -662,47 +661,47 @@ namespace Magician
                     o = m.IncrMagnitude;
                     break;
                 case "R":
-                    o = ((Drawable)m).SetR;
+                    o = ((IDrawable)m).SetR;
                     break;
 
                 case "G":
-                    o = ((Drawable)m).SetG;
+                    o = ((IDrawable)m).SetG;
                     break;
                 case "B":
-                    o = ((Drawable)m).SetB;
+                    o = ((IDrawable)m).SetB;
                     break;
                 case "A":
-                    o = ((Drawable)m).SetA;
+                    o = ((IDrawable)m).SetA;
                     break;
                 case "H":
-                    o = ((Drawable)m).SetH;
+                    o = ((IDrawable)m).SetH;
                     break;
                 case "S":
-                    o = ((Drawable)m).SetS;
+                    o = ((IDrawable)m).SetS;
                     break;
                 case "L":
-                    o = ((Drawable)m).SetL;
+                    o = ((IDrawable)m).SetL;
                     break;
                 case "R+":
-                    o = ((Drawable)m).IncrR;
+                    o = ((IDrawable)m).IncrR;
                     break;
                 case "G+":
-                    o = ((Drawable)m).IncrG;
+                    o = ((IDrawable)m).IncrG;
                     break;
                 case "B+":
-                    o = ((Drawable)m).IncrB;
+                    o = ((IDrawable)m).IncrB;
                     break;
                 case "A+":
-                    o = ((Drawable)m).IncrA;
+                    o = ((IDrawable)m).IncrA;
                     break;
                 case "H+":
-                    o = ((Drawable)m).IncrH;
+                    o = ((IDrawable)m).IncrH;
                     break;
                 case "S+":
-                    o = ((Drawable)m).IncrS;
+                    o = ((IDrawable)m).IncrS;
                     break;
                 case "L+":
-                    o = ((Drawable)m).IncrL;
+                    o = ((IDrawable)m).IncrL;
                     break;
 
                 default:

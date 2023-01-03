@@ -6,7 +6,7 @@
 namespace Magician
 {
     public delegate double[] DriveFunction(params double[] x);
-    public class Driver : IMap, Driveable
+    public class Driver : IMap, IDriveable
     {
         protected DriveFunction driveFunction;
         private Action<double[]>? output;

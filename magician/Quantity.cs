@@ -5,7 +5,7 @@
 
 namespace Magician
 {
-    public class Quantity : IMap, Driveable
+    public class Quantity : IMap, IDriveable
     {
         protected List<Driver> drivers = new List<Driver>();
 

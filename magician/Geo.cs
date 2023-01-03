@@ -20,6 +20,7 @@ namespace Magician
         {
             return Point(x, y, Globals.fgCol);
         }
+
         // Create a line
         public static Multi Line(Multi p1, Multi p2, Color col)
         {
@@ -36,6 +37,7 @@ namespace Magician
         {
             return Line(p1, p2, Globals.fgCol);
         }
+
         // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
@@ -59,6 +61,7 @@ namespace Magician
             return RegularPolygon(0, 0, sides, magnitude);
         }
 
+        // Create a star with an inner and outer radius
         public static Multi Star(double xOffset, double yOffset, Color col, int sides, double innerRadius, double outerRadius)
         {
             List<Multi> ps = new List<Multi>();
