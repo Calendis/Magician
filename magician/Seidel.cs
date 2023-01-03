@@ -1,7 +1,14 @@
 using System;
 
-namespace Renderer
+/*
+ * This code is a port of a C implementation of Seidel's algorithm
+ * Thanks to Atul Narkhede and Dinesh Manocha
+ * http://gamma.cs.unc.edu/SEIDEL/
+*/
+
+namespace Seidel
 {
+    // A whole bunch of helper methods
     public static class Alg
     {
         // Iterated logarithm
@@ -62,7 +69,7 @@ namespace Renderer
         // the vertices have the same y-coord., etc.
         public static bool IsLeftOf(int segnum, Point_t v)
         {
-            Segment s = Geo.segs[segnum];
+            Segment s = Triangulator.segs[segnum];
             double area;
             if (GreaterThan(s.p1, s.p0))  // Segment going upwards
             {
@@ -167,7 +174,7 @@ namespace Renderer
     *  The big-daddy renderer class. Geo handles importing of data from a Multi
     *  and, using Siedel's algorithm, its division into triangles.
     */
-    public static class Geo
+    public static class Triangulator
     {
 
         static int MAX_SEGMENTS;
@@ -206,7 +213,7 @@ namespace Renderer
         const int TRI_RHS = 2;
 
         // The SOLE purpose of this constructor is to soothe the compiler
-        static Geo()
+        static Triangulator()
         {
             query = new Node[]{};
             trapezoids = new Trapezoid[]{};
@@ -1057,7 +1064,7 @@ namespace Renderer
             root = i1;
 
             query[i1].right = i2 = NewNode();
-            query[i2].kind = Renderer.NodeKind.S_NODE;
+            query[i2].kind = Seidel.NodeKind.S_NODE;
             query[i2].parent = i1;
 
             query[i1].left = i3 = NewNode();
@@ -1066,7 +1073,7 @@ namespace Renderer
             query[i3].parent = i1;
 
             query[i3].left = i4 = NewNode();
-            query[i4].kind = Renderer.NodeKind.S_NODE;
+            query[i4].kind = Seidel.NodeKind.S_NODE;
             query[i4].parent = i3;
 
             query[i3].right = i5 = NewNode();
@@ -1075,11 +1082,11 @@ namespace Renderer
             query[i5].parent = i3;
 
             query[i5].left = i6 = NewNode();
-            query[i6].kind = Renderer.NodeKind.S_NODE;
+            query[i6].kind = Seidel.NodeKind.S_NODE;
             query[i6].parent = i5;
 
             query[i5].right = i7 = NewNode();
-            query[i7].kind = Renderer.NodeKind.S_NODE;
+            query[i7].kind = Seidel.NodeKind.S_NODE;
             query[i7].parent = i5;
 
             // Define the initial 4 trapezoids in the trapezoidation
@@ -1135,7 +1142,7 @@ namespace Renderer
             /*
             * Initialize Trapezoidation tree / query structure
             */
-            int root = Renderer.Geo.InitialQueryStructure(ChooseSegment());
+            int root = Seidel.Triangulator.InitialQueryStructure(ChooseSegment());
             //Console.WriteLine($"root: {root}");
 
             /*
@@ -1149,12 +1156,12 @@ namespace Renderer
             /*
             * Add the remaining segments into the trapezoidation
             */
-            int logstarN = Renderer.Alg.Logstar(nseg);
+            int logstarN = Seidel.Alg.Logstar(nseg);
             // Idk
             for (int h = 1; h <= logstarN; h++)
             {
                 //Console.WriteLine($" h: {h}");
-                for (int i = Renderer.Alg.N(nseg, h - 1) + 1; i <= Renderer.Alg.N(nseg, h); i++)
+                for (int i = Seidel.Alg.N(nseg, h - 1) + 1; i <= Seidel.Alg.N(nseg, h); i++)
                 {
                     //Console.WriteLine($"  i: {i}");
                     AddSegment(ChooseSegment());
