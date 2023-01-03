@@ -1,13 +1,10 @@
+// This interface provides common features for Multis and Textures (Geometry and Images)
 namespace Magician
 {
-    public interface Drawable
+    public interface IDrawable
     {
         public abstract void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0);
         public abstract Color Col {get; set;}
-        /*
-        public abstract double XCartesian(double offset);
-        public abstract double YCartesian(double offset);
-        */
 
         // Setter accessors for colour
         public void SetR(double r)
