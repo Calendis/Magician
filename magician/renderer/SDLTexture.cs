@@ -16,12 +16,11 @@ namespace Magician.Renderer
             w = width;
             h = height;
             IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, w, h, 0, SDL_PIXELFORMAT_ARGB8888);
-            try
+
+            surface = SDL2.SDL_image.IMG_Load(filepath);
+            if (surface == (IntPtr)0)
             {
-                surface = SDL2.SDL_image.IMG_Load(filepath);
-            }
-            catch
-            {
+                Console.WriteLine($"Could not load {filepath}");
                 surface = SDL2.SDL_image.IMG_Load("ui/assets/default.png");
             }
 
@@ -43,10 +42,10 @@ namespace Magician.Renderer
             srcRect.w = w;
             srcRect.h = h;
             SDL_Rect dstRect;
-            dstRect.x = 0;
-            dstRect.y = 0;
-            dstRect.w = Ref.winWidth;
-            dstRect.h = Ref.winHeight;
+            dstRect.x = xOffset;
+            dstRect.y = yOffset;
+            dstRect.w = w;
+            dstRect.h = h;
             SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
         }
     }
