@@ -5,24 +5,22 @@ namespace Magician
         // For stuff that can be defined once and left alone
         public static void PreLoop(ref int frames, ref double timeResolution)
         {
-            int f = frames;
-            double tr = timeResolution;
+            // Default graph
+            UI.Presets.Graph.Cartesian();
+            
+            // Plot a sine wave
+            Multi sineWave = ((IMap)new Driver(
+                x => 30*Math.Sin(x[0]/6)
+            ))
+            .Plot(0, 0, -300, 300, 3, new RGBA(0x00ff00ff));
+            Geo.Origin.Add(sineWave);
 
-            Geo.Origin.Add(Geo.Line(
-                Geo.Point(80, -200).DrawFlags(DrawMode.INVISIBLE),
-                Geo.Point(80, -100).DrawFlags(DrawMode.INVISIBLE),
-                new RGBA(0xff00ffff)
-            ));
-
-            Geo.Origin.Add(
-                Geo.RegularPolygon(30, 100, new RGBA(0x55d00090), 5, 100)
-            .Sub(m => m.Driven(x => 0.01, "phase+")).DrawFlags(DrawMode.OUTER)
-            .Driven(x => 100 * Math.Sin(f * tr * 0.33), "y")
-            .Driven(x => 10 * Math.Sin(f * tr), "magnitude+")
-            );
-
-            Multi g = new UI.Grid(100, 10, 100, 10).Render();
-            Geo.Origin.Add(g);
+            // Plot a Lissajous curve
+            Multi lissajous = ((IMap)new Driver(
+                t => new double[]{300*Math.Cos(t[0]/5), 300*Math.Sin(t[0])
+                }))
+            .Plot(0, 0, 0, 100, 1, new RGBA(0xff0000ff));
+            Geo.Origin.Add(lissajous);
         }
 
         // For stuff that needs to redefined every frame
