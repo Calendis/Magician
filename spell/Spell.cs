@@ -30,6 +30,7 @@ namespace Magician
         // For stuff that needs to redefined every frame
         public static void Loop(ref int frames, ref double timeResolution)
         {
+            Renderer.Control.Clear();
             t.Draw();
         }
     }
