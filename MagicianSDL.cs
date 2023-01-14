@@ -85,11 +85,6 @@ namespace Magician
 
             // Draw objects
             SDL_SetRenderTarget(SDLGlobals.renderer, renderedTexture);
-            
-            // Clear the background pixels
-            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)Ref.bgCol.R, (byte)Ref.bgCol.G, (byte)Ref.bgCol.B, (byte)Ref.bgCol.A);
-            // Comment out the following line to enable 'smearing'
-            SDL_RenderClear(SDLGlobals.renderer);
 
             // Draw the objects
             Geo.Origin.Draw(ref SDLGlobals.renderer, 0, 0);
