@@ -4,7 +4,7 @@
 
 namespace Magician
 {
-    public static class Globals
+    public static class Ref
     {
         public static int winWidth = 1200;
         public static int winHeight = 800;

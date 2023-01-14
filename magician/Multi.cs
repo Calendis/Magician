@@ -106,9 +106,9 @@ namespace Magician
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
         : this(Geo.Origin, x, y, col, dm, cs) { }
-        public Multi(double x, double y) : this(x, y, Globals.fgCol) { }
+        public Multi(double x, double y) : this(x, y, Ref.fgCol) { }
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Globals.fgCol, DrawMode.FULL, cs) { }
+        public Multi(params Multi[] cs) : this(0, 0, Ref.fgCol, DrawMode.FULL, cs) { }
 
         public Color Col
         {
@@ -163,11 +163,11 @@ namespace Magician
 
         public double XCartesian(double offset)
         {
-            return Globals.winWidth / 2 + X.Evaluate(offset);
+            return Ref.winWidth / 2 + X.Evaluate(offset);
         }
         public double YCartesian(double offset)
         {
-            return Globals.winHeight / 2 - Y.Evaluate(offset);
+            return Ref.winHeight / 2 - Y.Evaluate(offset);
         }
 
         public Multi Positioned(double x, double y)

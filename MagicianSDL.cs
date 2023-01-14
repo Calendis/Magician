@@ -5,7 +5,6 @@ namespace Magician
     class Demo
     {
         static IntPtr win;
-        static IntPtr renderer;
         static IntPtr renderedTexture;
 
         bool done = false;
@@ -33,7 +32,7 @@ namespace Magician
             demo.GameLoop();
 
             // Cleanup
-            SDL_DestroyRenderer(renderer);
+            SDL_DestroyRenderer(SDLGlobals.renderer);
             SDL_DestroyWindow(win);
             SDL_Quit();
         }
@@ -45,11 +44,10 @@ namespace Magician
 
             // Create a surface
             IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
-            s = SDL2.SDL_image.IMG_Load("test.png");
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            renderedTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Globals.winWidth, Globals.winHeight);
+            renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Ref.winWidth, Ref.winHeight);
             SDL_FreeSurface(s);
 
             while (!done)
@@ -82,39 +80,39 @@ namespace Magician
         void Render()
         {
             // Options
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             SDL_SetTextureBlendMode(renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
             // Draw objects
-            SDL_SetRenderTarget(renderer, renderedTexture);
+            SDL_SetRenderTarget(SDLGlobals.renderer, renderedTexture);
             
             // Clear the background pixels
-            SDL_SetRenderDrawColor(renderer, (byte)Globals.bgCol.R, (byte)Globals.bgCol.G, (byte)Globals.bgCol.B, (byte)Globals.bgCol.A);
+            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)Ref.bgCol.R, (byte)Ref.bgCol.G, (byte)Ref.bgCol.B, (byte)Ref.bgCol.A);
             // Comment out the following line to enable 'smearing'
-            SDL_RenderClear(renderer);
+            SDL_RenderClear(SDLGlobals.renderer);
 
             // Draw the objects
-            Geo.Origin.Draw(ref renderer, 0, 0);
+            Geo.Origin.Draw(ref SDLGlobals.renderer, 0, 0);
 
             // SAVE FRAME TO IMAGE
             if (saveFrames)
             {
-                IntPtr texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
-                IntPtr target = SDL_GetRenderTarget(renderer);
+                IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
+                IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
 
                 int width, height;
-                SDL_SetRenderTarget(renderer, texture);
+                SDL_SetRenderTarget(SDLGlobals.renderer, texture);
                 SDL_QueryTexture(texture, out _, out _, out width, out height);
                 IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
                 SDL_Rect r = new SDL_Rect();
                 r.x = 0;
                 r.y = 0;
-                r.w = Globals.winWidth;
-                r.h = Globals.winHeight;
+                r.w = Ref.winWidth;
+                r.h = Ref.winHeight;
                 unsafe
                 {
                     SDL_Surface* surf = (SDL_Surface*)surface;
-                    SDL_RenderReadPixels(renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
+                    SDL_RenderReadPixels(SDLGlobals.renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
                     SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D4")}.bmp");
                     SDL_FreeSurface(surface);
                 }
@@ -126,17 +124,17 @@ namespace Magician
             SDL_Rect srcRect;
             srcRect.x = 0;
             srcRect.y = 0;
-            srcRect.w = Globals.winWidth;
-            srcRect.h = Globals.winHeight;
+            srcRect.w = Ref.winWidth;
+            srcRect.h = Ref.winHeight;
             SDL_Rect dstRect;
             dstRect.x = 0;
             dstRect.y = 0;
-            dstRect.w = Globals.winWidth;
-            dstRect.h = Globals.winHeight;
+            dstRect.w = Ref.winWidth;
+            dstRect.h = Ref.winHeight;
 
-            SDL_SetRenderTarget(renderer, IntPtr.Zero);
-            SDL_RenderCopy(renderer, renderedTexture, ref srcRect, ref dstRect);
-            SDL_RenderPresent(renderer);
+            SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+            SDL_RenderCopy(SDLGlobals.renderer, renderedTexture, ref srcRect, ref dstRect);
+            SDL_RenderPresent(SDLGlobals.renderer);
             //SDL_Delay(1/6);
         }
 
@@ -158,7 +156,7 @@ namespace Magician
         }
         void CreateWindow()
         {
-            win = SDL_CreateWindow("Test Window", 0, 0, Globals.winWidth, Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow("Test Window", 0, 0, Ref.winWidth, Ref.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {
@@ -167,8 +165,8 @@ namespace Magician
         }
         void CreateRenderer()
         {
-            renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
-            if (renderer == IntPtr.Zero)
+            SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+            if (SDLGlobals.renderer == IntPtr.Zero)
             {
                 Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
             }

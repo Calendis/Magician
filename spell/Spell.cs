@@ -3,6 +3,7 @@ namespace Magician
     static class Spell
     {
         // For stuff that can be defined once and left alone
+        static Renderer.Texture t;
         public static void PreLoop(ref int frames, ref double timeResolution)
         {
             // Default graph
@@ -21,12 +22,15 @@ namespace Magician
                 }))
             .Plot(0, 0, 0, 100, 1, new RGBA(0xff0000ff));
             Geo.Origin.Add(lissajous);
+
+            // Load a texture
+            t = new Renderer.Texture("test.png", 400, 300);
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop(ref int frames, ref double timeResolution)
         {
-            //
+            t.Draw();
         }
     }
 }
