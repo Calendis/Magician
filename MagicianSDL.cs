@@ -40,26 +40,8 @@ namespace Magician
 
         void GameLoop()
         {
-            /*
-            *  Pre-loop
-            *  -----------------------------------------------------------------
-            *  Much is possible in the pre-loop, since Drivers will still work
-            */
-            Geo.Origin.Add(Geo.Line(
-                Geo.Point(80, -200).DrawFlags(DrawMode.INVISIBLE),
-                Geo.Point(80, -100).DrawFlags(DrawMode.INVISIBLE),
-                new RGBA(0xff00ffff)
-            ));
-
-            Geo.Origin.Add(
-                Geo.RegularPolygon(30, 100, new RGBA(0x55d00090), 5, 100)
-            .Sub(m => m.Driven(x => 0.01, "phase+")).DrawFlags(DrawMode.OUTER)
-            .Driven(x => 100*Math.Sin(frames*timeResolution*0.33), "y")
-            .Driven(x => 10*Math.Sin(frames*timeResolution), "magnitude+")
-            );
-
-            Multi g = new UI.Grid(100, 10, 100, 10).Render();
-            Geo.Origin.Add(g);
+            // Cast a spell
+            Spell.PreLoop(ref frames, ref timeResolution);
 
             // Create a surface
             IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
@@ -67,20 +49,14 @@ namespace Magician
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            //renderedTexture = SDL_CreateTextureFromSurface(renderer, s);
             renderedTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Globals.winWidth, Globals.winHeight);
-
             SDL_FreeSurface(s);
 
-            /*
-            *  Loop
-            *  ----------------------------------------------------------------
-            *  The loop automatically drives and renders the math objects.
-            *  When you want to modulate arguments in a constructor, you will
-            *  need the loop
-            */
             while (!done)
             {
+                // Cast a spell
+                Spell.Loop(ref frames, ref timeResolution);
+                
                 // Control flow and SDL
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
@@ -102,6 +78,7 @@ namespace Magician
             }
         }
 
+        // Renders each frame to a texture and displays the texture
         void Render()
         {
             // Options
@@ -113,7 +90,8 @@ namespace Magician
             
             // Clear the background pixels
             SDL_SetRenderDrawColor(renderer, (byte)Globals.bgCol.R, (byte)Globals.bgCol.G, (byte)Globals.bgCol.B, (byte)Globals.bgCol.A);
-            //SDL_RenderClear(renderer);
+            // Comment out the following line to enable 'smearing'
+            SDL_RenderClear(renderer);
 
             // Draw the objects
             Geo.Origin.Draw(ref renderer, 0, 0);
@@ -162,6 +140,7 @@ namespace Magician
             //SDL_Delay(1/6);
         }
 
+        // Drive the dynamics of Multis and Quantities
         void Drive()
         {
             Geo.Origin.Go((frames - driveDelay) * timeResolution);
