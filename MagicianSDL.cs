@@ -23,6 +23,7 @@ namespace Magician
             SDL2.SDL.SDL_version d;
             SDL2.SDL_ttf.SDL_TTF_VERSION(out d);
             Console.WriteLine($"SDL_ttf version: {d.major}.{d.minor}.{d.patch}");
+            SDL2.SDL_ttf.TTF_Init();
 
             Demo demo = new Demo();
             demo.InitSDL();
