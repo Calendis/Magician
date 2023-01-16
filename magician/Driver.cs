@@ -17,6 +17,7 @@ namespace Magician
         {
             // converts driver with one output to multi-output format
             driveFunction = new DriveFunction(new Func<double[], double[]>(x => new double[]{df.Invoke(x)}));
+            
             if (output is not null)
             {
                 this.output = new Action<double[]>(x => output.Invoke(x[0]));
