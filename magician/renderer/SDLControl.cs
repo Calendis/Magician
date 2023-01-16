@@ -6,7 +6,7 @@ namespace Magician.Renderer
     {
         public static void Clear()
         {
-            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)Ref.bgCol.R, (byte)Ref.bgCol.G, (byte)Ref.bgCol.B, (byte)Ref.bgCol.A);            
+            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)Ref.bgCol.R, (byte)Ref.bgCol.G, (byte)Ref.bgCol.B, (byte)Ref.bgCol.A);
             SDL_RenderClear(SDLGlobals.renderer);
         }
     }
