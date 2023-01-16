@@ -1,4 +1,3 @@
-using System;
 using static SDL2.SDL;
 
 // Wrapper around an SDL texture
@@ -26,6 +25,19 @@ namespace Magician.Renderer
 
             texture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, surface);
             SDL_FreeSurface(surface);
+        }
+
+        // Create a texture from a given SDL texture
+        public Texture(IntPtr texture)
+        {
+            this.texture = texture;
+            
+            // Grab width and height of the rendered text
+            unsafe
+            {
+                w = ((SDL_Surface*)texture)->w;
+                h = ((SDL_Surface*)texture)->h;
+            }
         }
 
         public void Draw(int xOffset=0, int yOffset=0)
