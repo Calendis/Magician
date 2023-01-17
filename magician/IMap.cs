@@ -65,7 +65,7 @@ namespace Magician
                 Multi[] ps = interpolate(t, t+dx);
                 ps[0].Col = c;
                 ps[1].Col = c;
-                points.Add(ps[0]);
+                points.Add(ps[0].DrawFlags(DrawMode.INVISIBLE));
 
             }
             Multi m = new Multi(x, y, c, DrawMode.PLOT, points.ToArray());
