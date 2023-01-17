@@ -453,12 +453,14 @@ namespace Magician
             double a = col.A;
 
             // If the flag is set, draw the relative origin
+            //Console.WriteLine($"{drawMode} / {DrawMode.POINT}, c: {Count}");
             if ((drawMode & DrawMode.POINT) > 0)
             {
                 SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
                 SDL_RenderDrawPointF(renderer, (float)XCartesian(0), (float)YCartesian(0));
             }
+            if (Count < 1) {return;}
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
             for (int i = 0; i < constituents.Count - 1; i++)
@@ -474,7 +476,6 @@ namespace Magician
 
                     SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(renderer,
-                    
                     (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
                     (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
 
@@ -502,13 +503,9 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                if (m.Count > 0)
-                {
-                    m.Draw(ref renderer, X.Evaluate(m.X.Evaluate(xOffset)), Y.Evaluate(m.Y.Evaluate(yOffset)));
-                }
+                m.Draw(ref renderer, (m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
             }
             
-
             // If the flag is set, and there are at least 3 constituents, fill the shape
             if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
             {
