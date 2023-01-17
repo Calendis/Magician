@@ -2,10 +2,9 @@
 
 namespace Magician
 {
-    class Demo
+    class MagicianSDL
     {
         static IntPtr win;
-        static IntPtr renderedTexture;
 
         bool done = false;
         Random r = new Random();
@@ -25,7 +24,7 @@ namespace Magician
             Console.WriteLine($"SDL_ttf version: {d.major}.{d.minor}.{d.patch}");
             SDL2.SDL_ttf.TTF_Init();
 
-            Demo demo = new Demo();
+            MagicianSDL demo = new MagicianSDL();
             demo.InitSDL();
             demo.CreateWindow();
             demo.CreateRenderer();
@@ -48,7 +47,7 @@ namespace Magician
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Ref.winWidth, Ref.winHeight);
+            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Ref.winWidth, Ref.winHeight);
             SDL_FreeSurface(s);
 
             while (!done)
@@ -82,10 +81,10 @@ namespace Magician
         {
             // Options
             SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-            SDL_SetTextureBlendMode(renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+            SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
             // Draw objects
-            SDL_SetRenderTarget(SDLGlobals.renderer, renderedTexture);
+            SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
 
             // Draw the objects
             Geo.Origin.Draw(ref SDLGlobals.renderer, 0, 0);
@@ -129,7 +128,7 @@ namespace Magician
             dstRect.h = Ref.winHeight;
 
             SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-            SDL_RenderCopy(SDLGlobals.renderer, renderedTexture, ref srcRect, ref dstRect);
+            SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
             SDL_RenderPresent(SDLGlobals.renderer);
             //SDL_Delay(1/6);
         }
