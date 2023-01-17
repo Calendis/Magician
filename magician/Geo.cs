@@ -5,7 +5,7 @@ namespace Magician
     public static class Geo
     {
         // The Origin is the eventual parent Multi for all Multis
-        public static Multi Origin = Point(null, 0, 0, Ref.fgCol).DrawFlags(DrawMode.INVISIBLE);
+        public static Multi Origin = Point(null, 0, 0, Ref.UIDefault.FG).DrawFlags(DrawMode.INVISIBLE);
 
         // Create a point
         public static Multi Point(Multi? parent, double x, double y, Color col)
@@ -18,7 +18,7 @@ namespace Magician
         }
         public static Multi Point(double x, double y)
         {
-            return Point(x, y, Ref.fgCol);
+            return Point(x, y, Ref.UIDefault.FG);
         }
 
         // Create a line
@@ -35,7 +35,7 @@ namespace Magician
         }
         public static Multi Line(Multi p1, Multi p2)
         {
-            return Line(p1, p2, Ref.fgCol);
+            return Line(p1, p2, Ref.UIDefault.FG);
         }
 
         // Create a regular polygon with a position, number of sides, color, and magnitude
@@ -54,7 +54,7 @@ namespace Magician
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
-            return RegularPolygon(xOffset, yOffset, Ref.fgCol, sides, magnitude);
+            return RegularPolygon(xOffset, yOffset, Ref.UIDefault.FG, sides, magnitude);
         }
         public static Multi RegularPolygon(int sides, double magnitude)
         {
@@ -80,7 +80,7 @@ namespace Magician
         }
         public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
         {
-            return Star(xOffset, yOffset, Ref.fgCol, sides, innerRadius, outerRadius);
+            return Star(xOffset, yOffset, Ref.UIDefault.FG, sides, innerRadius, outerRadius);
         }
         public static Multi Star(int sides, double innerRadius, double outerRadius)
         {
