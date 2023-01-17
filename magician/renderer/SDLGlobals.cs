@@ -5,5 +5,6 @@ namespace Magician
     public static class SDLGlobals
     {
         public static IntPtr renderer;
+        public static IntPtr renderedTexture;
     }
 }
