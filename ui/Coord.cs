@@ -56,16 +56,8 @@ namespace Magician.UI
                     Geo.Point(i * horizSpacing - Ref.winWidth / 2, spacerSize / 2 - Perspective.y),
                     Geo.Point(i * horizSpacing - Ref.winWidth / 2, -spacerSize / 2 - Perspective.y)
                 );
-                spacers0.Add(horizSpacer.Copy());
+                spacers0.Add(horizSpacer);
 
-                // While adding the spacers to the axis, also construct vertical grid lines
-                // TODO: make a decent colour scheme
-                gridLines.Add(
-                    Geo.Line(
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, -Ref.winHeight),
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, Ref.winHeight)
-                    )
-                );
 
                 // Add smaller perpendicular subdividers
                 double horizSubdivSpacing = horizSpacing / horizSubdivs;
@@ -77,6 +69,16 @@ namespace Magician.UI
                     );
                     spacers0.Add(horizSubdiv);
                 }
+
+                // Vertical grid lines
+                if (i % 2 != 0) {continue;}
+                gridLines.Add(
+                    Geo.Line(
+                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, -Ref.winHeight),
+                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, Ref.winHeight),
+                        Ref.UIDefault[1]
+                    )
+                );
             }
 
             // Add spacers to the vertical axis
@@ -89,25 +91,26 @@ namespace Magician.UI
                 );
                 spacers1.Add(vertSpacer);
 
+
                 // Add smaller perpendicular subdividers
                 double vertSubdivSpacing = vertSpacing / vertSubdivs;
                 for (int j = 0; j < vertSubdivs; j++)
                 {
                     Multi vertSubdiv = Geo.Line(
                         Geo.Point(-subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2),
-                        Geo.Point(subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)
-                    );
+                        Geo.Point(subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)                    );
                     spacers1.Add(vertSubdiv);
-
-                    // While adding the spacers to the axis, also construct horizontal grid lines
-                    // TODO: make a decent colour scheme
-                    gridLines.Add(
-                        Geo.Line(
-                            Geo.Point(-Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
-                            Geo.Point(Ref.winWidth, i * vertSpacing - Ref.winHeight / 2)
-                        )
-                    );
                 }
+                
+                // Horizontal grid lines
+                if (i % 2 != 0) {continue;}
+                gridLines.Add(
+                    Geo.Line(
+                        Geo.Point(-Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
+                        Geo.Point(Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
+                        Ref.UIDefault[1]
+                    )
+                );
             }
         }
 
@@ -119,7 +122,7 @@ namespace Magician.UI
 
         public Multi Render()
         {
-            return new Multi(axis0.Adjoin(spacers0), axis1.Adjoin(spacers1), gridLines).DrawFlags(DrawMode.INVISIBLE);
+            return new Multi(gridLines, axis0.Adjoin(spacers0), axis1.Adjoin(spacers1)).DrawFlags(DrawMode.INVISIBLE);
         }
     }
 }
