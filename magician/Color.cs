@@ -3,6 +3,8 @@
 */
 
 
+using System.Collections;
+
 namespace Magician
 {
     public abstract class Color
@@ -363,5 +365,39 @@ namespace Magician
         {
             return $"HSLA({h}, {s}, {l}, {a})";
         }
+    }
+
+    public class Palette
+    {
+        int size;
+        Color[] palette;
+
+        public Palette(params Color[] colors)
+        {
+            size = colors.Length;
+            palette = new Color[size];
+            int i = 0;
+            foreach (Color c in colors)
+            {
+                palette[i++] = c;
+            }
+        }
+
+        public Color this[int i]
+        {
+            get => palette[i%size];
+            set => palette[i%size] = value;
+        }
+
+        public void Rotate(double theta)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                palette[i].H += theta;
+            }
+        }
+
+        public Color FG {get => this[Math.Min(size, 2)];}
+        public Color BG {get => this[0];}
     }
 }
