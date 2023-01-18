@@ -90,7 +90,7 @@ namespace Magician
                 Geo.Origin.Draw(0, 0);
 
                 // SAVE FRAME TO IMAGE
-                if (Renderer.Control.saveFrames)
+                if (Renderer.Control.saveFrame)
                 {
                     IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
                     IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
@@ -132,7 +132,10 @@ namespace Magician
 
                 SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
                 SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
-                SDL_RenderPresent(SDLGlobals.renderer);
+                if (Renderer.Control.display)
+                {
+                    SDL_RenderPresent(SDLGlobals.renderer);
+                }
                 //SDL_Delay(1/6);
             }
             frames++;

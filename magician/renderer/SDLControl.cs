@@ -5,12 +5,17 @@ namespace Magician.Renderer
     public static class Control
     {
         public static bool doRender = true;
-        public static bool saveFrames = false;
+        public static bool display = true;
+        public static bool saveFrame = false;
         public static int saveCount = 0;
         public static void Clear()
         {
+            Clear(Ref.UIDefault.BG);
+        }
+        public static void Clear(Color c)
+        {
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)Ref.UIDefault.BG.R, (byte)Ref.UIDefault.BG.G, (byte)Ref.UIDefault.BG.B, (byte)Ref.UIDefault.BG.A);
+            SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)c.R, (byte)c.G, (byte)c.B, (byte)c.A);
             SDL_RenderClear(SDLGlobals.renderer);
         }
     }
