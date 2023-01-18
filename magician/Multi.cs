@@ -465,7 +465,7 @@ namespace Magician
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPoint(SDLGlobals.renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
+                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
             if (Count < 1) {return;}
 
@@ -510,7 +510,8 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
+                //m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
+                m.Draw(xOffset, yOffset);
             }
             
             // If the flag is set, and there are at least 3 constituents, fill the shape
