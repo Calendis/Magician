@@ -4,6 +4,9 @@ namespace Magician.Renderer
 {
     public static class Control
     {
+        public static bool doRender = true;
+        public static bool saveFrames = false;
+        public static int saveCount = 0;
         public static void Clear()
         {
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);

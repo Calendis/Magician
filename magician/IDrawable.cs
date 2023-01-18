@@ -3,7 +3,7 @@ namespace Magician
 {
     public interface IDrawable
     {
-        public abstract void Draw(ref IntPtr renderer, double xOffset=0, double yOffset=0);
+        public abstract void Draw(double xOffset=0, double yOffset=0);
         public abstract Color Col {get; set;}
 
         // Setter accessors for colour
