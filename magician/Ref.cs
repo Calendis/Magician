@@ -10,6 +10,10 @@ namespace Magician
         public static int winHeight = 800;
         public static int fontSize = 24;
 
+        static Random r = new Random();
+        public static double RandX => r.NextDouble() * winWidth - winWidth / 2;
+        public static double RandY => r.NextDouble() * winHeight - winHeight / 2;
+
         //public static Color bgCol = new RGBA(0x001010ff).ToHSLA();
         //public static Color fgCol = new RGBA(0x00e9f5ff).ToHSLA();
         
