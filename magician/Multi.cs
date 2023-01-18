@@ -314,13 +314,20 @@ namespace Magician
             }
             return this;
         }
-
         public Multi DeepSub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
         {
             Sub(action, truth, threshold);
             foreach (Multi c in this)
             {
                 c.DeepSub(action, truth, threshold);
+            }
+            return this;
+        }
+        public Multi IterSub(int iters, Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        {
+            for (int i = 0; i < iters; i++)
+            {
+                Sub(action, truth, threshold);
             }
             return this;
         }
@@ -371,9 +378,9 @@ namespace Magician
             return Wielding(F.Invoke(Copy()));
         }
 
-        public Multi Invisible()
+        public Multi Written(double d)
         {
-            drawMode = DrawMode.INVISIBLE;
+            Write(this, d);
             return this;
         }
 
@@ -445,7 +452,7 @@ namespace Magician
             i = i == p.Count - 1 ? 0 : i + 1;
             return p.constituents[i];
         }
-        public void Draw(ref IntPtr renderer, double xOffset, double yOffset)
+        public void Draw(double xOffset, double yOffset)
         {
             double r = col.R;
             double g = col.G;
@@ -456,9 +463,9 @@ namespace Magician
             //Console.WriteLine($"{drawMode} / {DrawMode.POINT}, c: {Count}");
             if ((drawMode & DrawMode.POINT) > 0)
             {
-                SDL_SetRenderDrawColor(renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-                //SDL_RenderDrawPoint(renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(renderer, (float)XCartesian(0), (float)YCartesian(0));
+                SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
+                //SDL_RenderDrawPoint(SDLGlobals.renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
+                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
             }
             if (Count < 1) {return;}
 
@@ -474,8 +481,8 @@ namespace Magician
                     double subb = p0.Col.B;
                     double suba = p0.Col.A;
 
-                    SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
-                    SDL_RenderDrawLineF(renderer,
+                    SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
+                    SDL_RenderDrawLineF(SDLGlobals.renderer,
                     (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
                     (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
 
@@ -493,8 +500,8 @@ namespace Magician
                 double subb = pLast.Col.B;
                 double suba = pLast.Col.A;
 
-                SDL_SetRenderDrawColor(renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
-                SDL_RenderDrawLineF(renderer,
+                SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
+                SDL_RenderDrawLineF(SDLGlobals.renderer,
                 (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
                 (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
             }
@@ -503,7 +510,7 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                m.Draw(ref renderer, (m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
+                m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
             }
             
             // If the flag is set, and there are at least 3 constituents, fill the shape
@@ -515,7 +522,7 @@ namespace Magician
                     List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
                     int numTriangles = (Count - 2);
                     SDL_Vertex[] vs = new SDL_Vertex[numTriangles * 3];
-                    // Assemble the triangles from the renderer into vertices for SDL
+                    // Assemble the triangles from the SDLGlobals.renderer into vertices for SDL
                     for (int i = 0; i < numTriangles; i++)
                     {
                         int[] vertexIndices = vertices[i];
@@ -572,7 +579,7 @@ namespace Magician
                     }
 
                     IntPtr ip = new IntPtr();
-                    SDL_RenderGeometry(renderer, ip, vs, vs.Length, null, 0);
+                    SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
                 }
                 catch (System.Exception)
                 {
@@ -624,8 +631,7 @@ namespace Magician
         /*
         *  Common types of Multis you might want to create
         */
-
-        
+  
 
         public static Action<double> StringMap(Multi m, string s)
         {
@@ -752,6 +758,16 @@ namespace Magician
         public static void Scale(Multi m, double mag)
         {
             ScaleTo(m, mag*m.Magnitude.Evaluate());
+        }
+
+        // Transformation methods
+        public static void Affine(double[,] matrix)
+        {
+            // TODO: implement me
+        }
+        public static void Affine(double[] matrix)
+        {
+            // TODO: implement me
         }
 
         public static void Drive(Multi m, Driver d)
