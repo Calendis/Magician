@@ -10,7 +10,7 @@ namespace Magician
         Random r = new Random();
         int frames = 0;
         int stopFrame = -1;
-        bool saveFrames = false;
+        
         int driveDelay = 0;
         double timeResolution = 0.1;
 
@@ -54,7 +54,7 @@ namespace Magician
             {
                 // Cast a spell
                 Spell.Loop(ref frames, ref timeResolution);
-                
+
                 // Control flow and SDL
                 SDL_PollEvent(out SDL_Event sdlEvent);
                 if (frames >= driveDelay)
@@ -79,58 +79,63 @@ namespace Magician
         // Renders each frame to a texture and displays the texture
         void Render()
         {
-            // Options
-            SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-            SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-
-            // Draw objects
-            SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-
-            // Draw the objects
-            Geo.Origin.Draw(ref SDLGlobals.renderer, 0, 0);
-
-            // SAVE FRAME TO IMAGE
-            if (saveFrames)
+            if (Renderer.Control.doRender)
             {
-                IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
-                IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
+                // Options
+                SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+                SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
-                int width, height;
-                SDL_SetRenderTarget(SDLGlobals.renderer, texture);
-                SDL_QueryTexture(texture, out _, out _, out width, out height);
-                IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
-                SDL_Rect r = new SDL_Rect();
-                r.x = 0;
-                r.y = 0;
-                r.w = Ref.winWidth;
-                r.h = Ref.winHeight;
-                unsafe
+                // Draw objects
+                SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+                Geo.Origin.Draw(0, 0);
+
+                // SAVE FRAME TO IMAGE
+                if (Renderer.Control.saveFrames)
                 {
-                    SDL_Surface* surf = (SDL_Surface*)surface;
-                    SDL_RenderReadPixels(SDLGlobals.renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
-                    SDL_SaveBMP(surface, $"saved/frame_{frames.ToString("D4")}.bmp");
-                    SDL_FreeSurface(surface);
+                    IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
+                    IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
+
+                    int width, height;
+                    SDL_SetRenderTarget(SDLGlobals.renderer, texture);
+                    SDL_QueryTexture(texture, out _, out _, out width, out height);
+                    IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
+                    SDL_Rect r = new SDL_Rect();
+                    r.x = 0;
+                    r.y = 0;
+                    r.w = Ref.winWidth;
+                    r.h = Ref.winHeight;
+                    unsafe
+                    {
+                        SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+                        
+                        SDL_Surface* surf = (SDL_Surface*)surface;
+                        SDL_RenderReadPixels(SDLGlobals.renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
+                        SDL_SaveBMP(surface, $"saved/frame_{Renderer.Control.saveCount.ToString("D4")}.bmp");
+                        Renderer.Control.saveCount++;
+                        SDL_FreeSurface(surface);
+
+                        SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+                    }
                 }
+
+                // Display
+                SDL_Rect srcRect;
+                srcRect.x = 0;
+                srcRect.y = 0;
+                srcRect.w = Ref.winWidth;
+                srcRect.h = Ref.winHeight;
+                SDL_Rect dstRect;
+                dstRect.x = 0;
+                dstRect.y = 0;
+                dstRect.w = Ref.winWidth;
+                dstRect.h = Ref.winHeight;
+
+                SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+                SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
+                SDL_RenderPresent(SDLGlobals.renderer);
+                //SDL_Delay(1/6);
             }
-
             frames++;
-
-            // Display
-            SDL_Rect srcRect;
-            srcRect.x = 0;
-            srcRect.y = 0;
-            srcRect.w = Ref.winWidth;
-            srcRect.h = Ref.winHeight;
-            SDL_Rect dstRect;
-            dstRect.x = 0;
-            dstRect.y = 0;
-            dstRect.w = Ref.winWidth;
-            dstRect.h = Ref.winHeight;
-
-            SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-            SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
-            SDL_RenderPresent(SDLGlobals.renderer);
-            //SDL_Delay(1/6);
         }
 
         // Drive the dynamics of Multis and Quantities
