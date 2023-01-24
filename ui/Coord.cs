@@ -56,7 +56,9 @@ namespace Magician.UI
                     Geo.Point(i * horizSpacing - Ref.winWidth / 2, spacerSize / 2 - Perspective.y),
                     Geo.Point(i * horizSpacing - Ref.winWidth / 2, -spacerSize / 2 - Perspective.y)
                 );
-                spacers0.Add(horizSpacer);
+                spacers0.Add(horizSpacer
+                .Textured(new Renderer.Text($"{(int)(i*hSp - Ref.winWidth/2)}", Ref.UIDefault.FG).Render())
+                );
 
 
                 // Add smaller perpendicular subdividers
@@ -89,7 +91,9 @@ namespace Magician.UI
                     Geo.Point(spacerSize / 2 - Perspective.x, i * vertSpacing - Ref.winHeight / 2),
                     Geo.Point(-spacerSize / 2 - Perspective.x, i * vertSpacing - Ref.winHeight / 2)
                 );
-                spacers1.Add(vertSpacer);
+                spacers1.Add(vertSpacer
+                //S.Textured(new Renderer.Text($"{-i*vSp + Ref.winHeight/2}", Ref.UIDefault.FG).Render())
+                );
 
 
                 // Add smaller perpendicular subdividers
@@ -98,18 +102,21 @@ namespace Magician.UI
                 {
                     Multi vertSubdiv = Geo.Line(
                         Geo.Point(-subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2),
-                        Geo.Point(subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)                    );
+                        Geo.Point(subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)
+                        );
                     spacers1.Add(vertSubdiv);
                 }
                 
                 // Horizontal grid lines
                 if (i % 2 != 0) {continue;}
-                gridLines.Add(
-                    Geo.Line(
+                Multi l = Geo.Line(
                         Geo.Point(-Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
                         Geo.Point(Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
                         Ref.UIDefault[1]
-                    )
+                );
+
+                gridLines.Add(
+                    l
                 );
             }
         }
@@ -122,7 +129,9 @@ namespace Magician.UI
 
         public Multi Render()
         {
-            return new Multi(gridLines, axis0.Adjoin(spacers0), axis1.Adjoin(spacers1)).DrawFlags(DrawMode.INVISIBLE);
+            
+            return new Multi(gridLines, axis0.Adjoin(spacers0), axis1.Adjoin(spacers1)).DrawFlags(DrawMode.INVISIBLE)
+            ;
         }
     }
 }
