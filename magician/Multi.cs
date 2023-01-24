@@ -3,6 +3,7 @@
 */
 using System.Collections;
 using System.Runtime.Serialization;
+using Magician.Renderer;
 using static SDL2.SDL;
 
 namespace Magician
@@ -25,12 +26,7 @@ namespace Magician
         Quantity y = new Quantity(0);
         public Multi? parent;
         // Multis are recursive, positioned relative to the parent
-        List<Multi> constituents;
-        public Multi this[int key]
-        {
-            get => constituents[key];
-            set => constituents[key] = value;
-        }
+        public List<Multi> csts;
 
         /*
         *  Positional Properties
@@ -86,6 +82,7 @@ namespace Magician
 
         DrawMode drawMode;
         protected Color col;
+        public Texture? texture;
 
         // Full constructor
         public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
@@ -96,7 +93,7 @@ namespace Magician
             this.col = col;
             this.drawMode = dm;
 
-            constituents = new List<Multi> { };
+            csts = new List<Multi> { };
             foreach (Multi c in cs)
             {
                 Add(c.Copy());
@@ -123,8 +120,8 @@ namespace Magician
 
         public Multi Modify(params Multi[] cs)
         {
-            constituents.Clear();
-            constituents.AddRange(cs);
+            csts.Clear();
+            csts.AddRange(cs);
             return this;
         }
 
@@ -214,7 +211,7 @@ namespace Magician
             {
                 d.Go(x);
             }
-            foreach (Multi c in constituents)
+            foreach (Multi c in csts)
             {
                 c.Go(x);
             }
@@ -253,6 +250,7 @@ namespace Magician
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
             copy.parent = parent;
+            copy.texture = texture;
 
             // Copy the drivers
             for (int i = 0; i < drivers.Count; i++)
@@ -271,14 +269,14 @@ namespace Magician
         // Create a new Multi with the constituents of both Multis
         public Multi FlatAdjoin(Multi m)
         {
-            constituents.AddRange(m.constituents);
+            csts.AddRange(m.csts);
             return this;
         }
 
         // Flat adjoining on a particular constituent
         public void AddAt(Multi m, int n)
         {
-            m.Translated(this[n].X.Evaluate(), this[n].Y.Evaluate());
+            m.Translated(csts[n].X.Evaluate(), csts[n].Y.Evaluate());
             Add(m);
         }
 
@@ -292,7 +290,7 @@ namespace Magician
 
         public Multi Where(Func<Multi, bool> predicate)
         {
-            return Modify(constituents.Where(predicate).ToArray());
+            return Modify(csts.Where(predicate).ToArray());
         }
 
         public Multi Sub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
@@ -307,7 +305,7 @@ namespace Magician
                 {
                     CreateIndex(this);
                 }
-                if (truth.Invoke(c.Index) >= threshold)
+                if (truth.Invoke(c.Index) > threshold)
                 {
                     action.Invoke(c);
                 }
@@ -338,15 +336,15 @@ namespace Magician
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy().Positioned(this[i].X.Evaluate(), this[i].Y.Evaluate());
+                Multi outerCopy = outer.Copy().Positioned(csts[i].X.Evaluate(), csts[i].Y.Evaluate());
 
                 // Copy the drivers to the new multi
-                foreach (Driver d in this[i].drivers)
+                foreach (Driver d in csts[i].drivers)
                 {
                     outerCopy.AddDriver(d.CopiedTo(outerCopy));
                 }
 
-                this[i] = outerCopy;
+                csts[i] = outerCopy;
             }
 
             return this;
@@ -415,7 +413,7 @@ namespace Magician
                 return (double)Index / parent.Count;
             }
         }
-        public int Count => constituents.Count;
+        public int Count => csts.Count;
         public int DeepCount
         {
             get
@@ -439,7 +437,7 @@ namespace Magician
             Multi p = parent;
             int i = Index;
             i = i == 0 ? p.Count - 1 : i - 1;
-            return p.constituents[i];
+            return p.csts[i];
         }
         public Multi Next()
         {
@@ -450,7 +448,7 @@ namespace Magician
             Multi p = parent;
             int i = Index;
             i = i == p.Count - 1 ? 0 : i + 1;
-            return p.constituents[i];
+            return p.csts[i];
         }
         public void Draw(double xOffset, double yOffset)
         {
@@ -464,18 +462,17 @@ namespace Magician
             if ((drawMode & DrawMode.POINT) > 0)
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-                //SDL_RenderDrawPoint(SDLGlobals.renderer, (int)((Drawable)this).XCartesian(xOffset), (int)((Drawable)this).YCartesian(yOffset));
-                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
             }
-            if (Count < 1) {return;}
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
-            for (int i = 0; i < constituents.Count - 1; i++)
+            for (int i = 0; i < csts.Count - 1; i++)
             {
                 if ((drawMode & DrawMode.PLOT) > 0)
                 {
-                    Multi p0 = constituents[i];
-                    Multi p1 = constituents[i + 1];
+                    Multi p0 = csts[i];
+                    Multi p1 = csts[i + 1];
                     double subr = p0.Col.R;
                     double subg = p0.Col.G;
                     double subb = p0.Col.B;
@@ -490,10 +487,10 @@ namespace Magician
             }
 
             // If the Multi is a closed shape, connect the first and last constituent with a line
-            if ((drawMode & DrawMode.CONNECTED) > 0 && constituents.Count > 0)
+            if ((drawMode & DrawMode.CONNECTED) > 0 && csts.Count > 0)
             {
-                Multi pLast = constituents[constituents.Count - 1];
-                Multi pFirst = constituents[0];
+                Multi pLast = csts[csts.Count - 1];
+                Multi pFirst = csts[0];
 
                 double subr = pLast.Col.R;
                 double subg = pLast.Col.G;
@@ -510,8 +507,8 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                //m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
-                m.Draw(xOffset, yOffset);
+                m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
+                //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
             }
             
             // If the flag is set, and there are at least 3 constituents, fill the shape
@@ -539,12 +536,12 @@ namespace Magician
                         SDL_FPoint p0, p1, p2;
                         //p.x = (float)constituents[i].XCartesian
                         //p.y = (float)constituents[i].YCartesian(yOffset);
-                        p0.x = (float)constituents[tri0 - 1].XCartesian(xOffset);
-                        p0.y = (float)constituents[tri0 - 1].YCartesian(yOffset);
-                        p1.x = (float)constituents[tri1 - 1].XCartesian(xOffset);
-                        p1.y = (float)constituents[tri1 - 1].YCartesian(yOffset);
-                        p2.x = (float)constituents[tri2 - 1].XCartesian(xOffset);
-                        p2.y = (float)constituents[tri2 - 1].YCartesian(yOffset);
+                        p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
+                        p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
+                        p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
+                        p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
+                        p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
+                        p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
 
                         vs[3 * i] = new SDL_Vertex();
                         vs[3 * i].position.x = p0.x;
@@ -584,10 +581,16 @@ namespace Magician
                 }
                 catch (System.Exception)
                 {
-                    Console.WriteLine($"Bad Omen: failed to render {this}");
+                    Console.WriteLine($"Failed to render {this}");
                     //throw;
                 }
 
+            }
+
+            // If not null, draw the texture
+            if (texture != null)
+            {
+                texture.Draw(XCartesian(0), YCartesian(0));
             }
 
         }
@@ -604,11 +607,11 @@ namespace Magician
                     s += "Lonely Multi";
                     break;
                 case (2):
-                    s += $"Pair Multi ({constituents[0]}, {constituents[1]})";
+                    s += $"Pair Multi ({csts[0]}, {csts[1]})";
                     break;
                 default:
                     s += $"{Count}-Multi (";
-                    foreach (Multi m in constituents)
+                    foreach (Multi m in csts)
                     {
                         s += m.ToString() + "), ";
                     }
@@ -761,6 +764,17 @@ namespace Magician
             ScaleTo(m, mag*m.Magnitude.Evaluate());
         }
 
+        // TODO: Multi methods should follow this format
+        public static void _Textured(Multi m, Renderer.Texture t)
+        {
+            m.texture = t;
+        }
+        public Multi Textured(Renderer.Texture t)
+        {
+            _Textured(this, t);
+            return this;
+        }
+
         // Transformation methods
         public static void Affine(double[,] matrix)
         {
@@ -799,7 +813,7 @@ namespace Magician
         {
             for (int i = 0; i < m.Count; i++)
             {
-                m[i].index = i;
+                m.csts[i].index = i;
             }
         }
 
@@ -807,41 +821,41 @@ namespace Magician
 
         public IEnumerator<Multi> GetEnumerator()
         {
-            return ((IEnumerable<Multi>)constituents).GetEnumerator();
+            return ((IEnumerable<Multi>)csts).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable)constituents).GetEnumerator();
+            return ((IEnumerable)csts).GetEnumerator();
         }
 
         public void Add(Multi item)
         {
-            constituents.Add(item);
+            csts.Add(item);
         }
         public void Add(params Multi[] items)
         {
-            constituents.AddRange(items);
+            csts.AddRange(items);
         }
 
         public void Clear()
         {
-            constituents.Clear();
+            csts.Clear();
         }
 
         public bool Contains(Multi item)
         {
-            return constituents.Contains(item);
+            return csts.Contains(item);
         }
 
         public void CopyTo(Multi[] array, int arrayIndex)
         {
-            constituents.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
+            csts.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
         }
 
         public bool Remove(Multi item)
         {
-            return constituents.Remove(item);
+            return csts.Remove(item);
         }
 
     }
