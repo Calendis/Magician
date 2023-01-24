@@ -1,4 +1,6 @@
 // This interface provides common features for Multis and Textures (Geometry and Images)
+using Magician.Renderer;
+
 namespace Magician
 {
     public interface IDrawable
