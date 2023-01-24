@@ -28,7 +28,20 @@ namespace Magician
             }
         }
 
-        public virtual double Evaluate(double x) {return s[(int)x];}
+        public virtual double Evaluate(double x)
+        {
+            double d;
+            try
+            {
+                d = s[(int)x];
+            }
+            catch (IndexOutOfRangeException)
+            {
+                d = 0;
+            }
+
+            return d;
+        }
         public virtual double[] Evaluate(double[] offsets)
         {
             double[] outputs = new double[offsets.Length];
