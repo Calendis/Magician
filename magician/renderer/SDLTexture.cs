@@ -40,7 +40,15 @@ namespace Magician.Renderer
             }
         }
 
-        public void Draw(int xOffset=0, int yOffset=0)
+        // Create a texture from another texture
+        public Texture(Texture t)
+        {
+            texture = t.texture;
+            w = t.w;
+            h = t.h;
+        }
+
+        public void Draw(double xOffset=0, double yOffset=0)
         {
             // Options
             SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
@@ -54,8 +62,8 @@ namespace Magician.Renderer
             srcRect.w = w;
             srcRect.h = h;
             SDL_Rect dstRect;
-            dstRect.x = xOffset;
-            dstRect.y = yOffset;
+            dstRect.x = (int)xOffset;
+            dstRect.y = (int)yOffset;
             dstRect.w = w;
             dstRect.h = h;
             SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
