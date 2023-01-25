@@ -245,6 +245,11 @@ namespace Magician
             y.Driven(yFunc);
             return this;
         }
+        public Multi Driven(IMap df, string? s=null)
+        {
+            Drive(this, df, s);
+            return this;
+        }
 
         public Multi Copy()
         {
@@ -792,6 +797,17 @@ namespace Magician
         public static void Drive(Multi m, Func<double[], double> df, string s)
         {
             Action<double> output = StringMap(m, s);
+            Driver d = new Driver(df, output);
+            d.ActionString = s;
+            Drive(m, d);
+        }
+        public static void Drive(Multi m, IMap df, string? s=null)
+        {
+            Action<double>? output = null;
+            if (s != null)
+            {
+                output = StringMap(m, s);
+            }
             Driver d = new Driver(df, output);
             d.ActionString = s;
             Drive(m, d);

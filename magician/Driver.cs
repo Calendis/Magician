@@ -34,7 +34,10 @@ namespace Magician
         public Driver(Func<double[], double[]> df) : this(df, null) {}
         public Driver(IMap df, Action<double>? output=null) : this(new Func<double[], double[]>(x => new double[]{df.Evaluate(x[0])}))
         {
-            //
+            if (output is not null)
+            {
+                this.output = new Action<double[]>(x => output.Invoke(x[0]));
+            }
         }
 
         // Used for making copies of Drivers
