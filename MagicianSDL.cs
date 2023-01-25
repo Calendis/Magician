@@ -72,6 +72,11 @@ namespace Magician
                     case SDL_EventType.SDL_QUIT:
                         done = true;
                         break;
+                    
+                    default:
+                        Interactive.Events.Process(sdlEvent);
+                        break;
+                    
                 }
             }
         }
