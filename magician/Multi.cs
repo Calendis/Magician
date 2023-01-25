@@ -809,7 +809,10 @@ namespace Magician
                 output = StringMap(m, s);
             }
             Driver d = new Driver(df, output);
-            d.ActionString = s;
+            if (s != null)
+            {
+                d.ActionString = s;
+            }
             Drive(m, d);
         }
 
