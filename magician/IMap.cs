@@ -22,7 +22,6 @@ namespace Magician
         {
             throw new NotImplementedException($"Method Integral not supported on {this.GetType().Name}");
         }
-
         public virtual IMap Concat()
         {
             throw new NotImplementedException($"Method Concat not supported on {this.GetType().Name}");
