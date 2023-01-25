@@ -9,11 +9,6 @@ namespace Magician
     {
         // For stuff that can be defined once and left alone
         static Random rng = new Random();
-        static Texture? tx0;
-        static Texture? tx1;
-
-        static Multi vertex;
-
 
         public static void PreLoop(ref int frames, ref double timeResolution)
         {
@@ -28,7 +23,9 @@ namespace Magician
             Geo.Origin.Add(
                 pentagon
             );
-            pentagon.Driven(new Seq(1,2,3,4,5,6,7,8,9,10), "x+");
+            pentagon.Driven(x => Interactive.Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RETURN]?1:0, "x+");
+            pentagon.Sub(m => m
+            .Driven(x => Interactive.Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d]?0.035:0, "phase+"));
 
         }
 
