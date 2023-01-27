@@ -101,7 +101,7 @@ namespace Magician
                 Geo.Origin.Draw(0, 0);
 
                 // SAVE FRAME TO IMAGE
-                if (Renderer.Control.saveFrame)
+                if (Renderer.Control.saveFrame && frames < stopFrame)
                 {
                     IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
                     IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
