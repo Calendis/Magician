@@ -468,7 +468,11 @@ namespace Magician
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
-                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
+                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
+                if (parent != null)
+                {
+                    SDL_RenderDrawPointF(SDLGlobals.renderer, (float)parent.XCartesian(xOffset), (float)parent.YCartesian(yOffset));
+                }
             }
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
@@ -593,9 +597,9 @@ namespace Magician
             }
 
             // If not null, draw the texture
-            if (texture != null)
+            if (texture != null && parent != null)
             {
-                texture.Draw(XCartesian(0), YCartesian(0));
+                texture.Draw(parent.XCartesian(xOffset), parent.YCartesian(yOffset));
             }
 
         }
