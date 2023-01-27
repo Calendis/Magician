@@ -2,6 +2,7 @@
 // It's static for now
 
 using Magician.Renderer;
+using static SDL2.SDL;
 
 namespace Magician
 {
@@ -23,9 +24,19 @@ namespace Magician
             Geo.Origin.Add(
                 pentagon
             );
-            pentagon.Driven(x => Interactive.Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RETURN]?1:0, "x+");
+            pentagon
+            .Driven(x => Interactive.Events.MouseX, "x")
+            .Driven(x => Interactive.Events.MouseY, "y")
+            ;
+            
             pentagon.Sub(m => m
-            .Driven(x => Interactive.Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d]?0.035:0, "phase+"));
+            .Driven(x => Interactive.Events.keys[SDL_Keycode.SDLK_a]?0.035:0, "phase+")
+            .Driven(x => Interactive.Events.keys[SDL_Keycode.SDLK_d]?-0.035:0, "phase+")
+            );
+
+            pentagon.Sub(
+                m => m.Driven(x => 0.01, "phase+")
+            );
 
         }
 
