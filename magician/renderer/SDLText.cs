@@ -17,7 +17,7 @@ namespace Magician.Renderer
         public Texture Render()
         {
             // Load the default font
-            IntPtr font = TTF_OpenFont("ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Ref.fontSize);
+            IntPtr font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Ref.fontSize);
             //IntPtr font = (IntPtr)0;
             if (font == (IntPtr)0)
             {
