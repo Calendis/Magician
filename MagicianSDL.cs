@@ -56,27 +56,33 @@ namespace Magician
                 Spell.Loop(ref frames, ref timeResolution);
 
                 // Control flow and SDL
-                SDL_PollEvent(out SDL_Event sdlEvent);
-                if (frames >= driveDelay)
-                {
-                    Drive();
-                }
-                if (frames != stopFrame)
-                {
-                    Render();
-                }
+                //SDL_PollEvent(out SDL_Event sdlEvent);
 
                 // Event handling
-                switch (sdlEvent.type)
+                //SDL_Event sdlEvent;
+                while (SDL_PollEvent(out SDL_Event sdlEvent)!=0?true:false)
+                {
+                    Interactive.Events.Process(sdlEvent);
+                    switch (sdlEvent.type)
                 {
                     case SDL_EventType.SDL_QUIT:
                         done = true;
                         break;
-                    
-                    default:
-                        Interactive.Events.Process(sdlEvent);
-                        break;
-                    
+                }
+                }
+                
+                
+                
+                // Drive things
+                if (frames >= driveDelay)
+                {
+                    Drive();
+                }
+
+                // Draw things
+                if (frames != stopFrame)
+                {
+                    Render();
                 }
             }
         }
@@ -173,7 +179,11 @@ namespace Magician
         }
         void CreateRenderer()
         {
+            // With VSync
             SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+            
+            // No VSync
+            //SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
             if (SDLGlobals.renderer == IntPtr.Zero)
             {
                 Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
