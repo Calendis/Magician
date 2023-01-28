@@ -2,8 +2,8 @@ namespace Magician.UI
 {
     public static class Perspective
     {
-        public static double x = 0;
-        public static double y = 0;
+        public static Quantity x = new Quantity(0);
+        public static Quantity y = new Quantity(0);
     }
 
     public class Grid
@@ -31,16 +31,16 @@ namespace Magician.UI
 
             // the horizontal axis on a 2d graph
             axis0 = Geo.Line(
-                Geo.Point(-Ref.winWidth / 2 - Perspective.x, -Perspective.y),
-                Geo.Point(Ref.winWidth / 2 - Perspective.x, -Perspective.y)
+                Geo.Point(-Ref.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
+                Geo.Point(Ref.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
             );
             // the vertical spacers along that axis
             spacers0 = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
             // the vertical axis on a 2d graph
             axis1 = Geo.Line(
-                Geo.Point(-Perspective.x, Ref.winWidth / 2 - Perspective.y),
-                Geo.Point(-Perspective.x, -Ref.winWidth / 2 - Perspective.y)
+                Geo.Point(-Perspective.x.Evaluate(), Ref.winWidth / 2 - Perspective.y.Evaluate()),
+                Geo.Point(-Perspective.x.Evaluate(), -Ref.winWidth / 2 - Perspective.y.Evaluate())
             );
             // the horizontal spacers along that axis
             spacers1 = new Multi().DrawFlags(DrawMode.INVISIBLE);
@@ -53,8 +53,8 @@ namespace Magician.UI
             for (int i = 0; i < horizSpacers; i++)
             {
                 Multi horizSpacer = Geo.Line(
-                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, spacerSize / 2 - Perspective.y),
-                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, -spacerSize / 2 - Perspective.y)
+                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
+                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
                 spacers0.Add(horizSpacer
                 .Textured(new Renderer.Text($"{(int)(i*hSp - Ref.winWidth/2)}", Ref.UIDefault.FG).Render())
@@ -66,8 +66,8 @@ namespace Magician.UI
                 for (int j = 0; j < horizSubdivs; j++)
                 {
                     Multi horizSubdiv = Geo.Line(
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y),
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y)
+                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
+                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
                     );
                     spacers0.Add(horizSubdiv);
                 }
@@ -88,12 +88,10 @@ namespace Magician.UI
             for (int i = 0; i < vertSpacers; i++)
             {
                 Multi vertSpacer = Geo.Line(
-                    Geo.Point(spacerSize / 2 - Perspective.x, i * vertSpacing - Ref.winHeight / 2),
-                    Geo.Point(-spacerSize / 2 - Perspective.x, i * vertSpacing - Ref.winHeight / 2)
+                    Geo.Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Ref.winHeight / 2),
+                    Geo.Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Ref.winHeight / 2)
                 );
-                spacers1.Add(vertSpacer
-                //S.Textured(new Renderer.Text($"{-i*vSp + Ref.winHeight/2}", Ref.UIDefault.FG).Render())
-                );
+                spacers1.Add(vertSpacer);
 
 
                 // Add smaller perpendicular subdividers
@@ -101,8 +99,8 @@ namespace Magician.UI
                 for (int j = 0; j < vertSubdivs; j++)
                 {
                     Multi vertSubdiv = Geo.Line(
-                        Geo.Point(-subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2),
-                        Geo.Point(subdivSize / 2 - Perspective.x, i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)
+                        Geo.Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2),
+                        Geo.Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)
                         );
                     spacers1.Add(vertSubdiv);
                 }
