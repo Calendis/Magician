@@ -62,8 +62,11 @@ namespace Magician
             for (double t = start; t < end; t+=dx)
             {
                 Multi[] ps = interpolate(t, t+dx);
-                ps[0].Col = c;
-                ps[1].Col = c;
+                //ps[0].Col = c;
+                //ps[1].Col = c;
+                // TODO: test plotting after cleaning Multi
+                ps[0].Colored(c);
+                ps[1].Colored(c);
                 points.Add(ps[0].DrawFlags(DrawMode.INVISIBLE));
 
             }
