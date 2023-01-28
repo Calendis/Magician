@@ -98,7 +98,7 @@ namespace Magician
 
                 // Draw objects
                 SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-                Geo.Origin.Draw(0, 0);
+                Geo.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames < stopFrame)
