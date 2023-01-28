@@ -20,7 +20,7 @@ namespace Magician
         OUTERP = (short)0b1101
     }
 
-    public class Multi : Quantity, IDrawable, IDriveable, ICollection<Multi>
+    public class Multi : Quantity, IDriveable, ICollection<Multi>
     {
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
@@ -42,8 +42,6 @@ namespace Magician
                 // Recursive getting of parent position
                 return x.GetDelta(parent.X.Evaluate());
             }
-
-            set => x = value;
         }
         public Quantity Y
         {
@@ -56,8 +54,8 @@ namespace Magician
                 // Recursive getting of parent position
                 return y.GetDelta(parent.Y.Evaluate());
             }
-            set => y = value;
         }
+        // TODO: experiment with making these Objects that typecheck for double and Quantity
         public Quantity Phase
         {
             get
@@ -66,18 +64,10 @@ namespace Magician
                 p = p < 0 ? p + 2 * Math.PI : p;
                 return new Quantity(p);
             }
-            set
-            {
-                SetPhase(value.Evaluate());
-            }
         }
         public Quantity Magnitude
         {
             get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate()));
-            set
-            {
-                ScaleTo(this, value.Evaluate());
-            }
         }
 
         DrawMode drawMode;
@@ -110,7 +100,6 @@ namespace Magician
         public Color Col
         {
             get => col;
-            set => col = value;
         }
 
         public List<Driver> Drivers
@@ -125,118 +114,257 @@ namespace Magician
             return this;
         }
 
-        public void SetX(double offset)
-        {
-            SetX(this, offset);
-        }
-        public void IncrX(double offset)
-        {
-            Translate(this, offset, 0);
-        }
-        public void SetY(double offset)
-        {
-            SetY(this, offset);
-        }
-        public void IncrY(double offset)
-        {
-            Translate(this, 0, offset);
-        }
-        public void SetPhase(double offset)
-        {
-            RotateTo(this, offset);
-        }
-        public void IncrPhase(double offset)
-        {
-            Rotate(this, offset);
-        }
-        public void SetMagnitude(double offset)
-        {
-            ScaleTo(this, offset);
-        }
-        public void IncrMagnitude(double offset)
-        {
-            ScaleShift(this, offset);
-        }
-
         public double XCartesian(double offset)
         {
-            return Ref.winWidth / 2 + X.Evaluate(offset);
+            return Ref.winWidth / 2 + x.Evaluate(offset);
         }
         public double YCartesian(double offset)
         {
-            return Ref.winHeight / 2 - Y.Evaluate(offset);
+            return Ref.winHeight / 2 - y.Evaluate(offset);
         }
 
-        public Multi Positioned(double x, double y)
+
+        /* Colour methods */
+        public static void _Color(Multi m, Color c)
         {
-            SetX(this, x);
-            SetY(this, y);
-            return this;
+            m.col = c;
         }
-
-        public Multi Translated(double x, double y)
-        {
-            Translate(this, x, y);
-            return this;
-        }
-
-        public Multi Rotated(double theta)
-        {
-            Rotate(this, theta);
-            return this;
-        }
-
-        public Multi Scaled(double mag)
-        {
-            Scale(this, mag);
-            return this;
-        }
-
-        public Multi ScaleShifted(double mag)
-        {
-            ScaleShift(this, mag);
-            return this;
-        }
-
         public Multi Colored(Color c)
         {
-            SetColor(this, c);
+            _Color(this, c);
+            return this;
+        }
+        public Multi R(double r)
+        {
+            Col.R = r;
+            return this;
+        }
+        public Multi G(double g)
+        {
+            Col.G = g;
+            return this;
+        }
+        public Multi B(double b)
+        {
+            Col.B = b;
+            return this;
+        }
+        public Multi A(double b)
+        {
+            Col.A = b;
+            return this;
+        }
+        public Multi H(double h)
+        {
+            Col.H = h;
+            return this;
+        }
+        public Multi S(double s)
+        {
+            Col.S = s;
+            return this;
+        }
+        public Multi L(double l)
+        {
+            Col.L = l;
+            return this;
+        }
+        public Multi RShifted(double r)
+        {
+            Col.R += r;
+            return this;
+        }
+        public Multi GShifted(double g)
+        {
+            Col.G += g;
+            return this;
+        }
+        public Multi BShifted(double b)
+        {
+            Col.B += b;
+            return this;
+        }
+        public Multi AShifted(double b)
+        {
+            Col.A += b;
+            return this;
+        }
+        public Multi HShifted(double h)
+        {
+            Col.H += h;
+            return this;
+        }
+        public Multi SShifted(double s)
+        {
+            Col.S += s;
+            return this;
+        }
+        public Multi LShifted(double l)
+        {
+            Col.L += l;
+            return this;
+        }
+
+        /* Translation methods */
+        public static void _SetX(Multi m, double x)
+        {
+            // x is is stored as a Quantity object, so set it like this
+            m.x.Set(x);
+        }
+        public Multi AtX(double offset)
+        {
+            _SetX(this, offset);
+            return this;
+        }
+        public static void _SetY(Multi m, double y)
+        {
+            // y is is stored as a Quantity object, so set it like this
+            m.y.Set(y);
+        }
+        public Multi AtY(double offset)
+        {
+            _SetY(this, offset);
+            return this;
+        }
+
+        public static void _Translate(Multi m, double x, double y)
+        {
+            // x and y are Quantities, so increment them like this
+            m.x.Incr(x);
+            m.y.Incr(y);
+        }
+        public Multi Translated(double x, double y)
+        {
+            _Translate(this, x, y);
+            return this;
+        }
+        public Multi XShifted(double offset)
+        {
+            _Translate(this, offset, 0);
+            return this;
+        }
+        public Multi YShifted(double offset)
+        {
+            _Translate(this, 0, offset);
+            return this;
+        }
+        public Multi Positioned(double x, double y)
+        {
+            _SetX(this, x);
+            _SetY(this, y);
+            return this;
+        }
+
+        /* Rotation methods */
+        public static void _RotateTo(Multi m, double theta)
+        {
+            double mag = m.Magnitude.Evaluate();
+            m.x.Set(mag * Math.Cos(theta));
+            m.y.Set(mag * Math.Sin(theta));
+        }
+        public static void _RotateBy(Multi m, double theta)
+        {
+            _RotateTo(m, theta + m.Phase.Evaluate());
+        }
+        public Multi Rotated(double theta)
+        {
+            _RotateBy(this, theta);
+            return this;
+        }
+        public Multi RotatedTo(double offset)
+        {
+            _RotateTo(this, offset);
+            return this;
+        }
+
+        /* Scaling methods */
+        public static void _AbsoluteScale(Multi m, double mag)
+        {
+            double ph = m.Phase.Evaluate();
+            _SetX(m, mag * Math.Cos(ph));
+            _SetY(m, mag * Math.Sin(ph));
+        }
+        public Multi AbsoluteScaled(double mag)
+        {
+            _AbsoluteScale(this, mag);
+            return this;
+        }
+        public Multi AbsoluteScaleShifted(double mag)
+        {
+            _AbsoluteScale(this, mag + this.Magnitude.Evaluate());
+            return this;
+        }
+
+        // Scale is implemented in terms of absolute scale
+        public static void _Scale(Multi m, double mag)
+        {
+            _AbsoluteScale(m, mag * m.Magnitude.Evaluate());
+        }
+        public Multi Scaled(double mag)
+        {
+            _Scale(this, mag);
             return this;
         }
 
 
-        public new void Go(params double[] x)
+        // TODO: Multi methods should follow this format, where static methods follow an underscore
+        public static void _Texture(Multi m, Renderer.Texture t)
         {
-            foreach (Driver d in drivers)
-            {
-                d.Go(x);
-            }
-            foreach (Multi c in csts)
-            {
-                c.Go(x);
-            }
+            m.texture = t;
         }
-
-        public Multi Eject()
+        public Multi Textured(Renderer.Texture t)
         {
-            drivers.Clear();
-            /*
-            foreach (Multi m in constituents)
-            {
-                m.Eject();
-            }
-            */
+            _Texture(this, t);
             return this;
         }
 
+        /* Transformation methods */
+        public static void Affine(double[,] matrix)
+        {
+            // TODO: implement me
+        }
+        public static void Affine(double[] matrix)
+        {
+            // TODO: implement me
+        }
+
+        /* Driving methods */
+        // Add a driver to a Multi
+        public static void _Drive(Multi m, Driver d)
+        {
+            m.AddDriver(d);
+        }
+        // Add a driver to a Multi given a double[] => double, and a string for output mapping
+        public static void _Drive(Multi m, Func<double[], double> df, string s)
+        {
+            Func<double, Multi> output = StringMap(m, s);
+            Driver d = new Driver(df, output);
+            d.ActionString = s;
+            _Drive(m, d);
+        }
+        // Add a driver to a Multi given an IMap
+        public static void _Drive(Multi m, IMap df, string? s = null)
+        {
+            Func<double, Multi>? output = null;
+            if (s != null)
+            {
+                output = StringMap(m, s);
+            }
+            Driver d = new Driver(df, output);
+            if (s != null)
+            {
+                d.ActionString = s;
+            }
+            _Drive(m, d);
+        }
         public Multi Driven(Func<double[], double> df, string s)
         {
-            Drive(this, df, s);
+            _Drive(this, df, s);
             return this;
         }
         public new Multi Driven(Func<double[], double> df)
         {
-            Drive(this, new Driver(df));
+            _Drive(this, new Driver(df));
             return this;
         }
         public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
@@ -245,12 +373,63 @@ namespace Magician
             y.Driven(yFunc);
             return this;
         }
-        public Multi Driven(IMap df, string? s=null)
+        public Multi Driven(IMap df, string? s = null)
         {
-            Drive(this, df, s);
+            _Drive(this, df, s);
             return this;
         }
 
+        public static void _Write(Multi m, double d)
+        {
+            m.q = d;
+        }
+        public Multi Written(double d)
+        {
+            _Write(this, d);
+            return this;
+        }
+
+        public Multi DrawFlags(DrawMode dm)
+        {
+            drawMode = dm;
+            return this;
+        }
+
+        // Indexes the constituents of a Multi in the internal values of the constituents
+        // This is useful because getting the index using IndexOf is too expensive
+        public static void CreateIndex(Multi m)
+        {
+            for (int i = 0; i < m.Count; i++)
+            {
+                m.csts[i].index = i;
+            }
+        }
+
+
+        // Activates all the drivers
+        public new void Go(params double[] t)
+        {
+            foreach (Driver d in drivers)
+            {
+                d.Go(t);
+            }
+            foreach (Multi c in csts)
+            {
+                c.Go(t);
+            }
+            // Automatically drive internal quantities
+            x.Go(t);
+            y.Go(t);
+        }
+
+        // Remove all the drivers
+        public Multi Ejected()
+        {
+            drivers.Clear();
+            return this;
+        }
+
+        // Create a copy of the Multi
         public Multi Copy()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
@@ -298,7 +477,7 @@ namespace Magician
             return Modify(csts.Where(predicate).ToArray());
         }
 
-        public Multi Sub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        public Multi Sub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
         {
             if (truth is null)
             {
@@ -317,7 +496,7 @@ namespace Magician
             }
             return this;
         }
-        public Multi DeepSub(Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        public Multi DeepSub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
         {
             Sub(action, truth, threshold);
             foreach (Multi c in this)
@@ -326,7 +505,7 @@ namespace Magician
             }
             return this;
         }
-        public Multi IterSub(int iters, Action<Multi> action, Func<double, double>? truth=null, double threshold=0)
+        public Multi IterSub(int iters, Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
         {
             for (int i = 0; i < iters; i++)
             {
@@ -381,17 +560,6 @@ namespace Magician
             return Wielding(F.Invoke(Copy()));
         }
 
-        public Multi Written(double d)
-        {
-            Write(this, d);
-            return this;
-        }
-
-        public Multi DrawFlags(DrawMode dm)
-        {
-            drawMode = dm;
-            return this;
-        }
         int? index = null;
         public int Index
         {
@@ -404,7 +572,7 @@ namespace Magician
                 return (int)index;
             }
         }
-        
+
 
         // TODO: rename this
         public double Normal
@@ -519,7 +687,7 @@ namespace Magician
                 m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
                 //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
             }
-            
+
             // If the flag is set, and there are at least 3 constituents, fill the shape
             if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
             {
@@ -613,10 +781,7 @@ namespace Magician
                     s += "Empty Multi";
                     break;
                 case (1):
-                    s += "Lonely Multi";
-                    break;
-                case (2):
-                    s += $"Pair Multi ({csts[0]}, {csts[1]})";
+                    s += "Multi";
                     break;
                 default:
                     s += $"{Count}-Multi (";
@@ -632,7 +797,7 @@ namespace Magician
             }
             else if (parent is null)
             {
-                s += $" Origin at {x.Evaluate()}, {y.Evaluate()}";
+                s += $" ORIGIN at {x.Evaluate()}, {y.Evaluate()}";
             }
             else
             {
@@ -641,203 +806,84 @@ namespace Magician
             return s;
         }
 
-        /*
-        *  Common types of Multis you might want to create
-        */
-  
-
-        public static Action<double> StringMap(Multi m, string s)
+        // Allows you to easily drive position and colour
+        public static Func<double, Multi> StringMap(Multi m, string s)
         {
-            Action<double> o;
+            Func<double, Multi> o;
             s = s.ToUpper();
             switch (s)
             {
                 case "X":
-                    o = m.SetX;
+                    o = m.AtX;
                     break;
                 case "X+":
-                    o = m.IncrX;
+                    o = m.XShifted;
                     break;
                 case "Y":
-                    o = m.SetY;
+                    o = m.AtY;
                     break;
                 case "Y+":
-                    o = m.IncrY;
+                    o = m.YShifted;
                     break;
                 case "PHASE":
-                    o = m.SetPhase;
+                    o = m.RotatedTo;
                     break;
                 case "PHASE+":
-                    o = m.IncrPhase;
+                    o = m.Rotated;
                     break;
                 case "MAGNITUDE":
-                    o = m.SetMagnitude;
+                    o = m.AbsoluteScaled;
                     break;
                 case "MAGNITUDE+":
-                    o = m.IncrMagnitude;
+                    o = m.AbsoluteScaleShifted;
                     break;
                 case "R":
-                    o = ((IDrawable)m).SetR;
+                    o = m.R;
                     break;
-
                 case "G":
-                    o = ((IDrawable)m).SetG;
+                    o = m.G;
                     break;
                 case "B":
-                    o = ((IDrawable)m).SetB;
+                    o = m.B;
                     break;
                 case "A":
-                    o = ((IDrawable)m).SetA;
+                    o = m.A;
                     break;
                 case "H":
-                    o = ((IDrawable)m).SetH;
+                    o = m.H;
                     break;
                 case "S":
-                    o = ((IDrawable)m).SetS;
+                    o = m.S;
                     break;
                 case "L":
-                    o = ((IDrawable)m).SetL;
+                    o = m.L;
                     break;
                 case "R+":
-                    o = ((IDrawable)m).IncrR;
+                    o = m.RShifted;
                     break;
                 case "G+":
-                    o = ((IDrawable)m).IncrG;
+                    o = m.GShifted;
                     break;
                 case "B+":
-                    o = ((IDrawable)m).IncrB;
+                    o = m.BShifted;
                     break;
                 case "A+":
-                    o = ((IDrawable)m).IncrA;
+                    o = m.AShifted;
                     break;
                 case "H+":
-                    o = ((IDrawable)m).IncrH;
+                    o = m.HShifted;
                     break;
                 case "S+":
-                    o = ((IDrawable)m).IncrS;
+                    o = m.SShifted;
                     break;
                 case "L+":
-                    o = ((IDrawable)m).IncrL;
+                    o = m.LShifted;
                     break;
 
                 default:
                     throw new NotImplementedException($"Unknown driver string {s}");
             }
             return o;
-        }
-
-        /*
-        * static void Multi methods
-        */
-        public static void SetX(Multi m, double x)
-        {
-            m.x.Set(x);
-        }
-        public static void SetY(Multi m, double y)
-        {
-            m.y.Set(y);
-        }
-
-        public static void Translate(Multi m, double x, double y)
-        {
-            m.x.Incr(x);
-            m.y.Incr(y);
-        }
-
-        public static void RotateTo(Multi m, double theta)
-        {
-            double mag = m.Magnitude.Evaluate();
-            m.x.Set(mag * Math.Cos(theta));
-            m.y.Set(mag * Math.Sin(theta));
-        }
-        
-        public static void Rotate(Multi m, double theta)
-        {
-            RotateTo(m , theta+m.Phase.Evaluate());
-        }
-
-        public static void ScaleTo(Multi m, double mag)
-        {
-            double ph = m.Phase.Evaluate();
-            SetX(m, mag*Math.Cos(ph));
-            SetY(m, mag*Math.Sin(ph));
-        }
-
-        public static void ScaleShift(Multi m, double mag)
-        {
-            ScaleTo(m, mag+m.Magnitude.Evaluate());
-        }
-
-        public static void Scale(Multi m, double mag)
-        {
-            ScaleTo(m, mag*m.Magnitude.Evaluate());
-        }
-
-        // TODO: Multi methods should follow this format
-        public static void _Textured(Multi m, Renderer.Texture t)
-        {
-            m.texture = t;
-        }
-        public Multi Textured(Renderer.Texture t)
-        {
-            _Textured(this, t);
-            return this;
-        }
-
-        // Transformation methods
-        public static void Affine(double[,] matrix)
-        {
-            // TODO: implement me
-        }
-        public static void Affine(double[] matrix)
-        {
-            // TODO: implement me
-        }
-
-        public static void Drive(Multi m, Driver d)
-        {
-            m.AddDriver(d);
-        }
-        public static void Drive(Multi m, Func<double[], double> df, string s)
-        {
-            Action<double> output = StringMap(m, s);
-            Driver d = new Driver(df, output);
-            d.ActionString = s;
-            Drive(m, d);
-        }
-        public static void Drive(Multi m, IMap df, string? s=null)
-        {
-            Action<double>? output = null;
-            if (s != null)
-            {
-                output = StringMap(m, s);
-            }
-            Driver d = new Driver(df, output);
-            if (s != null)
-            {
-                d.ActionString = s;
-            }
-            Drive(m, d);
-        }
-
-        public static void SetColor(Multi m, Color c)
-        {
-            m.Col = c;
-        }
-
-        public static void Write(Multi m, double d)
-        {
-            m.q = d;
-        }
-
-        // Indexes the constituents of a Multi in the internal values of the constituents
-        // This is useful because getting the index using IndexOf is too expensive
-        public static void CreateIndex(Multi m)
-        {
-            for (int i = 0; i < m.Count; i++)
-            {
-                m.csts[i].index = i;
-            }
         }
 
         // Interface methods
