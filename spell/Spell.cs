@@ -2,6 +2,7 @@
 // It's static for now
 
 using Magician.Renderer;
+using Magician.UI;
 using static SDL2.SDL;
 
 namespace Magician
@@ -10,13 +11,15 @@ namespace Magician
     {
         // For stuff that can be defined once and left alone
         static Random rng = new Random();
+        static UI.Grid uiGrid;
 
         public static void PreLoop(ref int frames, ref double timeResolution)
         {
             Renderer.Control.Clear();
-            Geo.Origin.Add(UI.Presets.Graph.Cartesian());
+            uiGrid = UI.Presets.Graph.Cartesian();
+            Geo.Origin.Add(uiGrid.Render());
 
-            Multi pentagon = Geo.RegularPolygon(0, 0, new RGBA(0x00f01070), 5, 120)
+            Multi pentagon = Geo.RegularPolygon(0, 0, new RGBA(0x00f01010), 5, 100)
                 .Sub(m => m
                     .Textured(new Text($"{m.Index}", new RGBA(0xff00ffff)).Render())
                 );
@@ -34,9 +37,8 @@ namespace Magician
             .Driven(x => Interactive.Events.keys[SDL_Keycode.SDLK_d]?-0.035:0, "phase+")
             );
 
-            pentagon.Sub(
-                m => m.Driven(x => 0.01, "phase+")
-            );
+            Perspective.x.Driven(x => 50*Math.Sin(x[0]/10));
+            Quantity.ExtantQuantites.Add(Perspective.x);
 
         }
 
@@ -44,6 +46,9 @@ namespace Magician
         public static void Loop(ref int frames, ref double timeResolution)
         {
             Renderer.Control.Clear();
+            uiGrid = uiGrid.Update();
+            Geo.Origin.csts[0] = uiGrid.Render();
+            Console.WriteLine(Perspective.x);
         }
     }
 }
