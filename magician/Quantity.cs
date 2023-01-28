@@ -23,6 +23,11 @@ namespace Magician
         {
             q = x;
         }
+        public Quantity As(double x)
+        {
+            q = x;
+            return this;
+        }
 
         public void Incr(double x)
         {
@@ -76,10 +81,15 @@ namespace Magician
 
         public Quantity Driven(Func<double[], double> df)
         {
-            Action<double> output = Set;
+            Func<double, Quantity> output = As;
             Driver d = new Driver(df, output);
             AddDriver(d);
             return this;
+        }
+
+        public override string ToString()
+        {
+            return q.ToString();
         }
     }
 }
