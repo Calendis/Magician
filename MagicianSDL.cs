@@ -47,7 +47,7 @@ namespace Magician
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Ref.winWidth, Ref.winHeight);
+            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Globals.winWidth, Globals.winHeight);
             SDL_FreeSurface(s);
 
             while (!done)
@@ -98,12 +98,12 @@ namespace Magician
 
                 // Draw objects
                 SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-                Geo.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
+                Geo.Ref.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames < stopFrame)
                 {
-                    IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Ref.winWidth, Ref.winHeight);
+                    IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
                     IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
 
                     int width, height;
@@ -113,8 +113,8 @@ namespace Magician
                     SDL_Rect r = new SDL_Rect();
                     r.x = 0;
                     r.y = 0;
-                    r.w = Ref.winWidth;
-                    r.h = Ref.winHeight;
+                    r.w = Globals.winWidth;
+                    r.h = Globals.winHeight;
                     unsafe
                     {
                         SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
@@ -133,13 +133,13 @@ namespace Magician
                 SDL_Rect srcRect;
                 srcRect.x = 0;
                 srcRect.y = 0;
-                srcRect.w = Ref.winWidth;
-                srcRect.h = Ref.winHeight;
+                srcRect.w = Globals.winWidth;
+                srcRect.h = Globals.winHeight;
                 SDL_Rect dstRect;
                 dstRect.x = 0;
                 dstRect.y = 0;
-                dstRect.w = Ref.winWidth;
-                dstRect.h = Ref.winHeight;
+                dstRect.w = Globals.winWidth;
+                dstRect.h = Globals.winHeight;
 
                 SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
                 SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
@@ -155,7 +155,7 @@ namespace Magician
         // Drive the dynamics of Multis and Quantities
         void Drive()
         {
-            Geo.Origin.Go((frames - driveDelay) * timeResolution);
+            Geo.Ref.Origin.Go((frames - driveDelay) * timeResolution);
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
                 Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
@@ -170,7 +170,7 @@ namespace Magician
         }
         void CreateWindow()
         {
-            win = SDL_CreateWindow("Test Window", 0, 0, Ref.winWidth, Ref.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow("Test Window", 0, 0, Globals.winWidth, Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {

@@ -10,7 +10,7 @@ namespace Magician.Renderer
         public static int saveCount = 0;
         public static void Clear()
         {
-            Clear(Ref.UIDefault.BG);
+            Clear(Globals.UIDefault.BG);
         }
         public static void Clear(Color c)
         {
