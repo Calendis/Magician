@@ -1,3 +1,6 @@
+using Magician.Renderer;
+using static Magician.Geo.Create;
+
 namespace Magician
 {
     public interface IMap
@@ -41,6 +44,36 @@ namespace Magician
                 {
                     tmp.parent = m;
                     double[] p = Evaluate(new double[]{i});
+                    // Parametric Multi placement
+                    if (p.Length > 1)
+                    {
+                        m.Add(tmp.Copy().Positioned(p[0]+tmp.X.Evaluate(), p[1]+tmp.Y.Evaluate()));
+                    }
+                    // In terms of one axis
+                    else
+                    {
+                        m.Add(tmp.Copy().Positioned(i+tmp.X.Evaluate(), p[0]+tmp.Y.Evaluate()));
+                    }
+                }
+            }
+            m.parent = Geo.Ref.Origin;
+            return m.DrawFlags(DrawMode.INVISIBLE);
+        }
+        public Multi TextAlong(double lb, double ub, double dx, string msg, double xOffset=0, double yOffset=0, Func<double, double>? truth=null, double threshold=0)
+        {
+            if (truth is null)
+            {
+                truth = x => 1;
+            }
+            Multi m = new Multi(xOffset, yOffset);
+            int j = 0;
+            for (double i = lb; i < ub; i+=dx)
+            {
+                Multi tmp = new Multi().Textured(new Text(msg.Substring(j, 1), new RGBA(0xffff00ff)).Render());
+                if (truth.Invoke(i) >= threshold)
+                {
+                    tmp.parent = m;
+                    double[] p = Evaluate(new double[]{i});
                     if (p.Length > 1)
                     {
                         m.Add(tmp.Copy().Positioned(p[0]+tmp.X.Evaluate(), p[1]+tmp.Y.Evaluate()));
@@ -50,8 +83,9 @@ namespace Magician
                         m.Add(tmp.Copy().Positioned(i+tmp.X.Evaluate(), p[0]+tmp.Y.Evaluate()));
                     }
                 }
+                j++;
             }
-            m.parent = Geo.Origin;
+            m.parent = Geo.Ref.Origin;
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
 
@@ -89,8 +123,8 @@ namespace Magician
             }
 
 
-            Multi mp0 = Geo.Point(p0[0], p0[1]);
-            Multi mp1 = Geo.Point(p1[0], p1[1]);
+            Multi mp0 = Point(p0[0], p0[1]);
+            Multi mp1 = Point(p1[0], p1[1]);
             return new Multi[] {mp0, mp1};
         }
     }
