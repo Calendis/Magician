@@ -79,7 +79,9 @@ namespace Magician
                 {
                     break;
                 }
-                Multi tmp = new Multi().Textured(new Text(msg.Substring(j, 1), c).Render());
+                Text tx = new Text(msg.Substring(j, 1), c);
+                Texture txr = tx.Render();
+                Multi tmp = new Multi().Textured(txr);
                 if (truth.Invoke(i) >= threshold)
                 {
                     tmp.parent = m;
@@ -94,6 +96,7 @@ namespace Magician
                     }
                 }
                 j++;
+                tx.Dispose();
             }
             m.parent = Geo.Ref.Origin;
             return m.DrawFlags(DrawMode.INVISIBLE);
