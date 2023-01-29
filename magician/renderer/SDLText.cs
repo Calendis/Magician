@@ -3,21 +3,23 @@ using static SDL2.SDL_ttf;
 
 namespace Magician.Renderer
 {
-    public class Text
+    public class Text : IDisposable
     {
         string s;
         Color c;
+        IntPtr font;
+        bool disposed = false;
 
         public Text(string s, Color c)
         {
             this.s = s;
             this.c = c;
+            // Open the default fony
+            font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Globals.fontSize);
         }
 
         public Texture Render()
         {
-            // Load the default font
-            IntPtr font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Globals.fontSize);
             //IntPtr font = (IntPtr)0;
             if (font == (IntPtr)0)
             {
@@ -47,6 +49,31 @@ namespace Magician.Renderer
         Multi AsMulti()
         {
             throw new NotImplementedException("Text as Multi not supported. Please file an issue at https://github.com/Calendis/Magician");
+        }
+        /* IDisposable implementation */
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                }
+                // Close the font
+                TTF_CloseFont(font);
+                font = IntPtr.Zero;
+                disposed = true;
+            }
+        }
+
+        ~Text()
+        {
+            Dispose(false);
         }
     }
 }
