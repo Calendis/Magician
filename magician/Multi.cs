@@ -73,7 +73,7 @@ namespace Magician
         public Multi this[int i]
         {
             get => csts[i];
-            set => csts[i] = value.Parented(this);
+            set {csts[i].DisposeAllTextures(); csts[i] = value.Parented(this);}
         }
 
         DrawMode drawMode;
