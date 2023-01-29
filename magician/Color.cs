@@ -90,7 +90,7 @@ namespace Magician
             }
             else
             {
-                throw new InvalidDataException("ERROR: invalid lightness {l}");
+                throw new InvalidDataException($"ERROR: invalid lightness {l}");
             }
             
             return s;
