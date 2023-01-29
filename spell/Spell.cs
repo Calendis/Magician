@@ -8,6 +8,7 @@ using static Magician.Geo.Create;
 using static Magician.Geo.Ref;
 
 using static SDL2.SDL;
+using Magician.Interactive;
 
 namespace Magician
 {
@@ -26,7 +27,7 @@ namespace Magician
         public static void PreLoop(ref int frames, ref double timeResolution)
         {
             Renderer.Control.Clear();
-            Origin.Add(uiGrid.Render());
+            //Origin.Add(uiGrid.Render());
             Origin.Add(new Multi());
 
 
@@ -39,16 +40,17 @@ namespace Magician
 
         // For stuff that needs to redefined every frame
         public static void Loop(ref int frames, ref double timeResolution)
-        {
+        { 
             Renderer.Control.Clear();
-            uiGrid = uiGrid.Update();
-            Origin.csts[0] = uiGrid.Render();
+            //uiGrid.DisposeAllTextures();
+            //uiGrid = uiGrid.Update();
+            //Origin[0] = uiGrid.Render();
+
 
             double t = frames * timeResolution;
-
-            Origin.csts[1] = (((IMap)new Driver(x => 16 * Math.Sin(x[0] / 40 + t)))
-                .TextAlong(-200, 600, 10 * Math.PI, "Hello there, my friends", new HSLA(t, 1, 1, 255)));
-            //Console.WriteLine(Perspective.x);
+            Origin[0].DisposeAllTextures();
+            Origin[0] = (((IMap)new Driver(x => 16 * Math.Sin(x[0] / 40 + t)))
+                .TextAlong(-200, 600, 5 * Math.PI, "Hello there, my friendsssssssssssssssssss", new HSLA(t, 1, 1, 255)));            
         }
     }
 }
