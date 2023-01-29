@@ -69,6 +69,11 @@ namespace Magician
             int j = 0;
             for (double i = lb; i < ub; i+=dx)
             {
+                // Do not create more multis than characters in the string
+                if (j >= msg.Length)
+                {
+                    break;
+                }
                 Multi tmp = new Multi().Textured(new Text(msg.Substring(j, 1), new RGBA(0xffff00ff)).Render());
                 if (truth.Invoke(i) >= threshold)
                 {
