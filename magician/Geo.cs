@@ -16,11 +16,11 @@ namespace Magician.Geo
         }
         public static Multi Point(double x, double y, Color col)
         {
-            return new Multi(x, y, col).DrawFlags(DrawMode.POINT);
+            return Point(Ref.Origin, x, y, col).DrawFlags(DrawMode.POINT);
         }
         public static Multi Point(double x, double y)
         {
-            return Point(x, y, Globals.UIDefault.FG);
+            return Point(Ref.Origin, x, y, Globals.UIDefault.FG);
         }
 
         // Create a line
@@ -31,9 +31,13 @@ namespace Magician.Geo
             double x2 = p2.X.Evaluate();
             double y2 = p2.Y.Evaluate();
 
-            return new Multi(x1, y1, col, DrawMode.PLOT,
-            Point(0, 0, col),
-            Point(x2 - x1, y2 - y1, col));
+            Multi line = new Multi(0, 0, col, DrawMode.PLOT,
+            Point(x1, y1, col),
+            Point(x2, y2, col));
+            // Make sure the parents are set correctly
+            line[0].parent = line;
+            line[1].parent = line;
+            return line;
         }
         public static Multi Line(Multi p1, Multi p2)
         {
@@ -43,16 +47,19 @@ namespace Magician.Geo
         // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
-            List<Multi> ps = new List<Multi>();
+            //List<Multi> ps = new List<Multi>();
+            Multi ps = new Multi().Parented(Ref.Origin);
             double angle = 360d / (double)sides;
             for (int i = 0; i < sides; i++)
             {
                 double x = magnitude * Math.Cos(angle * i / 180 * Math.PI);
                 double y = magnitude * Math.Sin(angle * i / 180 * Math.PI);
-                ps.Add(Point(x, y, col));
+                ps.Add(Point(ps, x, y, col));
             }
 
-            return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
+            //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
+            return ps.Positioned(xOffset, yOffset).DrawFlags(DrawMode.INNER);
+
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
@@ -66,7 +73,7 @@ namespace Magician.Geo
         // Create a star with an inner and outer radius
         public static Multi Star(double xOffset, double yOffset, Color col, int sides, double innerRadius, double outerRadius)
         {
-            List<Multi> ps = new List<Multi>();
+            Multi ps = new Multi();
             double angle = 360d / (double)sides;
             for (int i = 0; i < sides; i++)
             {
@@ -74,11 +81,12 @@ namespace Magician.Geo
                 double innerY = innerRadius * Math.Sin(angle * i / 180 * Math.PI);
                 double outerX = outerRadius * Math.Cos((angle * i + angle / 2) / 180 * Math.PI);
                 double outerY = outerRadius * Math.Sin((angle * i + angle / 2) / 180 * Math.PI);
-                ps.Add(Point(innerX, innerY, col));
-                ps.Add(Point(outerX, outerY, col));
+                ps.Add(ps, Point(innerX, innerY, col));
+                ps.Add(ps, Point(outerX, outerY, col));
             }
 
-            return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
+            return ps.Positioned(xOffset, yOffset).Colored(col).DrawFlags(DrawMode.INNER);
+            //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
         }
         public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
         {
@@ -93,9 +101,60 @@ namespace Magician.Geo
     public static class Check
     {
         // TODO: implement this by making the triangulated triangles global and linking each Multi to its set of vertices
-        public static bool PointInPolygon()
+        public static bool PointInPolygon(double x, double y, Multi polygon)
         {
+            // Special case for rectangles
+            if (IsRectangle(polygon))
+            {
+                double minX = Math.Min(polygon[0].X.Evaluate(), polygon[2].X.Evaluate());
+                double xRange = Math.Max(
+                   Math.Abs(polygon[0].X.Evaluate()-polygon[1].X.Evaluate()),
+                   Math.Abs(polygon[0].X.Evaluate()-polygon[3].X.Evaluate())
+                );
+                double minY = Math.Min(polygon[0].Y.Evaluate(), polygon[2].Y.Evaluate());
+                double yRange = Math.Max(
+                   Math.Abs(polygon[0].Y.Evaluate()-polygon[1].Y.Evaluate()),
+                   Math.Abs(polygon[0].Y.Evaluate()-polygon[3].Y.Evaluate())
+                );
+                return (x >= minX) && (x < minX+xRange) && (y >= minY) && (y < minY+yRange);
+            }
             throw new NotImplementedException("doesn't work yet, file an issue at https://github.com/Calendis/Magician");
+        }
+
+        public static bool IsRectangle(Multi m, double tolerance=1.4210854715202004E-14)
+        {
+            if (m.Count != 4)
+            {
+                return false;
+            }
+            Multi v0 = m[0];
+
+            // Either the x or the y of the first must match the x or y of the neighbour, within a tolerance
+            return  (Math.Abs(m[0].X.Evaluate() - m[1].X.Evaluate()) <= tolerance) ||
+                    (Math.Abs(m[0].Y.Evaluate() - m[1].Y.Evaluate()) <= tolerance);
+        }
+    }
+
+    public static class Find
+    {
+        /* Find the Euclidian distance */
+        public static double Distance(double x0, double x1, double y0, double y1)
+        {
+            double dx = x1 - x0;
+            double dy = y1 - y0;
+            return Math.Sqrt(dx*dx + dy*dy);
+        }
+        public static double Distance(Multi m0, Multi m1)
+        {
+            return Distance(m0.X.Evaluate(), m1.X.Evaluate(), m0.Y.Evaluate(), m1.Y.Evaluate());
+        }
+        public static double Distance(Multi m)
+        {
+            if (m.Count != 2)
+            {
+                throw new NotImplementedException("Given Multi was not a Line!");
+            }
+            return Distance(m[0], m[1]);
         }
     }
 }
