@@ -26,12 +26,12 @@ namespace Magician.Interactive
 
         public override double Evaluate(double x)
         {
-            return 0;
+            return Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m)?1:0;
         }
 
         public override double[] Evaluate(params double[] x)
         {
-            return new double[] {0};
+            return new double[] {Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m)?1:0};
         }
     }
 
