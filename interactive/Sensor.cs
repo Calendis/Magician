@@ -2,22 +2,37 @@ using static SDL2.SDL;
 
 namespace Magician.Interactive
 {
-    public class Sensor : IMap
+    public abstract class Sensor : IMap
     {
-        public double[] Evaluate(params double[] x)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract double[] Evaluate(params double[] x);
 
-        public double Evaluate(double x)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract double Evaluate(double x);
     }
 
+    /*
     public class ASCII : Sensor, IMap
     {
         //public double
+    }
+    */
+
+    public class MouseOver : Sensor, IMap
+    {
+        Multi m;
+        public MouseOver(Multi m)
+        {
+            this.m = m;
+        }
+
+        public override double Evaluate(double x)
+        {
+            return 0;
+        }
+
+        public override double[] Evaluate(params double[] x)
+        {
+            return new double[] {0};
+        }
     }
 
     public static class Events
@@ -29,12 +44,12 @@ namespace Magician.Interactive
 
         public static double MouseX
         {
-            get => (double)mouse[0] - Ref.winWidth/2;
+            get => (double)mouse[0] - Globals.winWidth/2;
         }
 
         public static double MouseY
         {
-            get => (double)-mouse[1] + Ref.winHeight/2;
+            get => (double)-mouse[1] + Globals.winHeight/2;
         }
 
         static Events()
