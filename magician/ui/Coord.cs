@@ -58,6 +58,9 @@ namespace Magician.UI
                     Point(i * horizSpacing - Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
                     Point(i * horizSpacing - Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
+                
+                
+                // TODO: this call to Render is a memory leak
                 spacers0.Add(horizSpacer
                 .Textured(new Renderer.Text($"{(int)(i*hSp - Globals.winWidth/2)}", Globals.UIDefault.FG).Render())
                 );
