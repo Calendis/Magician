@@ -3,6 +3,7 @@
 */
 using System.Collections;
 using System.Runtime.Serialization;
+using Magician.Geo;
 using Magician.Renderer;
 using static SDL2.SDL;
 
@@ -26,8 +27,7 @@ namespace Magician
         Quantity y = new Quantity(0);
         public Multi? parent;
         // Multis are recursive, positioned relative to the parent
-        public List<Multi> csts;
-
+        List<Multi> csts;
         /*
         *  Positional Properties
         */
@@ -70,6 +70,12 @@ namespace Magician
             get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate()));
         }
 
+        public Multi this[int i]
+        {
+            get => csts[i];
+            set => csts[i] = value.Parented(this);
+        }
+
         DrawMode drawMode;
         protected Color col;
         public Texture? texture;
@@ -86,7 +92,7 @@ namespace Magician
             csts = new List<Multi> { };
             foreach (Multi c in cs)
             {
-                Add(c.Copy());
+                Add(c);
             }
         }
 
@@ -116,11 +122,11 @@ namespace Magician
 
         public double XCartesian(double offset)
         {
-            return Globals.winWidth / 2 + x.Evaluate(offset);
+            return Globals.winWidth / 2 + X.Evaluate(offset);
         }
         public double YCartesian(double offset)
         {
-            return Globals.winHeight / 2 - y.Evaluate(offset);
+            return Globals.winHeight / 2 - Y.Evaluate(offset);
         }
 
 
@@ -306,10 +312,12 @@ namespace Magician
             return this;
         }
 
-
-        // TODO: Multi methods should follow this format, where static methods follow an underscore
         public static void _Texture(Multi m, Renderer.Texture t)
         {
+            if (m.texture != null)
+            {
+                m.texture.Dispose();
+            }
             m.texture = t;
         }
         public Multi Textured(Renderer.Texture t)
@@ -379,6 +387,7 @@ namespace Magician
             return this;
         }
 
+        /* Internal state methods */
         public static void _Write(Multi m, double d)
         {
             m.q = d;
@@ -403,6 +412,16 @@ namespace Magician
             {
                 m.csts[i].index = i;
             }
+        }
+
+        static void _Parent(Multi m, Multi p)
+        {
+            m.parent = p;
+        }
+        public Multi Parented(Multi m)
+        {
+            _Parent(this, m);
+            return this;
         }
 
 
@@ -461,7 +480,7 @@ namespace Magician
         public void AddAt(Multi m, int n)
         {
             m.Translated(csts[n].X.Evaluate(), csts[n].Y.Evaluate());
-            Add(m);
+            csts[n] = m;
         }
 
         // Add both multis to a new parent Multi
@@ -625,10 +644,17 @@ namespace Magician
         }
         public void Draw(double xOffset, double yOffset)
         {
+            if (parent is null && this != Geo.Ref.Origin)
+            {
+                Console.WriteLine($"{this} has no parent!\n");
+            }
             double r = col.R;
             double g = col.G;
             double b = col.B;
             double a = col.A;
+
+            float drawX = (float)XCartesian(xOffset);
+            float drawY = (float)YCartesian(yOffset);
 
             // If the flag is set, draw the relative origin
             //Console.WriteLine($"{drawMode} / {DrawMode.POINT}, c: {Count}");
@@ -648,17 +674,17 @@ namespace Magician
             {
                 if ((drawMode & DrawMode.PLOT) > 0)
                 {
-                    Multi p0 = csts[i];
-                    Multi p1 = csts[i + 1];
-                    double subr = p0.Col.R;
-                    double subg = p0.Col.G;
-                    double subb = p0.Col.B;
-                    double suba = p0.Col.A;
+                    Multi lineP0 = csts[i];
+                    Multi lineP1 = csts[i + 1];
+                    double subr = lineP0.Col.R;
+                    double subg = lineP0.Col.G;
+                    double subb = lineP0.Col.B;
+                    double suba = lineP0.Col.A;
 
                     SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(SDLGlobals.renderer,
-                    (float)p0.XCartesian(xOffset), (float)p0.YCartesian(yOffset),
-                    (float)p1.XCartesian(xOffset), (float)p1.YCartesian(yOffset));
+                    (float)lineP0.XCartesian(xOffset), (float)lineP0.YCartesian(yOffset),
+                    (float)lineP1.XCartesian(xOffset), (float)lineP1.YCartesian(yOffset));
 
                 }
             }
@@ -684,7 +710,7 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                m.Draw((m.X.Evaluate(xOffset)), (m.Y.Evaluate(yOffset)));
+                m.Draw(xOffset, yOffset);//), (m.Y.Evaluate(yOffset)));
                 //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
             }
 
@@ -706,6 +732,7 @@ namespace Magician
                         int tri2 = vertexIndices[2];
                         // If all vertex indices are 0, we're done
 
+                        
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             continue;
 
@@ -765,9 +792,9 @@ namespace Magician
             }
 
             // If not null, draw the texture
-            if (texture != null && parent != null)
+            if (texture != null)
             {
-                texture.Draw(parent.XCartesian(xOffset), parent.YCartesian(yOffset));
+                texture.Draw(XCartesian(xOffset), YCartesian(yOffset));
             }
 
         }
@@ -900,11 +927,15 @@ namespace Magician
 
         public void Add(Multi item)
         {
+            item.parent = this;
             csts.Add(item);
         }
         public void Add(params Multi[] items)
         {
-            csts.AddRange(items);
+            foreach(Multi m in items)
+            {
+                Add(m);
+            }
         }
 
         public void Clear()
@@ -927,6 +958,17 @@ namespace Magician
             return csts.Remove(item);
         }
 
+        public void DisposeAllTextures()
+        {
+            if (texture != null)
+            {
+                texture.Dispose();
+            }
+            foreach (Multi m in this)
+            {
+                m.DisposeAllTextures();
+            }
+        }
     }
 
     [Serializable]
