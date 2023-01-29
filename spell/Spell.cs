@@ -43,12 +43,12 @@ namespace Magician
         { 
             Renderer.Control.Clear();
             uiGrid = uiGrid.Update();
-            Origin[0].DisposeAllTextures();
+            //Origin[0].DisposeAllTextures();
             Origin[0] = uiGrid.Render();
 
 
             double t = frames * timeResolution;
-            Origin[1].DisposeAllTextures();
+            //Origin[1].DisposeAllTextures();
             Origin[1] = (((IMap)new Driver(x => 16 * Math.Sin(x[0] / 40 + t)))
                 .TextAlong(-200, 600, 5 * Math.PI, "Hello there, my friendsssssssssssssssssss", new HSLA(t, 1, 1, 255)));            
         }
