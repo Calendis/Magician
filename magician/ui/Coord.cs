@@ -1,3 +1,5 @@
+using static Magician.Geo.Create;
+
 namespace Magician.UI
 {
     public static class Perspective
@@ -30,17 +32,17 @@ namespace Magician.UI
             vSd = vertSubdivs;
 
             // the horizontal axis on a 2d graph
-            axis0 = Geo.Line(
-                Geo.Point(-Ref.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
-                Geo.Point(Ref.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
+            axis0 = Line(
+                Point(-Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
+                Point(Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
             );
             // the vertical spacers along that axis
             spacers0 = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
             // the vertical axis on a 2d graph
-            axis1 = Geo.Line(
-                Geo.Point(-Perspective.x.Evaluate(), Ref.winWidth / 2 - Perspective.y.Evaluate()),
-                Geo.Point(-Perspective.x.Evaluate(), -Ref.winWidth / 2 - Perspective.y.Evaluate())
+            axis1 = Line(
+                Point(-Perspective.x.Evaluate(), Globals.winWidth / 2 - Perspective.y.Evaluate()),
+                Point(-Perspective.x.Evaluate(), -Globals.winWidth / 2 - Perspective.y.Evaluate())
             );
             // the horizontal spacers along that axis
             spacers1 = new Multi().DrawFlags(DrawMode.INVISIBLE);
@@ -49,15 +51,15 @@ namespace Magician.UI
             gridLines = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
             // Add spacers to the horizontal axis
-            int horizSpacers = (int)(Ref.winWidth / horizSpacing);
+            int horizSpacers = (int)(Globals.winWidth / horizSpacing);
             for (int i = 0; i < horizSpacers; i++)
             {
-                Multi horizSpacer = Geo.Line(
-                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
-                    Geo.Point(i * horizSpacing - Ref.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
+                Multi horizSpacer = Line(
+                    Point(i * horizSpacing - Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
+                    Point(i * horizSpacing - Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
                 spacers0.Add(horizSpacer
-                .Textured(new Renderer.Text($"{(int)(i*hSp - Ref.winWidth/2)}", Ref.UIDefault.FG).Render())
+                .Textured(new Renderer.Text($"{(int)(i*hSp - Globals.winWidth/2)}", Globals.UIDefault.FG).Render())
                 );
 
 
@@ -65,9 +67,9 @@ namespace Magician.UI
                 double horizSubdivSpacing = horizSpacing / horizSubdivs;
                 for (int j = 0; j < horizSubdivs; j++)
                 {
-                    Multi horizSubdiv = Geo.Line(
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
+                    Multi horizSubdiv = Line(
+                        Point(i * horizSpacing - Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
+                        Point(i * horizSpacing - Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
                     );
                     spacers0.Add(horizSubdiv);
                 }
@@ -75,21 +77,21 @@ namespace Magician.UI
                 // Vertical grid lines
                 if (i % 2 != 0) {continue;}
                 gridLines.Add(
-                    Geo.Line(
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, -Ref.winHeight),
-                        Geo.Point(i * horizSpacing - Ref.winWidth / 2, Ref.winHeight),
-                        Ref.UIDefault[1]
+                    Line(
+                        Point(i * horizSpacing - Globals.winWidth / 2, -Globals.winHeight),
+                        Point(i * horizSpacing - Globals.winWidth / 2, Globals.winHeight),
+                        Globals.UIDefault[1]
                     )
                 );
             }
 
             // Add spacers to the vertical axis
-            int vertSpacers = (int)(Ref.winHeight / vertSpacing);
+            int vertSpacers = (int)(Globals.winHeight / vertSpacing);
             for (int i = 0; i < vertSpacers; i++)
             {
-                Multi vertSpacer = Geo.Line(
-                    Geo.Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Ref.winHeight / 2),
-                    Geo.Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Ref.winHeight / 2)
+                Multi vertSpacer = Line(
+                    Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Globals.winHeight / 2),
+                    Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Globals.winHeight / 2)
                 );
                 spacers1.Add(vertSpacer);
 
@@ -98,19 +100,19 @@ namespace Magician.UI
                 double vertSubdivSpacing = vertSpacing / vertSubdivs;
                 for (int j = 0; j < vertSubdivs; j++)
                 {
-                    Multi vertSubdiv = Geo.Line(
-                        Geo.Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2),
-                        Geo.Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Ref.winHeight / 2)
+                    Multi vertSubdiv = Line(
+                        Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Globals.winHeight / 2),
+                        Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Globals.winHeight / 2)
                         );
                     spacers1.Add(vertSubdiv);
                 }
                 
                 // Horizontal grid lines
                 if (i % 2 != 0) {continue;}
-                Multi l = Geo.Line(
-                        Geo.Point(-Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
-                        Geo.Point(Ref.winWidth, i * vertSpacing - Ref.winHeight / 2),
-                        Ref.UIDefault[1]
+                Multi l = Line(
+                        Point(-Globals.winWidth, i * vertSpacing - Globals.winHeight / 2),
+                        Point(Globals.winWidth, i * vertSpacing - Globals.winHeight / 2),
+                        Globals.UIDefault[1]
                 );
 
                 gridLines.Add(
