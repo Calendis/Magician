@@ -49,24 +49,12 @@ namespace Magician
                 limeSq.DrivenXY(mo, new DirectMap(y => y))
             );
 
-            /*
-            Origin.Add(
-                mm.MultisAlong(-200, 200, 10.2, RegularPolygon(5, 10))
-            );
-            */
-
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop()
         { 
             Renderer.Control.Clear();
-            //uiGrid = uiGrid.Update();
-            //Origin[0].DisposeAllTextures();
-            //Origin[0] = uiGrid.Render();
-
-
-            //Origin[1].DisposeAllTextures();
             
             /*
             Origin[1] = (((IMap)new DirectMap(x => 16 * Math.Sin(x / 40 + Environment.Time)))
