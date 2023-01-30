@@ -25,6 +25,8 @@ namespace Magician
     {
         Quantity x = new Quantity(0);
         Quantity y = new Quantity(0);
+        double tempX = 0;
+        double tempY = 0;
         public Multi? parent;
         // Multis are recursive, positioned relative to the parent
         List<Multi> csts;
@@ -35,10 +37,8 @@ namespace Magician
         {
             get
             {
-                if (parent is null)
-                {
-                    return x;
-                }
+                if (parent is null) {return x;}
+
                 // Recursive getting of parent position
                 return x.GetDelta(parent.X.Evaluate());
             }
@@ -47,14 +47,14 @@ namespace Magician
         {
             get
             {
-                if (parent is null)
-                {
-                    return y;
-                }
+                if (parent is null) {return y;}
                 // Recursive getting of parent position
                 return y.GetDelta(parent.Y.Evaluate());
             }
         }
+        public double LastX {get => tempX;}
+        public double LastY {get => tempY;}
+
         // TODO: experiment with making these Objects that typecheck for double and Quantity
         public Quantity Phase
         {
@@ -73,7 +73,7 @@ namespace Magician
         public Multi this[int i]
         {
             get => csts[i];
-            set {csts[i].DisposeAllTextures(); csts[i] = value.Parented(this);}
+            set { csts[i].DisposeAllTextures(); csts[i] = value.Parented(this); }
         }
 
         DrawMode drawMode;
@@ -106,11 +106,6 @@ namespace Magician
         public Color Col
         {
             get => col;
-        }
-
-        public List<Driver> Drivers
-        {
-            get => drivers;
         }
 
         public Multi Modify(params Multi[] cs)
@@ -337,55 +332,80 @@ namespace Magician
         }
 
         /* Driving methods */
-        // Add a driver to a Multi
-        public static void _Drive(Multi m, Driver d)
+        // Activates all the drivers
+        public void Drive(double xOffset=0, double yOffset=0)
         {
-            m.AddDriver(d);
-        }
-        // Add a driver to a Multi given a double[] => double, and a string for output mapping
-        public static void _Drive(Multi m, Func<double[], double> df, string s)
-        {
-            Func<double, Multi> output = StringMap(m, s);
-            Driver d = new Driver(df, output);
-            d.ActionString = s;
-            _Drive(m, d);
-        }
-        // Add a driver to a Multi given an IMap
-        public static void _Drive(Multi m, IMap df, string? s = null)
-        {
-            Func<double, Multi>? output = null;
-            if (s != null)
+            /*
+            foreach (Driver d in drivers)
             {
-                output = StringMap(m, s);
+                d.Go(t);
             }
-            Driver d = new Driver(df, output);
-            if (s != null)
+            */
+            foreach (Multi c in csts)
             {
-                d.ActionString = s;
+                // Pass the offsets to subdriving?
+                // TODO: this may result in weird behaviour...
+                c.Drive(xOffset, yOffset);
             }
-            _Drive(m, d);
+            // Automatically drive internal quantities
+            tempX = x.Evaluate();
+            tempY = y.Evaluate();
+
+            // y may depend on x, so use a temporary variable
+            x.Drive(xOffset);
+            double storX = x.Evaluate();
+            X.Set(tempX);
+
+            y.Drive(yOffset);
+            X.Set(storX);
         }
-        public Multi Driven(Func<double[], double> df, string s)
+
+        // Remove all the drivers
+        public Multi Ejected()
         {
-            _Drive(this, df, s);
+            drivers.Clear();
             return this;
         }
-        public new Multi Driven(Func<double[], double> df)
+        public Multi DrivenXY(IMap f0, IMap f1)
         {
-            _Drive(this, new Driver(df));
+            X.Driven(f0);
+            Y.Driven(f1);
             return this;
         }
-        public Multi Driven(Func<double[], double> xFunc, Func<double[], double> yFunc)
+        public Multi DrivenXY(Func<double, double> f0, Func<double, double> f1)
         {
-            x.Driven(xFunc);
-            y.Driven(yFunc);
+            X.Driven(f0);
+            Y.Driven(f1);
             return this;
         }
-        public Multi Driven(IMap df, string? s = null)
+        public Multi DrivenPM(IMap fPhase, IMap fMag)
         {
-            _Drive(this, df, s);
+            // Driving of phase
+            X.Driven(x => Magnitude.Evaluate()*Math.Cos(fPhase.Evaluate(Phase.Evaluate())));
+            Y.Driven(y => Magnitude.Evaluate()*Math.Sin(fPhase.Evaluate(Phase.Evaluate())));
+
+            // Driving of magnitude
+            X.Driven(x => fMag.Evaluate(Magnitude.Evaluate())*Math.Cos(Phase.Evaluate()));
+            Y.Driven(y => fMag.Evaluate(Magnitude.Evaluate())*Math.Sin(Phase.Evaluate()));
             return this;
         }
+        public Multi DrivenPM(Func<double, double> fPhase, Func<double, double> fMag)
+        {
+            // Driving of phase
+            X.Driven(x => Magnitude.Evaluate()*Math.Cos(fPhase.Invoke(Phase.Evaluate())));
+            Y.Driven(y => Magnitude.Evaluate()*Math.Sin(fPhase.Invoke(Phase.Evaluate())));
+
+            // Driving of magnitude
+            X.Driven(x => fMag.Invoke(Magnitude.Evaluate())*Math.Cos(Phase.Evaluate()));
+            Y.Driven(y => fMag.Invoke(Magnitude.Evaluate())*Math.Sin(Phase.Evaluate()));
+            return this;
+        }
+
+        public Multi DrivenRGBA(Func<double, double> r, Func<double, double> g, Func<double, double> b, Func<double, double> a)
+        {
+            throw new NotImplementedException("DrivenRGBA not supported yet");
+        }
+
 
         /* Internal state methods */
         public static void _Write(Multi m, double d)
@@ -424,30 +444,6 @@ namespace Magician
             return this;
         }
 
-
-        // Activates all the drivers
-        public new void Go(params double[] t)
-        {
-            foreach (Driver d in drivers)
-            {
-                d.Go(t);
-            }
-            foreach (Multi c in csts)
-            {
-                c.Go(t);
-            }
-            // Automatically drive internal quantities
-            x.Go(t);
-            y.Go(t);
-        }
-
-        // Remove all the drivers
-        public Multi Ejected()
-        {
-            drivers.Clear();
-            return this;
-        }
-
         // Create a copy of the Multi
         public Multi Copy()
         {
@@ -456,10 +452,12 @@ namespace Magician
             copy.texture = texture;
 
             // Copy the drivers
+            /*
             for (int i = 0; i < drivers.Count; i++)
             {
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
+            */
             // Copy the constituents
             foreach (Multi c in this)
             {
@@ -542,10 +540,12 @@ namespace Magician
                 Multi outerCopy = outer.Copy().Positioned(csts[i].X.Evaluate(), csts[i].Y.Evaluate());
 
                 // Copy the drivers to the new multi
+                /*
                 foreach (Driver d in csts[i].drivers)
                 {
                     outerCopy.AddDriver(d.CopiedTo(outerCopy));
                 }
+                */
 
                 csts[i] = outerCopy;
             }
@@ -732,7 +732,7 @@ namespace Magician
                         int tri2 = vertexIndices[2];
                         // If all vertex indices are 0, we're done
 
-                        
+
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             continue;
 
@@ -833,88 +833,7 @@ namespace Magician
             return s;
         }
 
-        // Allows you to easily drive position and colour
-        public static Func<double, Multi> StringMap(Multi m, string s)
-        {
-            Func<double, Multi> o;
-            s = s.ToUpper();
-            switch (s)
-            {
-                case "X":
-                    o = m.AtX;
-                    break;
-                case "X+":
-                    o = m.XShifted;
-                    break;
-                case "Y":
-                    o = m.AtY;
-                    break;
-                case "Y+":
-                    o = m.YShifted;
-                    break;
-                case "PHASE":
-                    o = m.RotatedTo;
-                    break;
-                case "PHASE+":
-                    o = m.Rotated;
-                    break;
-                case "MAGNITUDE":
-                    o = m.AbsoluteScaled;
-                    break;
-                case "MAGNITUDE+":
-                    o = m.AbsoluteScaleShifted;
-                    break;
-                case "R":
-                    o = m.R;
-                    break;
-                case "G":
-                    o = m.G;
-                    break;
-                case "B":
-                    o = m.B;
-                    break;
-                case "A":
-                    o = m.A;
-                    break;
-                case "H":
-                    o = m.H;
-                    break;
-                case "S":
-                    o = m.S;
-                    break;
-                case "L":
-                    o = m.L;
-                    break;
-                case "R+":
-                    o = m.RShifted;
-                    break;
-                case "G+":
-                    o = m.GShifted;
-                    break;
-                case "B+":
-                    o = m.BShifted;
-                    break;
-                case "A+":
-                    o = m.AShifted;
-                    break;
-                case "H+":
-                    o = m.HShifted;
-                    break;
-                case "S+":
-                    o = m.SShifted;
-                    break;
-                case "L+":
-                    o = m.LShifted;
-                    break;
-
-                default:
-                    throw new NotImplementedException($"Unknown driver string {s}");
-            }
-            return o;
-        }
-
         // Interface methods
-
         public IEnumerator<Multi> GetEnumerator()
         {
             return ((IEnumerable<Multi>)csts).GetEnumerator();
@@ -932,7 +851,7 @@ namespace Magician
         }
         public void Add(params Multi[] items)
         {
-            foreach(Multi m in items)
+            foreach (Multi m in items)
             {
                 Add(m);
             }
