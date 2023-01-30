@@ -54,15 +54,16 @@ namespace Magician.UI
             int horizSpacers = (int)(Globals.winWidth / horizSpacing);
             for (int i = 0; i < horizSpacers; i++)
             {
+                Renderer.Text tx = new Renderer.Text($"{(int)(i*hSp - Globals.winWidth/2)}", Globals.UIDefault.FG);
                 Multi horizSpacer = Line(
                     Point(i * horizSpacing - Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
                     Point(i * horizSpacing - Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
-                                
-                Renderer.Text tx = new Renderer.Text($"{(int)(i*hSp - Globals.winWidth/2)}", Globals.UIDefault.FG);
-                spacers0.Add(horizSpacer
-                .Textured(tx.Render())
-                );
+                // TODO: why do I have to do it this way???
+                // If I attach the .Textured(tx.Render()) to the Point call above, the texture comes out null
+                horizSpacer[0].Textured(tx.Render());
+
+                spacers0.Add(horizSpacer);
                 tx.Dispose();
 
 
