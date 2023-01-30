@@ -24,22 +24,41 @@ namespace Magician
             uiGrid = UI.Presets.Graph.Cartesian();
         }
 
-        public static void PreLoop(ref int frames, ref double timeResolution)
+        public static void PreLoop()
         {
             Renderer.Control.Clear();
+            // Add a grid
             Origin.Add(uiGrid.Render());
-            Origin.Add(new Multi());
 
+            Origin.Add(
+                ((IMap)new DirectMap(x => 100*Math.Sin(x/30)))
+                .MultisAlong(-200, 200, 10.2, RegularPolygon(5, 10))
+            );
 
-            Perspective.x.Driven(x => 50 * Math.Sin(x[0] / 10));
-            Perspective.y.Driven(x => 50 * Math.Cos(x[0] / 10));
-            //Quantity.ExtantQuantites.Add(Perspective.x);
-            //Quantity.ExtantQuantites.Add(Perspective.y);
+            Origin.Add(RegularPolygon(2, 100, 3, 100)
+                //.DrivenPM(x => x+0.01, y => y)
+                .Sub(
+                    m => m
+                    .DrivenPM(x => x-0.01, y => y+5*Math.Sin(Environment.Time))
+                ).Colored(new RGBA(0xffd0d080))
+            );
+
+            Multi limeSq = RegularPolygon(4, 100).Sub(m => m.Rotated(Math.PI/4)).Colored(new RGBA(0x00ff00ff));
+            IMap mo = Sensor.MouseOver(limeSq);
+            Origin.Add(
+                limeSq.DrivenXY(mo, new DirectMap(y => y))
+            );
+
+            /*
+            Origin.Add(
+                mm.MultisAlong(-200, 200, 10.2, RegularPolygon(5, 10))
+            );
+            */
 
         }
 
         // For stuff that needs to redefined every frame
-        public static void Loop(ref int frames, ref double timeResolution)
+        public static void Loop()
         { 
             Renderer.Control.Clear();
             //uiGrid = uiGrid.Update();
@@ -47,12 +66,12 @@ namespace Magician
             //Origin[0] = uiGrid.Render();
 
 
-            double t = frames * timeResolution;
             //Origin[1].DisposeAllTextures();
+            
             /*
-            Origin[1] = (((IMap)new Driver(x => 16 * Math.Sin(x[0] / 40 + t)))
-                .TextAlong(-200, 600, 5 * Math.PI, "Hello there, my friendsssssssssssssssssss", new HSLA(t, 1, 1, 255)));
-            */     
+            Origin[1] = (((IMap)new DirectMap(x => 16 * Math.Sin(x / 40 + Environment.Time)))
+                .TextAlong(-200, 600, 5 * Math.PI, "Hello there, my friendsssssssssssssssssss", new HSLA(Environment.Time, 1, 1, 255)));
+            */
         }
     }
 }
