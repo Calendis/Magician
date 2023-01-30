@@ -3,6 +3,7 @@
     math objects (Single, Multi, Polygon, etc)
 */
 
+/*
 namespace Magician
 {
     public delegate double[] DriveFunction(params double[] x);
@@ -104,3 +105,4 @@ namespace Magician
         }
     }
 }
+*/
