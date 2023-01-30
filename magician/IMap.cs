@@ -49,7 +49,7 @@ namespace Magician
                     tmp.parent = m;
                     double p = Evaluate(i);
                     // Parametric Multi placement
-                    // TODO: re-implement parametric plotting
+                    // TODO: re-implement parametric MultisAlong
                     /*
                     if (p.Length > 1)
                     {
@@ -85,12 +85,15 @@ namespace Magician
                 }
                 Text tx = new Text(msg.Substring(j, 1), c);
                 Texture txr = tx.Render();
+                
                 Multi tmp = new Multi().Textured(txr);
                 if (truth.Invoke(i) >= threshold)
                 {
                     tmp.parent = m;
                     double p = Evaluate(i);
-                    m.Add(tmp.Copy().Positioned(i + tmp.X.Evaluate(), p + tmp.Y.Evaluate()));
+                    m.Add(
+                        tmp.Positioned(i, p)
+                    );
                 }
                 j++;
                 tx.Dispose();
@@ -106,9 +109,6 @@ namespace Magician
             for (double t = start; t < end; t += dx)
             {
                 Multi[] ps = Interpolate(t, t + dx);
-                //ps[0].Col = c;
-                //ps[1].Col = c;
-                // TODO: test plotting after cleaning Multi and refactoring IMap/Driver
                 ps[0].Colored(c);
                 ps[1].Colored(c);
                 points.Add(ps[0].DrawFlags(DrawMode.INVISIBLE));
@@ -180,7 +180,7 @@ namespace Magician
         {
             if (Ins != 1 || Outs != 1)
             {
-                throw new InvalidDataException("doesn't work like that, buddy");
+                throw new InvalidDataException($"Cannot evaluate Multimap with {Ins} ins with single arg {x}");
             }
             return imaps[0].Evaluate(x);
         }
@@ -268,7 +268,6 @@ namespace Magician
 
                     // Parametric
                     case 2:
-                        Console.WriteLine("two outputs, baby");
                         Multi parametricPlot = new Multi().DrawFlags(DrawMode.PLOT);
                         for (double t = start; t < end; t += dt)
                         {
