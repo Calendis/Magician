@@ -39,8 +39,9 @@ namespace Magician
 
         void GameLoop()
         {
-            // Cast a spell
-            Spell.PreLoop(ref frames, ref timeResolution);
+            // Setup
+            Environment.Time = 0;
+            Spell.PreLoop();
 
             // Create a surface
             IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
@@ -53,7 +54,8 @@ namespace Magician
             while (!done)
             {
                 // Cast a spell
-                Spell.Loop(ref frames, ref timeResolution);
+                Spell.Loop();
+                Environment.Time = frames*timeResolution;
 
                 // Control flow and SDL
                 //SDL_PollEvent(out SDL_Event sdlEvent);
@@ -155,10 +157,14 @@ namespace Magician
         // Drive the dynamics of Multis and Quantities
         void Drive()
         {
-            Geo.Ref.Origin.Go((frames - driveDelay) * timeResolution);
+            // TODO: reimplement automatic time? maybe, maybe not
+            //Geo.Ref.Origin.Drive((frames - driveDelay) * timeResolution);
+            Geo.Ref.Origin.Drive();
             for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
             {
-                Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
+                //Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
+                // TODO: maybe refactor away this ExtantQuantities idea...
+                Quantity.ExtantQuantites[i].Drive();
             }
         }
         void InitSDL()

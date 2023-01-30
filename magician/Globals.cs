@@ -52,4 +52,9 @@ namespace Magician
         public static Palette UIDefault = UITurquoise;
 
     }
+
+    public static class Environment
+    {
+        public static double Time {get; set;}
+    }
 }
