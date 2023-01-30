@@ -7,13 +7,15 @@ namespace Magician
 {
     public class Quantity : IMap, IDriveable
     {
-        protected List<Driver> drivers = new List<Driver>();
+        protected List<IMap> drivers = new List<IMap>();
 
         // Global container for created quantites
         // This can be used to Drive the quantities
         public static List<Quantity> ExtantQuantites = new List<Quantity>();
 
         protected double q;
+        // Setting the relative offset is useful when you want to offset a quantity while keeping the same reference
+        double relativeOffset = 0;
         public Quantity(double q)
         {
             this.q = q;
@@ -34,9 +36,9 @@ namespace Magician
             q += x;
         }
         // Converts to double
-        public double Evaluate(double offset=0)
+        public double Evaluate(double offset = 0)
         {
-            return q + offset;
+            return q + offset + relativeOffset;
         }
 
         public double[] Evaluate(double[] offsets)
@@ -57,7 +59,9 @@ namespace Magician
         }
         public Quantity GetDelta(double x)
         {
-            return new Quantity(q + x);
+            //return new Quantity(q + x);
+            relativeOffset = x;
+            return this;
         }
         public Quantity Mult(double x)
         {
@@ -66,30 +70,36 @@ namespace Magician
         }
 
         // Driver code
-        protected void AddDriver(Driver d)
+        protected static void _AddDriver(Quantity q, IMap imap)
         {
-            drivers.Add(d);
+            q.drivers.Add(imap);
         }
-
-        public void Go(params double[] x)
+        public Quantity Driven(IMap imap)
         {
-            foreach (Driver d in drivers)
-            {
-                d.Go(x);
-            }
-        }
-
-        public Quantity Driven(Func<double[], double> df)
-        {
-            Func<double, Quantity> output = As;
-            Driver d = new Driver(df, output);
-            AddDriver(d);
+            _AddDriver(this, imap);
             return this;
+        }
+        // Allow driving with lambdas
+        public Quantity Driven(Func<double, double> f)
+        {
+            return Driven(new DirectMap(f));
+        }
+
+        public void Drive(double offset=0)
+        {
+            // band-aid
+            relativeOffset = 0;
+            
+            foreach (IMap imap in drivers)
+            {
+                double result = imap.Evaluate(q+offset);
+                q = result;
+            }
         }
 
         public override string ToString()
         {
-            return q.ToString();
+            return "Quantity " + q.ToString();
         }
     }
 }
