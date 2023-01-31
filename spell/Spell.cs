@@ -34,12 +34,24 @@ namespace Magician
             // Add a grid
             Origin["grid"] = uiGrid.Render();
 
-            // Create a pentagon...
+            // Create a pentagon ...
             Origin["mouseFollowPentagon"] = RegularPolygon(5, 100).Colored(new RGBA(0x00ff3070))
-            // ... and make it follow the cursor
+            // ... and make it follow the cursor ...
             .DrivenXY(
                 x => Events.MouseX,
                 y => Events.MouseY
+            )
+            // ... and make it spin //
+            .Sub(
+                m => m
+                .DrivenPM(
+                    ph => ph+0.02,
+                    mg => mg
+                )
+                .DrivenPM(
+                    ph => ph+0.04,
+                    mg => mg
+                )
             );
         }
 
@@ -47,7 +59,8 @@ namespace Magician
         public static void Loop()
         { 
             Renderer.Control.Clear();
-            Origin["mouseFollowPentagon"].Rotated(0.02);
+            // This perfectly cancels the rotation
+            Origin["mouseFollowPentagon"].Rotated(-0.06);
         }
     }
 }
