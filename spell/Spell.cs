@@ -17,11 +17,17 @@ namespace Magician
         // For stuff that can be defined once and left alone
         static Random rng = new Random();
         static UI.Grid uiGrid;
+        static Multi myMulti;
+        static Multi banner;
+        static Multi multi2;
 
         // Initializations
         static Spell()
         {
             uiGrid = UI.Presets.Graph.Cartesian();
+            myMulti = RegularPolygon(3, 100).Colored(new RGBA(0x00f08080));
+            banner = new Multi();
+            multi2 = Star(6, 10, 48).Colored(new RGBA(0xf8070080));
         }
 
         public static void PreLoop()
@@ -29,37 +35,57 @@ namespace Magician
             Renderer.Control.Clear();
             // Add a grid
             Origin.Add(uiGrid.Render());
+            Origin.Add(myMulti, multi2);
 
-            Origin.Add(
-                ((IMap)new DirectMap(x => 100*Math.Sin(x/30)))
-                .MultisAlong(-200, 200, 10.2, RegularPolygon(5, 10))
-            );
-
-            Origin.Add(RegularPolygon(2, 100, 3, 100)
-                //.DrivenPM(x => x+0.01, y => y)
-                .Sub(
+            myMulti
+            .DrivenXY(
+                x => Events.MouseX,
+                y => Events.MouseY
+            )
+            .Sub(
+                m =>
+                m.DrivenPM(
+                    ph => ph + 0.01,
                     m => m
-                    .DrivenPM(x => x-0.01, y => y+5*Math.Sin(Environment.Time))
-                ).Colored(new RGBA(0xffd0d080))
+                )
+            )
+            .DrivenXY(
+                x => -x,
+                y => myMulti.LastX/2
+            )
+            .DrivenPM(
+                ph => ph,
+                mg => mg*2
+            )
+            ;
+            myMulti[0].Become(
+                RegularPolygon(4, 20).Sub(
+                    m => m.DrivenPM(
+                        ph => ph - 0.04,
+                        mg => mg
+                    )
+                )
             );
+            myMulti[2].Become(RegularPolygon(5, 20));
 
-            Multi limeSq = RegularPolygon(4, 100).Sub(m => m.Rotated(Math.PI/4)).Colored(new RGBA(0x00ff00ff));
-            IMap mo = Sensor.MouseOver(limeSq);
-            Origin.Add(
-                limeSq.DrivenXY(mo, new DirectMap(y => y))
-            );
-
+            multi2
+            .DrivenXY(
+                x => 100*Math.Cos(Environment.Time /5),
+                y => 100*Math.Sin(Environment.Time/9)
+            )
+            .DrivenXY(
+                x => x+Events.MouseX,
+                y => y+Events.MouseY
+            )
+            ;
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop()
         { 
+            //Origin[2].Rotated(-0.04);
             Renderer.Control.Clear();
-            
-            /*
-            Origin[1] = (((IMap)new DirectMap(x => 16 * Math.Sin(x / 40 + Environment.Time)))
-                .TextAlong(-200, 600, 5 * Math.PI, "Hello there, my friendsssssssssssssssssss", new HSLA(Environment.Time, 1, 1, 255)));
-            */
+            //Console.WriteLine()
         }
     }
 }
