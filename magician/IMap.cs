@@ -5,7 +5,14 @@ namespace Magician
 {
     public interface IMap
     {
+        public abstract double Offset{get; set;}
         public abstract double Evaluate(double x);
+
+        public virtual IMap WithOffset(double x)
+        {
+            Offset = x;
+            return this;
+        }
 
         // IMap operators
         public virtual IMap Add(IMap o)
@@ -56,7 +63,7 @@ namespace Magician
                         m.Add(tmp.Copy().Positioned(p[0] + tmp.X.Evaluate(), p[1] + tmp.Y.Evaluate()));
                     }
                     */
-                    m.Add(tmp.Copy().Positioned(i + tmp.X.Evaluate(), p + tmp.Y.Evaluate()));
+                    m.Add(tmp.Copy().Positioned(i + tmp.X, p + tmp.Y));
                 }
             }
             m.parent = Geo.Ref.Origin;
@@ -132,6 +139,7 @@ namespace Magician
     public class DirectMap : IMap
     {
         Func<double, double> f;
+        public double Offset{get; set;}
         public DirectMap(Func<double, double> f)
         {
             this.f = f;
@@ -141,6 +149,12 @@ namespace Magician
         {
             return f.Invoke(x);
         }
+        
+        // C# should do this for you tbh
+        public IMap AsIMap()
+        {
+            return ((IMap)this);
+        }
     }
 
     // IMap with an arbitrary amount of input and output dimensions
@@ -149,6 +163,7 @@ namespace Magician
         // Functionality
         List<IMap> imaps = new List<IMap>();
         int[][]? pairs;
+        public double Offset{get; set;}
 
         // Dimensionality
         public int Ins { get; set; }

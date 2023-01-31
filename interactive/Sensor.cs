@@ -7,6 +7,7 @@ namespace Magician.Interactive
         public abstract double[] Evaluate(params double[] x);
 
         public abstract double Evaluate(double x);
+        public double Offset {get; set;}
 
         public static IMap MouseOver(Multi m)
         {
