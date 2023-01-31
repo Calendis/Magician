@@ -33,47 +33,103 @@ namespace Magician
         /*
         *  Positional Properties
         */
-        public Quantity X
+        Quantity RecursX
         {
             get
             {
-                if (parent is null) {return x;}
-
-                // Recursive getting of parent position
-                return x.GetDelta(parent.X.Evaluate());
+                // The top of the tree
+                if (this == Ref.Origin)
+                {
+                    return x;
+                }
+                // Orphan Multis should never occur
+                else if (parent is null)
+                {
+                    throw new InvalidDataException($"RecursX detected Orphan {this}");
+                }
+                // Recurse up the tree of Multis to find your position relative to the origin
+                return x.GetDelta(parent.RecursX.Evaluate());
             }
         }
-        public Quantity Y
+        Quantity RecursY
         {
             get
             {
-                if (parent is null) {return y;}
-                // Recursive getting of parent position
-                return y.GetDelta(parent.Y.Evaluate());
+                // The top of the tree
+                if (this == Ref.Origin)
+                {
+                    return y;
+                }
+                // Orphan Multis should never occur
+                else if (parent is null)
+                {
+                    throw new InvalidDataException($"RecursY detected Orphan {this}");
+                }
+                // Recurse up the tree of Multis to find your position relative to the origin
+                return y.GetDelta(parent.RecursY.Evaluate());
             }
         }
-        public double LastX {get => tempX;}
-        public double LastY {get => tempY;}
+        // Big X is the x-position relative to (0, 0)
+        public double X
+        {
+            get
+            {
+                if (parent is null) { return x.Evaluate(); }
+                // Recursive getting of parent position
+                double recursX = RecursX.Evaluate();
+                x.Reset();
+                return recursX;
+            }
+        }
+        // Big Y is the Y-position relative to (0, 0)
+        public double Y
+        {
+            get
+            {
+                if (parent is null) { return y.Evaluate(); }
+                // Recursive getting of parent position
+                double recursY = RecursY.Evaluate();
+                y.Reset();
+                return recursY;
+            }
+        }
+        // These values are set by drivers
+        public double LastX { get => tempX; }
+        public double LastY { get => tempY; }
 
-        // TODO: experiment with making these Objects that typecheck for double and Quantity
-        public Quantity Phase
+        // Phase, relative to the parent
+        public double Phase
         {
             get
             {
                 double p = Math.Atan2(y.Evaluate(), x.Evaluate());
                 p = p < 0 ? p + 2 * Math.PI : p;
-                return new Quantity(p);
+                return p;
             }
         }
-        public Quantity Magnitude
+        // Magnitude, relative to the parent
+        public double Magnitude
         {
-            get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate()));
+            get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate())).Evaluate();
         }
 
+        /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS:    */
+        ///////////////////////////////////////////////////
+        // Multi m = (blah...)
+        // loop {
+        //      m = (blah...);
+        // }
+        /* This will cause a memory when using textures. */
+        /* INSTEAD, USE THIS SETTER! It disposes of all  */
+        /* textures and handily sets the parent too!     */
         public Multi this[int i]
         {
             get => csts[i];
-            set { csts[i].DisposeAllTextures(); csts[i] = value.Parented(this); }
+            set 
+            { 
+                csts[i].DisposeAllTextures();
+                csts[i] = value.Parented(this);
+            }
         }
 
         DrawMode drawMode;
@@ -108,20 +164,30 @@ namespace Magician
             get => col;
         }
 
-        public Multi Modify(params Multi[] cs)
+        public Multi Become(Multi m)
         {
-            csts.Clear();
-            csts.AddRange(cs);
+            Clear();
+            int i = 0;
+            foreach (Multi c in m)
+            {
+                Add(c);
+                i++;
+            }
+
+            if (i >= 2)
+            {
+                DrawFlags(DrawMode.INNER);
+            }
             return this;
         }
 
         public double XCartesian(double offset)
         {
-            return Globals.winWidth / 2 + X.Evaluate(offset);
+            return Globals.winWidth / 2 + X + offset;
         }
         public double YCartesian(double offset)
         {
-            return Globals.winHeight / 2 - Y.Evaluate(offset);
+            return Globals.winHeight / 2 - Y + offset;
         }
 
 
@@ -209,6 +275,7 @@ namespace Magician
         /* Translation methods */
         public static void _SetX(Multi m, double x)
         {
+            //double pX = m.parent == null ? 0 : m.parent.X;
             // x is is stored as a Quantity object, so set it like this
             m.x.Set(x);
         }
@@ -219,6 +286,7 @@ namespace Magician
         }
         public static void _SetY(Multi m, double y)
         {
+            //double pY = m.parent == null ? 0 : m.parent.Y;
             // y is is stored as a Quantity object, so set it like this
             m.y.Set(y);
         }
@@ -257,31 +325,39 @@ namespace Magician
         }
 
         /* Rotation methods */
-        public static void _RotateTo(Multi m, double theta)
+        public static void _RevolveTo(Multi m, double theta)
         {
-            double mag = m.Magnitude.Evaluate();
+            double mag = m.Magnitude;
             m.x.Set(mag * Math.Cos(theta));
             m.y.Set(mag * Math.Sin(theta));
         }
-        public static void _RotateBy(Multi m, double theta)
+        public static void _RevolveBy(Multi m, double theta)
         {
-            _RotateTo(m, theta + m.Phase.Evaluate());
+            _RevolveTo(m, theta + m.Phase);
         }
+        public Multi Revolved(double theta)
+        {
+            _RevolveBy(this, theta);
+            return this;
+        }
+        public Multi RevolvedTo(double offset)
+        {
+            _RevolveTo(this, offset);
+            return this;
+        }
+        // Rotation, in terms of revolution
         public Multi Rotated(double theta)
         {
-            _RotateBy(this, theta);
-            return this;
-        }
-        public Multi RotatedTo(double offset)
-        {
-            _RotateTo(this, offset);
-            return this;
+            return Sub(
+                m =>
+                m.Revolved(theta)
+            );
         }
 
         /* Scaling methods */
         public static void _AbsoluteScale(Multi m, double mag)
         {
-            double ph = m.Phase.Evaluate();
+            double ph = m.Phase;
             _SetX(m, mag * Math.Cos(ph));
             _SetY(m, mag * Math.Sin(ph));
         }
@@ -292,14 +368,14 @@ namespace Magician
         }
         public Multi AbsoluteScaleShifted(double mag)
         {
-            _AbsoluteScale(this, mag + this.Magnitude.Evaluate());
+            _AbsoluteScale(this, mag + this.Magnitude);
             return this;
         }
 
         // Scale is implemented in terms of absolute scale
         public static void _Scale(Multi m, double mag)
         {
-            _AbsoluteScale(m, mag * m.Magnitude.Evaluate());
+            _AbsoluteScale(m, mag * m.Magnitude);
         }
         public Multi Scaled(double mag)
         {
@@ -333,7 +409,7 @@ namespace Magician
 
         /* Driving methods */
         // Activates all the drivers
-        public void Drive(double xOffset=0, double yOffset=0)
+        public void Drive(double xOffset = 0, double yOffset = 0)
         {
             /*
             foreach (Driver d in drivers)
@@ -343,8 +419,7 @@ namespace Magician
             */
             foreach (Multi c in csts)
             {
-                // Pass the offsets to subdriving?
-                // TODO: this may result in weird behaviour...
+                // Pass the offsets to subdriving
                 c.Drive(xOffset, yOffset);
             }
             // Automatically drive internal quantities
@@ -354,51 +429,66 @@ namespace Magician
             // y may depend on x, so use a temporary variable
             x.Drive(xOffset);
             double storX = x.Evaluate();
-            X.Set(tempX);
+            x.Set(tempX);
 
             y.Drive(yOffset);
-            X.Set(storX);
+            x.Set(storX);
         }
 
         // Remove all the drivers
+        public new void Eject()
+        {
+            x.Eject();
+            y.Eject();
+        }
         public Multi Ejected()
         {
-            drivers.Clear();
+            Eject();
             return this;
         }
-        public Multi DrivenXY(IMap f0, IMap f1)
+        public Multi DrivenXY(IMap im0, IMap im1)
         {
-            X.Driven(f0);
-            Y.Driven(f1);
+            //Eject();
+            if (parent == null)
+            {
+                x.Driven(im0);
+                y.Driven(im1);
+                return this;
+            }
+            x.Driven(im0.WithOffset(-parent.X));
+            y.Driven(im1.WithOffset(-parent.Y));
             return this;
         }
         public Multi DrivenXY(Func<double, double> f0, Func<double, double> f1)
         {
-            X.Driven(f0);
-            Y.Driven(f1);
-            return this;
+            return DrivenXY(new DirectMap(f0), new DirectMap(f1));
         }
-        public Multi DrivenPM(IMap fPhase, IMap fMag)
+        public Multi DrivenPM(IMap imPh, IMap imMg)
         {
+            //Eject();
+            if (parent == null)
+            {
+                // Driving of phase
+                x.Driven(x => Magnitude * Math.Cos(imPh.Evaluate(Phase)));
+                y.Driven(y => Magnitude * Math.Sin(imPh.Evaluate(Phase)));
+
+                // Driving of magnitude
+                x.Driven(x => imMg.Evaluate(Magnitude) * Math.Cos(Phase));
+                y.Driven(y => imMg.Evaluate(Magnitude) * Math.Sin(Phase));
+                return this;
+            }
             // Driving of phase
-            X.Driven(x => Magnitude.Evaluate()*Math.Cos(fPhase.Evaluate(Phase.Evaluate())));
-            Y.Driven(y => Magnitude.Evaluate()*Math.Sin(fPhase.Evaluate(Phase.Evaluate())));
+            x.Driven(x => Magnitude * Math.Cos(imPh.WithOffset(-parent.Phase).Evaluate(Phase)));
+            y.Driven(y => Magnitude * Math.Sin(imPh.WithOffset(-parent.Phase).Evaluate(Phase)));
 
             // Driving of magnitude
-            X.Driven(x => fMag.Evaluate(Magnitude.Evaluate())*Math.Cos(Phase.Evaluate()));
-            Y.Driven(y => fMag.Evaluate(Magnitude.Evaluate())*Math.Sin(Phase.Evaluate()));
+            x.Driven(x => imMg.WithOffset(-parent.Magnitude).Evaluate(Magnitude) * Math.Cos(Phase));
+            y.Driven(y => imMg.WithOffset(-parent.Magnitude).Evaluate(Magnitude) * Math.Sin(Phase));
             return this;
         }
-        public Multi DrivenPM(Func<double, double> fPhase, Func<double, double> fMag)
+        public Multi DrivenPM(Func<double, double> fPh, Func<double, double> fMg)
         {
-            // Driving of phase
-            X.Driven(x => Magnitude.Evaluate()*Math.Cos(fPhase.Invoke(Phase.Evaluate())));
-            Y.Driven(y => Magnitude.Evaluate()*Math.Sin(fPhase.Invoke(Phase.Evaluate())));
-
-            // Driving of magnitude
-            X.Driven(x => fMag.Invoke(Magnitude.Evaluate())*Math.Cos(Phase.Evaluate()));
-            Y.Driven(y => fMag.Invoke(Magnitude.Evaluate())*Math.Sin(Phase.Evaluate()));
-            return this;
+            return DrivenPM(new DirectMap(fPh), new DirectMap(fMg));
         }
 
         public Multi DrivenRGBA(Func<double, double> r, Func<double, double> g, Func<double, double> b, Func<double, double> a)
@@ -458,6 +548,10 @@ namespace Magician
                 copy.drivers.Add(drivers[i].CopiedTo(copy));
             }
             */
+            // TODO: fix this
+            x.TransferDrivers(copy.x);
+            y.TransferDrivers(copy.y);
+
             // Copy the constituents
             foreach (Multi c in this)
             {
@@ -477,7 +571,7 @@ namespace Magician
         // Flat adjoining on a particular constituent
         public void AddAt(Multi m, int n)
         {
-            m.Translated(csts[n].X.Evaluate(), csts[n].Y.Evaluate());
+            m.Translated(csts[n].X, csts[n].Y);
             csts[n] = m;
         }
 
@@ -487,11 +581,6 @@ namespace Magician
             Multi nm = new Multi(xOffset, yOffset);
             nm.Add(this, m);
             return nm;
-        }
-
-        public Multi Where(Func<Multi, bool> predicate)
-        {
-            return Modify(csts.Where(predicate).ToArray());
         }
 
         public Multi Sub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
@@ -537,7 +626,7 @@ namespace Magician
             for (int i = 0; i < Count; i++)
             {
                 // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy().Positioned(csts[i].X.Evaluate(), csts[i].Y.Evaluate());
+                Multi outerCopy = outer.Copy().Positioned(csts[i].x.Evaluate(), csts[i].y.Evaluate()).Parented(this);
 
                 // Copy the drivers to the new multi
                 /*
@@ -546,6 +635,8 @@ namespace Magician
                     outerCopy.AddDriver(d.CopiedTo(outerCopy));
                 }
                 */
+                csts[i].x.TransferDrivers(outerCopy.x);
+                csts[i].y.TransferDrivers(outerCopy.y);
 
                 csts[i] = outerCopy;
             }
@@ -646,7 +737,7 @@ namespace Magician
         {
             if (parent is null && this != Geo.Ref.Origin)
             {
-                Console.WriteLine($"{this} has no parent!\n");
+                Console.WriteLine($"WARNING: {this} has no parent!\n");
             }
             double r = col.R;
             double g = col.G;
@@ -657,7 +748,6 @@ namespace Magician
             float drawY = (float)YCartesian(yOffset);
 
             // If the flag is set, draw the relative origin
-            //Console.WriteLine($"{drawMode} / {DrawMode.POINT}, c: {Count}");
             if ((drawMode & DrawMode.POINT) > 0)
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
@@ -799,7 +889,12 @@ namespace Magician
 
         }
 
+        /* ToString override */
         public override string ToString()
+        {
+            return ToString();
+        }
+        public string ToString(int depth = 1)
         {
             string s = "";
             switch (Count)
@@ -811,25 +906,35 @@ namespace Magician
                     s += "Multi";
                     break;
                 default:
-                    s += $"{Count}-Multi (";
-                    foreach (Multi m in csts)
-                    {
-                        s += m.ToString() + "), ";
-                    }
+                    s += $"{Count}-Multi";
                     break;
             }
+
             if (this is null)
             {
-                s += "nothing";
+                s += " NULL";
             }
             else if (parent is null)
             {
-                s += $" ORIGIN at {x.Evaluate()}, {y.Evaluate()}";
+                s += " ORIGIN";
             }
-            else
+            string xAbs = X.ToString("F1");
+            string xRel = x.Evaluate().ToString("F1");
+            string yAbs = Y.ToString("F1");
+            string yRel = y.Evaluate().ToString("F1");
+            s += $" at ({xRel}, {yRel}) relative, ({xAbs}, {yAbs}) absolute";
+
+            foreach (Multi m in csts)
             {
-                s += $" at ({x.Evaluate()}, {y.Evaluate()}) relative";
+                s += "\n";
+                for (int i = 0; i <= depth; i++)
+                {
+                    s += " ";
+                }
+                s += m.ToString(depth + 2);
             }
+
+
             return s;
         }
 
@@ -846,6 +951,10 @@ namespace Magician
 
         public void Add(Multi item)
         {
+            if (item == this)
+            {
+                throw new InvalidDataException($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {this.parent}");
+            }
             item.parent = this;
             csts.Add(item);
         }
@@ -859,6 +968,10 @@ namespace Magician
 
         public void Clear()
         {
+            foreach (Multi c in csts)
+            {
+                c.DisposeAllTextures();
+            }
             csts.Clear();
         }
 

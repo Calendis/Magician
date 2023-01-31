@@ -7,7 +7,7 @@ namespace Magician
 {
     public class Quantity : IMap, IDriveable
     {
-        protected List<IMap> drivers = new List<IMap>();
+        List<IMap> drivers = new List<IMap>();
 
         // Global container for created quantites
         // This can be used to Drive the quantities
@@ -15,7 +15,7 @@ namespace Magician
 
         protected double q;
         // Setting the relative offset is useful when you want to offset a quantity while keeping the same reference
-        double relativeOffset = 0;
+        public double Offset{get; set;}
         public Quantity(double q)
         {
             this.q = q;
@@ -38,7 +38,7 @@ namespace Magician
         // Converts to double
         public double Evaluate(double offset = 0)
         {
-            return q + offset + relativeOffset;
+            return q + offset + Offset;
         }
 
         public double[] Evaluate(double[] offsets)
@@ -60,7 +60,7 @@ namespace Magician
         public Quantity GetDelta(double x)
         {
             //return new Quantity(q + x);
-            relativeOffset = x;
+            Offset = x;
             return this;
         }
         public Quantity Mult(double x)
@@ -84,17 +84,32 @@ namespace Magician
         {
             return Driven(new DirectMap(f));
         }
-
+        // Use the drivers
         public void Drive(double offset=0)
-        {
-            // band-aid
-            relativeOffset = 0;
-            
+        {            
             foreach (IMap imap in drivers)
             {
-                double result = imap.Evaluate(q+offset);
+                // so many offsets!
+                // so tuneable!
+                double result = imap.Evaluate(q+offset+imap.Offset);
                 q = result;
             }
+        }
+        // Remove the drivers
+        public void Eject()
+        {
+            drivers.Clear();
+        }
+        // TODO: Move this method to IDriveable
+        public void TransferDrivers(Quantity other)
+        {
+            other.drivers.AddRange(drivers);
+            //drivers.Clear();
+        }
+
+        public void Reset()
+        {
+            Offset = 0;
         }
 
         public override string ToString()
