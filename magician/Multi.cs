@@ -28,8 +28,10 @@ namespace Magician
         double tempX = 0;
         double tempY = 0;
         public Multi? parent;
-        // Multis are recursive, positioned relative to the parent
+        /* Multis are a recursive structure. They track position relative to their parent */
         List<Multi> csts;
+        Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
+        
         /*
         *  Positional Properties
         */
@@ -129,6 +131,33 @@ namespace Magician
             { 
                 csts[i].DisposeAllTextures();
                 csts[i] = value.Parented(this);
+            }
+        }
+        public Multi this[string tag]
+        {
+            get
+            {
+                if (tags.ContainsKey(tag))
+                {
+                    return tags[tag];
+                }
+                throw new KeyNotFoundException($"tag {tag} does not exist in {this}");
+            }
+            set
+            {
+                // Create new Multi associated with the tag
+                if (!tags.ContainsKey(tag))
+                {
+                    tags.Add(tag, value);
+                    Add(value);
+                    return;
+                }
+
+                // Destroy the old Multi, and tag the new one with the same tag
+                tags[tag].DisposeAllTextures();
+                Remove(tags[tag]);
+                tags[tag] = value;
+                Add(value);
             }
         }
 
