@@ -25,67 +25,29 @@ namespace Magician
         static Spell()
         {
             uiGrid = UI.Presets.Graph.Cartesian();
-            myMulti = RegularPolygon(3, 100).Colored(new RGBA(0x00f08080));
-            banner = new Multi();
-            multi2 = Star(6, 10, 48).Colored(new RGBA(0xf8070080));
         }
 
         public static void PreLoop()
         {
             Renderer.Control.Clear();
+            
             // Add a grid
-            Origin.Add(uiGrid.Render());
-            Origin.Add(myMulti, multi2);
+            Origin["grid"] = uiGrid.Render();
 
-            myMulti
+            // Create a pentagon...
+            Origin["mouseFollowPentagon"] = RegularPolygon(5, 100).Colored(new RGBA(0x00ff3070))
+            // ... and make it follow the cursor
             .DrivenXY(
                 x => Events.MouseX,
                 y => Events.MouseY
-            )
-            .Sub(
-                m =>
-                m.DrivenPM(
-                    ph => ph + 0.01,
-                    m => m
-                )
-            )
-            .DrivenXY(
-                x => -x,
-                y => myMulti.LastX/2
-            )
-            .DrivenPM(
-                ph => ph,
-                mg => mg*2
-            )
-            ;
-            myMulti[0].Become(
-                RegularPolygon(4, 20).Sub(
-                    m => m.DrivenPM(
-                        ph => ph - 0.04,
-                        mg => mg
-                    )
-                )
             );
-            myMulti[2].Become(RegularPolygon(5, 20));
-
-            multi2
-            .DrivenXY(
-                x => 100*Math.Cos(Environment.Time /5),
-                y => 100*Math.Sin(Environment.Time/9)
-            )
-            .DrivenXY(
-                x => x+Events.MouseX,
-                y => y+Events.MouseY
-            )
-            ;
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop()
         { 
-            //Origin[2].Rotated(-0.04);
             Renderer.Control.Clear();
-            //Console.WriteLine()
+            Origin["mouseFollowPentagon"].Rotated(0.02);
         }
     }
 }
