@@ -26,10 +26,10 @@ namespace Magician.Geo
         // Create a line
         public static Multi Line(Multi p1, Multi p2, Color col)
         {
-            double x1 = p1.X.Evaluate();
-            double y1 = p1.Y.Evaluate();
-            double x2 = p2.X.Evaluate();
-            double y2 = p2.Y.Evaluate();
+            double x1 = p1.X;
+            double y1 = p1.Y;
+            double x2 = p2.X;
+            double y2 = p2.Y;
 
             Multi line = new Multi(0, 0, col, DrawMode.PLOT,
             Point(x1, y1, col),
@@ -54,11 +54,11 @@ namespace Magician.Geo
             {
                 double x = magnitude * Math.Cos(angle * i / 180 * Math.PI);
                 double y = magnitude * Math.Sin(angle * i / 180 * Math.PI);
-                ps.Add(Point(ps, x, y, col));
+                ps.Add(Point(ps, x, y, Globals.UIDefault.FG));
             }
 
             //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-            return ps.Positioned(xOffset, yOffset).DrawFlags(DrawMode.INNER);
+            return ps.Positioned(xOffset, yOffset).Colored(col).DrawFlags(DrawMode.INNER);
 
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -73,7 +73,7 @@ namespace Magician.Geo
         // Create a star with an inner and outer radius
         public static Multi Star(double xOffset, double yOffset, Color col, int sides, double innerRadius, double outerRadius)
         {
-            Multi ps = new Multi();
+            Multi ps = new Multi().Parented(Ref.Origin);
             double angle = 360d / (double)sides;
             for (int i = 0; i < sides; i++)
             {
@@ -81,8 +81,8 @@ namespace Magician.Geo
                 double innerY = innerRadius * Math.Sin(angle * i / 180 * Math.PI);
                 double outerX = outerRadius * Math.Cos((angle * i + angle / 2) / 180 * Math.PI);
                 double outerY = outerRadius * Math.Sin((angle * i + angle / 2) / 180 * Math.PI);
-                ps.Add(ps, Point(innerX, innerY, col));
-                ps.Add(ps, Point(outerX, outerY, col));
+                ps.Add(Point(innerX, innerY, col));
+                ps.Add(Point(outerX, outerY, col));
             }
 
             return ps.Positioned(xOffset, yOffset).Colored(col).DrawFlags(DrawMode.INNER);
@@ -106,15 +106,15 @@ namespace Magician.Geo
             // Special case for rectangles
             if (IsRectangle(polygon))
             {
-                double minX = Math.Min(polygon[0].X.Evaluate(), polygon[2].X.Evaluate());
+                double minX = Math.Min(polygon[0].X, polygon[2].X);
                 double xRange = Math.Max(
-                   Math.Abs(polygon[0].X.Evaluate()-polygon[1].X.Evaluate()),
-                   Math.Abs(polygon[0].X.Evaluate()-polygon[3].X.Evaluate())
+                   Math.Abs(polygon[0].X-polygon[1].X),
+                   Math.Abs(polygon[0].X-polygon[3].X)
                 );
-                double minY = Math.Min(polygon[0].Y.Evaluate(), polygon[2].Y.Evaluate());
+                double minY = Math.Min(polygon[0].Y, polygon[2].Y);
                 double yRange = Math.Max(
-                   Math.Abs(polygon[0].Y.Evaluate()-polygon[1].Y.Evaluate()),
-                   Math.Abs(polygon[0].Y.Evaluate()-polygon[3].Y.Evaluate())
+                   Math.Abs(polygon[0].Y-polygon[1].Y),
+                   Math.Abs(polygon[0].Y-polygon[3].Y)
                 );
                 return (x >= minX) && (x < minX+xRange) && (y >= minY) && (y < minY+yRange);
             }
@@ -130,8 +130,8 @@ namespace Magician.Geo
             Multi v0 = m[0];
 
             // Either the x or the y of the first must match the x or y of the neighbour, within a tolerance
-            return  (Math.Abs(m[0].X.Evaluate() - m[1].X.Evaluate()) <= tolerance) ||
-                    (Math.Abs(m[0].Y.Evaluate() - m[1].Y.Evaluate()) <= tolerance);
+            return  (Math.Abs(m[0].X - m[1].X) <= tolerance) ||
+                    (Math.Abs(m[0].Y - m[1].Y) <= tolerance);
         }
     }
 
@@ -146,7 +146,7 @@ namespace Magician.Geo
         }
         public static double Distance(Multi m0, Multi m1)
         {
-            return Distance(m0.X.Evaluate(), m1.X.Evaluate(), m0.Y.Evaluate(), m1.Y.Evaluate());
+            return Distance(m0.X, m1.X, m0.Y, m1.Y);
         }
         public static double Distance(Multi m)
         {
