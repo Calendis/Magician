@@ -8,6 +8,7 @@ namespace Magician
         // If no generator is specifed, the sequence may lose information when shifting/extending
         IMap? generator;
         protected double[] s;
+        public double Offset{get; set;}
         
         // Seq from literals
         public Seq(params double[] s)
