@@ -5,7 +5,7 @@
 
 namespace Magician
 {
-    public class Quantity : IMap, IDriveable
+    public class Quantity : CustomMap, IDriveable
     {
         List<IMap> drivers = new List<IMap>();
 
@@ -15,10 +15,14 @@ namespace Magician
 
         protected double q;
         // Setting the relative offset is useful when you want to offset a quantity while keeping the same reference
-        public double Offset{get; set;}
         public Quantity(double q)
         {
             this.q = q;
+        }
+        public Quantity(Quantity qq)
+        {
+            q = qq.Evaluate();
+            drivers.AddRange(qq.drivers);
         }
 
         public void Set(double x)
@@ -36,19 +40,9 @@ namespace Magician
             q += x;
         }
         // Converts to double
-        public double Evaluate(double offset = 0)
+        public new double Evaluate(double offset = 0)
         {
-            return q + offset + Offset;
-        }
-
-        public double[] Evaluate(double[] offsets)
-        {
-            double[] outputs = new double[offsets.Length];
-            for (int i = 0; i < offsets.Length; i++)
-            {
-                outputs[i] = q + outputs[i];
-            }
-            return outputs;
+            return q + offset;
         }
 
         // Operators
@@ -59,9 +53,9 @@ namespace Magician
         }
         public Quantity GetDelta(double x)
         {
-            //return new Quantity(q + x);
-            Offset = x;
-            return this;
+            return new Quantity(q + x);
+            //Offset = x;
+            //return this;
         }
         public Quantity Mult(double x)
         {
@@ -82,34 +76,17 @@ namespace Magician
         // Allow driving with lambdas
         public Quantity Driven(Func<double, double> f)
         {
-            return Driven(new DirectMap(f));
+            return Driven(new CustomMap(f));
         }
-        // Use the drivers
-        public void Drive(double offset=0)
-        {            
-            foreach (IMap imap in drivers)
-            {
-                // so many offsets!
-                // so tuneable!
-                double result = imap.Evaluate(q+offset+imap.Offset);
-                q = result;
-            }
-        }
+
         // Remove the drivers
         public void Eject()
         {
             drivers.Clear();
         }
-        // TODO: Move this method to IDriveable
-        public void TransferDrivers(Quantity other)
+        public List<IMap> GetDrivers()
         {
-            other.drivers.AddRange(drivers);
-            //drivers.Clear();
-        }
-
-        public void Reset()
-        {
-            Offset = 0;
+            return drivers;
         }
 
         public override string ToString()
