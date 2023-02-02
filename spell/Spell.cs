@@ -17,9 +17,6 @@ namespace Magician
         // For stuff that can be defined once and left alone
         static Random rng = new Random();
         static UI.Grid uiGrid;
-        static Multi myMulti;
-        static Multi banner;
-        static Multi multi2;
 
         // Initializations
         static Spell()
@@ -34,33 +31,53 @@ namespace Magician
             // Add a grid
             Origin["grid"] = uiGrid.Render();
 
-            // Create a pentagon ...
-            Origin["mouseFollowPentagon"] = RegularPolygon(5, 100).Colored(new RGBA(0x00ff3070))
-            // ... and make it follow the cursor ...
+            Origin["spinner"] = RegularPolygon(6, 80).Colored(new RGBA(0x00e05080))
+            .Sub(m => m
+                .DrivenPM(
+                    ph => ph + 0.01,
+                    mg => mg
+                )
+            )
+            .Wielding(
+                RegularPolygon(3, 30)
+
+            );
+            Origin["spinner"][1]
+            .Sub(
+                    m => m
+                    .DrivenPM(
+                        ph => ph + 0.06,
+                        mg => mg
+                    )
+                )
+                .DrivenAbs(
+                    x => Events.MouseX,
+                    y => Events.MouseY
+                )
+            ;
+
+            // Demo of the EPIC parenting system
+            /*
+            Origin["ofOrigin"] = Star(400, -100, 5, 30, 60).Colored(new RGBA(0xffbb0080))
+            .DrivenXY(
+                x => 100*Math.Sin(Environment.Time/60),
+                y => 100*Math.Cos(Environment.Time/60)
+            )
+            ;
+            
+            Origin["ofOrigin"][1].Become(RegularPolygon(4, 40)
+            .Parented(Origin["ofOrigin"])
             .DrivenXY(
                 x => Events.MouseX,
                 y => Events.MouseY
-            )
-            // ... and make it spin //
-            .Sub(
-                m => m
-                .DrivenPM(
-                    ph => ph+0.02,
-                    mg => mg
-                )
-                .DrivenPM(
-                    ph => ph+0.04,
-                    mg => mg
-                )
-            );
+            ));
+            */
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop()
         { 
             Renderer.Control.Clear();
-            // This perfectly cancels the rotation
-            Origin["mouseFollowPentagon"].Rotated(-0.06);
         }
     }
 }
