@@ -299,10 +299,10 @@ namespace Magician
         }
         public static RGBA Random(double? red=null, double? green=null, double? blue=null, double? alpha=null)
         {
-            red ??= Environment.RNG.Next(256);
-            green ??= Environment.RNG.Next(256);
-            blue ??= Environment.RNG.Next(256);
-            alpha ??= Environment.RNG.Next(256);
+            red ??= Data.Env.RNG.Next(256);
+            green ??= Data.Env.RNG.Next(256);
+            blue ??= Data.Env.RNG.Next(256);
+            alpha ??= Data.Env.RNG.Next(256);
             return new RGBA((double)red, (double)green, (double)blue, (double)alpha);
         }
     }
@@ -376,10 +376,10 @@ namespace Magician
 
         public static HSLA Random(double? hue=null, double? saturation=null, double? lightness=null, double? alpha=null)
         {
-            hue ??= Environment.RNG.NextDouble()*2*Math.PI;
-            saturation ??= Environment.RNG.NextDouble();
-            lightness ??= Environment.RNG.NextDouble();
-            alpha ??= Environment.RNG.Next(256);
+            hue ??= Data.Env.RNG.NextDouble()*2*Math.PI;
+            saturation ??= Data.Env.RNG.NextDouble();
+            lightness ??= Data.Env.RNG.NextDouble();
+            alpha ??= Data.Env.RNG.Next(256);
             return new HSLA((double)hue, (double)saturation, (double)lightness, (double)alpha);
         }
     }
@@ -417,4 +417,5 @@ namespace Magician
         public Color FG {get => this[Math.Min(size, 2)];}
         public Color BG {get => this[0];}
     }
+
 }

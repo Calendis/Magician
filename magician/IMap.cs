@@ -71,7 +71,7 @@ namespace Magician
             }
             if (c is null)
             {
-                c = Globals.UIDefault.FG;
+                c = Data.Color.UIDefault.FG;
             }
 
             Multi m = new Multi(xOffset, yOffset);
@@ -229,7 +229,7 @@ namespace Magician
             }
             if (c is null)
             {
-                c = Globals.UIDefault.FG;
+                c = Data.Color.UIDefault.FG;
             }
 
             Multi m = new Multi(xOffset, yOffset);

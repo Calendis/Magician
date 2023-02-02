@@ -2,7 +2,7 @@
 *  Class for storing global variables like window and UI values
 */
 
-namespace Magician
+namespace Magician.Data
 {
     public static class Globals
     {
@@ -10,13 +10,18 @@ namespace Magician
         public static int winHeight = 800;
         public static int fontSize = 24;
 
-        static Random r = new Random();
-        public static double RandX => r.NextDouble() * winWidth - winWidth / 2;
-        public static double RandY => r.NextDouble() * winHeight - winHeight / 2;
+    }
 
-        //public static Color bgCol = new RGBA(0x001010ff).ToHSLA();
-        //public static Color fgCol = new RGBA(0x00e9f5ff).ToHSLA();
-        
+    public static class Env
+    {
+        public static double Time { get; set; }
+        public static Random RNG = new Random();
+        public static double RandX => RNG.NextDouble() * Globals.winWidth - Globals.winWidth / 2;
+        public static double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
+    }
+
+    public static class Color
+    {
         public static Palette UITurquoise = new Palette(
             new RGBA(0x000d0dff),
             new RGBA(0x002626ff),
@@ -24,7 +29,7 @@ namespace Magician
             new RGBA(0x007676ff),
             new RGBA(0xffffffff)
         );
-        
+
         public static Palette UIBlue = new Palette(
             new RGBA(0x000000ff),
             new RGBA(0x000c27ff),
@@ -50,12 +55,5 @@ namespace Magician
         );
 
         public static Palette UIDefault = UITurquoise;
-
-    }
-
-    public static class Environment
-    {
-        public static double Time {get; set;}
-        public static Random RNG = new Random();
     }
 }

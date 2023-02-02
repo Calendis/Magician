@@ -33,16 +33,16 @@ namespace Magician.UI
 
             // the horizontal axis on a 2d graph
             axis0 = Line(
-                Point(-Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
-                Point(Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
+                Point(-Data.Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
+                Point(Data.Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
             );
             // the vertical spacers along that axis
             spacers0 = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
             // the vertical axis on a 2d graph
             axis1 = Line(
-                Point(-Perspective.x.Evaluate(), Globals.winWidth / 2 - Perspective.y.Evaluate()),
-                Point(-Perspective.x.Evaluate(), -Globals.winWidth / 2 - Perspective.y.Evaluate())
+                Point(-Perspective.x.Evaluate(), Data.Globals.winWidth / 2 - Perspective.y.Evaluate()),
+                Point(-Perspective.x.Evaluate(), -Data.Globals.winWidth / 2 - Perspective.y.Evaluate())
             );
             // the horizontal spacers along that axis
             spacers1 = new Multi().DrawFlags(DrawMode.INVISIBLE);
@@ -51,13 +51,13 @@ namespace Magician.UI
             gridLines = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
             // Add spacers to the horizontal axis
-            int horizSpacers = (int)(Globals.winWidth / horizSpacing);
+            int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
             for (int i = 0; i < horizSpacers; i++)
             {
-                Renderer.Text tx = new Renderer.Text($"{(int)(i*hSp - Globals.winWidth/2)}", Globals.UIDefault.FG);
+                Renderer.Text tx = new Renderer.Text($"{(int)(i*hSp - Data.Globals.winWidth/2)}", Data.Color.UIDefault.FG);
                 Multi horizSpacer = Line(
-                    Point(i * horizSpacing - Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
-                    Point(i * horizSpacing - Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
+                    Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
+                    Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
                 // TODO: why do I have to do it this way???
                 // If I attach the .Textured(tx.Render()) to the Point call above, the texture comes out null
@@ -72,8 +72,8 @@ namespace Magician.UI
                 for (int j = 0; j < horizSubdivs; j++)
                 {
                     Multi horizSubdiv = Line(
-                        Point(i * horizSpacing - Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
-                        Point(i * horizSpacing - Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
                     );
                     spacers0.Add(horizSubdiv);
                 }
@@ -82,20 +82,20 @@ namespace Magician.UI
                 if (i % 2 != 0) {continue;}
                 gridLines.Add(
                     Line(
-                        Point(i * horizSpacing - Globals.winWidth / 2, -Globals.winHeight),
-                        Point(i * horizSpacing - Globals.winWidth / 2, Globals.winHeight),
-                        Globals.UIDefault[1]
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2, -Data.Globals.winHeight),
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2, Data.Globals.winHeight),
+                        Data.Color.UIDefault[1]
                     )
                 );
             }
 
             // Add spacers to the vertical axis
-            int vertSpacers = (int)(Globals.winHeight / vertSpacing);
+            int vertSpacers = (int)(Data.Globals.winHeight / vertSpacing);
             for (int i = 0; i < vertSpacers; i++)
             {
                 Multi vertSpacer = Line(
-                    Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Globals.winHeight / 2),
-                    Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Globals.winHeight / 2)
+                    Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Data.Globals.winHeight / 2),
+                    Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Data.Globals.winHeight / 2)
                 );
                 spacers1.Add(vertSpacer);
 
@@ -105,8 +105,8 @@ namespace Magician.UI
                 for (int j = 0; j < vertSubdivs; j++)
                 {
                     Multi vertSubdiv = Line(
-                        Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Globals.winHeight / 2),
-                        Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Globals.winHeight / 2)
+                        Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2),
+                        Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2)
                         );
                     spacers1.Add(vertSubdiv);
                 }
@@ -114,9 +114,9 @@ namespace Magician.UI
                 // Horizontal grid lines
                 if (i % 2 != 0) {continue;}
                 Multi l = Line(
-                        Point(-Globals.winWidth, i * vertSpacing - Globals.winHeight / 2),
-                        Point(Globals.winWidth, i * vertSpacing - Globals.winHeight / 2),
-                        Globals.UIDefault[1]
+                        Point(-Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
+                        Point(Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
+                        Data.Color.UIDefault[1]
                 );
 
                 gridLines.Add(

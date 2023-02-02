@@ -40,7 +40,7 @@ namespace Magician
         void GameLoop()
         {
             // Setup
-            Environment.Time = 0;
+            Data.Env.Time = 0;
             Spell.PreLoop();
 
             // Create a surface
@@ -48,14 +48,14 @@ namespace Magician
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Globals.winWidth, Globals.winHeight);
+            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
             SDL_FreeSurface(s);
 
             while (!done)
             {
                 // Cast a spell
                 Spell.Loop();
-                Environment.Time = frames*timeResolution;
+                Data.Env.Time = frames*timeResolution;
 
                 // Control flow and SDL
                 //SDL_PollEvent(out SDL_Event sdlEvent);
@@ -103,7 +103,7 @@ namespace Magician
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames < stopFrame)
                 {
-                    IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Globals.winWidth, Globals.winHeight);
+                    IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
                     IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
 
                     int width, height;
@@ -113,8 +113,8 @@ namespace Magician
                     SDL_Rect r = new SDL_Rect();
                     r.x = 0;
                     r.y = 0;
-                    r.w = Globals.winWidth;
-                    r.h = Globals.winHeight;
+                    r.w = Data.Globals.winWidth;
+                    r.h = Data.Globals.winHeight;
                     unsafe
                     {
                         SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
@@ -133,13 +133,13 @@ namespace Magician
                 SDL_Rect srcRect;
                 srcRect.x = 0;
                 srcRect.y = 0;
-                srcRect.w = Globals.winWidth;
-                srcRect.h = Globals.winHeight;
+                srcRect.w = Data.Globals.winWidth;
+                srcRect.h = Data.Globals.winHeight;
                 SDL_Rect dstRect;
                 dstRect.x = 0;
                 dstRect.y = 0;
-                dstRect.w = Globals.winWidth;
-                dstRect.h = Globals.winHeight;
+                dstRect.w = Data.Globals.winWidth;
+                dstRect.h = Data.Globals.winHeight;
 
                 SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
                 SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
@@ -166,7 +166,7 @@ namespace Magician
         }
         void CreateWindow()
         {
-            win = SDL_CreateWindow("Test Window", 0, 0, Globals.winWidth, Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow("Test Window", 0, 0, Data.Globals.winWidth, Data.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {

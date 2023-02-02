@@ -15,7 +15,7 @@ namespace Magician.Renderer
             this.s = s;
             this.c = c;
             // Open the default fony
-            font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Globals.fontSize);
+            font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Data.Globals.fontSize);
         }
 
         public Texture Render()

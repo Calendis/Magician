@@ -191,9 +191,9 @@ namespace Magician
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
         : this(Geo.Ref.Origin, x, y, col, dm, cs) { }
-        public Multi(double x, double y) : this(x, y, Globals.UIDefault.FG) { }
+        public Multi(double x, double y) : this(x, y, Data.Color.UIDefault.FG) { }
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Globals.UIDefault.FG, DrawMode.FULL, cs) { }
+        public Multi(params Multi[] cs) : this(0, 0, Data.Color.UIDefault.FG, DrawMode.FULL, cs) { }
 
         public Color Col
         {
@@ -214,11 +214,11 @@ namespace Magician
 
         public double XCartesian(double offset)
         {
-            return Globals.winWidth / 2 + X + offset;
+            return Data.Globals.winWidth / 2 + X + offset;
         }
         public double YCartesian(double offset)
         {
-            return Globals.winHeight / 2 - Y + offset;
+            return Data.Globals.winHeight / 2 - Y + offset;
         }
 
         /* Colour methods */
@@ -811,7 +811,7 @@ namespace Magician
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
-                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesian(0));
+                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesianz(0));
                 if (parent != null)
                 {
                     SDL_RenderDrawPointF(SDLGlobals.renderer, (float)parent.XCartesian(xOffset), (float)parent.YCartesian(yOffset));

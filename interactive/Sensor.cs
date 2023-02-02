@@ -39,11 +39,11 @@ namespace Magician.Interactive
 
         public static double MouseX
         {
-            get => (double)mouse[0] - Globals.winWidth / 2;
+            get => (double)mouse[0] - Data.Globals.winWidth / 2;
         }
         public static double MouseY
         {
-            get => (double)-mouse[1] + Globals.winHeight / 2;
+            get => (double)-mouse[1] + Data.Globals.winHeight / 2;
         }
 
         public static double ScrollX

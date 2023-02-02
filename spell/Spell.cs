@@ -4,11 +4,12 @@
 using Magician.Renderer;
 using Magician.UI;
 using Magician.Geo;
+using Magician.Interactive;
+using Magician.Data;
 using static Magician.Geo.Create;
 using static Magician.Geo.Ref;
 
 using static SDL2.SDL;
-using Magician.Interactive;
 
 namespace Magician
 {
