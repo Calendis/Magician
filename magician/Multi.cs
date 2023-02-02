@@ -207,6 +207,7 @@ namespace Magician
             {
                 Add(c);
             }
+            col = m.Col;
 
             return DrawFlags(m.drawMode);
         }
