@@ -31,47 +31,24 @@ namespace Magician
             // Add a grid
             Origin["grid"] = uiGrid.Render();
 
-            Origin["spinner"] = RegularPolygon(6, 80).Colored(new RGBA(0x00e05080))
-            .Sub(m => m
-                .DrivenPM(
-                    ph => ph + 0.01,
-                    mg => mg
+            Origin["hex"] = RegularPolygon(6, 100).Colored(new RGBA(0x00e05080))
+            .Wielding(
+                RegularPolygon(3, 45).Colored(HSLA.Random(alpha: 0x80, lightness: 0.9, saturation: 0.9))
+                .Wielding(
+                    RegularPolygon(4, 20).Colored(HSLA.Random(alpha: 0x80, lightness: 0.9, saturation: 1))
                 )
             )
-            .Wielding(
-                RegularPolygon(3, 30)
-
-            );
-            Origin["spinner"][1]
-            .Sub(
+            .Surrounding(
+                RegularPolygon(3, 300).DrawFlags(DrawMode.OUTERP)
+                .Sub(
                     m => m
                     .DrivenPM(
-                        ph => ph + 0.06,
-                        mg => mg
+                        p => p + 0.001,
+                        m => m
                     )
                 )
-                .DrivenAbs(
-                    x => Events.MouseX,
-                    y => Events.MouseY
-                )
-            ;
-
-            // Demo of the EPIC parenting system
-            /*
-            Origin["ofOrigin"] = Star(400, -100, 5, 30, 60).Colored(new RGBA(0xffbb0080))
-            .DrivenXY(
-                x => 100*Math.Sin(Environment.Time/60),
-                y => 100*Math.Cos(Environment.Time/60)
             )
             ;
-            
-            Origin["ofOrigin"][1].Become(RegularPolygon(4, 40)
-            .Parented(Origin["ofOrigin"])
-            .DrivenXY(
-                x => Events.MouseX,
-                y => Events.MouseY
-            ));
-            */
         }
 
         // For stuff that needs to redefined every frame
