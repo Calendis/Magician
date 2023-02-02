@@ -16,7 +16,6 @@ namespace Magician
     static class Spell
     {
         // For stuff that can be defined once and left alone
-        static Random rng = new Random();
         static UI.Grid uiGrid;
 
         // Initializations
@@ -28,33 +27,20 @@ namespace Magician
         public static void PreLoop()
         {
             Renderer.Control.Clear();
-            
+
             // Add a grid
             Origin["grid"] = uiGrid.Render();
 
-            Origin["hex"] = RegularPolygon(6, 100).Colored(new RGBA(0x00e05080))
-            .Wielding(
-                RegularPolygon(3, 45).Colored(HSLA.Random(alpha: 0x80, lightness: 0.9, saturation: 0.9))
-                .Wielding(
-                    RegularPolygon(4, 20).Colored(HSLA.Random(alpha: 0x80, lightness: 0.9, saturation: 1))
-                )
-            )
-            .Surrounding(
-                RegularPolygon(3, 300).DrawFlags(DrawMode.OUTERP)
-                .Sub(
-                    m => m
-                    .DrivenPM(
-                        p => p + 0.001,
-                        m => m
-                    )
-                )
-            )
-            ;
+            Origin["parametric"] = new Multimap(1,
+                x => 180 * Math.Cos(x / 3),
+                y => 180 * Math.Sin(y / 7)
+            ).TextAlong(-49, 49, 0.3, "Here's an example of a Multimap with 1 input and two outputs being used to draw text parametrically"
+            , new RGBA(0x00ff9080));
         }
 
         // For stuff that needs to redefined every frame
         public static void Loop()
-        { 
+        {
             Renderer.Control.Clear();
         }
     }
