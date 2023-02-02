@@ -208,11 +208,7 @@ namespace Magician
                 Add(c);
             }
 
-            if (Count >= 2)
-            {
-                DrawFlags(DrawMode.OUTER);
-            }
-            return this;
+            return DrawFlags(m.drawMode);
         }
 
         public double XCartesian(double offset)
