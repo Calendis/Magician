@@ -5,26 +5,21 @@ namespace Magician
     class MagicianSDL
     {
         static IntPtr win;
-
         bool done = false;
-        Random r = new Random();
         int frames = 0;
         int stopFrame = -1;
-        
         int driveDelay = 0;
         double timeResolution = 0.1;
 
         static void Main(string[] args)
         {
             // Startup
-            Console.WriteLine("Abracadabra!");
+            Console.WriteLine(Data.App.Title);
 
-            SDL2.SDL.SDL_version d;
-            SDL2.SDL_ttf.SDL_TTF_VERSION(out d);
-            Console.WriteLine($"SDL_ttf version: {d.major}.{d.minor}.{d.patch}");
             SDL2.SDL_ttf.TTF_Init();
 
             MagicianSDL demo = new MagicianSDL();
+            
             demo.InitSDL();
             demo.CreateWindow();
             demo.CreateRenderer();
@@ -44,12 +39,12 @@ namespace Magician
             Spell.PreLoop();
 
             // Create a surface
-            IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
+            //IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
 
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
             SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
-            SDL_FreeSurface(s);
+            //SDL_FreeSurface(s);
 
             while (!done)
             {
@@ -57,20 +52,16 @@ namespace Magician
                 Spell.Loop();
                 Data.Env.Time = frames*timeResolution;
 
-                // Control flow and SDL
-                //SDL_PollEvent(out SDL_Event sdlEvent);
-
                 // Event handling
-                //SDL_Event sdlEvent;
                 while (SDL_PollEvent(out SDL_Event sdlEvent)!=0?true:false)
                 {
                     Interactive.Events.Process(sdlEvent);
                     switch (sdlEvent.type)
-                {
-                    case SDL_EventType.SDL_QUIT:
-                        done = true;
-                        break;
-                }
+                    {
+                        case SDL_EventType.SDL_QUIT:
+                            done = true;
+                            break;
+                    }
                 }
                 
                 // Drive things
@@ -127,6 +118,7 @@ namespace Magician
 
                         SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
                     }
+                    SDL_DestroyTexture(texture);
                 }
 
                 // Display
@@ -166,7 +158,7 @@ namespace Magician
         }
         void CreateWindow()
         {
-            win = SDL_CreateWindow("Test Window", 0, 0, Data.Globals.winWidth, Data.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+            win = SDL_CreateWindow(Data.App.Title, 0, 0, Data.Globals.winWidth, Data.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
             if (win == IntPtr.Zero)
             {
