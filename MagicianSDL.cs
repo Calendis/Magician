@@ -73,8 +73,6 @@ namespace Magician
                 }
                 }
                 
-                
-                
                 // Drive things
                 if (frames >= driveDelay)
                 {
@@ -157,15 +155,7 @@ namespace Magician
         // Drive the dynamics of Multis and Quantities
         void Drive()
         {
-            // TODO: reimplement automatic time? maybe, maybe not
-            //Geo.Ref.Origin.Drive((frames - driveDelay) * timeResolution);
             Geo.Ref.Origin.Drive();
-            for (int i = 0; i < Quantity.ExtantQuantites.Count; i++)
-            {
-                //Quantity.ExtantQuantites[i].Go((frames - driveDelay) * timeResolution);
-                // TODO: maybe refactor away this ExtantQuantities idea...
-                Quantity.ExtantQuantites[i].Drive();
-            }
         }
         void InitSDL()
         {
