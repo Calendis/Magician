@@ -31,7 +31,7 @@ namespace Magician
         /* Multis are a recursive structure. They track position relative to their parent */
         List<Multi> csts;
         Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
-        
+
         /*
         *  Positional Properties
         */
@@ -78,9 +78,7 @@ namespace Magician
             {
                 if (parent is null) { return x.Evaluate(); }
                 // Recursive getting of parent position
-                double recursX = RecursX.Evaluate();
-                x.Reset();
-                return recursX;
+                return RecursX.Evaluate();
             }
         }
         // Big Y is the Y-position relative to (0, 0)
@@ -90,9 +88,7 @@ namespace Magician
             {
                 if (parent is null) { return y.Evaluate(); }
                 // Recursive getting of parent position
-                double recursY = RecursY.Evaluate();
-                y.Reset();
-                return recursY;
+                return RecursY.Evaluate();
             }
         }
         // These values are set by drivers
@@ -126,9 +122,20 @@ namespace Magician
         /* textures and handily sets the parent too!     */
         public Multi this[int i]
         {
-            get => csts[i];
-            set 
-            { 
+            get
+            {
+                if (i >= Count)
+                {
+                    throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
+                }
+                return csts[i];
+            }
+            set
+            {
+                if (i >= Count)
+                {
+                    throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
+                }
                 csts[i].DisposeAllTextures();
                 csts[i] = value.Parented(this);
             }
@@ -149,7 +156,7 @@ namespace Magician
                 if (!tags.ContainsKey(tag))
                 {
                     tags.Add(tag, value);
-                    Add(value);
+                    Add(value.Tagged(tag));
                     return;
                 }
 
@@ -196,16 +203,14 @@ namespace Magician
         public Multi Become(Multi m)
         {
             Clear();
-            int i = 0;
             foreach (Multi c in m)
             {
                 Add(c);
-                i++;
             }
 
-            if (i >= 2)
+            if (Count >= 2)
             {
-                DrawFlags(DrawMode.INNER);
+                DrawFlags(DrawMode.OUTER);
             }
             return this;
         }
@@ -218,7 +223,6 @@ namespace Magician
         {
             return Globals.winHeight / 2 - Y + offset;
         }
-
 
         /* Colour methods */
         public static void _Color(Multi m, Color c)
@@ -440,28 +444,40 @@ namespace Magician
         // Activates all the drivers
         public void Drive(double xOffset = 0, double yOffset = 0)
         {
-            /*
-            foreach (Driver d in drivers)
-            {
-                d.Go(t);
-            }
-            */
+            /*                                          TODO:                                                    */
+            // All driving should be done concurrently, so we need to traverse the tree and collect all the drivers
             foreach (Multi c in csts)
             {
                 // Pass the offsets to subdriving
                 c.Drive(xOffset, yOffset);
             }
-            // Automatically drive internal quantities
-            tempX = x.Evaluate();
-            tempY = y.Evaluate();
 
-            // y may depend on x, so use a temporary variable
-            x.Drive(xOffset);
-            double storX = x.Evaluate();
-            x.Set(tempX);
+            int count = x.GetDrivers().Count;
+            if (count != y.GetDrivers().Count)
+            {
+                throw new InvalidDataException("TODO: implement a fix for this");
+            }
+            // This drives x and y. If the driving IMap is flagged as absolute, we offset the
+            // result by the parent position. This corrects the offset and allows a user to
+            // easily drive multis based on their children
+            for (int i = 0; i < count; i++)
+            {
+                IMap xDriver = x.GetDrivers()[i];
+                IMap yDriver = y.GetDrivers()[i];
 
-            y.Drive(yOffset);
-            x.Set(storX);
+                // null checking parent all the time is really boring so I had some fun with it
+                // TODO: add support for absolute phase driving as well. IsAbs will need to be
+                // replaced with a reference to an offset value
+                double xResult = xDriver.Evaluate(x.Evaluate()) - (parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * parent.X));
+                double yResult = yDriver.Evaluate(y.Evaluate()) - (parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * parent.Y));
+
+                x.Set(xResult);
+                y.Set(yResult);
+            }
+            //x.Delta(-tempX);
+            //y.Delta(-tempY);
+            tempX = X;
+            tempY = Y;
         }
 
         // Remove all the drivers
@@ -477,47 +493,42 @@ namespace Magician
         }
         public Multi DrivenXY(IMap im0, IMap im1)
         {
-            //Eject();
-            if (parent == null)
-            {
-                x.Driven(im0);
-                y.Driven(im1);
-                return this;
-            }
-            x.Driven(im0.WithOffset(-parent.X));
-            y.Driven(im1.WithOffset(-parent.Y));
+            x.Driven(im0);
+            y.Driven(im1);
             return this;
         }
         public Multi DrivenXY(Func<double, double> f0, Func<double, double> f1)
         {
-            return DrivenXY(new DirectMap(f0), new DirectMap(f1));
+            return DrivenXY(new CustomMap(f0), new CustomMap(f1));
         }
         public Multi DrivenPM(IMap imPh, IMap imMg)
         {
-            //Eject();
-            if (parent == null)
-            {
-                // Driving of phase
-                x.Driven(x => Magnitude * Math.Cos(imPh.Evaluate(Phase)));
-                y.Driven(y => Magnitude * Math.Sin(imPh.Evaluate(Phase)));
-
-                // Driving of magnitude
-                x.Driven(x => imMg.Evaluate(Magnitude) * Math.Cos(Phase));
-                y.Driven(y => imMg.Evaluate(Magnitude) * Math.Sin(Phase));
-                return this;
-            }
             // Driving of phase
-            x.Driven(x => Magnitude * Math.Cos(imPh.WithOffset(-parent.Phase).Evaluate(Phase)));
-            y.Driven(y => Magnitude * Math.Sin(imPh.WithOffset(-parent.Phase).Evaluate(Phase)));
+            x.Driven(x => Magnitude * Math.Cos(imPh.Evaluate(Phase)));
+            y.Driven(y => Magnitude * Math.Sin(imPh.Evaluate(Phase)));
 
             // Driving of magnitude
-            x.Driven(x => imMg.WithOffset(-parent.Magnitude).Evaluate(Magnitude) * Math.Cos(Phase));
-            y.Driven(y => imMg.WithOffset(-parent.Magnitude).Evaluate(Magnitude) * Math.Sin(Phase));
+            x.Driven(x => imMg.Evaluate(Magnitude) * Math.Cos(Phase));
+            y.Driven(y => imMg.Evaluate(Magnitude) * Math.Sin(Phase));
             return this;
         }
         public Multi DrivenPM(Func<double, double> fPh, Func<double, double> fMg)
         {
-            return DrivenPM(new DirectMap(fPh), new DirectMap(fMg));
+            return DrivenPM(new CustomMap(fPh), new CustomMap(fMg));
+        }
+        public Multi DrivenAbs(IMap im0, IMap im1)
+        {
+            if (parent is null)
+            {
+                return DrivenXY(im0, im1);
+            }
+            x.Driven(im0.AsAbsolute());
+            y.Driven(im1.AsAbsolute());
+            return this;
+        }
+        public Multi DrivenAbs(Func<double, double> f0, Func<double, double> f1)
+        {
+            return DrivenAbs(new CustomMap(f0), new CustomMap(f1));
         }
 
         public Multi DrivenRGBA(Func<double, double> r, Func<double, double> g, Func<double, double> b, Func<double, double> a)
@@ -545,7 +556,7 @@ namespace Magician
 
         // Indexes the constituents of a Multi in the internal values of the constituents
         // This is useful because getting the index using IndexOf is too expensive
-        public static void CreateIndex(Multi m)
+        public static void _IndexConstituents(Multi m)
         {
             for (int i = 0; i < m.Count; i++)
             {
@@ -553,6 +564,7 @@ namespace Magician
             }
         }
 
+        /* Parenting/tagging methods */
         static void _Parent(Multi m, Multi p)
         {
             m.parent = p;
@@ -562,24 +574,35 @@ namespace Magician
             _Parent(this, m);
             return this;
         }
+        static bool _IsOrphan(Multi m)
+        {
+            if (m == Ref.Origin) { return false; }
+            if (m.parent == null) { return true; }
+            return false;
+        }
+        static void _Tag(Multi m, string tag)
+        {
+            m.tag = tag;
+        }
+        public Multi Tagged(string tag)
+        {
+            _Tag(this, tag);
+            return this;
+        }
 
         // Create a copy of the Multi
         public Multi Copy()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
-            copy.parent = parent;
-            copy.texture = texture;
+            // Don't copy the texture, or create reference to it!
+            //copy.texture = texture;
 
             // Copy the drivers
-            /*
-            for (int i = 0; i < drivers.Count; i++)
-            {
-                copy.drivers.Add(drivers[i].CopiedTo(copy));
-            }
-            */
             // TODO: fix this
-            x.TransferDrivers(copy.x);
-            y.TransferDrivers(copy.y);
+            //x.TransferDrivers(copy.x);
+            //y.TransferDrivers(copy.y);
+            copy.x = new Quantity(x);
+            copy.y = new Quantity(y);
 
             // Copy the constituents
             foreach (Multi c in this)
@@ -614,23 +637,24 @@ namespace Magician
 
         public Multi Sub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
         {
-            if (truth is null)
-            {
-                truth = x => 1;
-            }
+            return Sub((x, _i) => action(x), truth, threshold);
+        }
+
+        public Multi Sub(Action<Multi, int> action, Func<double, double>? truth = null, double threshold = 0)
+        {
+            int i = 0;
             foreach (Multi c in this)
             {
-                if (c.index is null)
+                int index = i;
+                if (truth == null || truth.Invoke(i) > threshold)
                 {
-                    CreateIndex(this);
+                    action.Invoke(c, i);
                 }
-                if (truth.Invoke(c.Index) > threshold)
-                {
-                    action.Invoke(c);
-                }
+                i++;
             }
             return this;
         }
+
         public Multi DeepSub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
         {
             Sub(action, truth, threshold);
@@ -652,35 +676,21 @@ namespace Magician
         // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
         public Multi Wielding(Multi outer)
         {
+            Eject();
             for (int i = 0; i < Count; i++)
             {
-                // Make a copy of the outer Multi and position it against the inner Multi
-                Multi outerCopy = outer.Copy().Positioned(csts[i].x.Evaluate(), csts[i].y.Evaluate()).Parented(this);
-
-                // Copy the drivers to the new multi
-                /*
-                foreach (Driver d in csts[i].drivers)
-                {
-                    outerCopy.AddDriver(d.CopiedTo(outerCopy));
-                }
-                */
-                csts[i].x.TransferDrivers(outerCopy.x);
-                csts[i].y.TransferDrivers(outerCopy.y);
-
-                csts[i] = outerCopy;
+                Multi outerCopy = outer.Copy();
+                csts[i].Become(outerCopy);
             }
 
             return this;
-        }
-        public Multi Wielding(Multi outer, Func<Multi, Multi> F)
-        {
-            return Wielding(F(outer));
         }
 
         // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
         public Multi Surrounding(Multi inner)
         {
-            return inner.Wielding(this);
+            Eject();
+            return inner.Wielding(Copy());
             //thisSurroundingInner.x.Set(x.Evaluate());
             //thisSurroundingInner.y.Set(y.Evaluate());
             //return thisSurroundingInner;//.Wielding(this);
@@ -699,19 +709,37 @@ namespace Magician
             return Wielding(F.Invoke(Copy()));
         }
 
+        /* Getter roperties for indices and tags */
         int? index = null;
+        string tag = "";
         public int Index
         {
             get
             {
                 if (index is null)
                 {
-                    throw new NullIndexException($"{this} had null index! Did you remember to call CreateIndex on the parent Multi before getting the index?");
+                    if (_IsOrphan(this))
+                    {
+                        throw new InvalidDataException($"Orphan {this} detected by Index getter");
+                    }
+                    else
+                    if (parent is null)
+                    {
+                        Console.WriteLine("WARN: Getting index of Origin");
+                        return -1;
+                    }
+                    Console.WriteLine($"INFO: {this.parent} is distributing indices...");
+                    // This ensures index will not be null, but I'll check anyway to please the compiler
+                    _IndexConstituents(parent);
+                    if (index is null)
+                    {
+                        throw new InvalidDataException("This should never occur. File an issue at https://github.com/Calendis");
+                    }
+                    return (int)index;
                 }
                 return (int)index;
             }
         }
-
 
         // TODO: rename this
         public double Normal
@@ -725,6 +753,11 @@ namespace Magician
                 return (double)Index / parent.Count;
             }
         }
+        public string Tag
+        {
+            get => tag;
+        }
+
         public int Count => csts.Count;
         public int DeepCount
         {
@@ -905,6 +938,8 @@ namespace Magician
                 catch (System.Exception)
                 {
                     Console.WriteLine($"Failed to render {this}");
+                    Console.WriteLine(" setting draw flags...");
+                    DrawFlags(DrawMode.OUTERP);
                     //throw;
                 }
 
@@ -919,11 +954,7 @@ namespace Magician
         }
 
         /* ToString override */
-        public override string ToString()
-        {
-            return ToString();
-        }
-        public string ToString(int depth = 1)
+        public string Title()
         {
             string s = "";
             switch (Count)
@@ -938,20 +969,26 @@ namespace Magician
                     s += $"{Count}-Multi";
                     break;
             }
+            if (Tag != "")
+            {
+                s += $" \"{Tag}\"";
+            }
 
-            if (this is null)
-            {
-                s += " NULL";
-            }
-            else if (parent is null)
-            {
-                s += " ORIGIN";
-            }
+            return s;
+        }
+        public override string ToString()
+        {
+            return ToString();
+        }
+        public string ToString(int depth = 1, bool verbose = false)
+        {
+            string s = Title(); ;
+
             string xAbs = X.ToString("F1");
             string xRel = x.Evaluate().ToString("F1");
             string yAbs = Y.ToString("F1");
             string yRel = y.Evaluate().ToString("F1");
-            s += $" at ({xRel}, {yRel}) relative, ({xAbs}, {yAbs}) absolute";
+            s += $" at ({xRel}, {yRel})rel, ({xAbs}, {yAbs})abs";
 
             foreach (Multi m in csts)
             {
@@ -960,9 +997,16 @@ namespace Magician
                 {
                     s += " ";
                 }
+                // Trim excessive output
+                if (!verbose)
+                {
+                    if (s.Split('\n', 16).ToList<string>().Count >= 16)
+                    {
+                        return s + $"... (trimmed output of {Title()})";
+                    }
+                }
                 s += m.ToString(depth + 2);
             }
-
 
             return s;
         }
@@ -987,12 +1031,13 @@ namespace Magician
             item.parent = this;
             csts.Add(item);
         }
-        public void Add(params Multi[] items)
+        public Multi Add(params Multi[] items)
         {
             foreach (Multi m in items)
             {
                 Add(m);
             }
+            return this;
         }
 
         public void Clear()
@@ -1009,6 +1054,7 @@ namespace Magician
             return csts.Contains(item);
         }
 
+        // Some interface method
         public void CopyTo(Multi[] array, int arrayIndex)
         {
             csts.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
