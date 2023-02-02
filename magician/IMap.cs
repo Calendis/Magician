@@ -5,14 +5,15 @@ namespace Magician
 {
     public interface IMap
     {
-        public abstract double Offset{get; set;}
-        public abstract double Evaluate(double x);
+        public abstract bool IsAbs { get; set; }
+        public abstract double Evaluate(double x = 0);
 
-        public virtual IMap WithOffset(double x)
+        public virtual IMap AsAbsolute()
         {
-            Offset = x;
+            IsAbs = true;
             return this;
         }
+        //public static IMap Identity = new CustomMap(x => x);
 
         // IMap operators
         public virtual IMap Add(IMap o)
@@ -38,7 +39,7 @@ namespace Magician
         // Compose two IMaps :)
         public IMap Compose(IMap imap)
         {
-            return new DirectMap(x => Evaluate(imap.Evaluate(x)));
+            return new CustomMap(x => Evaluate(imap.Evaluate(x)));
         }
 
         // Place Multis along an IMap according to some truth function
@@ -55,14 +56,6 @@ namespace Magician
                 {
                     tmp.parent = m;
                     double p = Evaluate(i);
-                    // Parametric Multi placement
-                    // TODO: re-implement parametric MultisAlong
-                    /*
-                    if (p.Length > 1)
-                    {
-                        m.Add(tmp.Copy().Positioned(p[0] + tmp.X.Evaluate(), p[1] + tmp.Y.Evaluate()));
-                    }
-                    */
                     m.Add(tmp.Copy().Positioned(i + tmp.X, p + tmp.Y));
                 }
             }
@@ -90,9 +83,14 @@ namespace Magician
                 {
                     break;
                 }
+                if (truth.Invoke(i) <= threshold)
+                {
+                    continue;
+                }
+
                 Text tx = new Text(msg.Substring(j, 1), c);
                 Texture txr = tx.Render();
-                
+
                 Multi tmp = new Multi().Textured(txr);
                 if (truth.Invoke(i) >= threshold)
                 {
@@ -136,24 +134,29 @@ namespace Magician
         }
     }
 
-    public class DirectMap : IMap
+    public class CustomMap : IMap
     {
         Func<double, double> f;
-        public double Offset{get; set;}
-        public DirectMap(Func<double, double> f)
+        bool isAbs;
+        public bool IsAbs
+        {
+            get => isAbs;
+            set => isAbs = value;
+        }
+        public CustomMap()
+        {
+            f = x => x;
+            IsAbs = false;
+        }
+        public CustomMap(Func<double, double> f)
         {
             this.f = f;
+            IsAbs = false;
         }
 
         public double Evaluate(double x)
         {
             return f.Invoke(x);
-        }
-        
-        // C# should do this for you tbh
-        public IMap AsIMap()
-        {
-            return ((IMap)this);
         }
     }
 
@@ -163,7 +166,7 @@ namespace Magician
         // Functionality
         List<IMap> imaps = new List<IMap>();
         int[][]? pairs;
-        public double Offset{get; set;}
+        public bool IsAbs { get; set; }
 
         // Dimensionality
         public int Ins { get; set; }
@@ -179,10 +182,83 @@ namespace Magician
         {
             foreach (Func<double, double> f in outs)
             {
-                imaps.Add(new DirectMap(f));
+                imaps.Add(new CustomMap(f));
             }
             Ins = ins;
             Outs = imaps.Count;
+        }
+
+        // Parametric 2D Multisalong
+        public Multi MultisAlong(double lb, double ub, double dx, Multi tmp, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        {
+            Console.WriteLine($"MultisAlong on {this}");
+            if (Ins != 1)
+            {
+                throw new InvalidDataException("Multimap nust have 1 input for MultisAlong");
+            }
+            if (truth is null)
+            {
+                truth = x => 1;
+            }
+            Multi m = new Multi(xOffset, yOffset);
+            for (double i = lb; i < ub; i += dx)
+            {
+                if (truth.Invoke(i) <= threshold)
+                {
+                    continue;
+                }
+                tmp.parent = m;
+
+                double[] out0 = new double[2];
+                out0[0] = imaps[0].Evaluate(i);
+                out0[1] = imaps[1].Evaluate(i);
+
+                m.Add(
+                    tmp.Copy().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
+                );
+
+            }
+            m.parent = Geo.Ref.Origin;
+            return m.DrawFlags(DrawMode.INVISIBLE);
+        }
+        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        {
+            if (truth is null)
+            {
+                truth = x => 1;
+            }
+            if (c is null)
+            {
+                c = Globals.UIDefault.FG;
+            }
+
+            Multi m = new Multi(xOffset, yOffset);
+            int j = 0;
+            for (double i = lb; i < ub; i += dx)
+            {
+                // Do not create more multis than characters in the string
+                if (j >= msg.Length)
+                {
+                    break;
+                }
+                if (truth.Invoke(i) <= threshold)
+                {
+                    continue;
+                }
+                Text tx = new Text(msg.Substring(j, 1), c);
+                Texture txr = tx.Render();
+
+                Multi tmp = new Multi().Textured(txr);
+                //tmp.parent=m;
+                double[] out0 = new double[2];
+                out0[0] = imaps[0].Evaluate(i);
+                out0[1] = imaps[1].Evaluate(i);
+                m.Add(
+                    tmp.Positioned(out0[0] + xOffset, out0[1] + yOffset)
+                );
+                j++;
+            }
+            return m.DrawFlags(DrawMode.INVISIBLE);
         }
 
         public Multimap Paired(int[][] pairs)
@@ -190,18 +266,19 @@ namespace Magician
             this.pairs = pairs;
             return this;
         }
-        // Evaluate function for Multimaps with only one input and one output
+
+        //
         public double Evaluate(double x)
         {
             if (Ins != 1 || Outs != 1)
             {
-                throw new InvalidDataException($"Cannot evaluate Multimap with {Ins} ins with single arg {x}");
+                throw new InvalidDataException("whyyy");
             }
             return imaps[0].Evaluate(x);
         }
 
         // General Evaluate for any number of ins/outs
-        public double[] Evaluate(params double[] args)
+        public double[] Evaluate(double[] args)
         {
             int noArgs = args.Length;
             double[] output = new double[Outs];
@@ -241,35 +318,6 @@ namespace Magician
             return output;
         }
 
-        /*
-        // Interpolate method for Multimaps with multiple inputs
-        Multi[] Interpolate(double[] ts0, double[] ts1)
-        {
-            double[] p0 = Evaluate(ts0);
-            double[] p1 = Evaluate(ts1);
-
-            Multi m0 = Point(p0[0], p0[1]);
-            Multi m1 = Point(p1[0], p1[1]);
-            return new Multi[] { m0, m1 };
-        }
-        // Interpolate method for Multimaps with only one input
-        Multi[] Interpolate(double t0, double t1)
-        {
-            Multi[] ndPs = new Multi[Outs];
-            for (int i = 0; i < Outs; i++)
-            {
-                double[] p0 = Evaluate(t0);
-                double[] p1 = Evaluate(t1);
-
-                Multi m0 = Point(p0[0], p0[1])
-                Multi m1 = new Multi();
-
-                ndPs.Append(new Multi());
-            }
-        }
-        */
-
-        // Square plot
         public Multi Plot(double x, double y, double start, double end, double dt, Color c)
         {
             // One-input parametric plots
@@ -300,7 +348,7 @@ namespace Magician
                             );
 
                         }
-                        return parametricPlot;
+                        return parametricPlot.Positioned(x, y);
 
                     // Parametric with hue
                     case 3:
@@ -311,7 +359,7 @@ namespace Magician
                 }
             }
             else
-            
+
             // Square value-plots
             if (Ins == 2)
             {
@@ -364,6 +412,11 @@ namespace Magician
 
             Console.WriteLine("WARNING: IOResolver: nothing to resolve");
             return this;
+        }
+
+        public override string ToString()
+        {
+            return $"Multimap ({Ins}, {Outs})";
         }
     }
 }
