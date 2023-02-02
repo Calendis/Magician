@@ -56,5 +56,6 @@ namespace Magician
     public static class Environment
     {
         public static double Time {get; set;}
+        public static Random RNG = new Random();
     }
 }
