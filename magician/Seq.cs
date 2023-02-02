@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Magician
 {
-    public class Seq : IMap, ICollection<double>
+    public class Seq : CustomMap, ICollection<double>
     {
         // If a generator is specified, the sequence can be shifted/extended when necessary
         // If no generator is specifed, the sequence may lose information when shifting/extending
@@ -29,7 +29,7 @@ namespace Magician
             }
         }
 
-        public virtual double Evaluate(double x)
+        public new virtual double Evaluate(double x)
         {
             double d;
             try

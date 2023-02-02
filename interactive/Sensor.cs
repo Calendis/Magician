@@ -2,20 +2,15 @@ using static SDL2.SDL;
 
 namespace Magician.Interactive
 {
-    public abstract class Sensor : IMap
+    public abstract class Sensor : CustomMap
     {
-        public abstract double[] Evaluate(params double[] x);
-
-        public abstract double Evaluate(double x);
-        public double Offset {get; set;}
-
         public static IMap MouseOver(Multi m)
         {
-            return new DirectMap(b => Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0);
+            return new CustomMap(b => Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0);
         }
     }
 
-    public class ScrollOver : Sensor, IMap
+    public class ScrollOver : Sensor
     {
         Multi m;
         public ScrollOver(Multi m)
@@ -23,14 +18,9 @@ namespace Magician.Interactive
             this.m = m;
         }
 
-        public override double Evaluate(double x)
+        public new double Evaluate(double x)
         {
             return Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? Events.ScrollY : 0;
-        }
-
-        public override double[] Evaluate(params double[] x)
-        {
-            return Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? new double[] {Events.ScrollX, Events.ScrollY} : new double[] {0, 0};
         }
     }
 
