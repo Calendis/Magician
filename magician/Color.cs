@@ -297,6 +297,14 @@ namespace Magician
         {
             return $"RGBA({r}, {g}, {b}, {a})";
         }
+        public static RGBA Random(double? red=null, double? green=null, double? blue=null, double? alpha=null)
+        {
+            red ??= Environment.RNG.Next(256);
+            green ??= Environment.RNG.Next(256);
+            blue ??= Environment.RNG.Next(256);
+            alpha ??= Environment.RNG.Next(256);
+            return new RGBA((double)red, (double)green, (double)blue, (double)alpha);
+        }
     }
 
     public class HSLA : Color
@@ -364,6 +372,15 @@ namespace Magician
         public override string ToString()
         {
             return $"HSLA({h}, {s}, {l}, {a})";
+        }
+
+        public static HSLA Random(double? hue=null, double? saturation=null, double? lightness=null, double? alpha=null)
+        {
+            hue ??= Environment.RNG.NextDouble()*2*Math.PI;
+            saturation ??= Environment.RNG.NextDouble();
+            lightness ??= Environment.RNG.NextDouble();
+            alpha ??= Environment.RNG.Next(256);
+            return new HSLA((double)hue, (double)saturation, (double)lightness, (double)alpha);
         }
     }
 
