@@ -5,7 +5,10 @@ namespace Magician.Geo
     public static class Ref
     {
         // The Origin is the eventual parent Multi for all Multis
-        public static Multi Origin = Create.Point(null, 0, 0, Globals.UIDefault.FG).DrawFlags(DrawMode.INVISIBLE);
+        public static Multi Origin = Create.Point(null, 0, 0, Globals.UIDefault.FG)
+        .DrawFlags(DrawMode.INVISIBLE)
+        .Tagged("Origin")
+        ;
     }
     public static class Create
     {
