@@ -4,6 +4,16 @@
 
 namespace Magician.Data
 {
+    public static class App
+    {
+        static string name = "Magician";
+        static string version = "Alpha 0.0";
+        public static string Title
+        {
+            get => name + " " + version;
+        }
+    }
+    
     public static class Globals
     {
         public static int winWidth = 1200;
