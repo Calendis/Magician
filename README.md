@@ -21,6 +21,7 @@ Magician currently offers limited user interactivity, defineable through IMaps.
 
 ## Usage/Examples
 Currently, Magician has basic functionality, but is not ready for general use. It is best used by writing code in spell/Spell.cs. It consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
+#### These examples reflect usage as of Magician Alpha 0.0, and may break at any time
 
 ```c#
 // Create an equilateral triangle with radius 60 in the upper-right quadrant
