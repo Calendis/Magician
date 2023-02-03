@@ -20,7 +20,7 @@ A Multimap is an IMap with an arbitrary number of inputs and outputs. This is us
 Magician currently offers limited user interactivity, defineable through IMaps.
 
 ## Usage/Examples
-Currently, Magician is best used by writing code in spell/Spell.cs. It consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
+Currently, Magician has basic functionality, but is not ready for general use. It is best used by writing code in spell/Spell.cs. It consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
 
 ```c#
 // Create an equilateral triangle with radius 60 in the upper-right quadrant
