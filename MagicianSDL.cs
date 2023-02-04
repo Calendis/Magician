@@ -25,7 +25,7 @@ namespace Magician
             SDL2.SDL_ttf.TTF_Init();
 
             // Load a spell
-            caster.Spellbook.Add(new Demos.WavingText());
+            caster.Spellbook.Add(new Demos.SpinningStuff());
 
             // Run
             magicianSDL.MainLoop();

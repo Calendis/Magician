@@ -26,4 +26,24 @@ namespace Magician.Demos
             , new RGBA(0x00ff9080));
         }
     }
+
+    public class SpinningStuff : Spell
+    {
+        public override void PreLoop()
+        {
+            Origin["myMulti"] = Create.RegularPolygon(5, 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
+            .Sub(
+                m => m
+                .DrivenPM(
+                    ph => ph + 0.025,
+                    m => m
+                )
+            );
+        }
+
+        public override void Loop()
+        {
+            Renderer.Control.Clear();
+        }
+    }
 }
