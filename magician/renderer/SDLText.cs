@@ -25,7 +25,7 @@ namespace Magician.Renderer
             {
                 Console.WriteLine($"Failed to load font: {SDL_GetError()}");
             }
-            
+
             // Create an SDL color from a Color
             SDL_Color sdlC;
             sdlC.r = (byte)c.R;
@@ -42,7 +42,7 @@ namespace Magician.Renderer
             SDL_FreeSurface(textSurface);
 
             return new Texture(textTexture);
-            
+
             //throw new NotImplementedException("Text as Texture not supported. Please file an issue at https://github.com/Calendis/Magician");
         }
 

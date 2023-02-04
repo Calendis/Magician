@@ -5,7 +5,7 @@ namespace Magician.Geo
     public static class Ref
     {
         // The Origin is the eventual parent Multi for all Multis
-        public static Multi Origin {get; set;}
+        public static Multi Origin { get; set; }
         static Ref()
         {
             Origin = new Multi();
@@ -112,20 +112,20 @@ namespace Magician.Geo
             {
                 double minX = Math.Min(polygon[0].X, polygon[2].X);
                 double xRange = Math.Max(
-                   Math.Abs(polygon[0].X-polygon[1].X),
-                   Math.Abs(polygon[0].X-polygon[3].X)
+                   Math.Abs(polygon[0].X - polygon[1].X),
+                   Math.Abs(polygon[0].X - polygon[3].X)
                 );
                 double minY = Math.Min(polygon[0].Y, polygon[2].Y);
                 double yRange = Math.Max(
-                   Math.Abs(polygon[0].Y-polygon[1].Y),
-                   Math.Abs(polygon[0].Y-polygon[3].Y)
+                   Math.Abs(polygon[0].Y - polygon[1].Y),
+                   Math.Abs(polygon[0].Y - polygon[3].Y)
                 );
-                return (x >= minX) && (x < minX+xRange) && (y >= minY) && (y < minY+yRange);
+                return (x >= minX) && (x < minX + xRange) && (y >= minY) && (y < minY + yRange);
             }
             throw new NotImplementedException("doesn't work yet, file an issue at https://github.com/Calendis/Magician");
         }
 
-        public static bool IsRectangle(Multi m, double tolerance=1.4210854715202004E-14)
+        public static bool IsRectangle(Multi m, double tolerance = 1.4210854715202004E-14)
         {
             if (m.Count != 4)
             {
@@ -134,7 +134,7 @@ namespace Magician.Geo
             Multi v0 = m[0];
 
             // Either the x or the y of the first must match the x or y of the neighbour, within a tolerance
-            return  (Math.Abs(m[0].X - m[1].X) <= tolerance) ||
+            return (Math.Abs(m[0].X - m[1].X) <= tolerance) ||
                     (Math.Abs(m[0].Y - m[1].Y) <= tolerance);
         }
     }
@@ -146,7 +146,7 @@ namespace Magician.Geo
         {
             double dx = x1 - x0;
             double dy = y1 - y0;
-            return Math.Sqrt(dx*dx + dy*dy);
+            return Math.Sqrt(dx * dx + dy * dy);
         }
         public static double Distance(Multi m0, Multi m1)
         {

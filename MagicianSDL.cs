@@ -29,7 +29,7 @@ namespace Magician
 
             // Run
             magicianSDL.MainLoop();
-            
+
             // Cleanup
             SDL_DestroyRenderer(SDLGlobals.renderer);
             SDL_DestroyWindow(win);
@@ -54,10 +54,10 @@ namespace Magician
             while (!done)
             {
                 caster.CurrentSpell.Loop();
-                caster.CurrentSpell.Time = frames*timeResolution;
+                caster.CurrentSpell.Time = frames * timeResolution;
 
                 // Event handling
-                while (SDL_PollEvent(out SDL_Event sdlEvent)!=0?true:false)
+                while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
                 {
                     Interactive.Events.Process(sdlEvent);
                     switch (sdlEvent.type)
@@ -67,7 +67,7 @@ namespace Magician
                             break;
                     }
                 }
-                
+
                 // Drive things
                 if (frames >= driveDelay)
                 {
@@ -113,7 +113,7 @@ namespace Magician
                     unsafe
                     {
                         SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-                        
+
                         SDL_Surface* surf = (SDL_Surface*)surface;
                         SDL_RenderReadPixels(SDLGlobals.renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
                         SDL_SaveBMP(surface, $"saved/frame_{Renderer.Control.saveCount.ToString("D4")}.bmp");
@@ -173,7 +173,7 @@ namespace Magician
         {
             // With VSync
             SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
-            
+
             // No VSync
             //SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
             if (SDLGlobals.renderer == IntPtr.Zero)

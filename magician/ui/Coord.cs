@@ -54,7 +54,7 @@ namespace Magician.UI
             int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
             for (int i = 0; i < horizSpacers; i++)
             {
-                Renderer.Text tx = new Renderer.Text($"{(int)(i*hSp - Data.Globals.winWidth/2)}", Data.Color.UIDefault.FG);
+                Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Data.Globals.winWidth / 2)}", Data.Color.UIDefault.FG);
                 Multi horizSpacer = Line(
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
@@ -79,7 +79,7 @@ namespace Magician.UI
                 }
 
                 // Vertical grid lines
-                if (i % 2 != 0) {continue;}
+                if (i % 2 != 0) { continue; }
                 gridLines.Add(
                     Line(
                         Point(i * horizSpacing - Data.Globals.winWidth / 2, -Data.Globals.winHeight),
@@ -110,9 +110,9 @@ namespace Magician.UI
                         );
                     spacers1.Add(vertSubdiv);
                 }
-                
+
                 // Horizontal grid lines
-                if (i % 2 != 0) {continue;}
+                if (i % 2 != 0) { continue; }
                 Multi l = Line(
                         Point(-Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
                         Point(Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
@@ -133,7 +133,7 @@ namespace Magician.UI
 
         public Multi Render()
         {
-            
+
             return new Multi(gridLines, axis0.Adjoin(spacers0), axis1.Adjoin(spacers1)).DrawFlags(DrawMode.INVISIBLE)
             ;
         }

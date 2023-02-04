@@ -12,7 +12,7 @@ namespace Magician.Renderer
         // Create a texture from an image file
         public Texture(string filepath, int width, int height)
         {
-            
+
             w = width;
             h = height;
             IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, w, h, 0, SDL_PIXELFORMAT_ARGB8888);
@@ -32,7 +32,7 @@ namespace Magician.Renderer
         public Texture(IntPtr texture)
         {
             this.texture = texture;
-            
+
             // Grab width and height of the rendered text
             unsafe
             {
@@ -47,9 +47,9 @@ namespace Magician.Renderer
             h = texture.h;
         }
 
-        public void Draw(double xOffset=0, double yOffset=0)
+        public void Draw(double xOffset = 0, double yOffset = 0)
         {
-            
+
             // Options
             SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             SDL_SetTextureBlendMode(texture, SDL_BlendMode.SDL_BLENDMODE_BLEND);

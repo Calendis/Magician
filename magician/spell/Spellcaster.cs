@@ -4,7 +4,7 @@ namespace Magician.Library
 {
     public class Spellcaster
     {
-        public List<Spell> Spellbook {get; set;}
+        public List<Spell> Spellbook { get; set; }
         public Spell CurrentSpell
         {
             get

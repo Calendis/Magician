@@ -8,8 +8,8 @@ namespace Magician
         // If no generator is specifed, the sequence may lose information when shifting/extending
         IMap? generator;
         protected double[] s;
-        public double Offset{get; set;}
-        
+        public double Offset { get; set; }
+
         // Seq from literals
         public Seq(params double[] s)
         {
@@ -70,8 +70,8 @@ namespace Magician
         public bool Remove(double x)
         {
             int done = 0;
-            double[] newS = new double[s.Length-1];
-            
+            double[] newS = new double[s.Length - 1];
+
             for (int i = 0; i < s.Length; i++)
             {
                 double d = s[i];
@@ -80,14 +80,14 @@ namespace Magician
                     done = 1;
                     continue;
                 }
-                newS[i] = s[i-done];
+                newS[i] = s[i - done];
             }
             return done == 1;
         }
 
         public void Clear()
         {
-            s = new double[] {};
+            s = new double[] { };
         }
 
         public bool Contains(double d)
@@ -115,10 +115,10 @@ namespace Magician
             return s.GetEnumerator();
         }
     }
-    
+
     public class Polynomial : Seq
     {
-        public Polynomial(params double[] s) : base(s) {}
+        public Polynomial(params double[] s) : base(s) { }
 
         public override double Evaluate(double x)
         {
@@ -133,7 +133,7 @@ namespace Magician
 
     public class Taylor : Seq
     {
-        public Taylor(params double[] s) : base(s) {}
+        public Taylor(params double[] s) : base(s) { }
 
         public override double Evaluate(double x)
         {

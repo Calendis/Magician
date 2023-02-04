@@ -20,7 +20,7 @@ namespace Magician.Data
         public static double RandX => RNG.NextDouble() * Globals.winWidth - Globals.winWidth / 2;
         public static double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
     }
-    
+
     public static class Globals
     {
         public static int winWidth = 1200;

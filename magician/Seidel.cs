@@ -215,13 +215,13 @@ namespace Seidel
         // The SOLE purpose of this constructor is to soothe the compiler
         static Triangulator()
         {
-            query = new Node[]{};
-            trapezoids = new Trapezoid[]{};
-            segs = new Segment[]{};
-            vertices = new Vertexchain[]{};
-            mchain = new Monchain[]{};
-            mon = new int[]{};
-            visited = new bool[]{};
+            query = new Node[] { };
+            trapezoids = new Trapezoid[] { };
+            segs = new Segment[] { };
+            vertices = new Vertexchain[] { };
+            mchain = new Monchain[] { };
+            mon = new int[] { };
+            visited = new bool[] { };
         }
 
         // Initialize arrays and read segments from Multi
