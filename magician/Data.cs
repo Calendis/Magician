@@ -13,6 +13,13 @@ namespace Magician.Data
             get => name + " " + version;
         }
     }
+
+    public static class Rand
+    {
+        public static Random RNG = new Random();
+        public static double RandX => RNG.NextDouble() * Globals.winWidth - Globals.winWidth / 2;
+        public static double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
+    }
     
     public static class Globals
     {
@@ -20,14 +27,6 @@ namespace Magician.Data
         public static int winHeight = 800;
         public static int fontSize = 24;
 
-    }
-
-    public static class Env
-    {
-        public static double Time { get; set; }
-        public static Random RNG = new Random();
-        public static double RandX => RNG.NextDouble() * Globals.winWidth - Globals.winWidth / 2;
-        public static double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
     }
 
     public static class Color

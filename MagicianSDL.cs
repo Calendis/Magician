@@ -1,4 +1,5 @@
 ﻿using static SDL2.SDL;
+using Magician.Library;
 
 namespace Magician
 {
@@ -10,33 +11,37 @@ namespace Magician
         int stopFrame = -1;
         int driveDelay = 0;
         double timeResolution = 0.1;
+        static Spellcaster caster = new Spellcaster();
 
         static void Main(string[] args)
         {
-            // Startup
+            /* Startup */
             Console.WriteLine(Data.App.Title);
+            MagicianSDL magicianSDL = new MagicianSDL();
 
+            magicianSDL.InitSDL();
+            magicianSDL.CreateWindow();
+            magicianSDL.CreateRenderer();
             SDL2.SDL_ttf.TTF_Init();
 
-            MagicianSDL demo = new MagicianSDL();
+            // Load a spell
+            caster.Spellbook.Add(new Demos.WavingText());
+
+            // Run
+            magicianSDL.MainLoop();
             
-            demo.InitSDL();
-            demo.CreateWindow();
-            demo.CreateRenderer();
-
-            demo.GameLoop();
-
             // Cleanup
             SDL_DestroyRenderer(SDLGlobals.renderer);
             SDL_DestroyWindow(win);
             SDL_Quit();
+
         }
 
-        void GameLoop()
+        void MainLoop()
         {
-            // Setup
-            Data.Env.Time = 0;
-            Spell.PreLoop();
+            /* TODO: this stuff should be set within a spell */
+            caster.PrepareSpell();
+            caster.CurrentSpell.PreLoop();
 
             // Create a surface
             //IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
@@ -48,9 +53,8 @@ namespace Magician
 
             while (!done)
             {
-                // Cast a spell
-                Spell.Loop();
-                Data.Env.Time = frames*timeResolution;
+                caster.CurrentSpell.Loop();
+                caster.CurrentSpell.Time = frames*timeResolution;
 
                 // Event handling
                 while (SDL_PollEvent(out SDL_Event sdlEvent)!=0?true:false)

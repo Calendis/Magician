@@ -59,8 +59,8 @@ namespace Magician.UI
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
                 );
-                // TODO: why do I have to do it this way???
                 // If I attach the .Textured(tx.Render()) to the Point call above, the texture comes out null
+                // This is because of how Geo.Create.Line works.
                 horizSpacer[0].Textured(tx.Render());
 
                 spacers0.Add(horizSpacer);
