@@ -2,7 +2,12 @@ using System;
 
 namespace Magician.Interactive
 {
-    public abstract class Controls
+    public interface IControl
+    {
+        //
+    }
+
+    public class Button : Multi, IControl
     {
         //
     }

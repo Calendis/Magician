@@ -8,7 +8,7 @@ namespace Magician.UI
         public static Quantity y = new Quantity(0);
     }
 
-    public class Grid
+    public class RuledAxes
     {
         Multi axis0;
         Multi axis1;
@@ -24,7 +24,7 @@ namespace Magician.UI
         double vSp;
         double vSd;
 
-        public Grid(double horizSpacing, double horizSubdivs, double vertSpacing, double vertSubdivs)
+        public RuledAxes(double horizSpacing, double horizSubdivs, double vertSpacing, double vertSubdivs)
         {
             hSp = horizSpacing;
             hSd = horizSubdivs;
@@ -126,9 +126,9 @@ namespace Magician.UI
         }
 
         // Update the grid according to the UI Perspective
-        public Grid Update()
+        public RuledAxes Update()
         {
-            return new Grid(hSp, hSd, vSp, vSd);
+            return new RuledAxes(hSp, hSd, vSp, vSd);
         }
 
         public Multi Render()
