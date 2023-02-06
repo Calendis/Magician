@@ -5,17 +5,26 @@ namespace Magician.Renderer
 {
     public class Text : IDisposable
     {
+        public static string FallbackFontPath = "";
+        string fontPath;
+
         string s;
         Color c;
         IntPtr font;
         bool disposed = false;
 
-        public Text(string s, Color c)
+        public Text(string s, Color c, string fp="")
         {
+            if (FallbackFontPath == "")
+            {
+                throw new InvalidDataException("Must set fallback font path before using Text");
+            }
             this.s = s;
             this.c = c;
-            // Open the default fony
-            font = TTF_OpenFont("magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf", Data.Globals.fontSize);
+            fontPath = fp == "" ? FallbackFontPath : fp;
+            // WIP text support
+            // Open the default font
+            font = TTF_OpenFont(fontPath, Data.Globals.fontSize);
         }
 
         public Texture Render()
