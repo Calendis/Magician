@@ -47,7 +47,15 @@ namespace Magician
                 // Orphan Multis should never occur
                 else if (parent is null)
                 {
+                    
+                }
+                if (IsOrphan())
+                {
                     throw new InvalidDataException($"RecursX detected Orphan {this}");
+                }
+                else if (this == Ref.Origin || parent == null)  // Last check is to soothe compiler
+                {
+                    return x;
                 }
                 // Recurse up the tree of Multis to find your position relative to the origin
                 return x.GetDelta(parent.RecursX.Evaluate());
@@ -57,15 +65,15 @@ namespace Magician
         {
             get
             {
-                // The top of the tree
-                if (this == Ref.Origin)
-                {
-                    return y;
-                }
-                // Orphan Multis should never occur
-                else if (parent is null)
+                // Orphans forbidden
+                if (IsOrphan())
                 {
                     throw new InvalidDataException($"RecursY detected Orphan {this}");
+                }
+                // Top of the tree, parent
+                else if (this == Ref.Origin || this.parent == null)  // Last check is to soothe compiler
+                {
+                    return y;
                 }
                 // Recurse up the tree of Multis to find your position relative to the origin
                 return y.GetDelta(parent.RecursY.Evaluate());
@@ -175,6 +183,7 @@ namespace Magician
         // Full constructor
         public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
         {
+            this.parent = parent ?? Ref.Origin;
             this.parent = parent;
             this.x.Set(x);
             this.y.Set(y);
@@ -577,6 +586,11 @@ namespace Magician
             if (m.parent == null) { return true; }
             return false;
         }
+        public bool IsOrphan()
+        {
+            return _IsOrphan(this);
+        }
+
         static void _Tag(Multi m, string tag)
         {
             m.tag = tag;
@@ -794,10 +808,11 @@ namespace Magician
         }
         public void Draw(double xOffset, double yOffset)
         {
-            if (parent is null && this != Geo.Ref.Origin)
+            if (IsOrphan())
             {
-                Console.WriteLine($"WARNING: {this} has no parent!\n");
+                throw new InvalidDataException($"Draw found orphan {this}");
             }
+            
             double r = col.R;
             double g = col.G;
             double b = col.B;
