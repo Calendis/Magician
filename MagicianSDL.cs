@@ -11,7 +11,6 @@ namespace Magician
         int stopFrame = -1;
         int driveDelay = 0;
         double timeResolution = 0.1;
-        static Spellcaster caster = new Spellcaster();
 
         static void Main(string[] args)
         {
@@ -26,7 +25,7 @@ namespace Magician
             Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
             // Load a spell
-            caster.Spellbook.Add(new Demos.SpinningStuff());
+            Spellcaster.Load(new Demos.RandomSpinner());
 
             // Run
             magicianSDL.MainLoop();
@@ -40,10 +39,6 @@ namespace Magician
 
         void MainLoop()
         {
-            /* TODO: this stuff should be set within a spell */
-            caster.PrepareSpell();
-            caster.CurrentSpell.PreLoop();
-
             // Create a surface
             //IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
 
@@ -54,8 +49,7 @@ namespace Magician
 
             while (!done)
             {
-                caster.CurrentSpell.Loop();
-                caster.CurrentSpell.Time = frames * timeResolution;
+                Spellcaster.Loop(frames * timeResolution);
 
                 // Event handling
                 while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
@@ -95,6 +89,7 @@ namespace Magician
                 // Draw objects
                 SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
                 Geo.Ref.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
+                //caster.CurrentSpell.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames < stopFrame)

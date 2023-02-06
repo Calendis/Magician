@@ -1,18 +1,27 @@
-using static Magician.Geo.Ref;
+using Magician.Geo;
 using Magician.Library;
 
 namespace Magician.Demos
 {
+    public class DefaultSpell : Spell
+    {
+        public override void PreLoop()
+        {
+            //
+        }
+
+        public override void Loop()
+        {
+            //
+        }
+    }
+    
     public class WavingText : Spell
     {
 
         public override void PreLoop()
         {
             Renderer.Control.Clear();
-
-            // Add a grid
-            Origin["grid"] = uiGrid.Render();
-
         }
 
         // For stuff that needs to redefined every frame
@@ -27,10 +36,13 @@ namespace Magician.Demos
         }
     }
 
-    public class SpinningStuff : Spell
+    public class RandomSpinner : Spell
     {
         public override void PreLoop()
         {
+            // Add a Cartesian plane
+            Origin["cartPlane"] = new UI.RuledAxes(100, 10, 100, 10).Render();
+            
             Origin["myMulti"] = Create.RegularPolygon(5, 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
             .Sub(
                 m => m

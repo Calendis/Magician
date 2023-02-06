@@ -1,14 +1,18 @@
 using System;
+using Magician.Library;
 
 namespace Magician.Geo
 {
     public static class Ref
     {
-        // The Origin is the eventual parent Multi for all Multis
-        public static Multi Origin { get; set; }
+        // Reference to the Origin of the current Spell (see Spellcaster.Load)
+        public static Multi Origin
+        {
+            get; set;
+        }
         static Ref()
         {
-            Origin = new Multi();
+            Origin = new Multi().Tagged("new Origin");
         }
     }
     public static class Create
