@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Magician
+namespace Magician.Symbols
 {
     public class Seq : CustomMap, ICollection<double>
     {
