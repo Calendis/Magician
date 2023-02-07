@@ -28,7 +28,7 @@ namespace Magician.Geo
         }
         public static Multi Point(double x, double y)
         {
-            return Point(Ref.Origin, x, y, Data.Color.UIDefault.FG);
+            return Point(Ref.Origin, x, y, Data.Col.UIDefault.FG);
         }
 
         // Create a line
@@ -49,7 +49,7 @@ namespace Magician.Geo
         }
         public static Multi Line(Multi p1, Multi p2)
         {
-            return Line(p1, p2, Data.Color.UIDefault.FG);
+            return Line(p1, p2, Data.Col.UIDefault.FG);
         }
 
         // Create a regular polygon with a position, number of sides, color, and magnitude
@@ -62,7 +62,7 @@ namespace Magician.Geo
             {
                 double x = magnitude * Math.Cos(angle * i / 180 * Math.PI);
                 double y = magnitude * Math.Sin(angle * i / 180 * Math.PI);
-                ps.Add(Point(ps, x, y, Data.Color.UIDefault.FG));
+                ps.Add(Point(ps, x, y, Data.Col.UIDefault.FG));
             }
 
             //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
@@ -71,7 +71,7 @@ namespace Magician.Geo
         }
         public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
         {
-            return RegularPolygon(xOffset, yOffset, Data.Color.UIDefault.FG, sides, magnitude);
+            return RegularPolygon(xOffset, yOffset, Data.Col.UIDefault.FG, sides, magnitude);
         }
         public static Multi RegularPolygon(int sides, double magnitude)
         {
@@ -98,7 +98,7 @@ namespace Magician.Geo
         }
         public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
         {
-            return Star(xOffset, yOffset, Data.Color.UIDefault.FG, sides, innerRadius, outerRadius);
+            return Star(xOffset, yOffset, Data.Col.UIDefault.FG, sides, innerRadius, outerRadius);
         }
         public static Multi Star(int sides, double innerRadius, double outerRadius)
         {

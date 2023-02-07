@@ -200,9 +200,9 @@ namespace Magician
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
         : this(Geo.Ref.Origin, x, y, col, dm, cs) { }
-        public Multi(double x, double y) : this(x, y, Data.Color.UIDefault.FG) { }
+        public Multi(double x, double y) : this(x, y, Data.Col.UIDefault.FG) { }
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Data.Color.UIDefault.FG, DrawMode.FULL, cs) { }
+        public Multi(params Multi[] cs) : this(0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
 
         public Color Col
         {

@@ -382,6 +382,10 @@ namespace Magician
             alpha ??= Data.Rand.RNG.Next(256);
             return new HSLA((double)hue, (double)saturation, (double)lightness, (double)alpha);
         }
+        public static HSLA RandomVisible()
+        {
+            return Random(saturation: 1, lightness: 1, alpha: 255);
+        }
     }
 
     public class Palette

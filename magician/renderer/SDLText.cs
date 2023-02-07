@@ -29,10 +29,9 @@ namespace Magician.Renderer
 
         public Texture Render()
         {
-            //IntPtr font = (IntPtr)0;
             if (font == (IntPtr)0)
             {
-                Console.WriteLine($"Failed to load font: {SDL_GetError()}");
+                Console.WriteLine($"Font is invalid: {SDL_GetError()}");
             }
 
             // Create an SDL color from a Color
@@ -49,7 +48,6 @@ namespace Magician.Renderer
 
             IntPtr textTexture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, textSurface);
             SDL_FreeSurface(textSurface);
-
             return new Texture(textTexture);
 
             //throw new NotImplementedException("Text as Texture not supported. Please file an issue at https://github.com/Calendis/Magician");
@@ -83,6 +81,11 @@ namespace Magician.Renderer
         ~Text()
         {
             Dispose(false);
+        }
+
+        public override string ToString()
+        {
+            return $"Text {s}";
         }
     }
 }

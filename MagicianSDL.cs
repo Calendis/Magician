@@ -25,7 +25,7 @@ namespace Magician
             Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
             // Load a spell
-            Spellcaster.Load(new Demos.RandomSpinner());
+            Spellcaster.Load(new Demos.DefaultSpell());
 
             // Run
             magicianSDL.MainLoop();
@@ -39,13 +39,10 @@ namespace Magician
 
         void MainLoop()
         {
-            // Create a surface
-            //IntPtr s = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, 400, 300, 0, SDL_PIXELFORMAT_ARGB8888);
-
             // Create a texture from the surface
             // Textures are hardware-acclerated, while surfaces use CPU rendering
-            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
-            //SDL_FreeSurface(s);
+            SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
+                Data.Globals.winWidth, Data.Globals.winHeight);
 
             while (!done)
             {
@@ -133,7 +130,9 @@ namespace Magician
                 dstRect.w = Data.Globals.winWidth;
                 dstRect.h = Data.Globals.winHeight;
 
+                // Set render target to 0, meaning display
                 SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+                // Copy the renderer to the texturez
                 SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
                 if (Renderer.Control.display)
                 {

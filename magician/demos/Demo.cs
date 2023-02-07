@@ -7,7 +7,22 @@ namespace Magician.Demos
     {
         public override void PreLoop()
         {
-            //
+            Origin["textTest"] = new Multi()
+            .Textured(
+                new Renderer.Text("Welcome to Magician, user", HSLA.RandomVisible()).Render()
+            )
+            .DrivenXY(
+                x => x + Math.Cos(Time/3),
+                y => y + Math.Sin(Time/10)
+            );
+
+            /*
+            Origin["paraTest"] = new Multi(-300, 100)
+            .Textured(
+                new UI.Paragraph("hahaha what a cool text\nwith newline support!\nIsn't it great? :)", HSLA.RandomVisible()).Render()
+            )
+            ;
+            */
         }
 
         public override void Loop()

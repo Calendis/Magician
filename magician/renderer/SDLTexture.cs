@@ -7,6 +7,18 @@ namespace Magician.Renderer
     {
         IntPtr texture;
         int w, h;
+        public int Width
+        {
+            get => w;
+        }
+        public int Height
+        {
+            get => h;
+        }
+        public IntPtr TexIntPtr
+        {
+            get => texture;
+        }
         bool disposed = false;
 
         // Create a texture from an image file
@@ -40,6 +52,7 @@ namespace Magician.Renderer
                 h = ((SDL_Surface*)texture)->h;
             }
         }
+        // Create a texture from a texture
         public Texture(Texture texture)
         {
             this.texture = texture.texture;  // texture

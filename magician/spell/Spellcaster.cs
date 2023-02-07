@@ -1,5 +1,3 @@
-using System;
-
 namespace Magician.Library
 {
     public static class Spellcaster
@@ -30,7 +28,6 @@ namespace Magician.Library
             {
                 Geo.Ref.Origin.DisposeAllTextures();
             }
-            Console.WriteLine("setting the Origin!");
             Geo.Ref.Origin = CurrentSpell.GetOrigin();
             CurrentSpell.PreLoop();
         }

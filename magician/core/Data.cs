@@ -29,7 +29,7 @@ namespace Magician.Data
 
     }
 
-    public static class Color
+    public static class Col
     {
         public static Palette UITurquoise = new Palette(
             new RGBA(0x000d0dff),

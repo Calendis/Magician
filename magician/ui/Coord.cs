@@ -54,7 +54,7 @@ namespace Magician.UI
             int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
             for (int i = 0; i < horizSpacers; i++)
             {
-                Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Data.Globals.winWidth / 2)}", Data.Color.UIDefault.FG);
+                Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Data.Globals.winWidth / 2)}", Data.Col.UIDefault.FG);
                 Multi horizSpacer = Line(
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
                     Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
@@ -84,7 +84,7 @@ namespace Magician.UI
                     Line(
                         Point(i * horizSpacing - Data.Globals.winWidth / 2, -Data.Globals.winHeight),
                         Point(i * horizSpacing - Data.Globals.winWidth / 2, Data.Globals.winHeight),
-                        Data.Color.UIDefault[1]
+                        Data.Col.UIDefault[1]
                     )
                 );
             }
@@ -116,7 +116,7 @@ namespace Magician.UI
                 Multi l = Line(
                         Point(-Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
                         Point(Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
-                        Data.Color.UIDefault[1]
+                        Data.Col.UIDefault[1]
                 );
 
                 gridLines.Add(
