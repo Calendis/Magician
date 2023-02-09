@@ -7,6 +7,7 @@ namespace Magician.Demos
     {
         public override void PreLoop()
         {
+            // Text moving in a Lissajous pattern
             Origin["textTest"] = new Multi()
             .Textured(
                 new Renderer.Text("Welcome to Magician, user", HSLA.RandomVisible()).Render()
@@ -16,6 +17,7 @@ namespace Magician.Demos
                 y => y + Math.Sin(Time/10)
             );
 
+            // Multi-line text (not working yet)
             /*
             Origin["paraTest"] = new Multi(-300, 100)
             .Textured(
@@ -23,11 +25,14 @@ namespace Magician.Demos
             )
             ;
             */
+
+            // Hexagonal grid
+            Origin["hex grid"] = new Symbols.Hexagonal(30, 30).Render(10);
         }
 
         public override void Loop()
         {
-            //
+            Renderer.Control.Clear();
         }
     }
     

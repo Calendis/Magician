@@ -950,7 +950,7 @@ namespace Magician
                 catch (System.Exception)
                 {
                     Console.WriteLine($"Failed to render {this}");
-                    Console.WriteLine(" setting draw flags...");
+                    Console.WriteLine(" You may have forgotten to set draw flags. Falling back to OUTERP...");
                     DrawFlags(DrawMode.OUTERP);
                     //throw;
                 }
