@@ -38,16 +38,19 @@ namespace Magician.Symbols
 
         public Multi Render(double radius)
         {
-            Multi hexGrid = new Multi();
+            double hexHeight = radius*Math.Cos(Math.PI/6);
+            double sideLength = radius*Math.Sin(Math.PI/6);
+
+            Multi hexGrid = new Multi(-300, -300);
             for (int row = 0; row < height; row++)
             {
                 for (int col = 0; col < width; col++)
                 {
-                    // This is easy to see if you draw some hexagons in a grid and look at the spacing between them
-                    double hexX = row%2==0? 3*col*radius : 3*col*radius + 1.5*radius;
-                    double hexY = row%2==0? 2*row*radius : 2*row*radius + radius;
+                    // Calculate x and y for hexagonal grid
+                    double hexX = row%2==0? 2*col*(radius+sideLength) : 2*col*(radius+sideLength) + radius + sideLength;
+                    double hexY = row*hexHeight;
                     
-                    Multi hexagon = Geo.Create.RegularPolygon(hexX, hexY, HSLA.RandomVisible(), 6, radius);
+                    Multi hexagon = Geo.Create.RegularPolygon(hexX, hexY, new HSLA(2*Math.PI*row/height, 1, 1, 120), 60, radius);
                     hexGrid.Add(hexagon);
                 }
             }

@@ -27,7 +27,7 @@ namespace Magician.Demos
             */
 
             // Hexagonal grid
-            Origin["hex grid"] = new Symbols.Hexagonal(30, 30).Render(10);
+            Origin["hex grid"] = new Symbols.Hexagonal(30, 30).Render(50);
         }
 
         public override void Loop()
