@@ -5,12 +5,14 @@ namespace Magician.Demos
 {
     public class DefaultSpell : Spell
     {
+        
+        IMap mo;
         public override void PreLoop()
         {
             // Text moving in a Lissajous pattern
             Origin["textTest"] = new Multi()
             .Textured(
-                new Renderer.Text("Welcome to Magician, user", HSLA.RandomVisible()).Render()
+                new Renderer.Text("Welcome :)", HSLA.RandomVisible()).Render()
             )
             .DrivenXY(
                 x => x + Math.Cos(Time/3),
@@ -27,20 +29,18 @@ namespace Magician.Demos
             */
 
             // Hexagonal grid
-            Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45);
+            Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
 
             // Non-square mouseover
-            Origin["mouseOver"] = Create.RegularPolygon(-200, 300, HSLA.RandomVisible(), 5, 100);
-            IMap mo = Interactive.Sensor.MouseOver(Origin["mouseOver"]);
-            Origin["mouseOver"].DrivenXY(
-                x => x + mo.Evaluate(),
-                y => y
-            );
+            Origin["my star"] = Create.Star(-250, 150, HSLA.RandomVisible(), 10, 40, 140);
+            mo = Interactive.Sensor.MouseOver(Origin["my star"]);
         }
 
         public override void Loop()
         {
             Renderer.Control.Clear();
+            Origin["my star"].Rotated(0.01);
+            Origin["my star"].Colored(new RGBA(0, 255*mo.Evaluate(), 255, 255));
         }
     }
     
