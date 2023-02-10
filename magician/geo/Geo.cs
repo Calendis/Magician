@@ -156,7 +156,7 @@ namespace Magician.Geo
                 double v1 = (y - y0 - v0*(y1-y0)) / (y2-y0);
                 
                 // Point is NOT in triangle
-                if (v0 < 0 || v1 < 0 || v0+v1 > 1)
+                if (v0 < 0 || v1 < 0 || Math.Abs(v0) > 1 || Math.Abs(v1) > 1 || v0+v1 > 1 || double.IsNaN(v0) || double.IsNaN(v1))
                 {
                     continue;
                 }
