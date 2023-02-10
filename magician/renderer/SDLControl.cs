@@ -17,7 +17,7 @@ namespace Magician.Renderer
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
             SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)c.R, (byte)c.G, (byte)c.B, (byte)c.A);
             SDL_RenderClear(SDLGlobals.renderer);
-            //SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+            SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
         }
     }
 }
