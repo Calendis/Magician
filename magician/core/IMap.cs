@@ -54,12 +54,12 @@ namespace Magician
             {
                 if (truth.Invoke(i) >= threshold)
                 {
-                    tmp.parent = m;
+                    tmp.Parented(m);
                     double p = Evaluate(i);
                     m.Add(tmp.Copy().Positioned(i + tmp.X, p + tmp.Y));
                 }
             }
-            m.parent = Geo.Ref.Origin;
+            m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
         // Place characters text, rendered char-by-char along an IMap according to some truth function
@@ -94,7 +94,7 @@ namespace Magician
                 Multi tmp = new Multi().Textured(txr);
                 if (truth.Invoke(i) >= threshold)
                 {
-                    tmp.parent = m;
+                    tmp.Parented(m);
                     double p = Evaluate(i);
                     m.Add(
                         tmp.Positioned(i, p)
@@ -103,7 +103,7 @@ namespace Magician
                 j++;
                 tx.Dispose();
             }
-            m.parent = Geo.Ref.Origin;
+            m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
 
@@ -191,7 +191,6 @@ namespace Magician
         // Parametric 2D Multisalong
         public Multi MultisAlong(double lb, double ub, double dx, Multi tmp, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
-            Console.WriteLine($"MultisAlong on {this}");
             if (Ins != 1)
             {
                 throw new InvalidDataException("Multimap nust have 1 input for MultisAlong");
@@ -207,7 +206,7 @@ namespace Magician
                 {
                     continue;
                 }
-                tmp.parent = m;
+                tmp.Parented(m);
 
                 double[] out0 = new double[2];
                 out0[0] = imaps[0].Evaluate(i);
@@ -218,7 +217,7 @@ namespace Magician
                 );
 
             }
-            m.parent = Geo.Ref.Origin;
+            m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
         public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
@@ -410,7 +409,7 @@ namespace Magician
                 throw new InvalidDataException("Cannot resolve!");
             }
 
-            Console.WriteLine("WARNING: IOResolver: nothing to resolve");
+            Scribe.Warn("IOResolver: nothing to resolve");
             return this;
         }
 
