@@ -128,13 +128,45 @@ namespace Magician.Geo
             }
             
             // For other shapes, grab the triangles from Siedel's algo and check each
-            List<int[]> vertices = Seidel.Triangulator.Triangulate(polygon);
-            foreach (int[] idxTriangle in vertices)
+            List<int[]> triangles = Seidel.Triangulator.Triangulate(polygon);
+            foreach (int[] vertexIdx in triangles)
             {
-                if (idxTriangle.Length != 3) {throw new InvalidDataException("bad triangle :(");}
+                if (vertexIdx.Length != 3) {Scribe.Issue("Renderer gave bad triangle :(");}
+                double x0, y0, x1, y1, x2, y2;
+                int idx0 = vertexIdx[0];
+                int idx1 = vertexIdx[1];
+                int idx2 = vertexIdx[2];
+                
+                // If all vertex indices are zero, we're done
+                if (idx0 + idx1 + idx2 == 0)
+                {
+                    break;
+                }
+
+                // Calculate absolute coordinates of triangle
+                x0 = polygon[idx0-1].X;
+                y0 = polygon[idx0-1].Y;
+                x1 = polygon[idx1-1].X;
+                y1 = polygon[idx1-1].Y;
+                x2 = polygon[idx2-1].X;
+                y2 = polygon[idx2-1].Y;
+
+                // These two vectors add up to the position of the mouse
+                double v0 = (x0*(y2-y0)+(y-y0)*(x2-x0)-x*(y2-y0)) / ((y1-y0)*(x2-x0)-(x1-x0)*(y2-y0));
+                double v1 = (y - y0 - v0*(y1-y0)) / (y2-y0);
+                
+                // Point is NOT in triangle
+                if (v0 < 0 || v1 < 0 || v0+v1 > 1)
+                {
+                    continue;
+                }
+                return true;
             }
+            return false;
             
-            throw new NotImplementedException("doesn't work yet, file an issue at https://github.com/Calendis/Magician");
+            // die
+            Scribe.Error("non-rect mouseover");
+            throw new Exception();
         }
 
         public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)
