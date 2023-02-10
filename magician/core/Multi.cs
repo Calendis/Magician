@@ -857,16 +857,13 @@ namespace Magician
                         int tri0 = vertexIndices[0];
                         int tri1 = vertexIndices[1];
                         int tri2 = vertexIndices[2];
+                        
                         // If all vertex indices are 0, we're done
-
-
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
-                            continue;
+                            break;
 
 
                         SDL_FPoint p0, p1, p2;
-                        //p.x = (float)constituents[i].XCartesian
-                        //p.y = (float)constituents[i].YCartesian(yOffset);
                         p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
                         p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
                         p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
