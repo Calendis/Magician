@@ -10,7 +10,7 @@ namespace Magician.Library
             {
                 if (Spellbook.Count == 0)
                 {
-                    throw new IndexOutOfRangeException("You must load a spell first");
+                    Scribe.Error("You must load a Spell first");
                 }
                 return Spellbook[idx];
             }
