@@ -41,7 +41,7 @@ namespace Magician.Symbols
             double hexHeight = radius*Math.Cos(Math.PI/6);
             double sideLength = radius*Math.Sin(Math.PI/6);
 
-            Multi hexGrid = new Multi(-300, -300);
+            Multi hexGrid = new Multi();
             for (int row = 0; row < height; row++)
             {
                 for (int col = 0; col < width; col++)
@@ -50,7 +50,8 @@ namespace Magician.Symbols
                     double hexX = row%2==0? 2*col*(radius+sideLength) : 2*col*(radius+sideLength) + radius + sideLength;
                     double hexY = row*hexHeight;
                     
-                    Multi hexagon = Geo.Create.RegularPolygon(hexX, hexY, new HSLA(2*Math.PI*row/height, 1, 1, 120), 6, radius);
+                    Multi hexagon = Geo.Create.RegularPolygon(hexX, hexY, new HSLA(2*Math.PI*row/height, 1, 1, 120), 6, radius)
+                    ;
                     hexGrid.Add(hexagon);
                 }
             }

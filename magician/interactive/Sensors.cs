@@ -6,19 +6,10 @@ namespace Magician.Interactive
         {
             return new CustomMap(b => Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0);
         }
-    }
 
-    public class ScrollOver : Sensor
-    {
-        Multi m;
-        public ScrollOver(Multi m)
+        public static IMap ScrollOver(Multi m)
         {
-            this.m = m;
-        }
-
-        public new double Evaluate(double x)
-        {
-            return Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? Events.ScrollY : 0;
+            return new CustomMap(b => Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? Events.ScrollY : 0);
         }
     }
 }

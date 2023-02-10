@@ -27,7 +27,15 @@ namespace Magician.Demos
             */
 
             // Hexagonal grid
-            Origin["hex grid"] = new Symbols.Hexagonal(30, 30).Render(50);
+            Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45);
+
+            // Non-square mouseover
+            Origin["mouseOver"] = Create.RegularPolygon(-200, 300, HSLA.RandomVisible(), 5, 100);
+            IMap mo = Interactive.Sensor.MouseOver(Origin["mouseOver"]);
+            Origin["mouseOver"].DrivenXY(
+                x => x + mo.Evaluate(),
+                y => y
+            );
         }
 
         public override void Loop()
