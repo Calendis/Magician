@@ -299,7 +299,6 @@ namespace Magician
         /* Translation methods */
         public static void _SetX(Multi m, double x)
         {
-            //double pX = m.parent == null ? 0 : m.parent.X;
             // x is is stored as a Quantity object, so set it like this
             m.x.Set(x);
         }
@@ -310,7 +309,6 @@ namespace Magician
         }
         public static void _SetY(Multi m, double y)
         {
-            //double pY = m.parent == null ? 0 : m.parent.Y;
             // y is is stored as a Quantity object, so set it like this
             m.y.Set(y);
         }
@@ -725,12 +723,7 @@ namespace Magician
 
                     Scribe.Info($"{this.Parent} is distributing indices...");
                     _IndexConstituents(Parent);
-                    if (index is null)
-                    {
-                        Scribe.Issue("Impossible null index");
-                        throw new InvalidDataException("This should never occur");
-                    }
-                    return (int)index;
+                    return (int)index!;  // just learned about this bad boy
                 }
                 return (int)index;
             }
