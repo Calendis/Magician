@@ -276,16 +276,9 @@ namespace Seidel
             }
 
             ConstructTrapezoids(n);
-            //SegsCheckpoint();
             int nmonopoly = MonotonateTrapezoids(n);
             int ntriangles = TriangulateMonotonePolygons(n, nmonopoly, op);
-            ////Console.WriteLine("Load successful!");
-            /*
-            for (int k = 0; k < ntriangles; k++)
-            {
-                //Console.WriteLine($"Triangle #{k}: {op[k][0]},{op[k][1]},{op[k][2]}");
-            }
-            */
+
             return op;
         }
 
