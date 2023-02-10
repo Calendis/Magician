@@ -64,8 +64,6 @@ namespace Magician.Interactive
                     break;
 
                 default:
-                    //SDL_GetMouseState(out mouse[0], out mouse[1]);
-                    //Console.WriteLine($"Could not process event {e.type}");
                     break;
             }
 
