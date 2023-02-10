@@ -27,11 +27,25 @@ namespace Magician
         Quantity y = new Quantity(0);
         double tempX = 0;
         double tempY = 0;
-        public Multi? parent;
+        Multi? _parent;
         /* Multis are a recursive structure. They track position relative to their parent */
         List<Multi> csts;
         Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
 
+        /* parent property */
+        public Multi Parent
+        {
+            get
+            {
+                if (_parent == null)
+                {
+                    Scribe.Error("Orphan detected");
+                    throw new Exception("throw for the compiler");
+                }
+                return _parent;
+            }
+        }
+        
         /*
         *  Positional Properties
         */
@@ -39,65 +53,37 @@ namespace Magician
         {
             get
             {
-                // The top of the tree
+                // Base case (top of the tree)
                 if (this == Ref.Origin)
                 {
                     return x;
                 }
-                // Orphan Multis should never occur
-                else if (parent is null)
-                {
-                    
-                }
-                if (IsOrphan())
-                {
-                    throw new InvalidDataException($"RecursX detected Orphan {this}");
-                }
-                else if (this == Ref.Origin || parent == null)  // Last check is to soothe compiler
-                {
-                    return x;
-                }
                 // Recurse up the tree of Multis to find your position relative to the origin
-                return x.GetDelta(parent.RecursX.Evaluate());
+                return x.GetDelta(Parent.RecursX.Evaluate());
             }
         }
         Quantity RecursY
         {
             get
             {
-                // Orphans forbidden
-                if (IsOrphan())
-                {
-                    throw new InvalidDataException($"RecursY detected Orphan {this}");
-                }
-                // Top of the tree, parent
-                else if (this == Ref.Origin || this.parent == null)  // Last check is to soothe compiler
+                // Base case (top of the tree)
+                if (this == Ref.Origin)
                 {
                     return y;
                 }
                 // Recurse up the tree of Multis to find your position relative to the origin
-                return y.GetDelta(parent.RecursY.Evaluate());
+                return y.GetDelta(Parent.RecursY.Evaluate());
             }
         }
         // Big X is the x-position relative to (0, 0)
         public double X
         {
-            get
-            {
-                if (parent is null) { return x.Evaluate(); }
-                // Recursive getting of parent position
-                return RecursX.Evaluate();
-            }
+            get => RecursX.Evaluate();
         }
         // Big Y is the Y-position relative to (0, 0)
         public double Y
         {
-            get
-            {
-                if (parent is null) { return y.Evaluate(); }
-                // Recursive getting of parent position
-                return RecursY.Evaluate();
-            }
+            get => RecursY.Evaluate();
         }
         // These values are set by drivers
         public double LastX { get => tempX; }
@@ -183,8 +169,7 @@ namespace Magician
         // Full constructor
         public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
         {
-            this.parent = parent ?? Ref.Origin;
-            this.parent = parent;
+            this._parent = parent ?? Ref.Origin;
             this.x.Set(x);
             this.y.Set(y);
             this.col = col;
@@ -474,8 +459,8 @@ namespace Magician
                 // null checking parent all the time is really boring so I had some fun with it
                 // TODO: add support for absolute phase driving as well. IsAbs will need to be
                 // replaced with a reference to an offset value
-                double xResult = xDriver.Evaluate(x.Evaluate()) - (parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * parent.X));
-                double yResult = yDriver.Evaluate(y.Evaluate()) - (parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * parent.Y));
+                double xResult = xDriver.Evaluate(x.Evaluate()) - (_parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * _parent.X));
+                double yResult = yDriver.Evaluate(y.Evaluate()) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
 
                 x.Set(xResult);
                 y.Set(yResult);
@@ -524,7 +509,7 @@ namespace Magician
         }
         public Multi DrivenAbs(IMap im0, IMap im1)
         {
-            if (parent is null)
+            if (_parent is null)
             {
                 return DrivenXY(im0, im1);
             }
@@ -573,7 +558,7 @@ namespace Magician
         /* Parenting/tagging methods */
         static void _Parent(Multi m, Multi p)
         {
-            m.parent = p;
+            m._parent = p;
         }
         public Multi Parented(Multi m)
         {
@@ -583,7 +568,7 @@ namespace Magician
         static bool _IsOrphan(Multi m)
         {
             if (m == Ref.Origin) { return false; }
-            if (m.parent == null) { return true; }
+            if (m._parent == null) { return true; }
             return false;
         }
         public bool IsOrphan()
@@ -727,24 +712,23 @@ namespace Magician
         {
             get
             {
+                // If the index is null, it means it hasn't been indexed yet ...
+                // ... so we ask the parent to distribute indices to all children
                 if (index is null)
                 {
-                    if (_IsOrphan(this))
+                    // 
+                    if (this == Geo.Ref.Origin)
                     {
-                        throw new InvalidDataException($"Orphan {this} detected by Index getter");
-                    }
-                    else
-                    if (parent is null)
-                    {
-                        Console.WriteLine("WARN: Getting index of Origin");
+                        Scribe.Warn("Getting index of Origin");
                         return -1;
                     }
-                    Console.WriteLine($"INFO: {this.parent} is distributing indices...");
-                    // This ensures index will not be null, but I'll check anyway to please the compiler
-                    _IndexConstituents(parent);
+
+                    Scribe.Info($"{this.Parent} is distributing indices...");
+                    _IndexConstituents(Parent);
                     if (index is null)
                     {
-                        throw new InvalidDataException("This should never occur. File an issue at https://github.com/Calendis");
+                        Scribe.Issue("Impossible null index");
+                        throw new InvalidDataException("This should never occur");
                     }
                     return (int)index;
                 }
@@ -755,14 +739,7 @@ namespace Magician
         // TODO: rename this
         public double Normal
         {
-            get
-            {
-                if (parent is null)
-                {
-                    return 0;
-                }
-                return (double)Index / parent.Count;
-            }
+            get => (double)Index / Parent.Count;
         }
         public string Tag
         {
@@ -786,33 +763,19 @@ namespace Magician
 
         public Multi Prev()
         {
-            if (parent is null)
-            {
-                return this;
-            }
-            Multi p = parent;
             int i = Index;
-            i = i == 0 ? p.Count - 1 : i - 1;
-            return p.csts[i];
+            i = i == 0 ? Parent.Count - 1 : i - 1;
+            return Parent[i];
         }
         public Multi Next()
         {
-            if (parent is null)
-            {
-                return this;
-            }
-            Multi p = parent;
             int i = Index;
-            i = i == p.Count - 1 ? 0 : i + 1;
-            return p.csts[i];
+            i = i == Parent.Count - 1 ? 0 : i + 1;
+            return Parent[i];
         }
         public void Draw(double xOffset, double yOffset)
         {
-            if (IsOrphan())
-            {
-                throw new InvalidDataException($"Draw found orphan {this}");
-            }
-            
+
             double r = col.R;
             double g = col.G;
             double b = col.B;
@@ -827,9 +790,9 @@ namespace Magician
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
                 //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
                 //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesianz(0));
-                if (parent != null)
+                if (_parent != null)
                 {
-                    SDL_RenderDrawPointF(SDLGlobals.renderer, (float)parent.XCartesian(xOffset), (float)parent.YCartesian(yOffset));
+                    SDL_RenderDrawPointF(SDLGlobals.renderer, (float)_parent.XCartesian(xOffset), (float)_parent.YCartesian(yOffset));
                 }
             }
 
@@ -949,10 +912,9 @@ namespace Magician
                 }
                 catch (System.Exception)
                 {
-                    Console.WriteLine($"Failed to render {this}");
-                    Console.WriteLine(" You may have forgotten to set draw flags. Falling back to OUTERP...");
+                    Scribe.Warn($"Failed to render {this}");
+                    Scribe.Warn(" You may have forgotten to set draw flags. Falling back to OUTERP...");
                     DrawFlags(DrawMode.OUTERP);
-                    //throw;
                 }
 
             }
@@ -1038,9 +1000,9 @@ namespace Magician
         {
             if (item == this)
             {
-                throw new InvalidDataException($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {this.parent}");
+                throw new InvalidDataException($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {Parent}");
             }
-            item.parent = this;
+            item._parent = this;
             csts.Add(item);
         }
         public Multi Add(params Multi[] items)

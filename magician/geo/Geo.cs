@@ -43,8 +43,8 @@ namespace Magician.Geo
             Point(x1, y1, col),
             Point(x2, y2, col));
             // Make sure the parents are set correctly
-            line[0].parent = line;
-            line[1].parent = line;
+            line[0].Parented(line);
+            line[1].Parented(line);
             return line;
         }
         public static Multi Line(Multi p1, Multi p2)
@@ -126,10 +126,18 @@ namespace Magician.Geo
                 );
                 return (x >= minX) && (x < minX + xRange) && (y >= minY) && (y < minY + yRange);
             }
+            
+            // For other shapes, grab the triangles from Siedel's algo and check each
+            List<int[]> vertices = Seidel.Triangulator.Triangulate(polygon);
+            foreach (int[] idxTriangle in vertices)
+            {
+                if (idxTriangle.Length != 3) {throw new InvalidDataException("bad triangle :(");}
+            }
+            
             throw new NotImplementedException("doesn't work yet, file an issue at https://github.com/Calendis/Magician");
         }
 
-        public static bool IsRectangle(Multi m, double tolerance = 1.4210854715202004E-14)
+        public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)
         {
             if (m.Count != 4)
             {
