@@ -31,7 +31,7 @@ namespace Magician.Renderer
         {
             if (font == (IntPtr)0)
             {
-                Console.WriteLine($"Font is invalid: {SDL_GetError()}");
+                Scribe.Error($"{SDL_GetError()}");
             }
 
             // Create an SDL color from a Color
@@ -43,7 +43,7 @@ namespace Magician.Renderer
             IntPtr textSurface = TTF_RenderText_Solid(font, s, sdlC);
             if (textSurface == (IntPtr)0)
             {
-                Console.WriteLine($"A horrible error occured: {SDL_GetError()}");
+                Scribe.Error($"{SDL_GetError()}");
             }
 
             IntPtr textTexture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, textSurface);
@@ -55,7 +55,8 @@ namespace Magician.Renderer
 
         Multi AsMulti()
         {
-            throw new NotImplementedException("Text as Multi not supported. Please file an issue at https://github.com/Calendis/Magician");
+            Scribe.Error("Text as Multi not supported yet");
+            throw new Exception();
         }
         /* IDisposable implementation */
         public void Dispose()

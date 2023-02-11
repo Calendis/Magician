@@ -149,12 +149,14 @@ namespace Magician
                 // Create new Multi associated with the tag
                 if (!tags.ContainsKey(tag))
                 {
+                    //Scribe.Info($"Creating tag \"{tag}\"");
                     tags.Add(tag, value);
                     Add(value.Tagged(tag));
                     return;
                 }
 
                 // Destroy the old Multi, and tag the new one with the same tag
+                //Scribe.Info($"Overwriting tag \"{tag}\"");
                 tags[tag].DisposeAllTextures();
                 Remove(tags[tag]);
                 tags[tag] = value;
@@ -409,7 +411,12 @@ namespace Magician
         {
             if (m.texture != null)
             {
+                Scribe.Info("Overwriting texture");
                 m.texture.Dispose();
+            }
+            else
+            {
+                //Scribe.Info("Setting new texture");
             }
             m.texture = t;
         }
@@ -768,7 +775,8 @@ namespace Magician
         }
         public void Draw(double xOffset, double yOffset)
         {
-
+            Control.SaveTarget();
+            SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
             double r = col.R;
             double g = col.G;
             double b = col.B;
@@ -914,6 +922,7 @@ namespace Magician
             {
                 texture.Draw(XCartesian(xOffset), YCartesian(yOffset));
             }
+            Control.RecallTarget();
 
         }
 
