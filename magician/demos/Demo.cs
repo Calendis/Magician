@@ -30,6 +30,7 @@ namespace Magician.Demos
             Origin["paragraph1"] = new UI.Paragraph(-200, 0,
                 "hahaha what a cool text\nwith newline support!\nIsn't it great? :)", HSLA.RandomVisible()
             );
+            
             Origin["paragraph2"] = new UI.Paragraph(-440, 300, HSLA.RandomVisible(),
                 "This is another", "way to", "create multi-line Text,", "which I think is fun"
             );
