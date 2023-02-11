@@ -163,10 +163,6 @@ namespace Magician.Geo
                 return true;
             }
             return false;
-            
-            // die
-            Scribe.Error("non-rect mouseover");
-            throw new Exception();
         }
 
         public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)

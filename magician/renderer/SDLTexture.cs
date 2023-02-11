@@ -15,10 +15,7 @@ namespace Magician.Renderer
         {
             get => h;
         }
-        public IntPtr TexIntPtr
-        {
-            get => texture;
-        }
+
         bool disposed = false;
 
         // Create a texture from an image file
@@ -51,13 +48,6 @@ namespace Magician.Renderer
                 w = ((SDL_Surface*)texture)->w;
                 h = ((SDL_Surface*)texture)->h;
             }
-        }
-        // Create a texture from a texture
-        public Texture(Texture texture)
-        {
-            this.texture = texture.texture;  // texture
-            w = texture.w;
-            h = texture.h;
         }
 
         public void Draw(double xOffset = 0, double yOffset = 0)
