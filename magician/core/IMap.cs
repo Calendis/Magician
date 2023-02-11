@@ -247,7 +247,7 @@ namespace Magician
                 Text tx = new Text(msg.Substring(j, 1), c);
                 Texture txr = tx.Render();
 
-                Multi tmp = new Multi().Textured(txr);
+                Multi tmp = new Multi().Textured(txr).Tagged(msg.Substring(j, 1));
                 //tmp.parent=m;
                 double[] out0 = new double[2];
                 out0[0] = imaps[0].Evaluate(i);
@@ -255,6 +255,7 @@ namespace Magician
                 m.Add(
                     tmp.Positioned(out0[0] + xOffset, out0[1] + yOffset)
                 );
+                tx.Dispose();
                 j++;
             }
             return m.DrawFlags(DrawMode.INVISIBLE);
