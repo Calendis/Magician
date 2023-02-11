@@ -84,9 +84,7 @@ namespace Magician
                 SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
                 // Draw objects
-                SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
                 Geo.Ref.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
-                //caster.CurrentSpell.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames < stopFrame)
@@ -129,13 +127,11 @@ namespace Magician
                 dstRect.y = 0;
                 dstRect.w = Data.Globals.winWidth;
                 dstRect.h = Data.Globals.winHeight;
-
-                // Set render target to 0, meaning display
-                SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-                // Copy the renderer to the texturez
-                SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
+                
                 if (Renderer.Control.display)
                 {
+                    SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+                    SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
                     SDL_RenderPresent(SDLGlobals.renderer);
                 }
                 //SDL_Delay(1/6);
@@ -167,7 +163,8 @@ namespace Magician
         void CreateRenderer()
         {
             // With VSync
-            SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
+            SDLGlobals.renderer = SDL_CreateRenderer(win, -1,
+            SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC | SDL_RendererFlags.SDL_RENDERER_TARGETTEXTURE);
 
             // No VSync
             //SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
