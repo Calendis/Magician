@@ -6,33 +6,36 @@ namespace Magician.Demos
     public class DefaultSpell : Spell
     {
         
-        IMap mo;
+        IMap? mo;
         public override void PreLoop()
         {
+            // bg
+            Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
+            
             // Text moving in a Lissajous pattern
-            Origin["textTest"] = new Multi()
+            Origin["textTest"] = new Multi(400, 0)
             .Textured(
-                new Renderer.Text("Welcome :)", HSLA.RandomVisible()).Render()
+                new Renderer.Text("I am text", HSLA.RandomVisible()).Render()
             )
             .DrivenXY(
                 x => x + Math.Cos(Time/3),
                 y => y + Math.Sin(Time/10)
             );
 
-            // Multi-line text (not working yet)
-            /*
-            Origin["paraTest"] = new Multi(-300, 100)
-            .Textured(
-                new UI.Paragraph("hahaha what a cool text\nwith newline support!\nIsn't it great? :)", HSLA.RandomVisible()).Render()
-            )
-            ;
-            */
 
             // Hexagonal grid
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
+            
+            /* Multi-line text */
+            Origin["paragraph1"] = new UI.Paragraph(-200, 0,
+                "hahaha what a cool text\nwith newline support!\nIsn't it great? :)", HSLA.RandomVisible()
+            );
+            Origin["paragraph2"] = new UI.Paragraph(-440, 300, HSLA.RandomVisible(),
+                "This is another", "way to", "create multi-line Text,", "which I think is fun"
+            );
 
             // Non-square mouseover
-            Origin["my star"] = Create.Star(-250, 150, HSLA.RandomVisible(), 10, 40, 140);
+            Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140);
             mo = Interactive.Sensor.MouseOver(Origin["my star"]);
         }
 
@@ -40,7 +43,15 @@ namespace Magician.Demos
         {
             Renderer.Control.Clear();
             Origin["my star"].Rotated(0.01);
-            Origin["my star"].Colored(new RGBA(0, 255*mo.Evaluate(), 255, 255));
+            Origin["my star"].Colored(new RGBA(0, 255*mo!.Evaluate(), 255, 255));
+
+            /* PLEASE don't memory leak :( */
+            Origin["memTest"] = new Multimap(1,
+                x => 100*Math.Sin(x/2 + Time/4),
+                y => 100*Math.Cos(y/7 + Time/4)
+            )
+            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time/10, 1, 1, 222), 60, -100)
+            ;
         }
     }
     
