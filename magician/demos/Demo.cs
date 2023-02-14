@@ -27,10 +27,12 @@ namespace Magician.Demos
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
             
             /* Multi-line text */
-            Origin["paragraph1"] = new UI.RichParagraph(-200, 0,
-                $"Okay,{UI.TFS.Blue} here's\n{UI.TFS.Red}an example "+
-                $"of in-line{new UI.TextFormatSetting(HSLA.RandomVisible())} text\n"+
-                $"formatting.{new UI.TextFormatSetting(HSLA.RandomVisible())} What fun!", HSLA.RandomVisible()
+            Origin["paragraph1"] = new UI.RichParagraph(-200, 0, HSLA.RandomVisible(),
+            $"{new UI.TextFormatSetting(new RGBA(0xff0000ff))}", "I think",
+            $"this {new UI.TextFormatSetting(new RGBA(0xffff00ff))}example {new UI.TextFormatSetting(new RGBA(0xff0000ff))}makes",
+            $"it {new UI.TextFormatSetting(new RGBA(0x00ff00ff))}much " +
+            $"{new UI.TextFormatSetting(new RGBA(0xff0000ff))}more ",
+            $"clear how this w{new UI.TextFormatSetting(new RGBA(0xff00ffff))}orks"
             );
 
             // Non-square mouseover
@@ -51,11 +53,13 @@ namespace Magician.Demos
             .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time/10, 1, 1, 222), 60, -100)
             ;
 
+            /*
             Origin["alert!!"] = new UI.RichParagraph(0, 350,
                 $"{new UI.TextFormatSetting(new HSLA(Time+1, 1, 1, 250))}Check {new UI.TextFormatSetting(new HSLA(Time, 1, 1, 250))}THIS{new UI.TextFormatSetting(new HSLA(Time-1, 1, 1, 250))}out", new RGBA(0xff0000ff)
             )
             .Translated(10*Math.Cos(Time), 20*Math.Sin(Time/4))
             ;
+            */
         }
     }
     
