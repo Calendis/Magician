@@ -48,10 +48,13 @@ namespace Magician.UI
     public class RichParagraph : Paragraph
     {
         int size;
+        string[] inStr;
+        // Rich paragraph supports inline text formatting using TextFormatSetting and $"string interpolation"
         RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
         {
             // If no size given, use the default
             size = sz ?? Data.Globals.fontSize;
+            inStr = inputStr;
 
             // If no path given, use the default
             fontPath = fontPath == "" ? Text.FallbackFontPath : fontPath;
@@ -88,22 +91,30 @@ namespace Magician.UI
             }
 
             // Assemble this bad boy
-            Color currentCol = col;
-            int currentSize = size;
-            int maxSize = currentSize;
+            //Color currentCol = col;
+            //int currentSize = size;
+            Stack<Color> colStack = new Stack<Color>(); colStack.Push(col);
+            Stack<int> sizStack = new Stack<int>(); sizStack.Push(size);
+            int maxSize = sizStack.Peek();
+            /* The bool[] represents wasColorChanged, wasSizeChanged */
+            Stack<bool[]> deltas = new Stack<bool[]>();
+            //deltas.Push(new bool[] { false, false });
             Multi lineByLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
             for (int row = 0; row < groupedFormats.Count; row++)
             {
                 Multi wordsInLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
                 int runningLength = 0;
-                for (int col = 0; col < groupedFormats[row].Length; col++)
+                for (int column = 0; column < groupedFormats[row].Length; column++)
                 {
-                    char ch = groupedFormats[row][col][0];
+                    char ch = groupedFormats[row][column][0];
                     // Is it a formatter?
                     if (ch == TextFormatSetting.Prefix)
                     {
-                        string formatSettings = groupedFormats[row][col].Substring(1);
+                        deltas.Push(new bool[] { false, false });
+                        string formatSettings = groupedFormats[row][column].Substring(1);
                         // Extract the formatters
+                        //bool changedCol = false;
+                        //bool changedSize = false;
                         foreach (string formatSetting in formatSettings.Split(TextFormatSetting.Prefix))
                         {
                             // What kind of formatter is it?
@@ -112,11 +123,40 @@ namespace Magician.UI
                             {
                                 case ((char)TextFormatSetting.FormatSetting.COLOR):
                                     byte[] rgba = Convert.FromHexString(formatSetting.Substring(1));
-                                    currentCol = new RGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
+                                    colStack.Push(new RGBA(rgba[0], rgba[1], rgba[2], rgba[3]));
+                                    deltas.Peek()[0] = true;
                                     break;
                                 case ((char)TextFormatSetting.FormatSetting.SIZE):
-                                    int.TryParse(formatSetting.Substring(1), out currentSize);
-                                    maxSize = currentSize > maxSize ? currentSize : maxSize;
+                                    int s;
+                                    int.TryParse(formatSetting.Substring(1), out s);
+                                    sizStack.Push(s);
+                                    maxSize = s > maxSize ? s : maxSize;
+                                    deltas.Peek()[1] = true;
+                                    break;
+                                case ((char)TextFormatSetting.FormatSetting.BACK):
+                                    if (deltas.Count < 1)
+                                    {
+                                        Scribe.Warn("Text format setting in RichPara fell back on nothing");
+                                        break;
+                                    }
+
+                                    deltas.Pop();
+                                    if (deltas.Peek()[0])
+                                    {
+                                        colStack.Pop();
+                                        if (colStack.Count < 1)
+                                        {
+                                            colStack.Push(col);
+                                        }
+                                    }
+                                    if (deltas.Peek()[1])
+                                    {
+                                        sizStack.Pop();
+                                        if (sizStack.Count < 1)
+                                        {
+                                            sizStack.Push(size);
+                                        }
+                                    }
                                     break;
                                 default:
                                     Scribe.Error($"Unsupported format setting identifer {formatSettingIdentifer}");
@@ -128,11 +168,11 @@ namespace Magician.UI
                     else
                     {
                         // Add words
-                        string[] words = groupedFormats[row][col].ToString().Split(' ');
-                        Text t = new Text(groupedFormats[row][col].ToString(), currentCol, currentSize);
+                        string[] words = groupedFormats[row][column].ToString().Split(' ');
+                        Text t = new Text(groupedFormats[row][column].ToString(), colStack.Peek(), sizStack.Peek());
                         Texture txr = t.Render();
 
-                        lineByLine.Add(new Multi(runningLength, -row * maxSize - (maxSize - currentSize)).Textured(txr));
+                        lineByLine.Add(new Multi(runningLength, -row * maxSize - (maxSize - sizStack.Peek())).Textured(txr));
                         runningLength += txr.Width;
                         t.Dispose();
                     }
