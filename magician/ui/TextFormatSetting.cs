@@ -8,12 +8,6 @@ namespace Magician.UI
     {
         public const char Delimiter = '§';
         public const char Prefix = '¶';
-        public static Dictionary<char, int> Encoding = new Dictionary<char, int>
-        {
-            {'c', 8},  // color, as 8-char hex string
-            {'s', 3},  // size, up to 999
-            {'r', 0}   // reset format settings
-        };
 
         public enum FormatSetting
         {
