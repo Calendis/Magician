@@ -6,7 +6,7 @@ namespace Magician.UI
     public class Paragraph : Multi
     {
         protected string[]? sentences;
-        Paragraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, params string[] ss) : base(x, y, c ?? Data.Col.UIDefault.FG, DrawMode.INVISIBLE)
+        Paragraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? size = null, params string[] ss) : base(x, y, c ?? Data.Col.UIDefault.FG, DrawMode.INVISIBLE)
         {
             sentences = new string[ss.Length];
             // If no path given, use the default
@@ -14,16 +14,17 @@ namespace Magician.UI
             for (int i = 0; i < ss.Length; i++)
             {
                 sentences[i] = ss[i];
-                Text t = new Text(sentences[i], col, fontPath);
-                this[$"line{i}"] = new Multi(0, -i * Data.Globals.fontSize)
+                size = size ?? Data.Globals.fontSize;
+                Text t = new Text(sentences[i], col, (int)size, fontPath);
+                this[$"line{i}"] = new Multi(0, -i * (int)size)
                 .Textured(t.Render())
                 .DrawFlags(DrawMode.INVISIBLE)
                 ;
                 t.Dispose();
             }
         }
-        public Paragraph(double x, double y, string s, Color c, char delimiter = '\n', string fp = "") : this(x, y, fp, c, s.Split(delimiter)) { }
-        public Paragraph(double x, double y, Color? c = null, params string[] ss) : this(x, y, "", c, ss) { }
+        public Paragraph(double x, double y, string s, Color c, int size, char delimiter = '\n', string fp = "") : this(x, y, fp, c, size, s.Split(delimiter)) { }
+        public Paragraph(double x, double y, Color? c = null, int? size = null, params string[] ss) : this(x, y, "", c, size, ss) { }
         // Does not set text, only position and colour. Used by RichParagraph
         protected Paragraph(double x, double y, Color c) : base(x, y, c, DrawMode.INVISIBLE) { }
 
@@ -46,8 +47,12 @@ namespace Magician.UI
     /* Paragraph with in-line formatting */
     public class RichParagraph : Paragraph
     {
-        RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
+        int size;
+        RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
         {
+            // If no size given, use the default
+            size = sz ?? Data.Globals.fontSize;
+
             // If no path given, use the default
             fontPath = fontPath == "" ? Text.FallbackFontPath : fontPath;
 
@@ -80,90 +85,63 @@ namespace Magician.UI
                     lastFlag = flags[j];
                 }
                 groupedFormats.Add(filteredFormats.ToArray());
-
-                /* this[$"line{i}"] = new Multi(0, -i * Data.Globals.fontSize)
-                .Textured(new Text(inputStr[i], col, fontPath).Render())
-                .DrawFlags(DrawMode.INVISIBLE)
-                ; */
             }
 
             // Assemble this bad boy
             Color currentCol = col;
-            //double currentSize;
+            int currentSize = size;
+            int maxSize = currentSize;
             Multi lineByLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
             for (int row = 0; row < groupedFormats.Count; row++)
             {
                 Multi wordsInLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
-                // Scan and break up the line if formatters are there
                 int runningLength = 0;
-                bool lastWasFormatter = false;  // Used to keep track of whether or not to add a space
                 for (int col = 0; col < groupedFormats[row].Length; col++)
                 {
                     char ch = groupedFormats[row][col][0];
                     // Is it a formatter?
                     if (ch == TextFormatSetting.Prefix)
                     {
-                        // What kind of formatter is it?
-                        char formatSettingIdentifer = groupedFormats[row][col][1];
-                        switch (formatSettingIdentifer)
+                        string formatSettings = groupedFormats[row][col].Substring(1);
+                        // Extract the formatters
+                        foreach (string formatSetting in formatSettings.Split(TextFormatSetting.Prefix))
                         {
-                            case ((char)TextFormatSetting.FormatSetting.COLOR):
+                            // What kind of formatter is it?
+                            char formatSettingIdentifer = formatSetting[0];
+                            switch (formatSettingIdentifer)
                             {
-                                currentCol = HSLA.RandomVisible();
-                                string colorSetting = groupedFormats[row][col].Substring(2);
-                                byte[] rgba = Convert.FromHexString(colorSetting);
-                                currentCol = new RGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
-                                break;
-                            }
-                            default:
-                            {
-                                break;
+                                case ((char)TextFormatSetting.FormatSetting.COLOR):
+                                    byte[] rgba = Convert.FromHexString(formatSetting.Substring(1));
+                                    currentCol = new RGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
+                                    break;
+                                case ((char)TextFormatSetting.FormatSetting.SIZE):
+                                    int.TryParse(formatSetting.Substring(1), out currentSize);
+                                    maxSize = currentSize > maxSize ? currentSize : maxSize;
+                                    break;
+                                default:
+                                    Scribe.Error($"Unsupported format setting identifer {formatSettingIdentifer}");
+                                    break;
                             }
                         }
-                        lastWasFormatter = true;
                     }
                     // Is it a phrase?
                     else
                     {
                         // Add words
                         string[] words = groupedFormats[row][col].ToString().Split(' ');
-                        
-                        /* foreach (string word in words)
-                        {
-                            if (word == "")
-                            {
-                                //Scribe.Error("paranoid");
-                                continue;
-                            }
-                            string paddedWord = word + " ";//lastWasFormatter ? word : " " + word;
-                            if (lastWasFormatter)
-                            {
-                                Scribe.Info(word);
-                                lastWasFormatter = false;
-                            }
-
-                            Text t = new Text(paddedWord, currentCol, fontPath);
-                            Texture txr = t.Render();
-                            wordsInLine[$"{row}{col}{word.Substring(0, Math.Min(16, word.Length - 1))}"] = new Multi()
-                            .Textured(txr)
-                            .Positioned(runningLength, -row * Data.Globals.fontSize)
-                            ;
-                            t.Dispose();
-                            runningLength += txr.Width;
-                        } */
-                        lastWasFormatter = false;
-                        Text t = new Text(groupedFormats[row][col].ToString(), currentCol);
+                        Text t = new Text(groupedFormats[row][col].ToString(), currentCol, currentSize);
                         Texture txr = t.Render();
-                        lineByLine.Add(new Multi(runningLength, -row*Data.Globals.fontSize).Textured(txr));
+
+                        lineByLine.Add(new Multi(runningLength, -row * maxSize - (maxSize - currentSize)).Textured(txr));
                         runningLength += txr.Width;
                         t.Dispose();
                     }
                 }
-                //lineByLine[$"line{row}"] = wordsInLine;
             }
+            // Become the assembled Multi
             Become(lineByLine);
         }
-        public RichParagraph(double x, double y, string s, Color c, char delimiter = '\n', string fp = "") : this(x, y, fp, c, s.Split(delimiter)) { }
-        public RichParagraph(double x, double y, Color? c = null, params string[] ss) : this(x, y, "", c, ss) { }
+        public RichParagraph(double x, double y, string s, Color c, int size, char delimiter = '\n', string fp = "") : this(x, y, fp, c, size, s.Split(delimiter)) { }
+        public RichParagraph(double x, double y, Color? c = null, int? size = null, params string[] ss) : this(x, y, "", c, size, ss) { }
     }
 }

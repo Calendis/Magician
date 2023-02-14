@@ -36,11 +36,11 @@ namespace Magician.UI
             if (col != null)
             {
                 byte[] rgb = new byte[] { (byte)col.R, (byte)col.G, (byte)col.B, (byte)col.A };
-                tfs += Prefix.ToString() + $"c{BitConverter.ToString(rgb).Replace("-", "")}";
+                tfs += Prefix.ToString() + $"{(char)FormatSetting.COLOR}{BitConverter.ToString(rgb).Replace("-", "")}";
             }
             if (size != null)
             {
-                tfs += Prefix.ToString();
+                tfs += Prefix.ToString() + $"{(char)FormatSetting.SIZE}{size.ToString()}";
             }
 
             return tfs + Delimiter.ToString();
@@ -53,5 +53,8 @@ namespace Magician.UI
         public static TextFormatSetting Red = new TextFormatSetting(new RGBA(0xff0000ff));
         public static TextFormatSetting Blue = new TextFormatSetting(new RGBA(0x0000ffff));
         public static TextFormatSetting RGB(int r, int g, int b) => new TextFormatSetting(new RGBA(r, g, b, 255));
+
+        public static TextFormatSetting Small = new TextFormatSetting(null, 12);
+        public static TextFormatSetting Size(int s) => new TextFormatSetting(null, s);
     }
 }

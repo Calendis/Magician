@@ -10,10 +10,11 @@ namespace Magician.Renderer
 
         string s;
         Color c;
+        int size;
         IntPtr font;
         bool disposed = false;
 
-        public Text(string s, Color c, string fp="")
+        public Text(string s, Color c, int size, string fp="")
         {
             if (FallbackFontPath == "")
             {
@@ -21,10 +22,11 @@ namespace Magician.Renderer
             }
             this.s = s;
             this.c = c;
+            this.size = size;
             fontPath = fp == "" ? FallbackFontPath : fp;
             // WIP text support
             // Open the default font
-            font = TTF_OpenFont(fontPath, Data.Globals.fontSize);
+            font = TTF_OpenFont(fontPath, size);
         }
 
         public Texture Render()

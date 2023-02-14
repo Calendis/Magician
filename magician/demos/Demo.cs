@@ -13,9 +13,9 @@ namespace Magician.Demos
             Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
             // Text moving in a Lissajous pattern
-            Origin["textTest"] = new Multi(400, 0)
+            Origin["textTest"] = new Multi(100, 0)
             .Textured(
-                new Renderer.Text("I am text", HSLA.RandomVisible()).Render()
+                new Renderer.Text("I am text", HSLA.RandomVisible(), 70).Render()
             )
             .DrivenXY(
                 x => x + Math.Cos(Time / 3),
@@ -27,11 +27,11 @@ namespace Magician.Demos
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
 
             /* Multi-line text */
-            Origin["paragraph1"] = new UI.RichParagraph(-200, 0, HSLA.RandomVisible(),
+            Origin["paragraph1"] = new UI.RichParagraph(-330, 200, HSLA.RandomVisible(), 32,
                 
                 $"{UI.TFS.RGB(255, 0, 0)}", "I think",
                 $"this {UI.TFS.RGB(255, 255, 0)}example{UI.TFS.RGB(255, 0, 0)} makes",
-                $"it {UI.TFS.RGB(0, 255, 0)}slightly " +
+                $"{UI.TFS.Size(18)}it {new UI.TextFormatSetting(new RGBA(0x00ffffff), 20)}slightly{UI.TFS.Size(32)} " +
                 $"{UI.TFS.RGB(255, 0, 0)}more",
                 $"clear how this w{UI.TFS.RGB(255, 0, 255)}orks"
             );
@@ -51,7 +51,7 @@ namespace Magician.Demos
                 x => 100 * Math.Sin(x / 2 + Time / 4),
                 y => 100 * Math.Cos(y / 7 + Time / 4)
             )
-            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 60, -100)
+            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 32, 60, -100)
             ;
 
             /*

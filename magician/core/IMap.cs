@@ -63,16 +63,14 @@ namespace Magician
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
         // Place characters text, rendered char-by-char along an IMap according to some truth function
-        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size=null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
             if (truth is null)
             {
                 truth = x => 1;
             }
-            if (c is null)
-            {
-                c = Data.Col.UIDefault.FG;
-            }
+            c = c ?? Data.Col.UIDefault.FG;
+            size = size ?? Data.Globals.fontSize;
 
             Multi m = new Multi(xOffset, yOffset);
             int j = 0;
@@ -88,7 +86,7 @@ namespace Magician
                     continue;
                 }
 
-                Text tx = new Text(msg.Substring(j, 1), c);
+                Text tx = new Text(msg.Substring(j, 1), c, (int)size);
                 Texture txr = tx.Render();
 
                 Multi tmp = new Multi().Textured(txr);
@@ -220,16 +218,14 @@ namespace Magician
             m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
-        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size=null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
             if (truth is null)
             {
                 truth = x => 1;
             }
-            if (c is null)
-            {
-                c = Data.Col.UIDefault.FG;
-            }
+            c = c ?? Data.Col.UIDefault.FG;
+            size = size ?? Data.Globals.fontSize;
 
             Multi m = new Multi(xOffset, yOffset);
             int j = 0;
@@ -244,7 +240,7 @@ namespace Magician
                 {
                     continue;
                 }
-                Text tx = new Text(msg.Substring(j, 1), c);
+                Text tx = new Text(msg.Substring(j, 1), c, (int)size);
                 Texture txr = tx.Render();
 
                 Multi tmp = new Multi().Textured(txr).Tagged(msg.Substring(j, 1));
