@@ -42,7 +42,9 @@ namespace Magician.Renderer
             sdlC.g = (byte)c.G;
             sdlC.b = (byte)c.B;
             sdlC.a = (byte)c.A;
-            IntPtr textSurface = TTF_RenderText_Solid(font, s, sdlC);
+            //IntPtr textSurface = TTF_RenderText_Solid(font, s, sdlC);
+            IntPtr textSurface = TTF_RenderText_Blended(font, s, sdlC);
+            //IntPtr textSurface = TTF_RenderText_Shaded(font, s, sdlC, Data.Col.UIDefault.BG);
             if (textSurface == (IntPtr)0)
             {
                 Scribe.Error($"{SDL_GetError()}");

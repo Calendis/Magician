@@ -31,7 +31,7 @@ namespace Magician.Demos
                 
                 $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
                 $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
-                $"{UI.TFS.Back}because {UI.TFS.Back}why {new UI.TextFormatSetting(HSLA.RandomVisible(), 18)}not{UI.TFS.Back}?"
+                $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 18)} not{UI.TFS.Back}?"
             );
 
             // Non-square mouseover
@@ -49,7 +49,7 @@ namespace Magician.Demos
                 x => 100 * Math.Sin(x / 2 + Time / 4),
                 y => 100 * Math.Cos(y / 7 + Time / 4)
             )
-            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 32, 60, -100)
+            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
             ;
 
             /*
