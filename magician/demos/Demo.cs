@@ -44,19 +44,23 @@ namespace Magician.Demos
             Origin["my star"].Rotated(0.01);
             Origin["my star"].Colored(new RGBA(0, 255*mo!.Evaluate(), 255, 255));
 
-            /* PLEASE don't memory leak :( */
             Origin["memTest"] = new Multimap(1,
                 x => 100*Math.Sin(x/2 + Time/4),
                 y => 100*Math.Cos(y/7 + Time/4)
             )
             .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time/10, 1, 1, 222), 60, -100)
             ;
+
+            Origin["alert!!"] = new UI.RichParagraph(0, 350,
+                $"{new UI.TextFormatSetting(new HSLA(Time+1, 1, 1, 250))}Check {new UI.TextFormatSetting(new HSLA(Time, 1, 1, 250))}THIS{new UI.TextFormatSetting(new HSLA(Time-1, 1, 1, 250))}out", new RGBA(0xff0000ff)
+            )
+            .Translated(10*Math.Cos(Time), 20*Math.Sin(Time/4))
+            ;
         }
     }
     
     public class WavingText : Spell
     {
-
         public override void PreLoop()
         {
             Renderer.Control.Clear();
