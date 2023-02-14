@@ -29,11 +29,9 @@ namespace Magician.Demos
             /* Multi-line text */
             Origin["paragraph1"] = new UI.RichParagraph(-330, 200, HSLA.RandomVisible(), 32,
                 
-                $"{UI.TFS.RGB(255, 0, 0)}", "I think",
-                $"this {UI.TFS.RGB(255, 255, 0)}example{UI.TFS.RGB(255, 0, 0)} makes",
-                $"{UI.TFS.Size(18)}it {new UI.TextFormatSetting(new RGBA(0x00ffffff), 20)}slightly{UI.TFS.Size(32)} " +
-                $"{UI.TFS.RGB(255, 0, 0)}more",
-                $"clear how this w{UI.TFS.RGB(255, 0, 255)}orks"
+                $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
+                $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
+                $"{UI.TFS.Back}because {UI.TFS.Back}why {new UI.TextFormatSetting(HSLA.RandomVisible(), 18)}not{UI.TFS.Back}?"
             );
 
             // Non-square mouseover
