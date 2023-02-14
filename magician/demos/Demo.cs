@@ -27,12 +27,10 @@ namespace Magician.Demos
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
             
             /* Multi-line text */
-            Origin["paragraph1"] = new UI.Paragraph(-200, 0,
-                "hahaha what a cool text\nwith newline support!\nIsn't it great? :)", HSLA.RandomVisible()
-            );
-            
-            Origin["paragraph2"] = new UI.Paragraph(-440, 300, HSLA.RandomVisible(),
-                "This is another", "way to", "create multi-line Text,", "which I think is fun"
+            Origin["paragraph1"] = new UI.RichParagraph(-200, 0,
+                $"Okay,{UI.TFS.Blue} here's\n{UI.TFS.Red}an example "+
+                $"of in-line{new UI.TextFormatSetting(HSLA.RandomVisible())} text\n"+
+                $"formatting.{new UI.TextFormatSetting(HSLA.RandomVisible())} What fun!", HSLA.RandomVisible()
             );
 
             // Non-square mouseover
