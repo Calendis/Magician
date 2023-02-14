@@ -89,18 +89,21 @@ namespace Magician.UI
 
             // Assemble this bad boy
             Color currentCol = col;
-            double currentSize;
+            //double currentSize;
             Multi lineByLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
             for (int row = 0; row < groupedFormats.Count; row++)
             {
                 Multi wordsInLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
                 // Scan and break up the line if formatters are there
                 int runningLength = 0;
+                bool lastWasFormatter = false;  // Used to keep track of whether or not to add a space
                 for (int col = 0; col < groupedFormats[row].Length; col++)
                 {
                     char ch = groupedFormats[row][col][0];
+                    // Is it a formatter?
                     if (ch == TextFormatSetting.Prefix)
                     {
+                        // What kind of formatter is it?
                         char formatSettingIdentifer = groupedFormats[row][col][1];
                         switch (formatSettingIdentifer)
                         {
@@ -117,31 +120,46 @@ namespace Magician.UI
                                 break;
                             }
                         }
+                        lastWasFormatter = true;
                     }
+                    // Is it a phrase?
                     else
                     {
                         // Add words
                         string[] words = groupedFormats[row][col].ToString().Split(' ');
                         
-                        foreach (string word in words)
+                        /* foreach (string word in words)
                         {
                             if (word == "")
                             {
+                                //Scribe.Error("paranoid");
                                 continue;
                             }
-                            string paddedWord = word + " ";
+                            string paddedWord = word + " ";//lastWasFormatter ? word : " " + word;
+                            if (lastWasFormatter)
+                            {
+                                Scribe.Info(word);
+                                lastWasFormatter = false;
+                            }
+
                             Text t = new Text(paddedWord, currentCol, fontPath);
                             Texture txr = t.Render();
-                            wordsInLine[$"{row}{col}{paddedWord.Substring(0, Math.Min(16, paddedWord.Length - 1))}"] = new Multi()
+                            wordsInLine[$"{row}{col}{word.Substring(0, Math.Min(16, word.Length - 1))}"] = new Multi()
                             .Textured(txr)
                             .Positioned(runningLength, -row * Data.Globals.fontSize)
                             ;
                             t.Dispose();
                             runningLength += txr.Width;
-                        }
+                        } */
+                        lastWasFormatter = false;
+                        Text t = new Text(groupedFormats[row][col].ToString(), currentCol);
+                        Texture txr = t.Render();
+                        lineByLine.Add(new Multi(runningLength, -row*Data.Globals.fontSize).Textured(txr));
+                        runningLength += txr.Width;
+                        t.Dispose();
                     }
                 }
-                lineByLine[$"line{row}"] = wordsInLine;
+                //lineByLine[$"line{row}"] = wordsInLine;
             }
             Become(lineByLine);
         }
