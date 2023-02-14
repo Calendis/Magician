@@ -203,9 +203,7 @@ namespace Magician
             {
                 Add(c);
             }
-            col = m.Col;
-
-            return DrawFlags(m.drawMode);
+            return Colored(m.Col).DrawFlags(m.drawMode);
         }
 
         public double XCartesian(double offset)
