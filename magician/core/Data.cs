@@ -63,7 +63,6 @@ namespace Magician.Data
             new RGBA(0x00bf00ff),
             new RGBA(0xffffffff)
         );
-
         public static Palette UIDefault = UITurquoise;
     }
 }
