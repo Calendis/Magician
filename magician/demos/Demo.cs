@@ -5,34 +5,35 @@ namespace Magician.Demos
 {
     public class DefaultSpell : Spell
     {
-        
+
         IMap? mo;
         public override void PreLoop()
         {
             // bg
             Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-            
+
             // Text moving in a Lissajous pattern
             Origin["textTest"] = new Multi(400, 0)
             .Textured(
                 new Renderer.Text("I am text", HSLA.RandomVisible()).Render()
             )
             .DrivenXY(
-                x => x + Math.Cos(Time/3),
-                y => y + Math.Sin(Time/10)
+                x => x + Math.Cos(Time / 3),
+                y => y + Math.Sin(Time / 10)
             );
 
 
             // Hexagonal grid
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
-            
+
             /* Multi-line text */
             Origin["paragraph1"] = new UI.RichParagraph(-200, 0, HSLA.RandomVisible(),
-            $"{new UI.TextFormatSetting(new RGBA(0xff0000ff))}", "I think",
-            $"this {new UI.TextFormatSetting(new RGBA(0xffff00ff))}example {new UI.TextFormatSetting(new RGBA(0xff0000ff))}makes",
-            $"it {new UI.TextFormatSetting(new RGBA(0x00ff00ff))}much " +
-            $"{new UI.TextFormatSetting(new RGBA(0xff0000ff))}more ",
-            $"clear how this w{new UI.TextFormatSetting(new RGBA(0xff00ffff))}orks"
+                
+                $"{UI.TFS.RGB(255, 0, 0)}", "I think",
+                $"this {UI.TFS.RGB(255, 255, 0)}example{UI.TFS.RGB(255, 0, 0)} makes",
+                $"it {UI.TFS.RGB(0, 255, 0)}slightly " +
+                $"{UI.TFS.RGB(255, 0, 0)}more",
+                $"clear how this w{UI.TFS.RGB(255, 0, 255)}orks"
             );
 
             // Non-square mouseover
@@ -44,13 +45,13 @@ namespace Magician.Demos
         {
             Renderer.Control.Clear();
             Origin["my star"].Rotated(0.01);
-            Origin["my star"].Colored(new RGBA(0, 255*mo!.Evaluate(), 255, 255));
+            Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
             Origin["memTest"] = new Multimap(1,
-                x => 100*Math.Sin(x/2 + Time/4),
-                y => 100*Math.Cos(y/7 + Time/4)
+                x => 100 * Math.Sin(x / 2 + Time / 4),
+                y => 100 * Math.Cos(y / 7 + Time / 4)
             )
-            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time/10, 1, 1, 222), 60, -100)
+            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 60, -100)
             ;
 
             /*
@@ -62,7 +63,7 @@ namespace Magician.Demos
             */
         }
     }
-    
+
     public class WavingText : Spell
     {
         public override void PreLoop()
@@ -88,7 +89,7 @@ namespace Magician.Demos
         {
             // Add a Cartesian plane
             Origin["cartPlane"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-            
+
             Origin["myMulti"] = Create.RegularPolygon(5, 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
             .Sub(
                 m => m

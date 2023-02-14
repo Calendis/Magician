@@ -52,5 +52,6 @@ namespace Magician.UI
     {
         public static TextFormatSetting Red = new TextFormatSetting(new RGBA(0xff0000ff));
         public static TextFormatSetting Blue = new TextFormatSetting(new RGBA(0x0000ffff));
+        public static TextFormatSetting RGB(int r, int g, int b) => new TextFormatSetting(new RGBA(r, g, b, 255));
     }
 }
