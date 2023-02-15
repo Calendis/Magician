@@ -23,8 +23,8 @@ namespace Magician
 
     public class Multi : Quantity, IDriveable, ICollection<Multi>
     {
-        Quantity x = new Quantity(0);
-        Quantity y = new Quantity(0);
+        public Quantity x = new Quantity(0);
+        public Quantity y = new Quantity(0);
         double tempX = 0;
         double tempY = 0;
         Multi? _parent;
@@ -166,6 +166,7 @@ namespace Magician
 
         DrawMode drawMode;
         protected Color col;
+        // TODO: maybe make this not public
         public Texture? texture;
 
         // Full constructor
@@ -759,7 +760,7 @@ namespace Magician
         }
         public bool IsReadOnly => false;
 
-        public Multi Prev()
+        /* public Multi Prev()
         {
             int i = Index;
             i = i == 0 ? Parent.Count - 1 : i - 1;
@@ -770,7 +771,7 @@ namespace Magician
             int i = Index;
             i = i == Parent.Count - 1 ? 0 : i + 1;
             return Parent[i];
-        }
+        } */
         public void Draw(double xOffset, double yOffset)
         {
             Control.SaveTarget();
