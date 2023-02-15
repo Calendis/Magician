@@ -24,6 +24,7 @@ namespace Magician
         public static void Issue(string s)
         {
             Console.WriteLine($"ERROR: {s}\nPlease file an issue at https://github.com/Calendis");
+            throw new Exception(s);
         }
     }
 }
