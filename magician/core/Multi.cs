@@ -187,7 +187,7 @@ namespace Magician
 
         // Create a multi and define its position, colour, and drawing properties
         public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
-        : this(Geo.Ref.Origin, x, y, col, dm, cs) { }
+        : this(Ref.Origin, x, y, col, dm, cs) { }
         public Multi(double x, double y) : this(x, y, Data.Col.UIDefault.FG) { }
         // Create a multi from a list of multis
         public Multi(params Multi[] cs) : this(0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
@@ -435,17 +435,30 @@ namespace Magician
             // TODO: implement me
         }
 
+        public virtual void Update()
+        {
+            //
+        }
+
         /* Driving methods */
         // Activates all the drivers
-        public void Drive(double xOffset = 0, double yOffset = 0)
+        public void Drive(params double[] ds)
         {
+            Update();
+            if (ds.Length < 2)
+            {
+                ds = new double[]{0, 0};
+            }
+            double xOffset = ds[0];
+            double yOffset = ds[1];
             /*                                          TODO:                                                    */
             // All driving should be done concurrently, so we need to traverse the tree and collect all the drivers
-            foreach (Multi c in csts)
+            foreach (IDriveable c in csts)
             {
                 // Pass the offsets to subdriving
                 c.Drive(xOffset, yOffset);
             }
+            
 
             int count = x.GetDrivers().Count;
             if (count != y.GetDrivers().Count)

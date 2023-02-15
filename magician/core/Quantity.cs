@@ -5,7 +5,7 @@
 
 namespace Magician
 {
-    public class Quantity : CustomMap, IDriveable
+    public class Quantity : CustomMap
     {
         List<IMap> drivers = new List<IMap>();
 
