@@ -52,6 +52,22 @@ namespace Magician.Geo
             return Line(p1, p2, Data.Col.UIDefault.FG);
         }
 
+        // TODO: make Rect easier to implement with a Flatten method
+        // Rect from 2 points
+        public static Multi Rect(Multi p0, Multi p1)
+        {
+            return Rect(p0.X, p0.Y, p1.X-p0.X, p1.Y-p0.Y);
+        }
+        public static Multi Rect(double x, double y, double width, double height)
+        {
+            return new Multi(
+                Point(width, -height),
+                Point(width, 0),
+                Point(0, 0),
+                Point(0, -height)
+            ).Positioned(x, y);
+        }
+
         // Create a regular polygon with a position, number of sides, color, and magnitude
         public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
         {
