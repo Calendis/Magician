@@ -27,11 +27,12 @@ namespace Magician.Demos
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
 
             /* Multi-line text */
-            Origin["paragraph1"] = new UI.RichParagraph(-330, 200, HSLA.RandomVisible(), 32,
+            Origin["paragraph1"] = new UI.RichParagraph(-400, 200, HSLA.RandomVisible(), 32, UI.Justification.CENTRE,
                 
                 $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
                 $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
-                $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 18)} not{UI.TFS.Back}?"
+                $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 18)} not{UI.TFS.Back}?",
+                "Also, text can now be justified", "to left, right, or centre"
             );
 
             // Non-square mouseover
