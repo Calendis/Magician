@@ -7,7 +7,7 @@ namespace Magician.Interactive
         //
     }
 
-    public class Button : Multi
+    public class Button : Multi, IControl
     {
         IMap mo;
         bool hovered = false;
@@ -38,5 +38,10 @@ namespace Magician.Interactive
                 col = HSLA.RandomVisible();
             }
         }
+    }
+
+    public class Draggable : Multi, IControl
+    {
+        //
     }
 }
