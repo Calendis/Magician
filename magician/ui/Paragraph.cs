@@ -44,17 +44,26 @@ namespace Magician.UI
         }
     }
 
+    public enum Justification
+    {
+        LEFT,
+        CENTRE,
+        RIGHT
+    }
+
     /* Paragraph with in-line formatting */
     public class RichParagraph : Paragraph
     {
         int size;
         string[] inStr;
+        Justification just;
         // Rich paragraph supports inline text formatting using TextFormatSetting and $"string interpolation"
-        RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
+        RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, Justification just = 0, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
         {
             // If no size given, use the default
             size = sz ?? Data.Globals.fontSize;
             inStr = inputStr;
+            this.just = just;
 
             // If no path given, use the default
             fontPath = fontPath == "" ? Text.FallbackFontPath : fontPath;
@@ -90,16 +99,16 @@ namespace Magician.UI
                 groupedFormats.Add(filteredFormats.ToArray());
             }
 
-            // Assemble this bad boy
-            //Color currentCol = col;
-            //int currentSize = size;
+            /* Now that filtering is done, assemble the Rich Paragraph */
+            // These two stacks are to keep strack of nested in-line format settings
             Stack<Color> colStack = new Stack<Color>(); colStack.Push(col);
             Stack<int> sizStack = new Stack<int>(); sizStack.Push(size);
             int maxSize = sizStack.Peek();
             /* The bool[] represents wasColorChanged, wasSizeChanged */
             Stack<bool[]> deltas = new Stack<bool[]>();
-            //deltas.Push(new bool[] { false, false });
-            Multi lineByLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            Multi phrases = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            // Used for justification
+            int maxLineWidth = 0;
             for (int row = 0; row < groupedFormats.Count; row++)
             {
                 Multi wordsInLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
@@ -107,14 +116,12 @@ namespace Magician.UI
                 for (int column = 0; column < groupedFormats[row].Length; column++)
                 {
                     char ch = groupedFormats[row][column][0];
-                    // Is it a formatter?
+                    /* The item is a formatter */
                     if (ch == TextFormatSetting.Prefix)
                     {
                         deltas.Push(new bool[] { false, false });
                         string formatSettings = groupedFormats[row][column].Substring(1);
                         // Extract the formatters
-                        //bool changedCol = false;
-                        //bool changedSize = false;
                         foreach (string formatSetting in formatSettings.Split(TextFormatSetting.Prefix))
                         {
                             // What kind of formatter is it?
@@ -136,7 +143,7 @@ namespace Magician.UI
                                 case ((char)TextFormatSetting.FormatSetting.BACK):
                                     if (deltas.Count < 1)
                                     {
-                                        Scribe.Warn("Text format setting in RichPara fell back on nothing");
+                                        Scribe.Warn("Text format setting in RichParagraph fell back on nothing");
                                         break;
                                     }
 
@@ -164,24 +171,58 @@ namespace Magician.UI
                             }
                         }
                     }
-                    // Is it a phrase?
+                    /* The item is a phrase */
                     else
                     {
                         // Add words
-                        string[] words = groupedFormats[row][column].ToString().Split(' ');
                         Text t = new Text(groupedFormats[row][column].ToString(), colStack.Peek(), sizStack.Peek());
                         Texture txr = t.Render();
 
-                        lineByLine.Add(new Multi(runningLength, -row * maxSize - (maxSize - sizStack.Peek())).Textured(txr));
+                        // Determine position
+                        double lineX = runningLength;
+                        double lineY = -row * maxSize - (maxSize - sizStack.Peek());
+
+                        phrases.Add(new Multi(lineX, lineY).Textured(txr));
                         runningLength += txr.Width;
+                        maxLineWidth = runningLength > maxLineWidth ? runningLength : maxLineWidth;
                         t.Dispose();
                     }
                 }
             }
             // Become the assembled Multi
-            Become(lineByLine);
+            Become(phrases);
+
+            // Calculate shifts
+            int trail = 0;
+            for (int i = 0; i < Count; i++)
+            {
+                Multi m = this[Count - i - 1];
+                double dRightMargin = maxLineWidth - m.x.Evaluate() - m.texture!.Width;
+                m.Written(dRightMargin - trail);
+                trail += m.texture!.Width;
+                if (m.x.Evaluate() == 0)
+                {
+                    trail = 0;
+                }
+            }
+
+            // Apply justification rules
+            switch (this.just)
+            {
+                // Default case, do nothing
+                case (Justification.LEFT):
+                    break;
+
+                case (Justification.CENTRE):
+                    Sub(m => m.Translated(m.Evaluate() / 2, 0));
+                    break;
+
+                case (Justification.RIGHT):
+                    Sub(m => m.Translated(m.Evaluate(), 0));
+                    break;
+            }
         }
-        public RichParagraph(double x, double y, string s, Color c, int size, char delimiter = '\n', string fp = "") : this(x, y, fp, c, size, s.Split(delimiter)) { }
-        public RichParagraph(double x, double y, Color? c = null, int? size = null, params string[] ss) : this(x, y, "", c, size, ss) { }
+        public RichParagraph(double x, double y, string s, Color c, int size, Justification j = 0, char delimiter = '\n', string fp = "") : this(x, y, fp, c, size, j, s.Split(delimiter)) { }
+        public RichParagraph(double x, double y, Color? c = null, int? size = null, Justification j = 0, params string[] ss) : this(x, y, "", c, size, j, ss) { }
     }
 }
