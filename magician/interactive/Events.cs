@@ -10,6 +10,7 @@ namespace Magician.Interactive
         // Flags
         static bool getMouse = false;
         static bool getScroll = false;
+        static bool getClick = false;
 
         // Event state
         static int[] mouse = new int[2];
@@ -22,6 +23,10 @@ namespace Magician.Interactive
         public static double MouseY
         {
             get => (double)-mouse[1] + Data.Globals.winHeight / 2;
+        }
+        public static bool Click
+        {
+            get => getClick;
         }
 
         public static double ScrollX
@@ -44,6 +49,7 @@ namespace Magician.Interactive
 
         public static void Process(SDL_Event e)
         {
+            ResetFlags();
             switch (e.type)
             {
                 case SDL_EventType.SDL_KEYDOWN:
@@ -63,11 +69,15 @@ namespace Magician.Interactive
                     scroll[1] = e.wheel.preciseY;
                     break;
 
+                case SDL_EventType.SDL_MOUSEBUTTONDOWN:
+                    //Scribe.Info
+                    getClick = true;
+                    break;
+
                 default:
                     break;
             }
 
-            ResetFlags();
         }
 
         static void ResetFlags()
@@ -77,6 +87,7 @@ namespace Magician.Interactive
                 getMouse = false;
                 SDL_GetMouseState(out mouse[0], out mouse[1]);
             }
+            getClick = false;
 
         }
     }
