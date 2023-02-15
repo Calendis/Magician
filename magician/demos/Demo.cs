@@ -12,32 +12,26 @@ namespace Magician.Demos
             // bg
             Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
-            // Text moving in a Lissajous pattern
-            Origin["textTest"] = new Multi(100, 0)
-            .Textured(
-                new Renderer.Text("I am text", HSLA.RandomVisible(), 70).Render()
-            )
-            .DrivenXY(
-                x => x + Math.Cos(Time / 3),
-                y => y + Math.Sin(Time / 10)
-            );
-
-
             // Hexagonal grid
             Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
 
             /* Multi-line text */
-            Origin["paragraph1"] = new UI.RichParagraph(-400, 200, HSLA.RandomVisible(), 32, UI.Justification.CENTRE,
+            Origin["paragraph1"] = new UI.RichParagraph(0, 0, HSLA.RandomVisible(), 16, UI.Justification.CENTRE,
                 
                 $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
                 $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
-                $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 18)} not{UI.TFS.Back}?",
+                $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 12)} not{UI.TFS.Back}?",
                 "Also, text can now be justified", "to left, right, or centre"
             );
 
             // Non-square mouseover
             Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140);
             mo = Interactive.Sensor.MouseOver(Origin["my star"]);
+
+            /* Testing area */
+            Origin["btn"] = new Interactive.Button(-300, 250, 200, 180);
+            // needs a sensor
+            //IMap btnMo = Interactive.Sensor.MouseOver(Origin["btn"]);
         }
 
         public override void Loop()
@@ -52,14 +46,6 @@ namespace Magician.Demos
             )
             .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
             ;
-
-            /*
-            Origin["alert!!"] = new UI.RichParagraph(0, 350,
-                $"{new UI.TextFormatSetting(new HSLA(Time+1, 1, 1, 250))}Check {new UI.TextFormatSetting(new HSLA(Time, 1, 1, 250))}THIS{new UI.TextFormatSetting(new HSLA(Time-1, 1, 1, 250))}out", new RGBA(0xff0000ff)
-            )
-            .Translated(10*Math.Cos(Time), 20*Math.Sin(Time/4))
-            ;
-            */
         }
     }
 
