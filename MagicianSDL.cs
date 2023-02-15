@@ -140,6 +140,7 @@ namespace Magician
         }
 
         // Drive the dynamics of Multis and Quantities
+        // TODO: move this responsibility to the spellcaster
         void Drive()
         {
             Geo.Ref.Origin.Drive();
