@@ -391,6 +391,9 @@ namespace Magician
     public class Palette
     {
         int size;
+        // Colours are ordered by darkness
+        // The first colour is the background
+        // The third colour is the foreground
         Color[] palette;
 
         public Palette(params Color[] colors)
