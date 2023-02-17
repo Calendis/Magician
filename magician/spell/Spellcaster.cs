@@ -40,7 +40,7 @@ namespace Magician.Library
             toSwitchTo = Spellbook.Count - 1;
         }
 
-        public static void Load(Spell s)
+        static void Load(Spell s)
         {
             Cache(s);
             DoSwitch();
