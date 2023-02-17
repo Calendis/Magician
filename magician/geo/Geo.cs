@@ -12,7 +12,7 @@ namespace Magician.Geo
         }
         static Ref()
         {
-            Origin = new Multi().Tagged("new Origin");
+            Origin = new Multi().Tagged("Reference Origin");
         }
     }
     public static class Create
