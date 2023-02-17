@@ -4,6 +4,7 @@ namespace Magician.Library
     {
         // I never knew 'static public' was allowed
         static public List<Spell> Spellbook { get; set; }
+        static int toSwitchTo = -1;
         public static Spell CurrentSpell
         {
             get
@@ -21,31 +22,49 @@ namespace Magician.Library
             Spellbook = new List<Spell>();
         }
 
-        public static void PrepareSpell()
+        public static void PrepareSpell(int i)
         {
             CurrentSpell.Time = 0;
-            if (Geo.Ref.Origin is not null)
-            {
-                Geo.Ref.Origin.DisposeAllTextures();
-            }
-            Geo.Ref.Origin = CurrentSpell.GetOrigin();
-            CurrentSpell.PreLoop();
+            Geo.Ref.Origin = Spellbook[i].GetOrigin();
+            Spellbook[i].PreLoop();
+        }
+
+        public static void Clean()
+        {
+            Geo.Ref.Origin.DisposeAllTextures();
+        }
+
+        public static void Cache(Spell s)
+        {
+            Spellbook.Add(s);
+            toSwitchTo = Spellbook.Count - 1;
         }
 
         public static void Load(Spell s)
         {
-            Spellbook.Add(s);
-            idx = Spellbook.Count - 1;
-            PrepareSpell();
+            Cache(s);
+            DoSwitch();
         }
+
         public static void SwapTo(int i)
         {
-            idx = i < Spellbook.Count ? i : Spellbook.Count;
+            toSwitchTo = i < Spellbook.Count ? i : Spellbook.Count;
         }
         public static void Loop(double t)
         {
+            if (toSwitchTo > 0)
+            {
+                DoSwitch();
+                toSwitchTo = -1;
+            }
             CurrentSpell.Time = t;
             CurrentSpell.Loop();
+        }
+
+        public static void DoSwitch()
+        {
+            idx = toSwitchTo;
+            PrepareSpell(toSwitchTo);
         }
     }
 }

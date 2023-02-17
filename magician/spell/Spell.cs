@@ -20,7 +20,7 @@ namespace Magician.Library
         // ... when a Spell is loaded into the Spellcaster, Geo.Ref.Origin is set to that Spell's Origin
         protected Multi Origin = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
         .DrawFlags(DrawMode.INVISIBLE)
-        .Tagged("Origin")
+        .Tagged("Spell origin")
         ;
 
         // Initializations
