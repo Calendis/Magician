@@ -2,7 +2,7 @@ using System;
 
 namespace Magician.Symbols
 {
-    public interface Tiling
+    public interface ITiling
     {
         public abstract Multi Render(double d);
     }
@@ -26,7 +26,7 @@ namespace Magician.Symbols
     */
 
     /* Special hexagonal tiling */
-    public class Hexagonal : Tiling
+    public class Hexagonal : ITiling
     {
         int width;
         int height;
@@ -41,7 +41,7 @@ namespace Magician.Symbols
             double hexHeight = radius*Math.Cos(Math.PI/6);
             double sideLength = radius*Math.Sin(Math.PI/6);
 
-            Multi hexGrid = new Multi();
+            Multi hexGrid = new();
             for (int row = 0; row < height; row++)
             {
                 for (int col = 0; col < width; col++)
