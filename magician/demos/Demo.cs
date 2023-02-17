@@ -29,9 +29,13 @@ namespace Magician.Demos
             mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
             /* Testing area */
-            Origin["btn"] = new Interactive.Button(-300, 250, 200, 180);
-            // needs a sensor
-            //IMap btnMo = Interactive.Sensor.MouseOver(Origin["btn"]);
+            Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
+            () =>
+            {
+                Spellcaster.Cache(new RandomSpinner());
+            }
+            );
+
         }
 
         public override void Loop()
@@ -44,7 +48,7 @@ namespace Magician.Demos
                 x => 100 * Math.Sin(x / 2 + Time / 4),
                 y => 100 * Math.Cos(y / 7 + Time / 4)
             )
-            .TextAlong(-40, 40, 0.3, "Wheeeeeeeeeeeeeeeeeee!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
+            .TextAlong(-40, 40, 0.3, "WOaAoAoAHOAHOAHH!! I'm flying!!!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
             ;
         }
     }
@@ -72,6 +76,8 @@ namespace Magician.Demos
     {
         public override void PreLoop()
         {
+            Scribe.Warn("I'm dying");
+            Origin.Tagged("THIS IS A TEST");
             // Add a Cartesian plane
             Origin["cartPlane"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
