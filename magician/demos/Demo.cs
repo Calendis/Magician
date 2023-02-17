@@ -76,11 +76,6 @@ namespace Magician.Demos
     {
         public override void PreLoop()
         {
-            Scribe.Warn("I'm dying");
-            Origin.Tagged("THIS IS A TEST");
-            // Add a Cartesian plane
-            Origin["cartPlane"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-
             Origin["myMulti"] = Create.RegularPolygon(5, 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
             .Sub(
                 m => m
