@@ -37,12 +37,11 @@ namespace Magician
         {
             get
             {
-                if (_parent == null)
+                if (IsOrphan())
                 {
-                    Scribe.Error("Orphan detected");
-                    throw new Exception("throw for the compiler");
+                    Scribe.Warn($"Orphan detected {tag}");
                 }
-                return _parent;
+                return _parent!;
             }
         }
         
@@ -58,6 +57,7 @@ namespace Magician
                 {
                     return x;
                 }
+
                 // Recurse up the tree of Multis to find your position relative to the origin
                 return x.GetDelta(Parent.RecursX.Evaluate());
             }
@@ -773,6 +773,7 @@ namespace Magician
         }
         public bool IsReadOnly => false;
 
+        // Do we really need these?
         /* public Multi Prev()
         {
             int i = Index;
