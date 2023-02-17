@@ -23,9 +23,10 @@ namespace Magician.Symbols
             int range = (int)(end - start);
             int steps = (int)(range / dn);
             s = new double[range];
+            int counter = 0;
             for (double i = start; i < end; i += dn)
             {
-                s.Append(g.Evaluate(i));
+                s[counter++]=(g.Evaluate(i));
             }
         }
 
