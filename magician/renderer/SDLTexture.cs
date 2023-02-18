@@ -27,7 +27,7 @@ namespace Magician.Renderer
             IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, w, h, 0, SDL_PIXELFORMAT_ARGB8888);
 
             surface = SDL2.SDL_image.IMG_Load(filepath);
-            if (surface == (IntPtr)0)
+            if (surface == IntPtr.Zero)
             {
                 Console.WriteLine($"Could not load {filepath}");
                 surface = SDL2.SDL_image.IMG_Load("magician/ui/assets/default.png");

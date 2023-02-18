@@ -31,7 +31,7 @@ namespace Magician.Renderer
 
         public Texture Render()
         {
-            if (font == (IntPtr)0)
+            if (font == IntPtr.Zero)
             {
                 Scribe.Error($"{SDL_GetError()}");
             }
@@ -45,7 +45,7 @@ namespace Magician.Renderer
             //IntPtr textSurface = TTF_RenderText_Solid(font, s, sdlC);
             IntPtr textSurface = TTF_RenderText_Blended(font, s, sdlC);
             //IntPtr textSurface = TTF_RenderText_Shaded(font, s, sdlC, Data.Col.UIDefault.BG);
-            if (textSurface == (IntPtr)0)
+            if (textSurface == IntPtr.Zero)
             {
                 Scribe.Error($"{SDL_GetError()}");
             }
