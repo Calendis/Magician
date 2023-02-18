@@ -50,16 +50,21 @@ namespace Magician.Renderer
 
             // Draw objects
             SDL_SetRenderTarget(SDLGlobals.renderer, texture);
-            SDL_Rect srcRect;
-            srcRect.x = 0;
-            srcRect.y = 0;
-            srcRect.w = Width;
-            srcRect.h = Height;
-            SDL_Rect dstRect;
-            dstRect.x = (int)xOffset;
-            dstRect.y = (int)yOffset;
-            dstRect.w = Width;
-            dstRect.h = Height;
+            SDL_Rect srcRect = new()
+            {
+                x = 0,
+                y = 0,
+                w = Width,
+                h = Height,
+            };
+            SDL_Rect dstRect = new()
+            {
+                x = (int)xOffset,
+                y = (int)yOffset,
+                w = Width,
+                h = Height,
+            };
+
             SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
         }
 
