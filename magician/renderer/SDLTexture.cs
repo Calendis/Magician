@@ -17,9 +17,7 @@ namespace Magician.Renderer
 
             Width = width;
             Height = height;
-            IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, Width, Height, 0, SDL_PIXELFORMAT_ARGB8888);
-
-            surface = SDL2.SDL_image.IMG_Load(filepath);
+            IntPtr surface = SDL2.SDL_image.IMG_Load(filepath);
             if (surface == IntPtr.Zero)
             {
                 Console.WriteLine($"Could not load {filepath}");
