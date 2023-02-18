@@ -6,15 +6,8 @@ namespace Magician.Renderer
     public class Texture : IDisposable
     {
         IntPtr texture;
-        int w, h;
-        public int Width
-        {
-            get => w;
-        }
-        public int Height
-        {
-            get => h;
-        }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
         bool disposed = false;
 
@@ -22,9 +15,9 @@ namespace Magician.Renderer
         public Texture(string filepath, int width, int height)
         {
 
-            w = width;
-            h = height;
-            IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, w, h, 0, SDL_PIXELFORMAT_ARGB8888);
+            Width = width;
+            Height = height;
+            IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, Width, Height, 0, SDL_PIXELFORMAT_ARGB8888);
 
             surface = SDL2.SDL_image.IMG_Load(filepath);
             if (surface == IntPtr.Zero)
@@ -45,8 +38,8 @@ namespace Magician.Renderer
             // Grab width and height of the rendered text
             unsafe
             {
-                w = ((SDL_Surface*)texture)->w;
-                h = ((SDL_Surface*)texture)->h;
+                Width = ((SDL_Surface*)texture)->w;
+                Height = ((SDL_Surface*)texture)->h;
             }
         }
 
@@ -62,13 +55,13 @@ namespace Magician.Renderer
             SDL_Rect srcRect;
             srcRect.x = 0;
             srcRect.y = 0;
-            srcRect.w = w;
-            srcRect.h = h;
+            srcRect.w = Width;
+            srcRect.h = Height;
             SDL_Rect dstRect;
             dstRect.x = (int)xOffset;
             dstRect.y = (int)yOffset;
-            dstRect.w = w;
-            dstRect.h = h;
+            dstRect.w = Width;
+            dstRect.h = Height;
             SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
         }
 
