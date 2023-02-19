@@ -9,16 +9,16 @@ using static SDL2.SDL;
 
 namespace Magician
 {
-    public enum DrawMode
+    public enum DrawMode : short
     {
-        INVISIBLE = (short)0b0000,
-        PLOT = (short)0b1000,
-        CONNECTED = (short)0b0100,
-        INNER = (short)0b0010,
-        POINT = (short)0b0001,
-        OUTER = (short)0b1100,
-        FULL = (short)0b1110,
-        OUTERP = (short)0b1101
+        INVISIBLE = 0b0000,
+        PLOT = 0b1000,
+        CONNECTED = 0b0100,
+        INNER = 0b0010,
+        POINT = 0b0001,
+        OUTER = 0b1100,
+        FULL = 0b1110,
+        OUTERP = 0b1101
     }
 
     public class Multi : Quantity, IDriveable, ICollection<Multi>
