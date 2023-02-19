@@ -226,30 +226,27 @@ namespace Magician
 
     public class RGBA : Color
     {
-        double r;
-        double g;
-        double b;
         public RGBA(double r, double g, double b, double a)
         {
-            this.r = Math.Abs(r) % 256;
-            this.g = Math.Abs(g) % 256; ;
-            this.b = Math.Abs(b) % 256; ;
-            this.a = Math.Abs(a) % 256; ;
+            R = Math.Abs(r) % 256;
+            G = Math.Abs(g) % 256;
+            B = Math.Abs(b) % 256;
+            A = Math.Abs(a) % 256;
         }
         public RGBA(uint hex)
         {
-            this.r = hex >> 24;
-            this.g = (hex & 0x00ff0000) >> 16;
-            this.b = (hex & 0x0000ff00) >> 8;
-            this.a = (hex & 0x000000ff);
+            R = hex >> 24;
+            G = (hex & 0x00ff0000) >> 16;
+            B = (hex & 0x0000ff00) >> 8;
+            A = (hex & 0x000000ff);
         }
 
-        public override double R { get => r; set => r = value; }
-        public override double G { get => g; set => g = value; }
-        public override double B { get => b; set => b = value; }
+        public override double R { get; set; }
+        public override double G { get; set; }
+        public override double B { get; set; }
         public override double H
         {
-            get => HueFromRGB(r, g, b);
+            get => HueFromRGB(R, G, B);
             set
             {
                 HSLA converted = ToHSLA();
@@ -261,7 +258,7 @@ namespace Magician
         }
         public override double S
         {
-            get => SaturationFromRGB(r, g, b);
+            get => SaturationFromRGB(R, G, B);
             set
             {
                 Color converted = ToHSLA();
@@ -273,7 +270,7 @@ namespace Magician
         }
         public override double L
         {
-            get => LightnessFromRGB(r, g, b);
+            get => LightnessFromRGB(R, G, B);
             set
             {
                 Color converted = ToHSLA();
@@ -295,7 +292,7 @@ namespace Magician
 
         public override string ToString()
         {
-            return $"RGBA({r}, {g}, {b}, {a})";
+            return $"RGBA({R}, {G}, {B}, {A})";
         }
         public static RGBA Random(double? red = null, double? green = null, double? blue = null, double? alpha = null)
         {
@@ -309,22 +306,19 @@ namespace Magician
 
     public class HSLA : Color
     {
-        double h;
-        double s;
-        double l;
         public HSLA(double h, double s, double l, double a)
         {
-            this.h = Math.Abs(h) % (2 * Math.PI);
-            this.s = Math.Abs(s);
-            this.l = Math.Abs(l);
-            this.a = Math.Abs(a) % 256;
+            H = Math.Abs(h) % (2 * Math.PI);
+            S = Math.Abs(s);
+            L = Math.Abs(l);
+            A = Math.Abs(a) % 256;
         }
-        public override double H { get => h; set => h = value; }
-        public override double S { get => s; set => s = value; }
-        public override double L { get => l; set => l = value; }
+        public override double H { get; set; }
+        public override double S { get; set; }
+        public override double L { get; set; }
         public override double R
         {
-            get => RedFromHSL(h, s, l);
+            get => RedFromHSL(H, S, L);
             set
             {
                 Color converted = ToRGBA();
@@ -336,7 +330,7 @@ namespace Magician
         }
         public override double G
         {
-            get => GreenFromHSL(h, s, l);
+            get => GreenFromHSL(H, S, L);
             set
             {
                 Color converted = ToRGBA();
@@ -348,7 +342,7 @@ namespace Magician
         }
         public override double B
         {
-            get => BlueFromHSL(h, s, l);
+            get => BlueFromHSL(H, S, L);
             set
             {
                 Color converted = ToRGBA();
@@ -371,7 +365,7 @@ namespace Magician
 
         public override string ToString()
         {
-            return $"HSLA({h}, {s}, {l}, {a})";
+            return $"HSLA({H}, {S}, {L}, {A})";
         }
 
         public static HSLA Random(double? hue = null, double? saturation = null, double? lightness = null, double? alpha = null)
