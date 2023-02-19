@@ -54,6 +54,19 @@ namespace Magician
                     Interactive.Events.Process(sdlEvent);
                     switch (sdlEvent.type)
                     {
+                        case SDL_EventType.SDL_WINDOWEVENT:
+                            SDL_WindowEvent windowEvent = sdlEvent.window;
+                            switch (windowEvent.windowEvent)
+                            {
+
+                                case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
+                                    Data.Globals.winWidth = windowEvent.data1;
+                                    Data.Globals.winHeight = windowEvent.data2;
+                                    SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
+                                        Data.Globals.winWidth, Data.Globals.winHeight);
+                                    break;
+                            }
+                            break;
                         case SDL_EventType.SDL_QUIT:
                             done = true;
                             break;
