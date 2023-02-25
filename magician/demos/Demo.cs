@@ -1,4 +1,5 @@
 using Magician.Geo;
+using Magician.Interactive;
 using Magician.Library;
 
 namespace Magician.Demos
@@ -32,7 +33,7 @@ namespace Magician.Demos
             Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
             () =>
             {
-                Spellcaster.Cache(new RandomSpinner());
+                Spellbook.Cache(new RandomSpinner());
             }
             );
 
@@ -44,7 +45,7 @@ namespace Magician.Demos
             Origin["my star"].Rotated(0.01);
             Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
-            Origin["memTest"] = new Multimap(1,
+            Origin["memTest"] = new IOMap(1,
                 x => 100 * Math.Sin(x / 2 + Time / 4),
                 y => 100 * Math.Cos(y / 7 + Time / 4)
             )
@@ -64,7 +65,7 @@ namespace Magician.Demos
         public override void Loop()
         {
             Renderer.Control.Clear();
-            Origin["parametric"] = new Multimap(1,
+            Origin["parametric"] = new IOMap(1,
                 x => 180 * Math.Cos(x / 3) + 10 * Math.Sin(Time / 2),
                 y => 180 * Math.Sin(y / 7 + Time)
             ).TextAlong(-49, 49, 0.3, "Here's an example of a Multimap with 1 input and two outputs being used to draw text parametrically"
@@ -74,9 +75,13 @@ namespace Magician.Demos
 
     public class RandomSpinner : Spell
     {
+        Brush b;
+        
         public override void PreLoop()
         {
-            Origin["myMulti"] = Create.RegularPolygon(5, 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
+            b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
+            // A spinning shape
+            Origin["myMulti"] = Create.RegularPolygon(Data.Rand.RNG.Next(3, 10), 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
             .Sub(
                 m => m
                 .DrivenPM(
@@ -89,6 +94,19 @@ namespace Magician.Demos
         public override void Loop()
         {
             Renderer.Control.Clear();
+            // Brush testing
+            b.Paint(Events.Click ? 1 : 0,
+                Geo.Create.Star(5, 29, 53).Colored(new HSLA(Time, 1, 1, 120))
+                //.Rotated(Time)
+            )
+            .Sub(
+                    m =>
+                    m.DrivenPM(
+                        x => x+10.1,
+                        y => y
+                    )
+                )
+            ;
         }
     }
 }
