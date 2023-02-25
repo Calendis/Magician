@@ -25,7 +25,7 @@ namespace Magician
             Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
             // Load a spell
-            Spellcaster.Load(new Demos.DefaultSpell());
+            Spellbook.Load(new Demos.DefaultSpell());
 
             // Run
             magicianSDL.MainLoop();
@@ -46,7 +46,7 @@ namespace Magician
 
             while (!done)
             {
-                Spellcaster.Loop(frames * timeResolution);
+                Spellbook.Loop(frames * timeResolution);
 
                 // Event handling
                 while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
@@ -87,7 +87,7 @@ namespace Magician
                 Geo.Ref.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
 
                 // SAVE FRAME TO IMAGE
-                if (Renderer.Control.saveFrame && frames < stopFrame)
+                if (Renderer.Control.saveFrame && frames != stopFrame)
                 {
                     IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
                     IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);

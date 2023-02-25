@@ -1,32 +1,32 @@
 namespace Magician.Library
 {
-    public static class Spellcaster
+    public static class Spellbook
     {
         // I never knew 'static public' was allowed
-        static public List<Spell> Spellbook { get; set; }
+        static public List<Spell> Spells { get; set; }
         static int toSwitchTo = -1;
         public static Spell CurrentSpell
         {
             get
             {
-                if (Spellbook.Count == 0)
+                if (Spells.Count == 0)
                 {
                     Scribe.Error("You must load a Spell first");
                 }
-                return Spellbook[idx];
+                return Spells[idx];
             }
         }
         static public int idx = 0;
-        static Spellcaster()
+        static Spellbook()
         {
-            Spellbook = new List<Spell>();
+            Spells = new List<Spell>();
         }
 
         public static void PrepareSpell(int i)
         {
             CurrentSpell.Time = 0;
-            Geo.Ref.Origin = Spellbook[i].GetOrigin();
-            Spellbook[i].PreLoop();
+            Geo.Ref.Origin = Spells[i].GetOrigin();
+            Spells[i].PreLoop();
         }
 
         public static void Clean()
@@ -36,8 +36,8 @@ namespace Magician.Library
 
         public static void Cache(Spell s)
         {
-            Spellbook.Add(s);
-            toSwitchTo = Spellbook.Count - 1;
+            Spells.Add(s);
+            toSwitchTo = Spells.Count - 1;
         }
 
         public static void Load(Spell s)
@@ -48,7 +48,7 @@ namespace Magician.Library
 
         public static void SwapTo(int i)
         {
-            toSwitchTo = i < Spellbook.Count ? i : Spellbook.Count;
+            toSwitchTo = i < Spells.Count ? i : Spells.Count;
         }
         public static void Loop(double t)
         {
