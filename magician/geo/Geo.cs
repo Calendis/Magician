@@ -18,17 +18,26 @@ namespace Magician.Geo
     public static class Create
     {
         // Create a point
+        /* TODO: remove parent arguement from Create methods */
+        public static Multi Point(Multi? parent, double x, double y, double z, Color col)
+        {
+            return new Multi(parent, x, y, z, col).DrawFlags(DrawMode.POINT);
+        }
         public static Multi Point(Multi? parent, double x, double y, Color col)
         {
-            return new Multi(parent, x, y, col).DrawFlags(DrawMode.POINT);
+            return Point(parent, x, y, 0, col);
+        }
+        public static Multi Point(double x, double y, double z, Color col)
+        {
+            return Point(Ref.Origin, x, y, z, col).DrawFlags(DrawMode.POINT);
         }
         public static Multi Point(double x, double y, Color col)
         {
-            return Point(Ref.Origin, x, y, col).DrawFlags(DrawMode.POINT);
+            return Point(x, y, 0, col);
         }
-        public static Multi Point(double x, double y)
+        public static Multi Point(double x, double y, double z=0)
         {
-            return Point(Ref.Origin, x, y, Data.Col.UIDefault.FG);
+            return Point(Ref.Origin, x, y, z, Data.Col.UIDefault.FG);
         }
 
         // Create a line
@@ -119,6 +128,52 @@ namespace Magician.Geo
         public static Multi Star(int sides, double innerRadius, double outerRadius)
         {
             return Star(0, 0, sides, innerRadius, outerRadius);
+        }
+
+        public static Multi Cube(double x, double y, double z, double radius)
+        {
+            Multi cube = new Multi(x, y, z);
+            
+            cube.Add(new Multi(
+                Point(radius/2, radius/2, 0),
+                Point(-radius/2, radius/2, 0),
+                Point(-radius/2, -radius/2, 0),
+                Point(radius/2, -radius/2, 0)
+            ).Positioned(0, 0, radius/2).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xff0000d0)));
+            cube.Add(new Multi(
+                Point(radius/2, radius/2, 0),
+                Point(-radius/2, radius/2, 0),
+                Point(-radius/2, -radius/2, 0),
+                Point(radius/2, -radius/2, 0)
+            ).Positioned(0, 0, -radius/2).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x00ffffd0)));
+
+            cube.Add(new Multi(
+                Point(0, radius/2, radius/2),
+                Point(0, radius/2, -radius/2),
+                Point(0, -radius/2, -radius/2),
+                Point(0, -radius/2, radius/2)
+            ).Positioned(radius/2, 0, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xffff00d0)));
+            cube.Add(new Multi(
+                Point(0, radius/2, radius/2),
+                Point(0, radius/2, -radius/2),
+                Point(0, -radius/2, -radius/2),
+                Point(0, -radius/2, radius/2)
+            ).Positioned(-radius/2, 0, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x0000ffd0)));
+
+            cube.Add(new Multi(
+                Point(radius/2, 0, radius/2),
+                Point(-radius/2, 0, radius/2),
+                Point(-radius/2, 0, -radius/2),
+                Point(radius/2, 0, -radius/2)
+            ).Positioned(0, radius/2, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x00ff00d0)));
+            cube.Add(new Multi(
+                Point(radius/2, 0, radius/2),
+                Point(-radius/2, 0, radius/2),
+                Point(-radius/2, 0, -radius/2),
+                Point(radius/2, 0, -radius/2)
+            ).Positioned(0, -radius/2, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xff00ffd0)));
+
+            return cube.DrawFlags(DrawMode.INNER);
         }
     }
 
@@ -216,6 +271,8 @@ namespace Magician.Geo
             }
             return Distance(m[0], m[1]);
         }
+
+        //public static double
     }
 
     public static class Transform
@@ -237,6 +294,10 @@ namespace Magician.Geo
             return mx[row,col];
         }
 
+        public double X => Get(0, 0);
+        public double Y => Get(0, 1);
+        public double Z => Get(0, 2);
+
         public Matrix(double[,] mx)
         {
             height = mx.GetLength(0);   // rows
@@ -244,6 +305,7 @@ namespace Magician.Geo
             this.mx = mx;
         }
         public Matrix(Multi m) : this(new double[,] {{m.X, m.Y, m.Z}}){}
+
         public Matrix Mult(Matrix mox)
         {
             if (mox.width != height)
@@ -270,6 +332,8 @@ namespace Magician.Geo
         {
             return new Matrix(new double[,]{{Math.Cos(theta), -Math.Sin(theta)}, {Math.Sin(theta), Math.Cos(theta)}, {0, 0}});
         }
+        public static Matrix Parallel = new Matrix(new double[,]{{1, 0, 0}, {0, 1, 0}, {0, 0, 0}});
+
         public override string ToString()
         {
             string s = "";
@@ -283,6 +347,16 @@ namespace Magician.Geo
             }
             return s;
         }
-        //public static 
+
+        internal Matrix ToCartesian(double xOffset, double yOffset)
+        {
+            for (int row = 0; row < height; row++)
+            {
+                mx[row, 0] = mx[row, 0] + Data.Globals.winWidth /2 + xOffset;
+                mx[row, 1] = -mx[row, 1] + Data.Globals.winHeight/2 + yOffset;
+            }
+            return this;
+        }
     }
+
 }
