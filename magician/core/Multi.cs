@@ -107,7 +107,7 @@ namespace Magician
         public double LastY { get => tempY; }
 
         // Phase, relative to the parent
-        public double Phase
+        public double PhaseZ
         {
             get
             {
@@ -116,10 +116,36 @@ namespace Magician
                 return p;
             }
         }
-        // Magnitude, relative to the parent
-        public double Magnitude
+        public double PhaseY
         {
-            get => new Quantity(Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate())).Evaluate();
+            get
+            {
+                double p = Math.Atan2(z.Evaluate(), x.Evaluate());
+                p = p < 0 ? p + 2 * Math.PI : p;
+                return p;
+            }
+        }
+        public double PhaseX
+        {
+            get
+            {
+                double p = Math.Atan2(z.Evaluate(), y.Evaluate());
+                p = p < 0 ? p + 2 * Math.PI : p;
+                return p;
+            }
+        }
+        // Magnitude, relative to the parent
+        public double MagnitudeZ
+        {
+            get => Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate());
+        }
+        public double MagnitudeX
+        {
+            get => Math.Sqrt(z.Evaluate() * z.Evaluate() + y.Evaluate() * y.Evaluate());
+        }
+        public double MagnitudeY
+        {
+            get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
         }
 
         /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS:    */
@@ -187,7 +213,7 @@ namespace Magician
         public Texture? texture;
 
         // Full constructor
-        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
+        public Multi(Multi? parent, double x, double y, double z, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
         {
             this._parent = parent ?? Ref.Origin;
             this.x.Set(x);
@@ -201,13 +227,18 @@ namespace Magician
                 Add(c);
             }
         }
+        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(parent, x, y, 0, col, dm, cs)
+        {
+            //
+        }
 
         // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
-        : this(Ref.Origin, x, y, col, dm, cs) { }
-        public Multi(double x, double y) : this(x, y, Data.Col.UIDefault.FG) { }
+        public Multi(double x, double y, double z, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
+        : this(Ref.Origin, x, y, z, col, dm, cs) { }
+        public Multi(double x, double y, Color col, DrawMode dm=DrawMode.FULL, params Multi[] cs) : this(x, y, 0, col, dm, cs) {}
+        public Multi(double x, double y, double z=0) : this(x, y, z, Data.Col.UIDefault.FG) { }
         // Create a multi from a list of multis
-        public Multi(params Multi[] cs) : this(0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
+        public Multi(params Multi[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
 
         public Color Col
         {
@@ -224,6 +255,7 @@ namespace Magician
             return Colored(m.Col).DrawFlags(m.drawMode);
         }
 
+        
         public double XCartesian(double offset)
         {
             return Data.Globals.winWidth / 2 + X + offset;
@@ -232,6 +264,7 @@ namespace Magician
         {
             return Data.Globals.winHeight / 2 - Y + offset;
         }
+        
 
         /* Colour methods */
         public static void _Color(Multi m, Color c)
@@ -396,39 +429,95 @@ namespace Magician
         }
 
         /* Rotation methods */
-        public static void _RevolveTo(Multi m, double theta)
+        public static void _RevolveToZ(Multi m, double theta)
         {
-            double mag = m.Magnitude;
+            double mag = m.MagnitudeZ;
             m.x.Set(mag * Math.Cos(theta));
             m.y.Set(mag * Math.Sin(theta));
         }
-        public static void _RevolveBy(Multi m, double theta)
+        public static void _RevolveZ(Multi m, double theta)
         {
-            _RevolveTo(m, theta + m.Phase);
+            _RevolveToZ(m, theta + m.PhaseZ);
         }
-        public Multi Revolved(double theta)
+        public Multi RevolvedZ(double theta)
         {
-            _RevolveBy(this, theta);
+            _RevolveZ(this, theta);
             return this;
         }
-        public Multi RevolvedTo(double offset)
+        public Multi RevolvedToZ(double offset)
         {
-            _RevolveTo(this, offset);
+            _RevolveToZ(this, offset);
             return this;
         }
         // Rotation, in terms of revolution
-        public Multi Rotated(double theta)
+        public Multi RotatedZ(double theta)
         {
             return Sub(
                 m =>
-                m.Revolved(theta)
+                m.RevolvedZ(theta)
+            );
+        }
+        public static void _RevolveToY(Multi m, double theta)
+        {
+            double mag = m.MagnitudeY;
+            m.x.Set(mag * Math.Cos(theta));
+            m.z.Set(mag * Math.Sin(theta));
+        }
+        public static void _RevolveY(Multi m, double theta)
+        {
+            _RevolveToY(m, theta + m.PhaseY);
+        }
+        public Multi RevolvedY(double theta)
+        {
+            _RevolveY(this, theta);
+            return this;
+        }
+        public Multi RevolvedToY(double offset)
+        {
+            _RevolveToY(this, offset);
+            return this;
+        }
+        // Rotation, in terms of revolution
+        public Multi RotatedY(double theta)
+        {
+            return Sub(
+                m =>
+                m.RevolvedY(theta)
+            );
+        }
+        public static void _RevolveToX(Multi m, double theta)
+        {
+            double mag = m.MagnitudeX;
+            m.y.Set(mag * Math.Cos(theta));
+            m.z.Set(mag * Math.Sin(theta));
+        }
+        public static void _RevolveX(Multi m, double theta)
+        {
+            _RevolveToX(m, theta + m.PhaseX);
+        }
+        public Multi RevolvedX(double theta)
+        {
+            _RevolveX(this, theta);
+            return this;
+        }
+        public Multi RevolvedToX(double offset)
+        {
+            _RevolveToX(this, offset);
+            return this;
+        }
+        // Rotation, in terms of revolution
+        public Multi RotatedX(double theta)
+        {
+            return Sub(
+                m =>
+                m.RevolvedX(theta)
             );
         }
 
         /* Scaling methods */
         public static void _AbsoluteScale(Multi m, double mag)
         {
-            double ph = m.Phase;
+            double ph = m.PhaseZ;
             _SetX(m, mag * Math.Cos(ph));
             _SetY(m, mag * Math.Sin(ph));
         }
@@ -439,14 +528,14 @@ namespace Magician
         }
         public Multi AbsoluteScaleShifted(double mag)
         {
-            _AbsoluteScale(this, mag + this.Magnitude);
+            _AbsoluteScale(this, mag + this.MagnitudeZ);
             return this;
         }
 
         // Scale is implemented in terms of absolute scale
         public static void _Scale(Multi m, double mag)
         {
-            _AbsoluteScale(m, mag * m.Magnitude);
+            _AbsoluteScale(m, mag * m.MagnitudeZ);
         }
         public Multi Scaled(double mag)
         {
@@ -560,12 +649,12 @@ namespace Magician
         public Multi DrivenPM(IMap imPh, IMap imMg)
         {
             // Driving of phase
-            x.Driven(x => Magnitude * Math.Cos(imPh.Evaluate(Phase)));
-            y.Driven(y => Magnitude * Math.Sin(imPh.Evaluate(Phase)));
+            x.Driven(x => MagnitudeZ * Math.Cos(imPh.Evaluate(PhaseZ)));
+            y.Driven(y => MagnitudeZ * Math.Sin(imPh.Evaluate(PhaseZ)));
 
             // Driving of magnitude
-            x.Driven(x => imMg.Evaluate(Magnitude) * Math.Cos(Phase));
-            y.Driven(y => imMg.Evaluate(Magnitude) * Math.Sin(Phase));
+            x.Driven(x => imMg.Evaluate(MagnitudeZ) * Math.Cos(PhaseZ));
+            y.Driven(y => imMg.Evaluate(MagnitudeZ) * Math.Sin(PhaseZ));
             return this;
         }
         public Multi DrivenPM(Func<double, double> fPh, Func<double, double> fMg)
@@ -864,16 +953,21 @@ namespace Magician
             double b = col.B;
             double a = col.A;
 
+            // Get a projection of each constituent
+            Matrix[] verts = new Matrix[Count];
+            //foreach (Multi m in csts)
+            for (int i = 0; i < Count; i++)
+            {
+                Matrix mmx = new Matrix(csts[i]);
+                verts[i] = Matrix.Parallel.Mult(mmx).ToCartesian(xOffset, yOffset);
+                //Scribe.Info($"{i}: {verts[i]}");
+            }
+
             // If the flag is set, draw the relative origin
             if ((drawMode & DrawMode.POINT) > 0)
             {
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
-                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(0), (float)YCartesianz(0));
-                if (_parent != null)
-                {
-                    SDL_RenderDrawPointF(SDLGlobals.renderer, (float)_parent.XCartesian(xOffset), (float)_parent.YCartesian(yOffset));
-                }
+                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
             }
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
@@ -891,8 +985,8 @@ namespace Magician
 
                     SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(SDLGlobals.renderer,
-                    (float)lineP0.XCartesian(xOffset), (float)lineP0.YCartesian(yOffset),
-                    (float)lineP1.XCartesian(xOffset), (float)lineP1.YCartesian(yOffset));
+                    (float)verts[i].X, (float)verts[i].Y,
+                    (float)verts[i+1].X, (float)verts[i+1].Y);
 
                 }
             }
@@ -945,16 +1039,19 @@ namespace Magician
 
 
                         SDL_FPoint p0, p1, p2;
-                        //Matrix projection = new Matrix();
-                        //Matrix mx0 = projection.Mult(new Matrix())
-                        //Matrix mx1 = projection.Mult(new Matrix())
-                        //Matrix mx2 = projection.Mult(new Matrix())
-                        p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
-                        p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
-                        p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
-                        p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
-                        p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
-                        p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
+
+                        //p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
+                        //p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
+                        //p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
+                        //p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
+                        //p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
+                        //p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
+                        p0.x = (float)verts[tri0-1].X;
+                        p0.y = (float)verts[tri0-1].Y;
+                        p1.x = (float)verts[tri1 - 1].X;
+                        p1.y = (float)verts[tri1 - 1].Y;
+                        p2.x = (float)verts[tri2 - 1].X;
+                        p2.y = (float)verts[tri2 - 1].Y;
 
                         vs[3 * i] = new SDL_Vertex();
                         vs[3 * i].position.x = p0.x;
