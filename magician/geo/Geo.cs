@@ -12,7 +12,7 @@ namespace Magician.Geo
         }
         static Ref()
         {
-            Origin = new Multi().Tagged("Reference Origin");
+            Origin = new Multi().Tagged("Placeholder Origin");
         }
     }
     public static class Create
@@ -216,5 +216,73 @@ namespace Magician.Geo
             }
             return Distance(m[0], m[1]);
         }
+    }
+
+    public static class Transform
+    {
+        // Parallel projection is implicit in the drawing process
+        public static Multi ProjParallel(Multi m)
+        {
+            return m;
+        }
+    }
+    public class Matrix
+    {
+        public int width;
+        public int height;
+        double[,] mx;
+
+        public double Get(int row, int col)
+        {
+            return mx[row,col];
+        }
+
+        public Matrix(double[,] mx)
+        {
+            height = mx.GetLength(0);   // rows
+            width = mx.GetLength(1); // columns
+            this.mx = mx;
+        }
+        public Matrix(Multi m) : this(new double[,] {{m.X, m.Y, m.Z}}){}
+        public Matrix Mult(Matrix mox)
+        {
+            if (mox.width != height)
+            {
+                throw Scribe.Error($"Columns of {mox} must match rows of {this}");
+            }
+
+            double[,] result = new double[mox.height, width];
+            for (int row = 0; row < mox.height; row++)
+            {
+                for (int col = 0; col < width; col++)
+                {
+                    double sum = 0;
+                    for (int k = 0; k < width; k++)
+                    {
+                        sum += mox.Get(row, k) * Get(k, col);
+                    }
+                    result[row, col] = sum;
+                }
+            }
+            return new Matrix(result);
+        }
+        public static Matrix Rotation(double theta)
+        {
+            return new Matrix(new double[,]{{Math.Cos(theta), -Math.Sin(theta)}, {Math.Sin(theta), Math.Cos(theta)}, {0, 0}});
+        }
+        public override string ToString()
+        {
+            string s = "";
+            for (int row = 0; row < height; row++)
+            {
+                for (int col = 0; col < width; col++)
+                {
+                    s += $"{Get(row, col)} ";
+                }
+                s += "\n";
+            }
+            return s;
+        }
+        //public static 
     }
 }
