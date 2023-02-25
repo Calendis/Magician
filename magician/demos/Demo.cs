@@ -75,7 +75,7 @@ namespace Magician.Demos
 
     public class RandomSpinner : Spell
     {
-        Brush b;
+        Brush? b;
         
         public override void PreLoop()
         {
@@ -95,7 +95,7 @@ namespace Magician.Demos
         {
             Renderer.Control.Clear();
             // Brush testing
-            b.Paint(Events.Click ? 1 : 0,
+            b!.Paint(Events.Click ? 1 : 0,
                 Geo.Create.Star(5, 29, 53).Colored(new HSLA(Time, 1, 1, 120))
                 //.Rotated(Time)
             )
