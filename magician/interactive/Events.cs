@@ -73,6 +73,10 @@ namespace Magician.Interactive
                     //Scribe.Info
                     getClick = true;
                     break;
+                
+                case SDL_EventType.SDL_MOUSEBUTTONUP:
+                    getClick = false;
+                    break;
 
                 default:
                     break;
@@ -87,8 +91,6 @@ namespace Magician.Interactive
                 getMouse = false;
                 SDL_GetMouseState(out mouse[0], out mouse[1]);
             }
-            getClick = false;
-
         }
     }
 }
