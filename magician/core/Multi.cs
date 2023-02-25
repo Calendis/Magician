@@ -25,6 +25,7 @@ namespace Magician
     {
         public Quantity x = new Quantity(0);
         public Quantity y = new Quantity(0);
+        public Quantity z = new Quantity(0);
         double tempX = 0;
         double tempY = 0;
         Multi? _parent;
@@ -75,6 +76,17 @@ namespace Magician
                 return y.GetDelta(Parent.RecursY.Evaluate());
             }
         }
+        Quantity RecursZ
+        {
+            get
+            {
+                if (this == Ref.Origin)
+                {
+                    return z;
+                }
+                return z.GetDelta(Parent.RecursZ.Evaluate());
+            }
+        }
         // Big X is the x-position relative to (0, 0)
         public double X
         {
@@ -84,6 +96,11 @@ namespace Magician
         public double Y
         {
             get => RecursY.Evaluate();
+        }
+        // Big Z is the z-position relative to (0, 0)
+        public double Z
+        {
+            get => RecursZ.Evaluate();
         }
         // These values are set by drivers
         public double LastX { get => tempX; }
@@ -318,16 +335,29 @@ namespace Magician
             _SetY(this, offset);
             return this;
         }
-
-        public static void _Translate(Multi m, double x, double y)
+        public static void _SetZ(Multi m, double z)
         {
-            // x and y are Quantities, so increment them like this
+            m.z.Set(z);
+        }
+        public Multi AtZ(double offset)
+        {
+            _SetZ(this, offset);
+            return this;
+        }
+
+        public static void _Translate(Multi m, double x, double y, double? z = null)
+        {
+            // x, y, and z are Quantities, so increment them like this
             m.x.Incr(x);
             m.y.Incr(y);
+            if (z != null)
+            {
+                m.z.Incr((double)z);
+            }
         }
-        public Multi Translated(double x, double y)
+        public Multi Translated(double x, double y, double? z=null)
         {
-            _Translate(this, x, y);
+            _Translate(this, x, y, z);
             return this;
         }
         public Multi XShifted(double offset)
@@ -340,11 +370,29 @@ namespace Magician
             _Translate(this, 0, offset);
             return this;
         }
-        public Multi Positioned(double x, double y)
+        public Multi ZShifted(double offset)
+        {
+            _Translate(this, 0, 0, offset);
+            return this;
+        }
+        public Multi Positioned(double x, double y, double? z = null)
         {
             _SetX(this, x);
             _SetY(this, y);
+            if (z != null)
+            {
+                _SetZ(this, (double)z);
+            }
             return this;
+        }
+        public Multi Positioned(Matrix mx)
+        {
+            double pz = z.Evaluate();
+            if (mx.width == 3)
+            {
+                pz = mx.Get(0, 2);
+            }
+            return Positioned(mx.Get(0, 0), mx.Get(0, 1), pz);
         }
 
         /* Rotation methods */
@@ -816,9 +864,6 @@ namespace Magician
             double b = col.B;
             double a = col.A;
 
-            float drawX = (float)XCartesian(xOffset);
-            float drawY = (float)YCartesian(yOffset);
-
             // If the flag is set, draw the relative origin
             if ((drawMode & DrawMode.POINT) > 0)
             {
@@ -838,6 +883,7 @@ namespace Magician
                 {
                     Multi lineP0 = csts[i];
                     Multi lineP1 = csts[i + 1];
+
                     double subr = lineP0.Col.R;
                     double subg = lineP0.Col.G;
                     double subb = lineP0.Col.B;
@@ -899,6 +945,10 @@ namespace Magician
 
 
                         SDL_FPoint p0, p1, p2;
+                        //Matrix projection = new Matrix();
+                        //Matrix mx0 = projection.Mult(new Matrix())
+                        //Matrix mx1 = projection.Mult(new Matrix())
+                        //Matrix mx2 = projection.Mult(new Matrix())
                         p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
                         p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
                         p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
