@@ -16,15 +16,15 @@ namespace Magician
         /// <summary><exception>
         /// bruhException
         /// </exception></summary>
-        public static void Error(string s)
+        public static Exception Error(string s)
         {
             Console.Write($"ERROR: {s}\n");
-            throw new Exception(s);
+            return new Exception(s);
         }
-        public static void Issue(string s)
+        public static Exception Issue(string s)
         {
             Console.WriteLine($"ERROR: {s}\nPlease file an issue at https://github.com/Calendis");
-            throw new Exception(s);
+            return new Exception(s);
         }
     }
 }
