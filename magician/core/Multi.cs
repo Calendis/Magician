@@ -44,7 +44,7 @@ namespace Magician
                 return _parent!;
             }
         }
-        
+
         /*
         *  Positional Properties
         */
@@ -447,7 +447,7 @@ namespace Magician
             Update();
             if (ds.Length < 2)
             {
-                ds = new double[]{0, 0};
+                ds = new double[] { 0, 0 };
             }
             double xOffset = ds[0];
             double yOffset = ds[1];
@@ -458,7 +458,7 @@ namespace Magician
                 // Pass the offsets to subdriving
                 c.Drive(xOffset, yOffset);
             }
-            
+
 
             int count = x.GetDrivers().Count;
             if (count != y.GetDrivers().Count)
@@ -604,7 +604,7 @@ namespace Magician
         }
 
         // Create a copy of the Multi
-        public Multi Copy()
+        public Multi Copied()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
             // Don't copy the texture, or create reference to it!
@@ -614,16 +614,37 @@ namespace Magician
             // TODO: fix this
             //x.TransferDrivers(copy.x);
             //y.TransferDrivers(copy.y);
+
             copy.x = new Quantity(x);
             copy.y = new Quantity(y);
+
+            foreach (IMap d in x.GetDrivers())
+            {
+                copy.x.Driven(d);
+            }
+            foreach (IMap d in y.GetDrivers())
+            {
+                copy.y.Driven(d);
+            }
 
             // Copy the constituents
             foreach (Multi c in this)
             {
-                copy.Add(c.Copy());
+                copy.Add(c.Copied());
             }
 
             return copy;
+        }
+        /* The two paste methods must match!! */
+        public Multi Paste()
+        {
+            Geo.Ref.Origin[$"{tag}_paste{x}{y}"] = Copied();
+            return this;
+        }
+        public Multi Pasted()
+        {
+            Paste();
+            return Geo.Ref.Origin[$"{tag}_paste{x}{y}"];
         }
 
         // Create a new Multi with the constituents of both Multis
@@ -692,7 +713,7 @@ namespace Magician
             Eject();
             for (int i = 0; i < Count; i++)
             {
-                Multi outerCopy = outer.Copy();
+                Multi outerCopy = outer.Copied();
                 csts[i].Become(outerCopy);
             }
 
@@ -703,7 +724,7 @@ namespace Magician
         public Multi Surrounding(Multi inner)
         {
             Eject();
-            return inner.Wielding(Copy());
+            return inner.Wielding(Copied());
             //thisSurroundingInner.x.Set(x.Evaluate());
             //thisSurroundingInner.y.Set(y.Evaluate());
             //return thisSurroundingInner;//.Wielding(this);
@@ -715,11 +736,11 @@ namespace Magician
 
         public Multi Recursed()
         {
-            return Wielding(Copy());
+            return Wielding(Copied());
         }
         public Multi Recursed(Func<Multi, Multi> F)
         {
-            return Wielding(F.Invoke(Copy()));
+            return Wielding(F.Invoke(Copied()));
         }
 
         /* Getter roperties for indices and tags */
@@ -871,7 +892,7 @@ namespace Magician
                         int tri0 = vertexIndices[0];
                         int tri1 = vertexIndices[1];
                         int tri2 = vertexIndices[2];
-                        
+
                         // If all vertex indices are 0, we're done
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             break;
