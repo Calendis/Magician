@@ -56,14 +56,14 @@ namespace Magician
                 {
                     tmp.Parented(m);
                     double p = Evaluate(i);
-                    m.Add(tmp.Copy().Positioned(i + tmp.X, p + tmp.Y));
+                    m.Add(tmp.Copied().Positioned(i + tmp.X, p + tmp.Y));
                 }
             }
             m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
         // Place characters text, rendered char-by-char along an IMap according to some truth function
-        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size=null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
             if (truth is null)
             {
@@ -159,7 +159,7 @@ namespace Magician
     }
 
     // IMap with an arbitrary amount of input and output dimensions
-    public class Multimap : IMap
+    public class IOMap : IMap
     {
         // Functionality
         List<IMap> imaps = new List<IMap>();
@@ -170,13 +170,13 @@ namespace Magician
         public int Ins { get; set; }
         public int Outs { get; set; }
 
-        public Multimap(int ins, params IMap[] outs)
+        public IOMap(int ins, params IMap[] outs)
         {
             imaps.AddRange(outs);
             Outs = imaps.Count;
             Ins = ins;
         }
-        public Multimap(int ins, params Func<double, double>[] outs)
+        public IOMap(int ins, params Func<double, double>[] outs)
         {
             foreach (Func<double, double> f in outs)
             {
@@ -211,14 +211,14 @@ namespace Magician
                 out0[1] = imaps[1].Evaluate(i);
 
                 m.Add(
-                    tmp.Copy().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
+                    tmp.Copied().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
                 );
 
             }
             m.Parented(Geo.Ref.Origin);
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
-        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size=null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
             if (truth is null)
             {
@@ -257,7 +257,7 @@ namespace Magician
             return m.DrawFlags(DrawMode.INVISIBLE);
         }
 
-        public Multimap Paired(int[][] pairs)
+        public IOMap Paired(int[][] pairs)
         {
             this.pairs = pairs;
             return this;
@@ -268,7 +268,7 @@ namespace Magician
         {
             if (Ins != 1 || Outs != 1)
             {
-                throw new InvalidDataException("whyyy");
+                throw Scribe.Issue("This should never occur");
             }
             return imaps[0].Evaluate(x);
         }
@@ -280,7 +280,7 @@ namespace Magician
             double[] output = new double[Outs];
             if (noArgs != Ins)
             {
-                throw new InvalidDataException($"Number of provided arguments ({args.Length}) does not match input dimensionality ({Ins})");
+                throw Scribe.Error($"Number of provided arguments ({args.Length}) does not match input dimensionality ({Ins})");
             }
 
             if (Ins != Outs)
@@ -290,7 +290,7 @@ namespace Magician
                 {
                     for (int i = 0; i < Outs; i++)
                     {
-                        output.Append(imaps[i].Evaluate(args[0]));
+                        output[i] = imaps[i].Evaluate(args[0]);
                     }
                 }
 
@@ -304,12 +304,14 @@ namespace Magician
                     return Resolved(pairs).Evaluate(args);
                 }
             }
-
-            /* Inputs and out are equal, map 1-1 */
-            int counter = 0;
-            foreach (double x in args)
+            else
             {
-                output.Append(imaps[counter++].Evaluate(x));
+                /* Inputs and out are equal, map 1-1 */
+                int counter = 0;
+                foreach (double x in args)
+                {
+                    output[counter] = (imaps[counter++].Evaluate(x));
+                }
             }
             return output;
         }
@@ -376,7 +378,7 @@ namespace Magician
             throw new NotImplementedException($"Multiplex plotting for ins: {Ins} not working yet. File an issue at https://github.com/Calendis");
         }
 
-        public Multimap Resolved(int[][] pairs)
+        public IOMap Resolved(int[][] pairs)
         {
             IMap[] resolvedIns = new IMap[Outs];
             int combines = Ins - Outs;
@@ -397,7 +399,7 @@ namespace Magician
                     resolvedIns.Append(in0.Compose(in1));
                 }
 
-                return new Multimap(Outs, resolvedIns);
+                return new IOMap(Outs, resolvedIns);
             }
             else
             // Fewer inputs than outputs. This is evil
