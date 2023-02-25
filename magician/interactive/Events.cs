@@ -27,6 +27,7 @@ namespace Magician.Interactive
         public static bool Click
         {
             get => getClick;
+            set => getClick = value;
         }
 
         public static double ScrollX
