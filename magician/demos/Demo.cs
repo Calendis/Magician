@@ -18,7 +18,7 @@ namespace Magician.Demos
 
             /* Multi-line text */
             Origin["paragraph1"] = new UI.RichParagraph(0, 0, HSLA.RandomVisible(), 16, UI.Justification.CENTRE,
-                
+
                 $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
                 $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
                 $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 12)} not{UI.TFS.Back}?",
@@ -33,7 +33,7 @@ namespace Magician.Demos
             Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
             () =>
             {
-                Spellbook.Cache(new RandomSpinner());
+                Spellbook.Cache(new TestingSpell());
             }
             );
 
@@ -42,7 +42,7 @@ namespace Magician.Demos
         public override void Loop()
         {
             Renderer.Control.Clear();
-            Origin["my star"].Rotated(0.01);
+            Origin["my star"].RotatedZ(0.01);
             Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
             Origin["memTest"] = new IOMap(1,
@@ -51,6 +51,11 @@ namespace Magician.Demos
             )
             .TextAlong(-40, 40, 0.3, "WOaAoAoAHOAHOAHH!! I'm flying!!!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
             ;
+
+            // Perform a Matrix rotation
+            Matrix mmx = new Matrix(Origin["btn"]);
+            Matrix result = Matrix.Rotation(0.004).Mult(mmx);
+            Origin["btn"].Positioned(result);
         }
     }
 
@@ -73,22 +78,26 @@ namespace Magician.Demos
         }
     }
 
-    public class RandomSpinner : Spell
+    public class TestingSpell : Spell
     {
         Brush? b;
-        
+
         public override void PreLoop()
         {
             b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-            // A spinning shape
-            Origin["myMulti"] = Create.RegularPolygon(Data.Rand.RNG.Next(3, 10), 120).Colored(HSLA.Random(saturation: 1, lightness: 1, alpha: 100))
+            // A cube
+            Origin["cube"] = Create.Cube(0, 0, 0, 200)
             .Sub(
-                m => m
-                .DrivenPM(
-                    ph => ph + 0.025,
+                m =>
+                m.Sub(
+                    n =>
+                    n.DrivenPM(
+                    p => p + 0*0.01,
                     m => m
                 )
-            );
+                )
+            )
+            ;
         }
 
         public override void Loop()
@@ -97,16 +106,24 @@ namespace Magician.Demos
             // Brush testing
             b!.Paint(Events.Click ? 1 : 0,
                 Geo.Create.Star(5, 29, 53).Colored(new HSLA(Time, 1, 1, 120))
-                //.Rotated(Time)
+            //.Rotated(Time)
             )
             .Sub(
                     m =>
                     m.DrivenPM(
-                        x => x+10.1,
+                        x => x + 10.1,
                         y => y
                     )
                 )
             ;
+
+            Origin["cube"].Sub(
+                m => m
+                //.RevolvedX(-0.0000003)
+                .RotatedY(-0.03)
+                .RotatedZ(-0.015)
+                .RotatedX(0.02)
+            );
         }
     }
 }
