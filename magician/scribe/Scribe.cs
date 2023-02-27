@@ -12,6 +12,18 @@ namespace Magician
         {
             Console.Write($"WARNING: {s}\n");
         }
+        public static void List<T>(List<T> l)
+        {
+            if (l == null)
+            {
+                throw Scribe.Error($"Could not print null list");
+            }
+            int c = 0;
+            foreach (T o in l)
+            {
+                Console.WriteLine($"LIST {c++}: {o}");
+            }
+        }
 
         /// <summary><exception>
         /// bruhException
