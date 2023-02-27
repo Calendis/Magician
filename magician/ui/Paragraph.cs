@@ -197,9 +197,9 @@ namespace Magician.UI
             for (int i = 0; i < Count; i++)
             {
                 Multi m = this[Count - i - 1];
-                double dRightMargin = maxLineWidth - m.x.Evaluate() - m.texture!.Width;
+                double dRightMargin = maxLineWidth - m.x.Evaluate() - m.Texture.Width;
                 m.Written(dRightMargin - trail);
-                trail += m.texture!.Width;
+                trail += m.Texture.Width;
                 if (m.x.Evaluate() == 0)
                 {
                     trail = 0;
