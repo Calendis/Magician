@@ -148,6 +148,11 @@ namespace Magician
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
         }
 
+        public IReadOnlyList<Multi> Constituents
+        {
+            get => csts;
+        }
+
         /* USERS, NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
         ///////////////////////////////////////////////////
         // Multi m = (blah...)
@@ -1242,11 +1247,12 @@ namespace Magician
         }
         public void AddCautiously(Multi m)
         {
+            // Don't add empty pains
             if (m.Tag == "empty paint")
             {
-                //Scribe.Info($"discarding {item}");
                 return;
             }
+            // If the Multi has a tag, add it through the tag system
             if (m.Tag != "")
             {
                 this[m.Tag] = m;

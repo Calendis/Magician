@@ -12,14 +12,8 @@ namespace Magician
     {
         List<List<int>>? faces;
         // Full constructor
-        public Multi3D(double x, double y, double z, int n = 0, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points)
-        {
-            if (n > 0)
-            {
-                FacesSimplex(n);
-            }
-        }
-        public Multi3D(double x, double y, double z, int n = 0, params Multi[] points) : this(x, y, z, n, null, DrawMode.FULL, points) { }
+        public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) {}
+        public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
 
         public override void Draw(double xOffset, double yOffset)
         {
@@ -27,6 +21,10 @@ namespace Magician
             int cc = 0;
             foreach (List<int> face in faces)
             {
+                if (faces == null)
+                {
+                    throw Scribe.Error($"Faces of {this} were null");
+                }
                 Multi f = new Multi().Positioned(X, Y, Z).Colored(new HSLA((cc++*Math.PI)/Math.PI, 1, 1, 120)).DrawFlags(drawMode);
                 foreach (int idx in face)
                 {
@@ -41,37 +39,51 @@ namespace Magician
         {
         }
 
-        // For testing
-        public void FacesSimplex(int n)
+        // Arrange faces in a tetrahedral pattern
+        public Multi3D FacesSimplex()
         {
-            faces = new List<List<int>>();
-            faces.Add(new List<int> {0, 1, 2});
-            faces.Add(new List<int> {0, 1, 3});
-            faces.Add(new List<int> {1, 2, 3});
-            faces.Add(new List<int> {0, 2, 3});
+            return FacesGrouped(3,
+                0, 1, 2,
+                0, 1, 3,
+                1, 2, 3,
+                0, 2, 3
+            );
+        }
+        // Arrange faces in a cubic pattern
+        public Multi3D FacesCube()
+        {
+            return FacesGrouped(4,
+            0, 1, 2, 3,
+            4, 5, 6, 7,
+            0, 4, 5, 1,
+            3, 7, 6, 2,
+            1, 5, 6, 2,
+            0, 4, 7, 3
+            );
         }
 
-        // Groups the Multi into n equal faces. Assumes the constituents are grouped by faces
-        public void FacesGrouped(int n)
+        public Multi3D FacesGrouped(int faceSize, params int[] fs)
         {
             faces = new List<List<int>>();
-            if (Count % (n) != 0)
+            // Tbh, I have no idea how to check to see if 3d points can fit in a certain number of faces...
+            /* if (Count % faceSize != 0)
             {
-                throw Scribe.Error($"Could not group {Count} points into {n} equal faces!");
-            }
-            List<int> newFace = new List<int>();
-            for (int i = 0; i < Count; i++)
+                throw Scribe.Error($"Could not group\n{this}\n into faces of size {faceSize}");
+            } */
+            List<int> currentFace = new List<int>();
+            for (int i = 0; i < fs.Length; i++)
             {
-                newFace.Add(i);
-                if (i % n == n-1)
+                currentFace.Add(fs[i]);
+                if (i % faceSize == faceSize-1)
                 {
-                    faces.Add(newFace);
-                    newFace = new List<int>();
+                    faces.Add(currentFace);
+                    currentFace = new List<int>();
                 }
             }
+            return this;
         }
 
-        public void FacesGrouped(params int[] n)
+        /* public void FacesGrouped(params int[] n)
         {
             //
         }
@@ -79,6 +91,6 @@ namespace Magician
         public void FacesGrouped(IMap im)
         {
             //
-        }
+        } */
     }
 }

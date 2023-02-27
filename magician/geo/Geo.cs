@@ -27,7 +27,7 @@ namespace Magician.Geo
         {
             return Point(parent, x, y, 0, col);
         }
-        public static Multi Point(double x, double y, double z=0, Color? col=null)
+        public static Multi Point(double x, double y, double z = 0, Color? col = null)
         {
             return Point(Ref.Origin, x, y, z, col).DrawFlags(DrawMode.INVISIBLE);
         }
@@ -35,10 +35,10 @@ namespace Magician.Geo
         {
             return Point(x, y, 0, col);
         }
-/*         public static Multi Point(double x, double y, double z=0)
-        {
-            return Point(Ref.Origin, x, y, z, Data.Col.UIDefault.FG);
-        } */
+        /*         public static Multi Point(double x, double y, double z=0)
+                {
+                    return Point(Ref.Origin, x, y, z, Data.Col.UIDefault.FG);
+                } */
 
         // Create a line
         public static Multi Line(Multi p1, Multi p2, Color col)
@@ -65,7 +65,7 @@ namespace Magician.Geo
         // Rect from 2 points
         public static Multi Rect(Multi p0, Multi p1)
         {
-            return Rect(p0.X, p0.Y, p1.X-p0.X, p1.Y-p0.Y);
+            return Rect(p0.X, p0.Y, p1.X - p0.X, p1.Y - p0.Y);
         }
         public static Multi Rect(double x, double y, double width, double height)
         {
@@ -135,47 +135,70 @@ namespace Magician.Geo
         public static Multi ImpractiCube(double x, double y, double z, double radius)
         {
             Multi cube = new Multi(x, y, z);
-            
+
             cube.Add(new Multi(
-                Point(radius/2, radius/2, 0),
-                Point(-radius/2, radius/2, 0),
-                Point(-radius/2, -radius/2, 0),
-                Point(radius/2, -radius/2, 0)
+                Point(radius / 2, radius / 2, 0),
+                Point(-radius / 2, radius / 2, 0),
+                Point(-radius / 2, -radius / 2, 0),
+                Point(radius / 2, -radius / 2, 0)
             ).Positioned(0, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xff0000d0)));
             cube.Add(new Multi(
-                Point(radius/2, radius/2, 0),
-                Point(-radius/2, radius/2, 0),
-                Point(-radius/2, -radius/2, 0),
-                Point(radius/2, -radius/2, 0)
-            ).Positioned(0, 0, -radius/2).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
+                Point(radius / 2, radius / 2, 0),
+                Point(-radius / 2, radius / 2, 0),
+                Point(-radius / 2, -radius / 2, 0),
+                Point(radius / 2, -radius / 2, 0)
+            ).Positioned(0, 0, -radius / 2).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
 
             cube.Add(new Multi(
-                Point(0, radius/2, radius/2),
-                Point(0, radius/2, -radius/2),
-                Point(0, -radius/2, -radius/2),
-                Point(0, -radius/2, radius/2)
-            ).Positioned(radius/2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
+                Point(0, radius / 2, radius / 2),
+                Point(0, radius / 2, -radius / 2),
+                Point(0, -radius / 2, -radius / 2),
+                Point(0, -radius / 2, radius / 2)
+            ).Positioned(radius / 2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
             cube.Add(new Multi(
-                Point(0, radius/2, radius/2),
-                Point(0, radius/2, -radius/2),
-                Point(0, -radius/2, -radius/2),
-                Point(0, -radius/2, radius/2)
-            ).Positioned(-radius/2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
+                Point(0, radius / 2, radius / 2),
+                Point(0, radius / 2, -radius / 2),
+                Point(0, -radius / 2, -radius / 2),
+                Point(0, -radius / 2, radius / 2)
+            ).Positioned(-radius / 2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
 
             cube.Add(new Multi(
-                Point(radius/2, 0, radius/2),
-                Point(-radius/2, 0, radius/2),
-                Point(-radius/2, 0, -radius/2),
-                Point(radius/2, 0, -radius/2)
-            ).Positioned(0, radius/2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
+                Point(radius / 2, 0, radius / 2),
+                Point(-radius / 2, 0, radius / 2),
+                Point(-radius / 2, 0, -radius / 2),
+                Point(radius / 2, 0, -radius / 2)
+            ).Positioned(0, radius / 2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
             cube.Add(new Multi(
-                Point(radius/2, 0, radius/2),
-                Point(-radius/2, 0, radius/2),
-                Point(-radius/2, 0, -radius/2),
-                Point(radius/2, 0, -radius/2)
-            ).Positioned(0, -radius/2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
+                Point(radius / 2, 0, radius / 2),
+                Point(-radius / 2, 0, radius / 2),
+                Point(-radius / 2, 0, -radius / 2),
+                Point(radius / 2, 0, -radius / 2)
+            ).Positioned(0, -radius / 2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
 
             return cube.DrawFlags(DrawMode.INVISIBLE);
+        }
+
+        /* Create 3D shapes! */
+        public static Multi3D Tetrahedron(double x, double y, double z, double radius)
+        {
+            Multi3D tetra = new Multi3D(x, y, z,
+                Create.RegularPolygon(3, radius)
+                .Add(
+                new Multi[] { Create.Point(0, 0, radius) }
+                ).ToArray())
+            .FacesSimplex();
+            return tetra;
+        }
+
+        public static Multi3D Cube(double x, double y, double z, double radius)
+        {
+            Multi3D cube = new Multi3D(x, y, z,
+                Create.RegularPolygon(4, radius)
+                .Add(
+         Create.RegularPolygon(4, radius).Sub(m=>m.Translated(0, 0, -radius * 2)).Constituents.ToArray()
+                ).ToArray())
+            .FacesCube();
+            return cube;
         }
     }
 
@@ -199,17 +222,17 @@ namespace Magician.Geo
                 );
                 return (x >= minX) && (x < minX + xRange) && (y >= minY) && (y < minY + yRange);
             }
-            
+
             // For other shapes, grab the triangles from Siedel's algo and check each
             List<int[]> triangles = Seidel.Triangulator.Triangulate(polygon);
             foreach (int[] vertexIdx in triangles)
             {
-                if (vertexIdx.Length != 3) {Scribe.Issue("Renderer gave bad triangle :(");}
+                if (vertexIdx.Length != 3) { Scribe.Issue("Renderer gave bad triangle :("); }
                 double x0, y0, x1, y1, x2, y2;
                 int idx0 = vertexIdx[0];
                 int idx1 = vertexIdx[1];
                 int idx2 = vertexIdx[2];
-                
+
                 // If all vertex indices are zero, we're done
                 if (idx0 + idx1 + idx2 == 0)
                 {
@@ -217,19 +240,19 @@ namespace Magician.Geo
                 }
 
                 // Calculate absolute coordinates of triangle
-                x0 = polygon[idx0-1].X;
-                y0 = polygon[idx0-1].Y;
-                x1 = polygon[idx1-1].X;
-                y1 = polygon[idx1-1].Y;
-                x2 = polygon[idx2-1].X;
-                y2 = polygon[idx2-1].Y;
+                x0 = polygon[idx0 - 1].X;
+                y0 = polygon[idx0 - 1].Y;
+                x1 = polygon[idx1 - 1].X;
+                y1 = polygon[idx1 - 1].Y;
+                x2 = polygon[idx2 - 1].X;
+                y2 = polygon[idx2 - 1].Y;
 
                 // These two vectors add up to the position of the mouse
-                double v0 = (x0*(y2-y0)+(y-y0)*(x2-x0)-x*(y2-y0)) / ((y1-y0)*(x2-x0)-(x1-x0)*(y2-y0));
-                double v1 = (y - y0 - v0*(y1-y0)) / (y2-y0);
-                
+                double v0 = (x0 * (y2 - y0) + (y - y0) * (x2 - x0) - x * (y2 - y0)) / ((y1 - y0) * (x2 - x0) - (x1 - x0) * (y2 - y0));
+                double v1 = (y - y0 - v0 * (y1 - y0)) / (y2 - y0);
+
                 // Point is NOT in triangle
-                if (v0 < 0 || v1 < 0 || Math.Abs(v0) > 1 || Math.Abs(v1) > 1 || v0+v1 > 1 || double.IsNaN(v0) || double.IsNaN(v1))
+                if (v0 < 0 || v1 < 0 || Math.Abs(v0) > 1 || Math.Abs(v1) > 1 || v0 + v1 > 1 || double.IsNaN(v0) || double.IsNaN(v1))
                 {
                     continue;
                 }
@@ -285,7 +308,7 @@ namespace Magician.Geo
 
         public double Get(int row, int col)
         {
-            return mx[row,col];
+            return mx[row, col];
         }
 
         public double X => Get(0, 0);
@@ -298,7 +321,7 @@ namespace Magician.Geo
             width = mx.GetLength(1); // columns
             this.mx = mx;
         }
-        public Matrix(Multi m) : this(new double[,] {{m.X, m.Y, m.Z}}){}
+        public Matrix(Multi m) : this(new double[,] { { m.X, m.Y, m.Z } }) { }
 
         public Matrix Mult(Matrix mox)
         {
@@ -324,9 +347,9 @@ namespace Magician.Geo
         }
         public static Matrix Rotation(double theta)
         {
-            return new Matrix(new double[,]{{Math.Cos(theta), -Math.Sin(theta)}, {Math.Sin(theta), Math.Cos(theta)}, {0, 0}});
+            return new Matrix(new double[,] { { Math.Cos(theta), -Math.Sin(theta) }, { Math.Sin(theta), Math.Cos(theta) }, { 0, 0 } });
         }
-        public static Matrix Parallel = new Matrix(new double[,]{{1, 0, 0}, {0, 1, 0}, {0, 0, 0}});
+        public static Matrix Parallel = new Matrix(new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } });
 
         public override string ToString()
         {
@@ -346,8 +369,8 @@ namespace Magician.Geo
         {
             for (int row = 0; row < height; row++)
             {
-                mx[row, 0] = mx[row, 0] + Data.Globals.winWidth /2 + xOffset;
-                mx[row, 1] = -mx[row, 1] + Data.Globals.winHeight/2 + yOffset;
+                mx[row, 0] = mx[row, 0] + Data.Globals.winWidth / 2 + xOffset;
+                mx[row, 1] = -mx[row, 1] + Data.Globals.winHeight / 2 + yOffset;
             }
             return this;
         }
