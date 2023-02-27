@@ -19,26 +19,26 @@ namespace Magician.Geo
     {
         // Create a point
         /* TODO: remove parent arguement from Create methods */
-        public static Multi Point(Multi? parent, double x, double y, double z, Color col)
+        public static Multi Point(Multi? parent, double x, double y, double z, Color? col)
         {
-            return new Multi(parent, x, y, z, col).DrawFlags(DrawMode.POINT);
+            return new Multi(parent, x, y, z, col).DrawFlags(DrawMode.INVISIBLE);
         }
-        public static Multi Point(Multi? parent, double x, double y, Color col)
+        public static Multi Point(Multi? parent, double x, double y, Color? col)
         {
             return Point(parent, x, y, 0, col);
         }
-        public static Multi Point(double x, double y, double z, Color col)
+        public static Multi Point(double x, double y, double z=0, Color? col=null)
         {
-            return Point(Ref.Origin, x, y, z, col).DrawFlags(DrawMode.POINT);
+            return Point(Ref.Origin, x, y, z, col).DrawFlags(DrawMode.INVISIBLE);
         }
         public static Multi Point(double x, double y, Color col)
         {
             return Point(x, y, 0, col);
         }
-        public static Multi Point(double x, double y, double z=0)
+/*         public static Multi Point(double x, double y, double z=0)
         {
             return Point(Ref.Origin, x, y, z, Data.Col.UIDefault.FG);
-        }
+        } */
 
         // Create a line
         public static Multi Line(Multi p1, Multi p2, Color col)
@@ -70,10 +70,10 @@ namespace Magician.Geo
         public static Multi Rect(double x, double y, double width, double height)
         {
             return new Multi(
-                Point(width, -height),
-                Point(width, 0),
-                Point(0, 0),
-                Point(0, -height)
+                Point(width, -height).Textured(new Renderer.Text("1", new RGBA(0xff0000e0), 20).Render()),
+                Point(width, 0).Textured(new Renderer.Text("2", new RGBA(0xff0000e0), 20).Render()),
+                Point(0, 0).Textured(new Renderer.Text("3", new RGBA(0xff0000e0), 20).Render()),
+                Point(0, -height).Textured(new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render())
             ).Positioned(x, y);
         }
 
@@ -130,7 +130,9 @@ namespace Magician.Geo
             return Star(0, 0, sides, innerRadius, outerRadius);
         }
 
-        public static Multi Cube(double x, double y, double z, double radius)
+        // This approach to 3d objects is impractical
+        // For more info, see Multi3D
+        public static Multi ImpractiCube(double x, double y, double z, double radius)
         {
             Multi cube = new Multi(x, y, z);
             
@@ -139,41 +141,41 @@ namespace Magician.Geo
                 Point(-radius/2, radius/2, 0),
                 Point(-radius/2, -radius/2, 0),
                 Point(radius/2, -radius/2, 0)
-            ).Positioned(0, 0, radius/2).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xff0000d0)));
+            ).Positioned(0, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xff0000d0)));
             cube.Add(new Multi(
                 Point(radius/2, radius/2, 0),
                 Point(-radius/2, radius/2, 0),
                 Point(-radius/2, -radius/2, 0),
                 Point(radius/2, -radius/2, 0)
-            ).Positioned(0, 0, -radius/2).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x00ffffd0)));
+            ).Positioned(0, 0, -radius/2).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
 
             cube.Add(new Multi(
                 Point(0, radius/2, radius/2),
                 Point(0, radius/2, -radius/2),
                 Point(0, -radius/2, -radius/2),
                 Point(0, -radius/2, radius/2)
-            ).Positioned(radius/2, 0, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xffff00d0)));
+            ).Positioned(radius/2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
             cube.Add(new Multi(
                 Point(0, radius/2, radius/2),
                 Point(0, radius/2, -radius/2),
                 Point(0, -radius/2, -radius/2),
                 Point(0, -radius/2, radius/2)
-            ).Positioned(-radius/2, 0, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x0000ffd0)));
+            ).Positioned(-radius/2, 0, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
 
             cube.Add(new Multi(
                 Point(radius/2, 0, radius/2),
                 Point(-radius/2, 0, radius/2),
                 Point(-radius/2, 0, -radius/2),
                 Point(radius/2, 0, -radius/2)
-            ).Positioned(0, radius/2, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0x00ff00d0)));
+            ).Positioned(0, radius/2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
             cube.Add(new Multi(
                 Point(radius/2, 0, radius/2),
                 Point(-radius/2, 0, radius/2),
                 Point(-radius/2, 0, -radius/2),
                 Point(radius/2, 0, -radius/2)
-            ).Positioned(0, -radius/2, 0).DrawFlags(DrawMode.INNER).Colored(new RGBA(0xff00ffd0)));
+            ).Positioned(0, -radius/2, 0).DrawFlags(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
 
-            return cube.DrawFlags(DrawMode.INNER);
+            return cube.DrawFlags(DrawMode.INVISIBLE);
         }
     }
 
@@ -275,14 +277,6 @@ namespace Magician.Geo
         //public static double
     }
 
-    public static class Transform
-    {
-        // Parallel projection is implicit in the drawing process
-        public static Multi ProjParallel(Multi m)
-        {
-            return m;
-        }
-    }
     public class Matrix
     {
         public int width;
