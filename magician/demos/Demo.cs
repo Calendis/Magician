@@ -142,16 +142,12 @@ namespace Magician.Demos
         public override void PreLoop()
         {
             b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-            Multi tetra = Create.RegularPolygon(3, 150).Add(new Multi[]{Create.Point(0, 0, 150)});
-            Origin["cube"] = new Multi3D(0, 0, 0, 4,
-                tetra.ToArray()
-            )
+            Origin["cube"] = Create.Cube(0, 0, 0, 140)
             .DrivenXY(
                 x=>x,
                 y=> y+Math.Sin(Time/10)
             )
             ;
-            Scribe.Info($"tetra:\n{Origin["cube"]}");
             //Origin["cube"] = Create.ImpractiCube(0, 0, 0, 250);
         }
 
