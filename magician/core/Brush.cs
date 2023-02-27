@@ -14,7 +14,7 @@ namespace Magician
             double[] pos = base.Evaluate(new double[]{t});
             if (t > 0)
             {
-                return m.Positioned(pos[0], pos[1]).Pasted();
+                return m.Copied().Positioned(pos[0], pos[1]).Tagged($"{pos[0]}{pos[1]}paint");
             }
             return new Multi().Tagged("empty paint");
         }

@@ -30,7 +30,7 @@ namespace Magician
         double tempY = 0;
         Multi? _parent;
         /* Multis are a recursive structure. They track position relative to their parent */
-        List<Multi> csts;
+        protected List<Multi> csts;
         Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
 
         /* parent property */
@@ -148,15 +148,15 @@ namespace Magician
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
         }
 
-        /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS:    */
+        /* USERS, NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
         ///////////////////////////////////////////////////
         // Multi m = (blah...)
         // loop {
         //      m = (blah...);
         // }
-        /* This will cause a memory when using textures. */
-        /* INSTEAD, USE THIS SETTER! It disposes of all  */
-        /* textures and handily sets the parent too!     */
+        /* This will cause a memory when using textures.     */
+        /* INSTEAD, USE THIS SETTER! It disposes of all      */
+        /* textures and handily sets the parent too!         */
         public Multi this[int i]
         {
             get
@@ -207,18 +207,26 @@ namespace Magician
             }
         }
 
-        DrawMode drawMode;
+        public Texture Texture
+        {
+            get => texture ?? throw Scribe.Error($"Got null texture of {this}");
+        }
+
+
+
+        protected DrawMode drawMode;
         protected Color col;
         // TODO: maybe make this not public
-        public Texture? texture;
+        protected Texture? texture;
 
         // Full constructor
-        public Multi(Multi? parent, double x, double y, double z, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
+        public Multi(Multi? parent, double x, double y, double z, Color? col=null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
         {
             this._parent = parent ?? Ref.Origin;
             this.x.Set(x);
             this.y.Set(y);
-            this.col = col;
+            this.z.Set(z);
+            this.col = col ?? new RGBA(0xff00ffd0);
             this.drawMode = dm;
 
             csts = new List<Multi> { };
@@ -233,10 +241,10 @@ namespace Magician
         }
 
         // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, double z, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
+        public Multi(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
         : this(Ref.Origin, x, y, z, col, dm, cs) { }
-        public Multi(double x, double y, Color col, DrawMode dm=DrawMode.FULL, params Multi[] cs) : this(x, y, 0, col, dm, cs) {}
-        public Multi(double x, double y, double z=0) : this(x, y, z, Data.Col.UIDefault.FG) { }
+        public Multi(double x, double y, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(x, y, 0, col, dm, cs) { }
+        public Multi(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
         // Create a multi from a list of multis
         public Multi(params Multi[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
 
@@ -255,7 +263,7 @@ namespace Magician
             return Colored(m.Col).DrawFlags(m.drawMode);
         }
 
-        
+
         public double XCartesian(double offset)
         {
             return Data.Globals.winWidth / 2 + X + offset;
@@ -264,7 +272,7 @@ namespace Magician
         {
             return Data.Globals.winHeight / 2 - Y + offset;
         }
-        
+
 
         /* Colour methods */
         public static void _Color(Multi m, Color c)
@@ -388,7 +396,7 @@ namespace Magician
                 m.z.Incr((double)z);
             }
         }
-        public Multi Translated(double x, double y, double? z=null)
+        public Multi Translated(double x, double y, double? z = null)
         {
             _Translate(this, x, y, z);
             return this;
@@ -775,23 +783,48 @@ namespace Magician
         /* The two paste methods must match!! */
         public Multi Paste()
         {
-            Geo.Ref.Origin[$"{tag}_paste{x}{y}"] = Copied();
+            Parent[$"{tag}_paste{x}{y}"] = Copied();
             return this;
         }
         public Multi Pasted()
         {
             Paste();
-            return Geo.Ref.Origin[$"{tag}_paste{x}{y}"];
+            return Parent[$"{tag}_paste{x}{y}"];
         }
 
-        // Create a new Multi with the constituents of both Multis
+        public Multi Unique()
+        {
+            List<double> xs = new List<double>();
+            List<double> ys = new List<double>();
+            Multi c = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate());
+            foreach (Multi cst in csts)
+            {
+                bool addMe = true;
+                // Check for this position
+                for (int i = 0; i < xs.Count; i++)
+                {
+                    if (xs[i] == cst.x.Evaluate() && ys[i] == cst.y.Evaluate())
+                    {
+                        addMe = false;
+                        break;
+                    }
+                }
+                if (addMe)
+                {
+                    c.Add(cst);
+                }
+            }
+            return c;
+        }
+
+        // Inherit the constituents of another multi
         public Multi FlatAdjoin(Multi m)
         {
             csts.AddRange(m.csts);
             return this;
         }
 
-        // Flat adjoining on a particular constituent
+        // Replace a constituent
         public void AddAt(Multi m, int n)
         {
             m.Translated(csts[n].X, csts[n].Y);
@@ -799,9 +832,9 @@ namespace Magician
         }
 
         // Add both multis to a new parent Multi
-        public Multi Adjoin(Multi m, double xOffset = 0, double yOffset = 0)
+        public Multi Adjoined(Multi m, double xOffset = 0, double yOffset = 0, double zOffset=0)
         {
-            Multi nm = new Multi(xOffset, yOffset);
+            Multi nm = new Multi(xOffset, yOffset, zOffset, col, drawMode);
             nm.Add(this, m);
             return nm;
         }
@@ -944,7 +977,7 @@ namespace Magician
             i = i == Parent.Count - 1 ? 0 : i + 1;
             return Parent[i];
         } */
-        public void Draw(double xOffset, double yOffset)
+        public virtual void Draw(double xOffset, double yOffset)
         {
             Control.SaveTarget();
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
@@ -986,7 +1019,7 @@ namespace Magician
                     SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(SDLGlobals.renderer,
                     (float)verts[i].X, (float)verts[i].Y,
-                    (float)verts[i+1].X, (float)verts[i+1].Y);
+                    (float)verts[i + 1].X, (float)verts[i + 1].Y);
 
                 }
             }
@@ -1023,6 +1056,13 @@ namespace Magician
                 try
                 {
                     List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
+                    // If the render fails for some reason, try with reverse order
+                    // This is a hack, but oh well
+                    if (vertices[0][0] + vertices[0][1] + vertices[0][2] + vertices[1][0] + vertices[1][1] + vertices[1][2] == 0)
+                    {
+                        vertices = Seidel.Triangulator.Triangulate(Copied().Reversed());
+                    }
+
                     int numTriangles = (Count - 2);
                     SDL_Vertex[] vs = new SDL_Vertex[numTriangles * 3];
                     // Assemble the triangles from the SDLGlobals.renderer into vertices for SDL
@@ -1091,9 +1131,10 @@ namespace Magician
                 }
                 catch (System.Exception)
                 {
-                    Scribe.Warn($"Failed to render {this}");
-                    Scribe.Warn(" You may have forgotten to set draw flags. Falling back to OUTERP...");
-                    DrawFlags(DrawMode.OUTERP);
+                    //Scribe.Warn($"Failed to render {this}");
+                    //Scribe.Warn(" You may have forgotten to set draw flags. Falling back to OUTERP...");
+                    //DrawFlags(DrawMode.OUTERP);
+                    //throw Magician.Scribe.Error("Render error");
                 }
 
             }
@@ -1142,7 +1183,9 @@ namespace Magician
             string xRel = x.Evaluate().ToString("F1");
             string yAbs = Y.ToString("F1");
             string yRel = y.Evaluate().ToString("F1");
-            s += $" at ({xRel}, {yRel})rel, ({xAbs}, {yAbs})abs";
+            string zAbs = Z.ToString("F1");
+            string zRel = z.Evaluate().ToString("F1");
+            s += $" at ({xRel},{yRel},{zRel})rel, ({xAbs},{yAbs},{zAbs})abs";
 
             foreach (Multi m in csts)
             {
@@ -1180,7 +1223,11 @@ namespace Magician
         {
             if (item == this)
             {
-                throw new InvalidDataException($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {Parent}");
+                throw Scribe.Error($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {Parent}");
+            }
+            if (item == Parent)
+            {
+                throw Scribe.Error("A Multi may not have its parent as a constituent");
             }
             item._parent = this;
             csts.Add(item);
@@ -1192,6 +1239,20 @@ namespace Magician
                 Add(m);
             }
             return this;
+        }
+        public void AddCautiously(Multi m)
+        {
+            if (m.Tag == "empty paint")
+            {
+                //Scribe.Info($"discarding {item}");
+                return;
+            }
+            if (m.Tag != "")
+            {
+                this[m.Tag] = m;
+                return;
+            }
+            Add(m);
         }
 
         public void Clear()
@@ -1206,6 +1267,12 @@ namespace Magician
         public bool Contains(Multi item)
         {
             return csts.Contains(item);
+        }
+
+        public Multi Reversed()
+        {
+            csts.Reverse();
+            return this;
         }
 
         // Some interface method
