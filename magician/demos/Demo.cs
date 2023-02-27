@@ -30,14 +30,23 @@ namespace Magician.Demos
             mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
             /* Testing area */
+
             Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
             () =>
             {
                 Spellbook.Cache(new TestingSpell());
             }
+
             );
+            //Origin["testRect"] = Geo.Create.Rect(-150, 100, 300, 250).Colored(new RGBA(0x70ff00d0));
+            Origin["myMulti"] = new Multi().DrawFlags(DrawMode.INNER);
+            Origin["savMyMulti"] = new Multi().DrawFlags(DrawMode.INVISIBLE);
 
         }
+        Brush b = new Brush(
+            new CustomMap(x => Events.MouseX),
+            new CustomMap(x => Events.MouseY)
+        );
 
         public override void Loop()
         {
@@ -45,17 +54,65 @@ namespace Magician.Demos
             Origin["my star"].RotatedZ(0.01);
             Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
-            Origin["memTest"] = new IOMap(1,
-                x => 100 * Math.Sin(x / 2 + Time / 4),
-                y => 100 * Math.Cos(y / 7 + Time / 4)
-            )
-            .TextAlong(-40, 40, 0.3, "WOaAoAoAHOAHOAHH!! I'm flying!!!", new HSLA(Time / 10, 1, 1, 222), 32, 30, -100)
-            ;
-
             // Perform a Matrix rotation
-            Matrix mmx = new Matrix(Origin["btn"]);
-            Matrix result = Matrix.Rotation(0.004).Mult(mmx);
-            Origin["btn"].Positioned(result);
+            //Matrix mmx = new Matrix(Origin["btn"]);
+            //Matrix result = Matrix.Rotation(0.004).Mult(mmx);
+            //Origin["btn"].Positioned(result);
+            //Origin["testRect"].RotatedX(0.04);
+            //Origin["testRect"].RotatedY(0.02);
+            //Origin["btn"].RotatedZ(0.01);
+            Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().DrawFlags(DrawMode.POINT)));
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
+            {
+                Origin["savMyMulti"].RotatedZ(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_y])
+            {
+                Origin["savMyMulti"].RotatedY(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_x])
+            {
+                Origin["savMyMulti"].RotatedX(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
+            {
+                Origin["myMulti"].RotatedZ(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_b])
+            {
+                Origin["myMulti"].RotatedY(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_c])
+            {
+                Origin["myMulti"].RotatedX(0.03);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
+            {
+                Origin["myMulti"].Translated(0, 0.3, 0);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_DOWN])
+            {
+                Origin["myMulti"].Translated(0, -0.3, 0);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LEFT])
+            {
+                Origin["myMulti"].Translated(-0.3, 0, 0);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RIGHT])
+            {
+                Origin["myMulti"].Translated(0.3, 0, 0);
+            }
+
+
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
+            {
+                if (Origin["myMulti"].Count >= 4)
+                {
+                    //Origin["myMulti"].Written(Origin["myMulti"].Evaluate()+1);
+                    Origin[$"savMyMulti"].Add(Origin["myMulti"].Copied().Colored(HSLA.RandomVisible()));
+                    Origin["myMulti"].Clear();
+                }
+            }
         }
     }
 
@@ -85,28 +142,25 @@ namespace Magician.Demos
         public override void PreLoop()
         {
             b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-            // A cube
-            Origin["cube"] = Create.Cube(0, 0, 0, 200)
-            .Sub(
-                m =>
-                m.Sub(
-                    n =>
-                    n.DrivenPM(
-                    p => p + 0*0.01,
-                    m => m
-                )
-                )
+            Multi tetra = Create.RegularPolygon(3, 150).Add(new Multi[]{Create.Point(0, 0, 150)});
+            Origin["cube"] = new Multi3D(0, 0, 0, 4,
+                tetra.ToArray()
+            )
+            .DrivenXY(
+                x=>x,
+                y=> y+Math.Sin(Time/10)
             )
             ;
+            Scribe.Info($"tetra:\n{Origin["cube"]}");
+            //Origin["cube"] = Create.ImpractiCube(0, 0, 0, 250);
         }
 
         public override void Loop()
         {
             Renderer.Control.Clear();
             // Brush testing
-            b!.Paint(Events.Click ? 1 : 0,
+            Origin.AddCautiously(b!.Paint(Events.Click ? 1 : 0,
                 Geo.Create.Star(5, 29, 53).Colored(new HSLA(Time, 1, 1, 120))
-            //.Rotated(Time)
             )
             .Sub(
                     m =>
@@ -114,16 +168,21 @@ namespace Magician.Demos
                         x => x + 10.1,
                         y => y
                     )
-                )
+                ))
             ;
 
-            Origin["cube"].Sub(
-                m => m
-                //.RevolvedX(-0.0000003)
-                .RotatedY(-0.03)
-                .RotatedZ(-0.015)
-                .RotatedX(0.02)
-            );
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
+            {
+                Origin["cube"].RotatedZ(0.01);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_y])
+            {
+                Origin["cube"].RotatedY(0.01);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_x])
+            {
+                Origin["cube"].RotatedX(0.01);
+            }
         }
     }
 }
