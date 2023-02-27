@@ -54,7 +54,10 @@ namespace Magician.Library
         {
             if (toSwitchTo > 0)
             {
+                // Clear events, TODO: do this more
                 Interactive.Events.Click = false;
+                // Clear renderer to prevent artifacts during switch
+                Renderer.Control.Clear();
                 DoSwitch();
                 toSwitchTo = -1;
             }
