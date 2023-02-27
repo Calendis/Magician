@@ -134,7 +134,7 @@ namespace Magician.UI
         public Multi Render()
         {
 
-            return new Multi(gridLines, axis0.Adjoin(spacers0), axis1.Adjoin(spacers1)).DrawFlags(DrawMode.INVISIBLE)
+            return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).DrawFlags(DrawMode.INVISIBLE)
             ;
         }
     }
