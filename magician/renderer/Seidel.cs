@@ -227,6 +227,8 @@ namespace Seidel
         // Initialize arrays and read segments from Multi
         public static List<int[]> Triangulate(Magician.Multi m)
         {
+            //Magician.Multi m = new Magician.Multi();
+            //m = m.Unique();
             Initialize(m.Count);
             MAX_SEGMENTS = m.Count;
             MAX_NODES = 8 * MAX_SEGMENTS;
@@ -296,9 +298,9 @@ namespace Seidel
                 segs[i] = new Segment();
                 segs[i].isInserted = false;
             }
-            Random r = new Random();
+            //Random r = new Random();
             // TODO: ensure this shuffle works
-            //segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : -1);
+            //segs.ToList<Segment>().Sort((s0, s1) => r.Next(2) == 1 ? 1 : 0);
         }
 
         public static int TriangulateMonotonePolygons(int nvert, int nmonopoly, List<int[]> op)
@@ -487,7 +489,7 @@ namespace Seidel
 
             /* First locate a trapezoid which lies inside the polygon */
             /* and which is triangular */
-            for (i = 1; i < MAX_TRAPEZOIDS + 1; i++)
+            for (i = 1; i < MAX_TRAPEZOIDS ; i++)
                 if (InsidePolygon(trapezoids[i]))
                     break;
             tr_start = i;
@@ -515,14 +517,9 @@ namespace Seidel
             /* chain  */
             //
 
-            //Console.WriteLine($" tr_start: {tr_start}");
             // The C version had undefined behaviour here
-            // There are a few instances of this throughout but I tried to correct them
-            if (tr_start > MAX_TRAPEZOIDS)
-            {
-                //Console.WriteLine($" UNDEFINED: tr_start is {tr_start} (too large)");
-                return newmon();
-            }
+            //if (tr_start > MAX_TRAPEZOIDS)
+            
             /* traverse the polygon */
             if (trapezoids[tr_start].u0 > 0)
             {
@@ -538,12 +535,13 @@ namespace Seidel
 
             //Console.WriteLine("END OF MonotonateTrapezoids!");
             //Console.WriteLine("mchain:");
+            /*
             int k;
             for (k = 0; k < MAX_TRAPEZOIDS + 1; k++)
             {
                 //Console.WriteLine(MonchainToString(k));
             }
-
+            */
             /* return the number of polygons created */
             return newmon();
         }
@@ -877,7 +875,14 @@ namespace Seidel
             int i, j, nf0, nf1;
             Vertexchain vp0, vp1;
 
+            /* if (v1 == -1 || v0 == v1)
+            {
+                // TODO: wtf is going on here :(
+                //Magician.Scribe.Warn($"{v1} / {vertices.Length}, {tr_idx}");
+                //v1 += vertices.Length;
+            } */
             vp0 = vertices[v0];
+            // This line crashes with Y rotation
             vp1 = vertices[v1];
 
             GetVertexPositions(v0, v1, out ip, out iq);
@@ -1004,7 +1009,7 @@ namespace Seidel
                 ((t.d0 <= 0) && (t.d1 <= 0)))
                 return Alg.GreaterThan(segs[rseg].p1, segs[rseg].p0);
 
-            return false;
+            return true;
 
         }
 
@@ -1172,6 +1177,7 @@ namespace Seidel
             {
                 AddSegment(ChooseSegment());
             }
+
             //Console.WriteLine("END OF ConstructTrapezoids");
         }
 
