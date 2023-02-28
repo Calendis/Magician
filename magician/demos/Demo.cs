@@ -179,6 +179,28 @@ namespace Magician.Demos
             {
                 Origin["cube"].RotatedX(0.01);
             }
+
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_c])
+            {
+                Ref.Perspective.RotatedZ(0.01);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_b])
+            {
+                Ref.Perspective.RotatedY(0.01);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
+            {
+                Ref.Perspective.RotatedX(0.01);
+            }
+
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_o])
+            {
+                Ref.FOV++;
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
+            {
+                Ref.FOV--;
+            }
         }
     }
 }
