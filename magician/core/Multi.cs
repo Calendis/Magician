@@ -23,17 +23,17 @@ namespace Magician
 
     public class Multi : Quantity, IDriveable, ICollection<Multi>
     {
+        Multi? _parent;
+        protected List<Multi> csts;
+        Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
+        /* Multis are a recursive structure. They track position relative to their parent */
         public Quantity x = new Quantity(0);
         public Quantity y = new Quantity(0);
         public Quantity z = new Quantity(0);
+        double[] heading = new double[]{0, 0, 0};
         double tempX = 0;
         double tempY = 0;
-        Multi? _parent;
-        /* Multis are a recursive structure. They track position relative to their parent */
-        protected List<Multi> csts;
-        Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
 
-        /* parent property */
         public Multi Parent
         {
             get
@@ -46,6 +46,11 @@ namespace Magician
             }
         }
 
+        public IReadOnlyList<Multi> Constituents
+        {
+            get => csts;
+        }
+
         /*
         *  Positional Properties
         */
@@ -54,7 +59,7 @@ namespace Magician
             get
             {
                 // Base case (top of the tree)
-                if (this == Ref.Origin)
+                if (Ref.AllowedOrphans.Contains(this))
                 {
                     return x;
                 }
@@ -68,7 +73,7 @@ namespace Magician
             get
             {
                 // Base case (top of the tree)
-                if (this == Ref.Origin)
+                if (Ref.AllowedOrphans.Contains(this))
                 {
                     return y;
                 }
@@ -80,7 +85,7 @@ namespace Magician
         {
             get
             {
-                if (this == Ref.Origin)
+                if (Ref.AllowedOrphans.Contains(this))
                 {
                     return z;
                 }
@@ -148,10 +153,10 @@ namespace Magician
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
         }
 
-        public IReadOnlyList<Multi> Constituents
-        {
-            get => csts;
-        }
+        /* Tracks rotation independently of constituents' phases */
+        public double HeadingX {get => heading[0]; private set => heading[0]=value;}
+        public double HeadingY {get => heading[1]; private set => heading[1]=value;}
+        public double HeadingZ {get => heading[2]; private set => heading[2]=value;}
 
         /* USERS, NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
         ///////////////////////////////////////////////////
@@ -212,17 +217,14 @@ namespace Magician
             }
         }
 
+        protected Texture? texture;
         public Texture Texture
         {
             get => texture ?? throw Scribe.Error($"Got null texture of {this}");
         }
 
-
-
         protected DrawMode drawMode;
         protected Color col;
-        // TODO: maybe make this not public
-        protected Texture? texture;
 
         // Full constructor
         public Multi(Multi? parent, double x, double y, double z, Color? col=null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
@@ -239,10 +241,6 @@ namespace Magician
             {
                 Add(c);
             }
-        }
-        public Multi(Multi? parent, double x, double y, Color col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(parent, x, y, 0, col, dm, cs)
-        {
-            //
         }
 
         // Create a multi and define its position, colour, and drawing properties
@@ -465,6 +463,7 @@ namespace Magician
         // Rotation, in terms of revolution
         public Multi RotatedZ(double theta)
         {
+            HeadingZ += theta;
             return Sub(
                 m =>
                 m.RevolvedZ(theta)
@@ -493,6 +492,7 @@ namespace Magician
         // Rotation, in terms of revolution
         public Multi RotatedY(double theta)
         {
+            HeadingY += theta;
             return Sub(
                 m =>
                 m.RevolvedY(theta)
@@ -521,6 +521,7 @@ namespace Magician
         // Rotation, in terms of revolution
         public Multi RotatedX(double theta)
         {
+            HeadingX += theta;
             return Sub(
                 m =>
                 m.RevolvedX(theta)
@@ -556,6 +557,14 @@ namespace Magician
             return this;
         }
 
+        /* public Multi TransformedPoint(Matrix mx)
+        {
+            Matrix result = new Matrix(this)
+            .Mult(mx)
+            ;
+            return new Multi(result.Get(0,0), result.Get(1,1), result.Get(2,2));
+        } */
+
         public static void _Texture(Multi m, Renderer.Texture t)
         {
             if (m.texture != null)
@@ -573,16 +582,6 @@ namespace Magician
         {
             _Texture(this, t);
             return this;
-        }
-
-        /* Transformation methods */
-        public static void Affine(double[,] matrix)
-        {
-            // TODO: implement me
-        }
-        public static void Affine(double[] matrix)
-        {
-            // TODO: implement me
         }
 
         public virtual void Update()
@@ -723,18 +722,18 @@ namespace Magician
         }
 
         /* Parenting/tagging methods */
-        static void _Parent(Multi m, Multi p)
+        static void _Parent(Multi m, Multi? p)
         {
             m._parent = p;
         }
-        public Multi Parented(Multi m)
+        public Multi Parented(Multi? m)
         {
             _Parent(this, m);
             return this;
         }
         static bool _IsOrphan(Multi m)
         {
-            if (m == Ref.Origin) { return false; }
+            if (Ref.AllowedOrphans.Contains(m)) { return false; }
             if (m._parent == null) { return true; }
             return false;
         }
@@ -969,19 +968,7 @@ namespace Magician
         }
         public bool IsReadOnly => false;
 
-        // Do we really need these?
-        /* public Multi Prev()
-        {
-            int i = Index;
-            i = i == 0 ? Parent.Count - 1 : i - 1;
-            return Parent[i];
-        }
-        public Multi Next()
-        {
-            int i = Index;
-            i = i == Parent.Count - 1 ? 0 : i + 1;
-            return Parent[i];
-        } */
+        // TODO: Move this to an extension method
         public virtual void Draw(double xOffset, double yOffset)
         {
             Control.SaveTarget();
@@ -996,8 +983,8 @@ namespace Magician
             //foreach (Multi m in csts)
             for (int i = 0; i < Count; i++)
             {
-                Matrix mmx = new Matrix(csts[i]);
-                verts[i] = Matrix.Parallel.Mult(mmx).ToCartesian(xOffset, yOffset);
+                Matrix mmx = Matrix.Vector(csts[i]);
+                verts[i] = Matrix.Perspective.Mult(mmx).ToCartesian(xOffset, yOffset);
                 //Scribe.Info($"{i}: {verts[i]}");
             }
 
@@ -1153,8 +1140,7 @@ namespace Magician
 
         }
 
-        /* ToString override */
-        public string Title()
+        string Title()
         {
             string s = "";
             switch (Count)
