@@ -3,9 +3,19 @@ namespace Magician
     /* Scribe is the logger */
     public static class Scribe
     {
-        public static void Info(string s)
+        public static void Info(string? s)
         {
             Console.Write($"INFO: {s}\n");
+        }
+        public static void Info(object? o)
+        {
+            if (o == null)
+            {
+                Info("NULL");
+                return;
+            }
+            Info(o.ToString());
+            return;
         }
         
         public static void Warn(string s)
