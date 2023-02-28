@@ -1,18 +1,31 @@
 using System;
 using Magician.Library;
+using Magician.UI;
 
 namespace Magician.Geo
 {
     public static class Ref
     {
         // Reference to the Origin of the current Spell (see Spellcaster.Load)
-        public static Multi Origin
+        public static Multi Origin { get; internal set; }
+        public static Multi Perspective { get; }
+        public static List<Multi> AllowedOrphans;
+        public static double FOV
         {
-            get; set;
+            get => Perspective.Evaluate();
+            set => Perspective.Written(value);
         }
         static Ref()
         {
             Origin = new Multi().Tagged("Placeholder Origin");
+            Perspective = new Multi(0, -100, -100);//.Parented(null);
+            FOV = 90;
+
+            AllowedOrphans = new List<Multi>()
+            {
+                Origin,
+                Perspective
+            };
         }
     }
     public static class Create
@@ -195,7 +208,7 @@ namespace Magician.Geo
             Multi3D cube = new Multi3D(x, y, z,
                 Create.RegularPolygon(4, radius)
                 .Add(
-         Create.RegularPolygon(4, radius).Sub(m=>m.Translated(0, 0, -radius * 2)).Constituents.ToArray()
+         Create.RegularPolygon(4, radius).Sub(m => m.Translated(0, 0, -radius * 2)).Constituents.ToArray()
                 ).ToArray())
             .FacesCube();
             return cube;
@@ -317,11 +330,12 @@ namespace Magician.Geo
 
         public Matrix(double[,] mx)
         {
-            height = mx.GetLength(0);   // rows
-            width = mx.GetLength(1); // columns
+            height = mx.GetLength(0); // rows
+            width = mx.GetLength(1);  // columns
             this.mx = mx;
         }
-        public Matrix(Multi m) : this(new double[,] { { m.X, m.Y, m.Z } }) { }
+        public Matrix(Multi m) : this(new double[,] { { m.X, 0, 0 },{ 0, m.Y, 0 },{ 0, 0, m.Z } }) { }
+        public static Matrix Vector(Multi m) {return new Matrix(new double[,] { { m.X, m.Y, m.Z } });}
 
         public Matrix Mult(Matrix mox)
         {
@@ -345,11 +359,57 @@ namespace Magician.Geo
             }
             return new Matrix(result);
         }
-        public static Matrix Rotation(double theta)
+
+        public static Matrix RotationX(double theta)
         {
-            return new Matrix(new double[,] { { Math.Cos(theta), -Math.Sin(theta) }, { Math.Sin(theta), Math.Cos(theta) }, { 0, 0 } });
+            return new Matrix(new double[,]
+            {
+                { 1, 0, 0 },
+                { 0, Math.Cos(theta), -Math.Sin(theta) },
+                { 0, Math.Sin(theta), Math.Cos(theta) }
+            });
         }
-        public static Matrix Parallel = new Matrix(new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } });
+        public static Matrix RotationY(double theta)
+        {
+            return new Matrix(new double[,]
+            {
+                { Math.Cos(theta), 0, Math.Sin(theta) },
+                { 0, 1, 0 },
+                { -Math.Sin(theta), 0, Math.Cos(theta) }
+            });
+        }
+        public static Matrix RotationZ(double theta)
+        {
+            return new Matrix(new double[,]
+            {
+                { Math.Cos(theta), -Math.Sin(theta), 0 },
+                { Math.Sin(theta), Math.Cos(theta), 0 },
+                { 0, 0, 1 }
+            });
+        }
+        public static Matrix Orthographic = new Matrix(new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } });
+        // TODO: fix this
+        public static Matrix Isometric = new Matrix(new double[,] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } });
+        public static Matrix Perspective
+        {
+            get
+            {
+                double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
+                //double sX = Ref.Perspective.X / Math.Tan(Ref.FOV * Math.PI / 360);
+                //double sY = Ref.Perspective.Y / Math.Tan(Ref.FOV * Math.PI / 360);
+                //double sZ = Ref.Perspective.Z / Math.Tan(Ref.FOV * Math.PI / 360);
+                return new Matrix(new double[,]
+                {
+                    {s, 0, 0},
+                    {0, s, 0},
+                    {0, 0, s}
+                })
+                .Mult(RotationX(Ref.Perspective.HeadingX))
+                .Mult(RotationY(Ref.Perspective.HeadingY))
+                .Mult(RotationZ(Ref.Perspective.HeadingZ))
+                ;
+            }
+        }
 
         public override string ToString()
         {
