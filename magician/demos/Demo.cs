@@ -148,7 +148,6 @@ namespace Magician.Demos
                 y=> y+Math.Sin(Time/10)
             )
             ;
-            //Origin["cube"] = Create.ImpractiCube(0, 0, 0, 250);
         }
 
         public override void Loop()
