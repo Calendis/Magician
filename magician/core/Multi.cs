@@ -979,12 +979,12 @@ namespace Magician
             double a = col.A;
 
             // Get a projection of each constituent
-            Matrix[] verts = new Matrix[Count];
+            Matrix[] projectedVerts = new Matrix[Count];
             //foreach (Multi m in csts)
             for (int i = 0; i < Count; i++)
             {
                 Matrix mmx = Matrix.Vector(csts[i]);
-                verts[i] = Matrix.Perspective.Mult(mmx).ToCartesian(xOffset, yOffset);
+                projectedVerts[i] = Matrix.Perspective.Mult(mmx).ToCartesian(xOffset, yOffset);
                 //Scribe.Info($"{i}: {verts[i]}");
             }
 
@@ -1010,8 +1010,8 @@ namespace Magician
 
                     SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(SDLGlobals.renderer,
-                    (float)verts[i].X, (float)verts[i].Y,
-                    (float)verts[i + 1].X, (float)verts[i + 1].Y);
+                    (float)projectedVerts[i].X, (float)projectedVerts[i].Y,
+                    (float)projectedVerts[i + 1].X, (float)projectedVerts[i + 1].Y);
 
                 }
             }
@@ -1019,20 +1019,19 @@ namespace Magician
             // If the Multi is a closed shape, connect the first and last constituent with a line
             if ((drawMode & DrawMode.CONNECTED) > 0 && csts.Count > 0)
             {
-                Multi pLast = csts[csts.Count - 1];
-                Multi pFirst = csts[0];
+                Matrix pLast = projectedVerts[csts.Count - 1];
+                Matrix pFirst = projectedVerts[0];
 
-                double subr = pLast.Col.R;
-                double subg = pLast.Col.G;
-                double subb = pLast.Col.B;
-                double suba = pLast.Col.A;
+                double subr = csts[csts.Count-1].Col.R;
+                double subg = csts[csts.Count-1].Col.G;
+                double subb = csts[csts.Count-1].Col.B;
+                double suba = csts[csts.Count-1].Col.A;
 
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                 SDL_RenderDrawLineF(SDLGlobals.renderer,
-                (float)pLast.XCartesian(xOffset), (float)pLast.YCartesian(yOffset),
-                (float)pFirst.XCartesian(xOffset), (float)pFirst.YCartesian(yOffset));
+                (float)pLast.X, (float)pLast.Y,
+                (float)pFirst.X, (float)pFirst.Y);
             }
-
 
             // Draw each constituent recursively            
             foreach (Multi m in this)
@@ -1050,6 +1049,7 @@ namespace Magician
                     List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
                     // If the render fails for some reason, try with reverse order
                     // This is a hack, but oh well
+                    // TODO: resolve rendering bugs properly
                     if (vertices[0][0] + vertices[0][1] + vertices[0][2] + vertices[1][0] + vertices[1][1] + vertices[1][2] == 0)
                     {
                         vertices = Seidel.Triangulator.Triangulate(Copied().Reversed());
@@ -1069,7 +1069,6 @@ namespace Magician
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             break;
 
-
                         SDL_FPoint p0, p1, p2;
 
                         //p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
@@ -1078,12 +1077,12 @@ namespace Magician
                         //p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
                         //p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
                         //p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
-                        p0.x = (float)verts[tri0-1].X;
-                        p0.y = (float)verts[tri0-1].Y;
-                        p1.x = (float)verts[tri1 - 1].X;
-                        p1.y = (float)verts[tri1 - 1].Y;
-                        p2.x = (float)verts[tri2 - 1].X;
-                        p2.y = (float)verts[tri2 - 1].Y;
+                        p0.x = (float)projectedVerts[tri0-1].X;
+                        p0.y = (float)projectedVerts[tri0-1].Y;
+                        p1.x = (float)projectedVerts[tri1 - 1].X;
+                        p1.y = (float)projectedVerts[tri1 - 1].Y;
+                        p2.x = (float)projectedVerts[tri2 - 1].X;
+                        p2.y = (float)projectedVerts[tri2 - 1].Y;
 
                         vs[3 * i] = new SDL_Vertex();
                         vs[3 * i].position.x = p0.x;
