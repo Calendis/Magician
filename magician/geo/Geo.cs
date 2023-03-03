@@ -12,13 +12,13 @@ namespace Magician.Geo
         public static List<Multi> AllowedOrphans;
         public static double FOV
         {
-            get => Perspective.Evaluate();
+            get => Perspective.Read();
             set => Perspective.Written(value);
         }
         static Ref()
         {
             Origin = new Multi().Tagged("Placeholder Origin");
-            Perspective = new Multi(0, -100, -100);//.Parented(null);
+            Perspective = new Multi(0, -100, -100).Parented(null);
             FOV = 90;
 
             AllowedOrphans = new List<Multi>()
@@ -335,7 +335,7 @@ namespace Magician.Geo
             this.mx = mx;
         }
         public Matrix(Multi m) : this(new double[,] { { m.X, 0, 0 },{ 0, m.Y, 0 },{ 0, 0, m.Z } }) { }
-        public static Matrix Vector(Multi m) {return new Matrix(new double[,] { { m.X, m.Y, m.Z } });}
+        public static Matrix Row(Multi m) {return new Matrix(new double[,] { { m.X, m.Y, m.Z } });}
 
         public Matrix Mult(Matrix mox)
         {
