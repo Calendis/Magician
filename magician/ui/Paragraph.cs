@@ -214,11 +214,11 @@ namespace Magician.UI
                     break;
 
                 case (Justification.CENTRE):
-                    Sub(m => m.Translated(m.Evaluate() / 2, 0));
+                    Sub((m,i) => m.Translated(m.Read() / 2, 0));
                     break;
 
                 case (Justification.RIGHT):
-                    Sub(m => m.Translated(m.Evaluate(), 0));
+                    Sub((m, i) => m.Translated(m.Read(), 0));
                     break;
             }
         }

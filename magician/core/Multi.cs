@@ -21,16 +21,18 @@ namespace Magician
         OUTERP = 0b1101
     }
 
-    public class Multi : Quantity, IDriveable, ICollection<Multi>
+    public class Multi : Vec, IDriveable, ICollection<Multi>
     {
         Multi? _parent;
         protected List<Multi> csts;
         Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
         /* Multis are a recursive structure. They track position relative to their parent */
-        public Quantity x = new Quantity(0);
-        public Quantity y = new Quantity(0);
-        public Quantity z = new Quantity(0);
-        double[] heading = new double[]{0, 0, 0};
+        //public Quantity x = new Quantity(0);
+        //public Quantity y = new Quantity(0);
+        //public Quantity z = new Quantity(0);
+        //double[] heading = new double[]{0, 0, 0};
+        Quantity[] headings = new Quantity[3] { new(0), new(0), new(0) };  // I only support 3 axes of rotation
+        double internalVal = 0;
         double tempX = 0;
         double tempY = 0;
 
@@ -92,6 +94,48 @@ namespace Magician
                 return z.GetDelta(Parent.RecursZ.Evaluate());
             }
         }
+        /* Inherent phase, or "heading" */
+        public double HeadingX { get => headings[0].Evaluate(); set => headings[0].Set(value); }
+        public double HeadingY { get => headings[1].Evaluate(); set => headings[1].Set(value); }
+        public double HeadingZ { get => headings[2].Evaluate(); set => headings[2].Set(value); }
+        Quantity RecursHeadingX
+        {
+            get
+            {
+                if (Ref.AllowedOrphans.Contains(this))
+                {
+                    return headings[0];
+                }
+                return headings[0].GetDelta(Parent.RecursHeadingX.Evaluate());
+            }
+        }
+        Quantity RecursHeadingY
+        {
+            get
+            {
+                if (Ref.AllowedOrphans.Contains(this))
+                {
+                    return headings[1];
+                }
+                return headings[1].GetDelta(Parent.RecursHeadingY.Evaluate());
+            }
+        }
+        Quantity RecursHeadingZ
+        {
+            get
+            {
+                if (Ref.AllowedOrphans.Contains(this))
+                {
+                    return headings[2];
+                }
+                return headings[2].GetDelta(Parent.RecursHeadingZ.Evaluate());
+            }
+        }
+        // Theta_x
+        public double thX => RecursHeadingX.Evaluate();
+        public double thY => RecursHeadingY.Evaluate();
+        public double thZ => RecursHeadingZ.Evaluate();
+
         // Big X is the x-position relative to (0, 0)
         public double X
         {
@@ -107,56 +151,9 @@ namespace Magician
         {
             get => RecursZ.Evaluate();
         }
-        // These values are set by drivers
+        // These values are set by the driving process
         public double LastX { get => tempX; }
         public double LastY { get => tempY; }
-
-        // Phase, relative to the parent
-        public double PhaseZ
-        {
-            get
-            {
-                double p = Math.Atan2(y.Evaluate(), x.Evaluate());
-                p = p < 0 ? p + 2 * Math.PI : p;
-                return p;
-            }
-        }
-        public double PhaseY
-        {
-            get
-            {
-                double p = Math.Atan2(z.Evaluate(), x.Evaluate());
-                p = p < 0 ? p + 2 * Math.PI : p;
-                return p;
-            }
-        }
-        public double PhaseX
-        {
-            get
-            {
-                double p = Math.Atan2(z.Evaluate(), y.Evaluate());
-                p = p < 0 ? p + 2 * Math.PI : p;
-                return p;
-            }
-        }
-        // Magnitude, relative to the parent
-        public double MagnitudeZ
-        {
-            get => Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate());
-        }
-        public double MagnitudeX
-        {
-            get => Math.Sqrt(z.Evaluate() * z.Evaluate() + y.Evaluate() * y.Evaluate());
-        }
-        public double MagnitudeY
-        {
-            get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
-        }
-
-        /* Tracks rotation independently of constituents' phases */
-        public double HeadingX {get => heading[0]; private set => heading[0]=value;}
-        public double HeadingY {get => heading[1]; private set => heading[1]=value;}
-        public double HeadingZ {get => heading[2]; private set => heading[2]=value;}
 
         /* USERS, NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
         ///////////////////////////////////////////////////
@@ -227,7 +224,7 @@ namespace Magician
         protected Color col;
 
         // Full constructor
-        public Multi(Multi? parent, double x, double y, double z, Color? col=null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(0)
+        public Multi(Multi? parent, double x, double y, double z, Color? col=null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(3, 0, 0, 0)
         {
             this._parent = parent ?? Ref.Origin;
             this.x.Set(x);
@@ -244,8 +241,7 @@ namespace Magician
         }
 
         // Create a multi and define its position, colour, and drawing properties
-        public Multi(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs)
-        : this(Ref.Origin, x, y, z, col, dm, cs) { }
+        public Multi(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(Ref.Origin, x, y, z, col, dm, cs) { }
         public Multi(double x, double y, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(x, y, 0, col, dm, cs) { }
         public Multi(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
         // Create a multi from a list of multis
@@ -591,7 +587,7 @@ namespace Magician
 
         /* Driving methods */
         // Activates all the drivers
-        public void Drive(params double[] ds)
+        public void DriveQuants(params double[] ds)
         {
             Update();
             if (ds.Length < 2)
@@ -605,7 +601,7 @@ namespace Magician
             foreach (IDriveable c in csts)
             {
                 // Pass the offsets to subdriving
-                c.Drive(xOffset, yOffset);
+                c.DriveQuants(xOffset, yOffset);
             }
 
 
@@ -617,19 +613,27 @@ namespace Magician
             // This drives x and y. If the driving IMap is flagged as absolute, we offset the
             // result by the parent position. This corrects the offset and allows a user to
             // easily drive multis based on their children
+            // TODO: support z-driving
+            double xResult = x.Evaluate();
+            double yResult = y.Evaluate();            
+            //double zResult = z.Evaluate();                
             for (int i = 0; i < count; i++)
             {
                 IMap xDriver = x.GetDrivers()[i];
                 IMap yDriver = y.GetDrivers()[i];
+                //IMap zDriver = z.GetDrivers()[i];
 
-                // null checking parent all the time is really boring so I had some fun with it
                 // TODO: add support for absolute phase driving as well. IsAbs will need to be
                 // replaced with a reference to an offset value
-                double xResult = xDriver.Evaluate(x.Evaluate()) - (_parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * _parent.X));
-                double yResult = yDriver.Evaluate(y.Evaluate()) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
+                double tempXResult = xResult;
+                double tempYResult = yResult;
+                xResult = xDriver.Evaluate(tempXResult) - (_parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * _parent.X));
+                yResult = yDriver.Evaluate(tempYResult) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
+                //zResult = yDriver.Evaluate(zResult) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
 
                 x.Set(xResult);
                 y.Set(yResult);
+                HeadingZ = PhaseZ;
             }
             //x.Delta(-tempX);
             //y.Delta(-tempY);
@@ -638,10 +642,11 @@ namespace Magician
         }
 
         // Remove all the drivers
-        public new void Eject()
+        public void Eject()
         {
             x.Eject();
             y.Eject();
+            z.Eject();
         }
         public Multi Ejected()
         {
@@ -697,12 +702,16 @@ namespace Magician
         /* Internal state methods */
         public static void _Write(Multi m, double d)
         {
-            m.q = d;
+            m.internalVal = d;
         }
         public Multi Written(double d)
         {
             _Write(this, d);
             return this;
+        }
+        public double Read()
+        {
+            return internalVal;
         }
 
         public Multi DrawFlags(DrawMode dm)
@@ -983,7 +992,7 @@ namespace Magician
             //foreach (Multi m in csts)
             for (int i = 0; i < Count; i++)
             {
-                Matrix mmx = Matrix.Vector(csts[i]);
+                Matrix mmx = Matrix.Row(csts[i]);
                 projectedVerts[i] = Matrix.Perspective.Mult(mmx).ToCartesian(xOffset, yOffset);
                 //Scribe.Info($"{i}: {verts[i]}");
             }
@@ -1194,7 +1203,6 @@ namespace Magician
                 }
                 s += m.ToString(depth + 2);
             }
-
             return s;
         }
 
