@@ -34,7 +34,7 @@ namespace Magician.Demos
             Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
             () =>
             {
-                Spellbook.Cache(new TestingSpell());
+                Spellbook.Cache(new Spinner10K());
             }
 
             );
@@ -200,6 +200,22 @@ namespace Magician.Demos
             {
                 Ref.FOV--;
             }
+        }
+    }
+
+    public class Spinner10K : Spell
+    {
+        public override void PreLoop()
+        {
+            Origin.Become(new IOMap(1, x => x % 500, y => y)
+            .MultisAlong(-500, 500, 50, Create.RegularPolygon(4, 40).Sub(n=>n.DrivenPM(p=>p+0.1, m=>m+5)).DrawFlags(DrawMode.OUTERP))
+            );
+            //Origin["spinme"] = Create.RegularPolygon(6, 120).Sub(m=>m.DrivenPM(p=>p+0.02, m=>m));
+        }
+
+        public override void Loop()
+        {
+            Renderer.Control.Clear();
         }
     }
 }
