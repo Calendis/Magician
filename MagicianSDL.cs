@@ -156,7 +156,7 @@ namespace Magician
         // TODO: move this responsibility to the spellcaster
         void Drive()
         {
-            Geo.Ref.Origin.Drive();
+            Geo.Ref.Origin.DriveQuants();
         }
         void InitSDL()
         {

@@ -2,7 +2,7 @@ namespace Magician
 {
     public interface IDriveable
     {
-        public virtual void Drive(params double[] x){}
+        public virtual void DriveQuants(params double[] x){}
         public abstract void Eject();
     }
 }
