@@ -37,6 +37,7 @@ namespace Magician
             throw new NotImplementedException($"Method Concat not supported on {this.GetType().Name}");
         }
         // Compose two IMaps :)
+        // TODO: is there a better method of doing this?
         public IMap Compose(IMap imap)
         {
             return new CustomMap(x => Evaluate(imap.Evaluate(x)));
@@ -159,6 +160,7 @@ namespace Magician
     }
 
     // IMap with an arbitrary amount of input and output dimensions
+    // (FKA MultiMap)
     public class IOMap : IMap
     {
         // Functionality
@@ -184,6 +186,11 @@ namespace Magician
             }
             Ins = ins;
             Outs = imaps.Count;
+        }
+        // If you want to specifiy the inputs, and calculate the outputs later
+        public IOMap(int ins)
+        {
+            Ins = ins;
         }
 
         // Parametric 2D Multisalong
@@ -263,7 +270,10 @@ namespace Magician
             return this;
         }
 
-        //
+        public double[] Evaluate()
+        {
+            return Evaluate(new double[]{});
+        }
         public double Evaluate(double x)
         {
             if (Ins != 1 || Outs != 1)
@@ -414,7 +424,7 @@ namespace Magician
 
         public override string ToString()
         {
-            return $"Multimap ({Ins}, {Outs})";
+            return $"IOMap ({Ins}, {Outs})";
         }
     }
 }
