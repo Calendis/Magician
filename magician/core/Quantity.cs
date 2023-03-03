@@ -34,6 +34,10 @@ namespace Magician
             q = x;
             return this;
         }
+        public void From(Quantity oq)
+        {
+            q = oq.q;
+        }
 
         public void Incr(double x)
         {
