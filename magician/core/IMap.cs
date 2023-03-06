@@ -57,7 +57,7 @@ namespace Magician
                 {
                     tmp.Parented(m);
                     double p = Evaluate(i);
-                    m.Add(tmp.Copied().Positioned(i + tmp.X, p + tmp.Y));
+                    m.Add(tmp.Copy().Positioned(i + tmp.X, p + tmp.Y));
                 }
             }
             m.Parented(Geo.Ref.Origin);
@@ -218,7 +218,7 @@ namespace Magician
                 out0[1] = imaps[1].Evaluate(i);
 
                 m.Add(
-                    tmp.Copied().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
+                    tmp.Copy().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
                 );
 
             }
