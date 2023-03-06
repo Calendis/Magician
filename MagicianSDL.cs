@@ -97,7 +97,7 @@ namespace Magician
                 SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
                 // Draw objects
-                Geo.Ref.Origin.Draw(UI.Perspective.x.Evaluate(), UI.Perspective.y.Evaluate());
+                Geo.Ref.Origin.Draw(0, 0, 0);
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames != stopFrame)
