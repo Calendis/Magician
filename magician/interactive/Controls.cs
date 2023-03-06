@@ -74,9 +74,9 @@ namespace Magician.Interactive
         public Action ControlAction { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         // Custom draw behaviour for menus
-        public new void Draw(double xOffset, double yOffset)
+        public override void Draw(double xOffset, double yOffset, double zOffset, bool scale3d=false)
         {
-            base.Draw(xOffset, yOffset);
+            base.Draw(xOffset, yOffset, zOffset, scale3d);
         }
     }
 

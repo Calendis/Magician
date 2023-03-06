@@ -18,7 +18,7 @@ namespace Magician.Geo
         static Ref()
         {
             Origin = new Multi().Tagged("Placeholder Origin");
-            Perspective = new Multi(0, -100, -100).Parented(null);
+            Perspective = new Multi(0, 0, -1).Parented(null);
             FOV = 90;
 
             AllowedOrphans = new List<Multi>()
@@ -334,8 +334,8 @@ namespace Magician.Geo
             width = mx.GetLength(1);  // columns
             this.mx = mx;
         }
-        public Matrix(Multi m) : this(new double[,] { { m.X, 0, 0 },{ 0, m.Y, 0 },{ 0, 0, m.Z } }) { }
-        public static Matrix Row(Multi m) {return new Matrix(new double[,] { { m.X, m.Y, m.Z } });}
+        public Matrix(Multi m) : this(new double[,] { { m.X, 0, 0 }, { 0, m.Y, 0 }, { 0, 0, m.Z } }) { }
+        public static Matrix Row(Multi m) { return new Matrix(new double[,] { { m.X, m.Y, m.Z } }); }
 
         public Matrix Mult(Matrix mox)
         {
@@ -390,25 +390,57 @@ namespace Magician.Geo
         public static Matrix Orthographic = new Matrix(new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } });
         // TODO: fix this
         public static Matrix Isometric = new Matrix(new double[,] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } });
+        /* public static Matrix Perspective(double x, double y, double z)
+        {
+
+            double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
+            double xScale = 1 / Data.Globals.winWidth;
+            double yScale = 1 / Data.Globals.winHeight;
+            double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
+
+            double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
+            double zFar = zNear+0;// - Ref.Perspective.Z;
+
+            double xp, yp, zp;
+            xp = x + Ref.Perspective.X;     
+            yp = y + Ref.Perspective.Y;     
+            zp = z - Ref.Perspective.Z;     
+            
+            return new Matrix(new double[,]
+            {
+                {s*xp/zp, 0, 0},
+                {0, s*yp/zp, 0},
+                {0, 0, zFar/(zFar-zNear)}
+            })
+            .Mult(RotationX(Ref.Perspective.HeadingX))
+            .Mult(RotationY(Ref.Perspective.HeadingY))
+            .Mult(RotationZ(Ref.Perspective.HeadingZ))
+            ;
+
+        } */
+
         public static Matrix Perspective
         {
             get
             {
                 double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
-                //double sX = Ref.Perspective.X / Math.Tan(Ref.FOV * Math.PI / 360);
-                //double sY = Ref.Perspective.Y / Math.Tan(Ref.FOV * Math.PI / 360);
-                //double sZ = Ref.Perspective.Z / Math.Tan(Ref.FOV * Math.PI / 360);
+                double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
+
+                double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
+                double zFar = 101;//zNear - Ref.Perspective.Z;
+
                 return new Matrix(new double[,]
                 {
-                    {s, 0, 0},
-                    {0, s, 0},
-                    {0, 0, s}
+                {s*aspect, 0, 0},
+                {0, s, 0},
+                {0, 0, zFar/(zFar-zNear)}
                 })
                 .Mult(RotationX(Ref.Perspective.HeadingX))
                 .Mult(RotationY(Ref.Perspective.HeadingY))
                 .Mult(RotationZ(Ref.Perspective.HeadingZ))
                 ;
             }
+
         }
 
         public override string ToString()

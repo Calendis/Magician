@@ -224,7 +224,7 @@ namespace Magician
         protected Color col;
 
         // Full constructor
-        public Multi(Multi? parent, double x, double y, double z, Color? col=null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(3, 0, 0, 0)
+        public Multi(Multi? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(3, 0, 0, 0)
         {
             this._parent = parent ?? Ref.Origin;
             this.x.Set(x);
@@ -615,7 +615,7 @@ namespace Magician
             // easily drive multis based on their children
             // TODO: support z-driving
             double xResult = x.Evaluate();
-            double yResult = y.Evaluate();            
+            double yResult = y.Evaluate();
             //double zResult = z.Evaluate();                
             for (int i = 0; i < count; i++)
             {
@@ -762,7 +762,7 @@ namespace Magician
         }
 
         // Create a copy of the Multi
-        public Multi Copied()
+        public Multi Copy()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
             // Don't copy the texture, or create reference to it!
@@ -788,7 +788,7 @@ namespace Magician
             // Copy the constituents
             foreach (Multi c in this)
             {
-                copy.Add(c.Copied());
+                copy.Add(c.Copy());
             }
 
             return copy;
@@ -796,7 +796,7 @@ namespace Magician
         /* The two paste methods must match!! */
         public Multi Paste()
         {
-            Parent[$"{tag}_paste{x}{y}"] = Copied();
+            Parent[$"{tag}_paste{x}{y}"] = Copy();
             return this;
         }
         public Multi Pasted()
@@ -845,7 +845,7 @@ namespace Magician
         }
 
         // Add both multis to a new parent Multi
-        public Multi Adjoined(Multi m, double xOffset = 0, double yOffset = 0, double zOffset=0)
+        public Multi Adjoined(Multi m, double xOffset = 0, double yOffset = 0, double zOffset = 0)
         {
             Multi nm = new Multi(xOffset, yOffset, zOffset, col, drawMode);
             nm.Add(this, m);
@@ -896,7 +896,7 @@ namespace Magician
             Eject();
             for (int i = 0; i < Count; i++)
             {
-                Multi outerCopy = outer.Copied();
+                Multi outerCopy = outer.Copy();
                 csts[i].Become(outerCopy);
             }
 
@@ -907,7 +907,7 @@ namespace Magician
         public Multi Surrounding(Multi inner)
         {
             Eject();
-            return inner.Wielding(Copied());
+            return inner.Wielding(Copy());
             //thisSurroundingInner.x.Set(x.Evaluate());
             //thisSurroundingInner.y.Set(y.Evaluate());
             //return thisSurroundingInner;//.Wielding(this);
@@ -919,11 +919,11 @@ namespace Magician
 
         public Multi Recursed()
         {
-            return Wielding(Copied());
+            return Wielding(Copy());
         }
         public Multi Recursed(Func<Multi, Multi> F)
         {
-            return Wielding(F.Invoke(Copied()));
+            return Wielding(F.Invoke(Copy()));
         }
 
         /* Getter roperties for indices and tags */
@@ -978,7 +978,7 @@ namespace Magician
         public bool IsReadOnly => false;
 
         // TODO: Move this to an extension method
-        public virtual void Draw(double xOffset, double yOffset)
+        public virtual void Draw(double xOffset, double yOffset, double zOffset, bool scale3d=false)
         {
             Control.SaveTarget();
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
@@ -992,9 +992,29 @@ namespace Magician
             //foreach (Multi m in csts)
             for (int i = 0; i < Count; i++)
             {
-                Matrix mmx = Matrix.Row(csts[i]);
-                projectedVerts[i] = Matrix.Perspective.Mult(mmx).ToCartesian(xOffset, yOffset);
-                //Scribe.Info($"{i}: {verts[i]}");
+                //Matrix mmx = Matrix.Row(csts[i]);
+
+                double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
+                double zFar = zNear + 0;// - Ref.Perspective.Z;
+
+                double xp, yp, zp;
+                xp = csts[i].X - Ref.Perspective.X;
+                yp = csts[i].Y - Ref.Perspective.Y;
+                zp = csts[i].Z - Ref.Perspective.Z;
+                double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
+
+                if (scale3d)
+                {
+                    projectedVerts[i] = Matrix.Perspective
+                        .Mult(new Matrix(new double[,] { {xp/zp*Data.Globals.winWidth/2, yp/zp*Data.Globals.winHeight/2, zp } }))
+                        .ToCartesian(xOffset, yOffset);
+                }
+                else
+                {
+                    projectedVerts[i] = Matrix.Orthographic
+                        .Mult(new Matrix(new double[,] { {xp, yp, zp } }))
+                        .ToCartesian(xOffset, yOffset);
+                }
             }
 
             // If the flag is set, draw the relative origin
@@ -1031,10 +1051,10 @@ namespace Magician
                 Matrix pLast = projectedVerts[csts.Count - 1];
                 Matrix pFirst = projectedVerts[0];
 
-                double subr = csts[csts.Count-1].Col.R;
-                double subg = csts[csts.Count-1].Col.G;
-                double subb = csts[csts.Count-1].Col.B;
-                double suba = csts[csts.Count-1].Col.A;
+                double subr = csts[csts.Count - 1].Col.R;
+                double subg = csts[csts.Count - 1].Col.G;
+                double subb = csts[csts.Count - 1].Col.B;
+                double suba = csts[csts.Count - 1].Col.A;
 
                 SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                 SDL_RenderDrawLineF(SDLGlobals.renderer,
@@ -1045,7 +1065,7 @@ namespace Magician
             // Draw each constituent recursively            
             foreach (Multi m in this)
             {
-                m.Draw(xOffset, yOffset);//), (m.Y.Evaluate(yOffset)));
+                m.Draw(xOffset, yOffset, zOffset);//), (m.Y.Evaluate(yOffset)));
                 //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
             }
 
@@ -1061,7 +1081,7 @@ namespace Magician
                     // TODO: resolve rendering bugs properly
                     if (vertices[0][0] + vertices[0][1] + vertices[0][2] + vertices[1][0] + vertices[1][1] + vertices[1][2] == 0)
                     {
-                        vertices = Seidel.Triangulator.Triangulate(Copied().Reversed());
+                        vertices = Seidel.Triangulator.Triangulate(Copy().Reversed());
                     }
 
                     int numTriangles = (Count - 2);
@@ -1086,8 +1106,8 @@ namespace Magician
                         //p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
                         //p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
                         //p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
-                        p0.x = (float)projectedVerts[tri0-1].X;
-                        p0.y = (float)projectedVerts[tri0-1].Y;
+                        p0.x = (float)projectedVerts[tri0 - 1].X;
+                        p0.y = (float)projectedVerts[tri0 - 1].Y;
                         p1.x = (float)projectedVerts[tri1 - 1].X;
                         p1.y = (float)projectedVerts[tri1 - 1].Y;
                         p2.x = (float)projectedVerts[tri2 - 1].X;

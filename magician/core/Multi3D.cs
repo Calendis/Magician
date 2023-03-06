@@ -15,22 +15,35 @@ namespace Magician
         public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) {}
         public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
 
-        public override void Draw(double xOffset, double yOffset)
+        public override void Draw(double xOffset, double yOffset, double zOffset, bool scale3d=true)
         {
             //base.Draw(xOffset, yOffset);
             int cc = 0;
             foreach (List<int> face in faces)
             {
+                // Do not draw faces behind the camera
+                /* bool occluded = false;
+                for (int j = 0; j < face.Count; j++)
+                {
+                    if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
+                    {
+                        occluded = true;
+                    }
+                }
+                if (occluded)
+                {
+                    continue;
+                } */
                 if (faces == null)
                 {
                     throw Scribe.Error($"Faces of {this} were null");
                 }
-                Multi f = new Multi().Positioned(X, Y, Z).Colored(new HSLA((cc++*Math.PI)/Math.PI, 1, 1, 120)).DrawFlags(drawMode);
+                Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++*Math.PI)/Math.PI, 1, 1, 120)).DrawFlags(drawMode);
                 foreach (int idx in face)
                 {
                     f.Add(csts[idx]);
                 }
-                f.Draw(xOffset, yOffset);
+                f.Draw(xOffset, yOffset, zOffset, true);
             }
         }
 
