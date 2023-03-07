@@ -11,7 +11,7 @@ namespace Magician
             XY,
             PM
         }
-        public Vec(int d, params double[] vals) : base(1)
+        public Vec(int d, params double[] vals) : base(1)  // TODO: test if 0 ins works
         {
             if (d != vals.Length)
             {
