@@ -55,11 +55,9 @@ namespace Magician
             q += x;
             return this;
         }
-        public Quantity GetDelta(double x)
+        protected Quantity GetDelta(double x)
         {
             return new Quantity(q + x);
-            //Offset = x;
-            //return this;
         }
         public Quantity Mult(double x)
         {
