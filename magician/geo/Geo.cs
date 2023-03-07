@@ -428,6 +428,10 @@ namespace Magician.Geo
 
                 double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
                 double zFar = 101;//zNear - Ref.Perspective.Z;
+                if (zFar == zNear)
+                {
+                    zFar = Double.NegativeInfinity;
+                }
 
                 return new Matrix(new double[,]
                 {
@@ -435,9 +439,9 @@ namespace Magician.Geo
                 {0, s, 0},
                 {0, 0, zFar/(zFar-zNear)}
                 })
-                .Mult(RotationX(Ref.Perspective.HeadingX))
-                .Mult(RotationY(Ref.Perspective.HeadingY))
-                .Mult(RotationZ(Ref.Perspective.HeadingZ))
+                //.Mult(RotationX(Ref.Perspective.HeadingX))
+                //.Mult(RotationY(Ref.Perspective.HeadingY))
+                //.Mult(RotationZ(Ref.Perspective.HeadingZ))
                 ;
             }
 
