@@ -40,8 +40,8 @@ namespace Magician.Demos
 
             );
             //Origin["testRect"] = Geo.Create.Rect(-150, 100, 300, 250).Colored(new RGBA(0x70ff00d0));
-            Origin["myMulti"] = new Multi().DrawFlags(DrawMode.INNER);
-            Origin["savMyMulti"] = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            Origin["myMulti"] = new Multi().SetDraw(DrawMode.INNER);
+            Origin["savMyMulti"] = new Multi().SetDraw(DrawMode.INVISIBLE);
 
         }
         Brush b = new Brush(
@@ -62,7 +62,7 @@ namespace Magician.Demos
             //Origin["testRect"].RotatedX(0.04);
             //Origin["testRect"].RotatedY(0.02);
             //Origin["btn"].RotatedZ(0.01);
-            Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().DrawFlags(DrawMode.POINT)));
+            Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().SetDraw(DrawMode.POINT)));
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
             {
                 Origin["savMyMulti"].RotatedZ(0.03);
@@ -160,27 +160,14 @@ namespace Magician.Demos
             Origin["cube"] = Create.Cube(0, 0, 90, 10)
             ;
 
-            for (int i = 0; i < 2; i++)
-            {
-                Origin[$"cube{i}"] = Create.Cube(Data.Rand.RandX, Data.Rand.RandY, Data.Rand.RNG.Next(30, 120), Data.Rand.RNG.Next(5, 25));
-            }
+            Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000), z=>200+90*Math.Sin(z))
+            .MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 64).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
+            );
         }
 
         public override void Loop()
         {
             Renderer.Control.Clear();
-            // Brush testing
-            Origin.AddCautiously(b!.Paint(Events.Click ? 1 : 0,
-                Geo.Create.Star(5, 29, 53).Colored(new HSLA(Time, 1, 1, 120))
-            )
-            .Sub(
-                    m =>
-                    m.DrivenPM(
-                        x => x + 10.1,
-                        y => y
-                    )
-                ))
-            ;
 
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
             {

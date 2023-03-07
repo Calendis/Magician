@@ -18,7 +18,7 @@ namespace Magician.UI
                 Text t = new Text(sentences[i], col, (int)size, fontPath);
                 this[$"line{i}"] = new Multi(0, -i * (int)size)
                 .Textured(t.Render())
-                .DrawFlags(DrawMode.INVISIBLE)
+                .SetDraw(DrawMode.INVISIBLE)
                 ;
                 t.Dispose();
             }
@@ -106,12 +106,12 @@ namespace Magician.UI
             int maxSize = sizStack.Peek();
             /* The bool[] represents wasColorChanged, wasSizeChanged */
             Stack<bool[]> deltas = new Stack<bool[]>();
-            Multi phrases = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            Multi phrases = new Multi().SetDraw(DrawMode.INVISIBLE);
             // Used for justification
             int maxLineWidth = 0;
             for (int row = 0; row < groupedFormats.Count; row++)
             {
-                Multi wordsInLine = new Multi().DrawFlags(DrawMode.INVISIBLE);
+                Multi wordsInLine = new Multi().SetDraw(DrawMode.INVISIBLE);
                 int runningLength = 0;
                 for (int column = 0; column < groupedFormats[row].Length; column++)
                 {

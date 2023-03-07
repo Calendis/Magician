@@ -55,7 +55,7 @@ namespace Magician.Symbols
                     hexGrid.Add(hexagon);
                 }
             }
-            return hexGrid.DrawFlags(DrawMode.INVISIBLE);
+            return hexGrid.SetDraw(DrawMode.INVISIBLE);
         }
     }
 }

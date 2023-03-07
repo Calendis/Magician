@@ -37,7 +37,7 @@ namespace Magician.UI
                 Point(Data.Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
             );
             // the vertical spacers along that axis
-            spacers0 = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            spacers0 = new Multi().SetDraw(DrawMode.INVISIBLE);
 
             // the vertical axis on a 2d graph
             axis1 = Line(
@@ -45,10 +45,10 @@ namespace Magician.UI
                 Point(-Perspective.x.Evaluate(), -Data.Globals.winWidth / 2 - Perspective.y.Evaluate())
             );
             // the horizontal spacers along that axis
-            spacers1 = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            spacers1 = new Multi().SetDraw(DrawMode.INVISIBLE);
 
             // The grid lines, which will appear behind the spacers
-            gridLines = new Multi().DrawFlags(DrawMode.INVISIBLE);
+            gridLines = new Multi().SetDraw(DrawMode.INVISIBLE);
 
             // Add spacers to the horizontal axis
             int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
@@ -134,7 +134,7 @@ namespace Magician.UI
         public Multi Render()
         {
 
-            return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).DrawFlags(DrawMode.INVISIBLE)
+            return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).SetDraw(DrawMode.INVISIBLE)
             ;
         }
     }

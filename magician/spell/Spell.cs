@@ -19,7 +19,7 @@ namespace Magician.Library
         // The Origin is the eventual parent Multi for all Multis. Each Spell has its own Origin, and ..
         // ... when a Spell is loaded into the Spellcaster, Geo.Ref.Origin is set to that Spell's Origin
         protected Multi Origin = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
-        .DrawFlags(DrawMode.INVISIBLE)
+        .SetDraw(DrawMode.INVISIBLE)
         .Tagged("Spell origin")
         ;
 
