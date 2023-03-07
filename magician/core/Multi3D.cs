@@ -29,6 +29,7 @@ namespace Magician
                     if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
                     {
                         occluded = true;
+                        break;
                     }
                 }
                 if (occluded)
