@@ -14,6 +14,7 @@ namespace Magician
         // Full constructor
         public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) {}
         public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
+        public Multi3D(Multi m) : base(m.x.Evaluate(), m.y.Evaluate(), m.z.Evaluate(), m.Col, m.DrawFlags, m.Constituents.ToArray()){}
 
         public override void Draw(double xOffset, double yOffset, double zOffset, bool scale3d=true)
         {
@@ -38,13 +39,20 @@ namespace Magician
                 {
                     throw Scribe.Error($"Faces of {this} were null");
                 }
-                Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++*Math.PI)/Math.PI, 1, 1, 120)).DrawFlags(drawMode);
+                Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++*Math.PI)/Math.PI, 1, 1, 120)).SetDraw(drawMode);
                 foreach (int idx in face)
                 {
                     f.Add(csts[idx]);
                 }
                 f.Draw(xOffset, yOffset, zOffset, true);
             }
+        }
+
+        public override Multi3D Copy()
+        {
+            Multi3D c = new Multi3D(base.Copy());
+            c.faces = faces;
+            return c;
         }
 
         // Methods to generate faces
