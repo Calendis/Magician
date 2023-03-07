@@ -159,6 +159,11 @@ namespace Magician.Demos
             b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
             Origin["cube"] = Create.Cube(0, 0, 90, 10)
             ;
+
+            for (int i = 0; i < 2; i++)
+            {
+                Origin[$"cube{i}"] = Create.Cube(Data.Rand.RandX, Data.Rand.RandY, Data.Rand.RNG.Next(30, 120), Data.Rand.RNG.Next(5, 25));
+            }
         }
 
         public override void Loop()
@@ -181,18 +186,19 @@ namespace Magician.Demos
             {
                 Ref.Perspective.z.Delta(walkSpeed);
             }
-            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s])
-            {
-                Ref.Perspective.z.Delta(-walkSpeed);
-            }
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
             {
                 Ref.Perspective.x.Delta(-walkSpeed);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s])
+            {
+                Ref.Perspective.z.Delta(-walkSpeed);
             }
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d])
             {
                 Ref.Perspective.x.Delta(walkSpeed);
             }
+
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
             {
                 Ref.Perspective.y.Delta(walkSpeed);
@@ -215,13 +221,35 @@ namespace Magician.Demos
                 Origin["cube"].RotatedZ(0.01);
             }
 
+            // TODO: camera rotation
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_o])
             {
-                Ref.FOV++;
+                Ref.Origin.RotatedX(0.01);
             }
             if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
             {
-                Ref.FOV--;
+                Ref.Origin.RotatedY(0.01);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_k])
+            {
+                Ref.Origin.RotatedZ(0.01);
+            }
+
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
+            {
+                Origin["cube"].y.Delta(walkSpeed);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_DOWN])
+            {
+                Origin["cube"].y.Delta(-walkSpeed);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LEFT])
+            {
+                Origin["cube"].x.Delta(-walkSpeed);
+            }
+            if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RIGHT])
+            {
+                Origin["cube"].x.Delta(walkSpeed);
             }
         }
     }
