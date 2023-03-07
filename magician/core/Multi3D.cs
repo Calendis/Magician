@@ -2,7 +2,7 @@ using System;
 
 namespace Magician
 {
-    // While it's possible to build a 3D Multi out of 2D Multis manually, this approach is impractical
+    // While it's possible to build a 3D Multi out of 2D Multis manually, this approach is impractical.
     // The way a 2D Multi is drawn is inherent to the position of its constituent Multis, meaning each
     // face of a manually-built 3D Multi needs to be a multi with a number of constituents. This nested-
     // -ness makes the 3D Multi extremely impractical to manipulate, so we use a Multi3D instead.
