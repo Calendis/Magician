@@ -55,7 +55,7 @@ namespace Magician
             q += x;
             return this;
         }
-        protected Quantity GetDelta(double x)
+        public Quantity GetDelta(double x)
         {
             return new Quantity(q + x);
         }
