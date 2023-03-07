@@ -2,12 +2,6 @@ using static Magician.Geo.Create;
 
 namespace Magician.UI
 {
-    public static class Perspective
-    {
-        public static Quantity x = new Quantity(0);
-        public static Quantity y = new Quantity(0);
-    }
-
     public class RuledAxes
     {
         Multi axis0;
@@ -33,16 +27,16 @@ namespace Magician.UI
 
             // the horizontal axis on a 2d graph
             axis0 = Line(
-                Point(-Data.Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate()),
-                Point(Data.Globals.winWidth / 2 - Perspective.x.Evaluate(), -Perspective.y.Evaluate())
+                Point(-Data.Globals.winWidth / 2 - Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y),
+                Point(Data.Globals.winWidth / 2 - Geo.Ref.Perspective.X, -Geo.Ref.Perspective.Y)
             );
             // the vertical spacers along that axis
             spacers0 = new Multi().SetDraw(DrawMode.INVISIBLE);
 
             // the vertical axis on a 2d graph
             axis1 = Line(
-                Point(-Perspective.x.Evaluate(), Data.Globals.winWidth / 2 - Perspective.y.Evaluate()),
-                Point(-Perspective.x.Evaluate(), -Data.Globals.winWidth / 2 - Perspective.y.Evaluate())
+                Point(-Geo.Ref.Perspective.X, Data.Globals.winWidth / 2 - Geo.Ref.Perspective.Y),
+                Point(-Geo.Ref.Perspective.X, -Data.Globals.winWidth / 2 - Geo.Ref.Perspective.Y)
             );
             // the horizontal spacers along that axis
             spacers1 = new Multi().SetDraw(DrawMode.INVISIBLE);
@@ -56,8 +50,8 @@ namespace Magician.UI
             {
                 Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Data.Globals.winWidth / 2)}", Data.Col.UIDefault.FG, Data.Globals.fontSize);
                 Multi horizSpacer = Line(
-                    Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Perspective.y.Evaluate()),
-                    Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Perspective.y.Evaluate())
+                    Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Geo.Ref.Perspective.Y),
+                    Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Geo.Ref.Perspective.Y)
                 );
                 // If I attach the .Textured(tx.Render()) to the Point call above, the texture comes out null
                 // This is because of how Geo.Create.Line works.
@@ -72,8 +66,8 @@ namespace Magician.UI
                 for (int j = 0; j < horizSubdivs; j++)
                 {
                     Multi horizSubdiv = Line(
-                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Perspective.y.Evaluate()),
-                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Perspective.y.Evaluate())
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Geo.Ref.Perspective.Y),
+                        Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Geo.Ref.Perspective.Y)
                     );
                     spacers0.Add(horizSubdiv);
                 }
@@ -94,8 +88,8 @@ namespace Magician.UI
             for (int i = 0; i < vertSpacers; i++)
             {
                 Multi vertSpacer = Line(
-                    Point(spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Data.Globals.winHeight / 2),
-                    Point(-spacerSize / 2 - Perspective.x.Evaluate(), i * vertSpacing - Data.Globals.winHeight / 2)
+                    Point(spacerSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing - Data.Globals.winHeight / 2),
+                    Point(-spacerSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing - Data.Globals.winHeight / 2)
                 );
                 spacers1.Add(vertSpacer);
 
@@ -105,8 +99,8 @@ namespace Magician.UI
                 for (int j = 0; j < vertSubdivs; j++)
                 {
                     Multi vertSubdiv = Line(
-                        Point(-subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2),
-                        Point(subdivSize / 2 - Perspective.x.Evaluate(), i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2)
+                        Point(-subdivSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2),
+                        Point(subdivSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2)
                         );
                     spacers1.Add(vertSubdiv);
                 }
