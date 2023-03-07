@@ -22,7 +22,7 @@ namespace Magician
             foreach (List<int> face in faces)
             {
                 // Do not draw faces behind the camera
-                /* bool occluded = false;
+                bool occluded = false;
                 for (int j = 0; j < face.Count; j++)
                 {
                     if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
@@ -33,7 +33,7 @@ namespace Magician
                 if (occluded)
                 {
                     continue;
-                } */
+                }
                 if (faces == null)
                 {
                     throw Scribe.Error($"Faces of {this} were null");
