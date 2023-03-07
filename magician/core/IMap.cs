@@ -61,7 +61,7 @@ namespace Magician
                 }
             }
             m.Parented(Geo.Ref.Origin);
-            return m.DrawFlags(DrawMode.INVISIBLE);
+            return m.SetDraw(DrawMode.INVISIBLE);
         }
         // Place characters text, rendered char-by-char along an IMap according to some truth function
         public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
@@ -103,7 +103,7 @@ namespace Magician
                 tx.Dispose();
             }
             m.Parented(Geo.Ref.Origin);
-            return m.DrawFlags(DrawMode.INVISIBLE);
+            return m.SetDraw(DrawMode.INVISIBLE);
         }
 
         // Render an IMap to a Multi
@@ -115,7 +115,7 @@ namespace Magician
                 Multi[] ps = Interpolate(t, t + dx);
                 ps[0].Colored(c);
                 ps[1].Colored(c);
-                points.Add(ps[0].DrawFlags(DrawMode.INVISIBLE));
+                points.Add(ps[0].SetDraw(DrawMode.INVISIBLE));
 
             }
             Multi m = new Multi(x, y, c, DrawMode.PLOT, points.ToArray());
@@ -194,7 +194,7 @@ namespace Magician
         }
 
         // Parametric 2D Multisalong
-        public Multi MultisAlong(double lb, double ub, double dx, Multi tmp, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
+        public Multi MultisAlong(double lb, double ub, double dx, Multi tmp, double xOffset = 0, double yOffset = 0, double zOffset=0, Func<double, double>? truth = null, double threshold = 0)
         {
             if (Ins != 1)
             {
@@ -213,17 +213,22 @@ namespace Magician
                 }
                 tmp.Parented(m);
 
-                double[] out0 = new double[2];
+                double[] out0 = new double[3];
                 out0[0] = imaps[0].Evaluate(i);
                 out0[1] = imaps[1].Evaluate(i);
+                out0[2] = 0;
+                if (imaps.Count >= 3)
+                {
+                    out0[2] = imaps[2].Evaluate(i);
+                }
 
                 m.Add(
-                    tmp.Copy().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset)
+                    tmp.Copy().Positioned(out0[0] + tmp.X + xOffset, out0[1] + tmp.Y + xOffset, out0[2] + tmp.Z + zOffset)
                 );
 
             }
             m.Parented(Geo.Ref.Origin);
-            return m.DrawFlags(DrawMode.INVISIBLE);
+            return m.SetDraw(DrawMode.INVISIBLE);
         }
         public Multi TextAlong(double lb, double ub, double dx, string msg, Color? c = null, int? size = null, double xOffset = 0, double yOffset = 0, Func<double, double>? truth = null, double threshold = 0)
         {
@@ -261,7 +266,7 @@ namespace Magician
                 tx.Dispose();
                 j++;
             }
-            return m.DrawFlags(DrawMode.INVISIBLE);
+            return m.SetDraw(DrawMode.INVISIBLE);
         }
 
         public IOMap Paired(int[][] pairs)
@@ -339,7 +344,7 @@ namespace Magician
 
                     // Parametric
                     case 2:
-                        Multi parametricPlot = new Multi().DrawFlags(DrawMode.PLOT);
+                        Multi parametricPlot = new Multi().SetDraw(DrawMode.PLOT);
                         for (double t = start; t < end; t += dt)
                         {
                             double[] out0 = new double[2];
