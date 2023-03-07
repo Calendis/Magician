@@ -52,6 +52,10 @@ namespace Magician
         {
             get => csts;
         }
+        public DrawMode DrawFlags
+        {
+            get => drawMode;
+        }
 
         /*
         *  Positional Properties
@@ -259,7 +263,7 @@ namespace Magician
             {
                 Add(c);
             }
-            return Colored(m.Col).DrawFlags(m.drawMode);
+            return Colored(m.Col).SetDraw(m.drawMode);
         }
 
 
@@ -714,7 +718,7 @@ namespace Magician
             return internalVal;
         }
 
-        public Multi DrawFlags(DrawMode dm)
+        public Multi SetDraw(DrawMode dm)
         {
             drawMode = dm;
             return this;
@@ -762,7 +766,7 @@ namespace Magician
         }
 
         // Create a copy of the Multi
-        public Multi Copy()
+        public virtual Multi Copy()
         {
             Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
             // Don't copy the texture, or create reference to it!
@@ -790,6 +794,14 @@ namespace Magician
             {
                 copy.Add(c.Copy());
             }
+
+            // headings, internalval, tempx, tempy
+            copy.headings[0].From(headings[0]);
+            copy.headings[1].From(headings[1]);
+            copy.headings[2].From(headings[2]);
+            copy.internalVal = internalVal;
+            copy.tempX = tempX;
+            copy.tempY = tempY;
 
             return copy;
         }
