@@ -98,7 +98,7 @@ class MagicianSDL
             SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
             // Draw objects
-            Geo.Ref.Origin.Draw(0, 0, 0);
+            Geo.Ref.Origin.Render(0, 0, 0);
             Renderer.RDrawable.DrawAll();
             Renderer.RDrawable.drawables.Clear();
 

@@ -2,7 +2,6 @@
 *  A Multi exists as a point (two quantities), and as a list of constituent Multis that exist relative to the parent
 */
 using System.Collections;
-using System.Runtime.Serialization;
 using Magician.Geo;
 using Magician.Renderer;
 using static SDL2.SDL;
@@ -988,7 +987,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     public bool IsReadOnly => false;
 
     // TODO: Move this to an extension method
-    public virtual void Draw(double xOffset, double yOffset, double zOffset, bool scale3d = false)
+    public virtual void Render(double xOffset, double yOffset, double zOffset, bool scale3d = false)
     {
         if (stale)
         {
@@ -1089,7 +1088,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         // Draw each constituent recursively            
         foreach (Multi m in this)
         {
-            m.Draw(xOffset, yOffset, zOffset);//), (m.Y.Evaluate(yOffset)));
+            m.Render(xOffset, yOffset, zOffset);//), (m.Y.Evaluate(yOffset)));
                                               //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
         }
 

@@ -15,7 +15,7 @@ public class Multi3D : Multi
     public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
     public Multi3D(Multi m) : base(m.x.Evaluate(), m.y.Evaluate(), m.z.Evaluate(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
 
-    public override void Draw(double xOffset, double yOffset, double zOffset, bool scale3d = true)
+    public override void Render(double xOffset, double yOffset, double zOffset, bool scale3d = true)
     {
         //base.Draw(xOffset, yOffset);
         int cc = 0;
@@ -44,7 +44,7 @@ public class Multi3D : Multi
             {
                 f.Add(csts[idx]);
             }
-            f.Draw(xOffset, yOffset, zOffset, true);
+            f.Render(xOffset, yOffset, zOffset, true);
         }
     }
 

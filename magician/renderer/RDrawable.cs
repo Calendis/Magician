@@ -6,14 +6,14 @@ internal abstract class RDrawable
 {
     public int Layer { get; set; }
     public byte[] rgba = new byte[4];
-    public abstract void Drawe();
+    public abstract void Draw();
     public static List<RDrawable> drawables = new List<RDrawable>();
 
     public static void DrawAll()
     {
         foreach (RDrawable rd in drawables)
         {
-            rd.Drawe();
+            rd.Draw();
         }
     }
 }
@@ -28,7 +28,7 @@ internal class RPoint : RDrawable
         pos[0] = (float)x; pos[1] = (float)y; pos[2] = (float)z;
         rgba[0] = (byte)r; rgba[1] = (byte)g; rgba[2] = (byte)b; rgba[3] = (byte)a;
     }
-    public override void Drawe()
+    public override void Draw()
     {
         Control.SaveTarget();
         SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
@@ -51,7 +51,7 @@ internal class RLine : RDrawable
         rgba[0] = (byte)r; rgba[1] = (byte)g; rgba[2] = (byte)b; rgba[3] = (byte)a;
     }
 
-    public override void Drawe()
+    public override void Draw()
     {
         Control.SaveTarget();
         SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
@@ -79,7 +79,7 @@ internal class RTriangle : RDrawable
         rgba[0] = (byte)r; rgba[1] = (byte)g; rgba[2] = (byte)b; rgba[3] = (byte)a;
     }
 
-    public override void Drawe()
+    public override void Draw()
     {
         throw Scribe.Error("For now, drawing RTriangles is disabled");
         Control.SaveTarget();
@@ -133,7 +133,7 @@ internal class RGeometry : RDrawable
         }
     }
 
-    public override void Drawe()
+    public override void Draw()
     {
         Control.SaveTarget();
         SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
