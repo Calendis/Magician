@@ -29,6 +29,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     double internalVal = 0;
     double tempX = 0;
     double tempY = 0;
+    // Keep references to the rendered RDrawables so they can be removed
     List<RDrawable> drawables = new List<RDrawable>();
     bool stale = true; // Does the Multi need to be re-rendered?
 
@@ -260,7 +261,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         {
             Add(c);
         }
-        return Colored(m.Col).SetDraw(m.drawMode);
+        return Colored(m.Col).WithFlags(m.drawMode);
     }
 
 
@@ -715,7 +716,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         return internalVal;
     }
 
-    public Multi SetDraw(DrawMode dm)
+    public Multi WithFlags(DrawMode dm)
     {
         drawMode = dm;
         return this;
@@ -986,7 +987,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
     public bool IsReadOnly => false;
 
-    // TODO: Move this to an extension method
     public virtual void Render(double xOffset, double yOffset, double zOffset, bool scale3d = false)
     {
         if (stale)

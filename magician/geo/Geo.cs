@@ -34,7 +34,7 @@ public static class Create
     /* TODO: remove parent arguement from Create methods */
     public static Multi Point(Multi? parent, double x, double y, double z, Color? col)
     {
-        return new Multi(parent, x, y, z, col).SetDraw(DrawMode.INVISIBLE);
+        return new Multi(parent, x, y, z, col).WithFlags(DrawMode.INVISIBLE);
     }
     public static Multi Point(Multi? parent, double x, double y, Color? col)
     {
@@ -42,7 +42,7 @@ public static class Create
     }
     public static Multi Point(double x, double y, double z = 0, Color? col = null)
     {
-        return Point(Ref.Origin, x, y, z, col).SetDraw(DrawMode.INVISIBLE);
+        return Point(Ref.Origin, x, y, z, col).WithFlags(DrawMode.INVISIBLE);
     }
     public static Multi Point(double x, double y, Color col)
     {
@@ -104,7 +104,7 @@ public static class Create
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-        return ps.Positioned(xOffset, yOffset).Colored(col).SetDraw(DrawMode.INNER);
+        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.INNER);
 
     }
     public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -131,7 +131,7 @@ public static class Create
             ps.Add(Point(outerX, outerY, col));
         }
 
-        return ps.Positioned(xOffset, yOffset).Colored(col).SetDraw(DrawMode.INNER);
+        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.INNER);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
     public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
@@ -154,41 +154,41 @@ public static class Create
             Point(-radius / 2, radius / 2, 0),
             Point(-radius / 2, -radius / 2, 0),
             Point(radius / 2, -radius / 2, 0)
-        ).Positioned(0, 0, 0).SetDraw(DrawMode.FULL).Colored(new RGBA(0xff0000d0)));
+        ).Positioned(0, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xff0000d0)));
         cube.Add(new Multi(
             Point(radius / 2, radius / 2, 0),
             Point(-radius / 2, radius / 2, 0),
             Point(-radius / 2, -radius / 2, 0),
             Point(radius / 2, -radius / 2, 0)
-        ).Positioned(0, 0, -radius / 2).SetDraw(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
+        ).Positioned(0, 0, -radius / 2).WithFlags(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
 
         cube.Add(new Multi(
             Point(0, radius / 2, radius / 2),
             Point(0, radius / 2, -radius / 2),
             Point(0, -radius / 2, -radius / 2),
             Point(0, -radius / 2, radius / 2)
-        ).Positioned(radius / 2, 0, 0).SetDraw(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
+        ).Positioned(radius / 2, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
         cube.Add(new Multi(
             Point(0, radius / 2, radius / 2),
             Point(0, radius / 2, -radius / 2),
             Point(0, -radius / 2, -radius / 2),
             Point(0, -radius / 2, radius / 2)
-        ).Positioned(-radius / 2, 0, 0).SetDraw(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
+        ).Positioned(-radius / 2, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
 
         cube.Add(new Multi(
             Point(radius / 2, 0, radius / 2),
             Point(-radius / 2, 0, radius / 2),
             Point(-radius / 2, 0, -radius / 2),
             Point(radius / 2, 0, -radius / 2)
-        ).Positioned(0, radius / 2, 0).SetDraw(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
+        ).Positioned(0, radius / 2, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
         cube.Add(new Multi(
             Point(radius / 2, 0, radius / 2),
             Point(-radius / 2, 0, radius / 2),
             Point(-radius / 2, 0, -radius / 2),
             Point(radius / 2, 0, -radius / 2)
-        ).Positioned(0, -radius / 2, 0).SetDraw(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
+        ).Positioned(0, -radius / 2, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
 
-        return cube.SetDraw(DrawMode.INVISIBLE);
+        return cube.WithFlags(DrawMode.INVISIBLE);
     }
 
     /* Create 3D shapes! */

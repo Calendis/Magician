@@ -39,7 +39,7 @@ public class Multi3D : Multi
             {
                 throw Scribe.Error($"Faces of {this} were null");
             }
-            Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++ * Math.PI) / Math.PI, 1, 1, 120)).SetDraw(drawMode);
+            Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++ * Math.PI) / Math.PI, 1, 1, 120)).WithFlags(drawMode);
             foreach (int idx in face)
             {
                 f.Add(csts[idx]);

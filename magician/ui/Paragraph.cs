@@ -17,7 +17,7 @@ public class Paragraph : Multi
             Text t = new Text(sentences[i], col, (int)size, fontPath);
             this[$"line{i}"] = new Multi(0, -i * (int)size)
             .Textured(t.Render())
-            .SetDraw(DrawMode.INVISIBLE)
+            .WithFlags(DrawMode.INVISIBLE)
             ;
             t.Dispose();
         }
@@ -105,12 +105,12 @@ public class RichParagraph : Paragraph
         int maxSize = sizStack.Peek();
         /* The bool[] represents wasColorChanged, wasSizeChanged */
         Stack<bool[]> deltas = new Stack<bool[]>();
-        Multi phrases = new Multi().SetDraw(DrawMode.INVISIBLE);
+        Multi phrases = new Multi().WithFlags(DrawMode.INVISIBLE);
         // Used for justification
         int maxLineWidth = 0;
         for (int row = 0; row < groupedFormats.Count; row++)
         {
-            Multi wordsInLine = new Multi().SetDraw(DrawMode.INVISIBLE);
+            Multi wordsInLine = new Multi().WithFlags(DrawMode.INVISIBLE);
             int runningLength = 0;
             for (int column = 0; column < groupedFormats[row].Length; column++)
             {

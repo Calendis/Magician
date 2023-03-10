@@ -30,7 +30,7 @@ public class RuledAxes
             Point(Data.Globals.winWidth / 2 - Geo.Ref.Perspective.X, -Geo.Ref.Perspective.Y)
         );
         // the vertical spacers along that axis
-        spacers0 = new Multi().SetDraw(DrawMode.INVISIBLE);
+        spacers0 = new Multi().WithFlags(DrawMode.INVISIBLE);
 
         // the vertical axis on a 2d graph
         axis1 = Line(
@@ -38,10 +38,10 @@ public class RuledAxes
             Point(-Geo.Ref.Perspective.X, -Data.Globals.winWidth / 2 - Geo.Ref.Perspective.Y)
         );
         // the horizontal spacers along that axis
-        spacers1 = new Multi().SetDraw(DrawMode.INVISIBLE);
+        spacers1 = new Multi().WithFlags(DrawMode.INVISIBLE);
 
         // The grid lines, which will appear behind the spacers
-        gridLines = new Multi().SetDraw(DrawMode.INVISIBLE);
+        gridLines = new Multi().WithFlags(DrawMode.INVISIBLE);
 
         // Add spacers to the horizontal axis
         int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
@@ -127,7 +127,7 @@ public class RuledAxes
     public Multi Render()
     {
 
-        return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).SetDraw(DrawMode.INVISIBLE)
+        return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).WithFlags(DrawMode.INVISIBLE)
         ;
     }
 }

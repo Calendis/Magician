@@ -39,8 +39,8 @@ public class DefaultSpell : Spell
 
         );
         //Origin["testRect"] = Geo.Create.Rect(-150, 100, 300, 250).Colored(new RGBA(0x70ff00d0));
-        Origin["myMulti"] = new Multi().SetDraw(DrawMode.INNER);
-        Origin["savMyMulti"] = new Multi().SetDraw(DrawMode.INVISIBLE);
+        Origin["myMulti"] = new Multi().WithFlags(DrawMode.INNER);
+        Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
 
     }
     Brush b = new Brush(
@@ -61,7 +61,7 @@ public class DefaultSpell : Spell
         //Origin["testRect"].RotatedX(0.04);
         //Origin["testRect"].RotatedY(0.02);
         //Origin["btn"].RotatedZ(0.01);
-        Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().SetDraw(DrawMode.POINT)));
+        Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINT)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
         {
             Origin["savMyMulti"].RotatedZ(0.03);
