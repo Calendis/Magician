@@ -1,10 +1,8 @@
 using static SDL2.SDL;
 
-namespace Magician
+namespace Magician.Renderer;
+public static class SDLGlobals
 {
-    public static class SDLGlobals
-    {
-        public static IntPtr renderer;
-        public static IntPtr renderedTexture;
-    }
+    public static IntPtr renderer;
+    public static IntPtr renderedTexture;
 }

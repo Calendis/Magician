@@ -1,6 +1,6 @@
 using System;
 
-namespace Magician
+namespace Magician.Geo
 {
     public class Vec : IOMap
     {
