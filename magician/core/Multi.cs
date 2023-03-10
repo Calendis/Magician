@@ -1310,24 +1310,4 @@ namespace Magician
             }
         }
     }
-
-    [Serializable]
-    internal class NullIndexException : Exception
-    {
-        public NullIndexException()
-        {
-        }
-
-        public NullIndexException(string? message) : base(message)
-        {
-        }
-
-        public NullIndexException(string? message, Exception? innerException) : base(message, innerException)
-        {
-        }
-
-        protected NullIndexException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
-    }
 }
