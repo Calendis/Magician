@@ -26,15 +26,12 @@ namespace Magician
         Multi? _parent;
         protected List<Multi> csts;
         Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
-        /* Multis are a recursive structure. They track position relative to their parent */
-        //public Quantity x = new Quantity(0);
-        //public Quantity y = new Quantity(0);
-        //public Quantity z = new Quantity(0);
-        //double[] heading = new double[]{0, 0, 0};
         Quantity[] headings = new Quantity[3] { new(0), new(0), new(0) };  // I only support 3 axes of rotation
         double internalVal = 0;
         double tempX = 0;
         double tempY = 0;
+        List<RDrawable> drawables = new List<RDrawable>();
+        bool stale = true; // Does the Multi need to be re-rendered?
 
         public Multi Parent
         {
@@ -185,6 +182,7 @@ namespace Magician
                     throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
                 }
                 csts[i].DisposeAllTextures();
+                RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
                 csts[i] = value.Parented(this);
             }
         }
@@ -210,8 +208,8 @@ namespace Magician
                 }
 
                 // Destroy the old Multi, and tag the new one with the same tag
-                //Scribe.Info($"Overwriting tag \"{tag}\"");
                 tags[tag].DisposeAllTextures();
+                RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
                 Remove(tags[tag]);
                 tags[tag] = value;
                 Add(value);
@@ -990,8 +988,19 @@ namespace Magician
         public bool IsReadOnly => false;
 
         // TODO: Move this to an extension method
-        public virtual void Draw(double xOffset, double yOffset, double zOffset, bool scale3d=false)
+        public virtual void Draw(double xOffset, double yOffset, double zOffset, bool scale3d = false)
         {
+            if (stale)
+            {
+                //Scribe.Info($"cleaning stale");
+                //RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
+                //drawables.Clear();
+            }
+            else
+            {
+                return;
+            }
+
             Control.SaveTarget();
             SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
             double r = col.R;
@@ -1001,30 +1010,23 @@ namespace Magician
 
             // Get a projection of each constituent
             Matrix[] projectedVerts = new Matrix[Count];
-            //foreach (Multi m in csts)
             for (int i = 0; i < Count; i++)
             {
-                //Matrix mmx = Matrix.Row(csts[i]);
-
-                double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
-                double zFar = zNear + 0;// - Ref.Perspective.Z;
-
                 double xp, yp, zp;
                 xp = csts[i].X - Ref.Perspective.X;
                 yp = csts[i].Y - Ref.Perspective.Y;
                 zp = csts[i].Z - Ref.Perspective.Z;
-                double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
 
                 if (scale3d)
                 {
                     projectedVerts[i] = Matrix.Perspective
-                        .Mult(new Matrix(new double[,] { {xp/zp*Data.Globals.winWidth/2, yp/zp*Data.Globals.winHeight/2, zp } }))
+                        .Mult(new Matrix(new double[,] { { xp / zp * Data.Globals.winWidth / 2, yp / zp * Data.Globals.winHeight / 2, zp } }))
                         .ToCartesian(xOffset, yOffset);
                 }
                 else
                 {
                     projectedVerts[i] = Matrix.Orthographic
-                        .Mult(new Matrix(new double[,] { {xp, yp, zp } }))
+                        .Mult(new Matrix(new double[,] { { xp, yp, zp } }))
                         .ToCartesian(xOffset, yOffset);
                 }
             }
@@ -1032,8 +1034,11 @@ namespace Magician
             // If the flag is set, draw the relative origin
             if ((drawMode & DrawMode.POINT) > 0)
             {
-                SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-                SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+                //SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
+                //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
+                RPoint rp = new RPoint(X, Y, Z, Col.R, Col.G, Col.B, Col.A);
+                drawables.Add(rp);
+                RDrawable.drawables.Add(rp);
             }
 
             // If lined, draw lines between the constituents as if they were vertices in a polygon
@@ -1041,18 +1046,22 @@ namespace Magician
             {
                 if ((drawMode & DrawMode.PLOT) > 0)
                 {
-                    Multi lineP0 = csts[i];
-                    Multi lineP1 = csts[i + 1];
+                    double subr = csts[i].Col.R;
+                    double subg = csts[i].Col.G;
+                    double subb = csts[i].Col.B;
+                    double suba = csts[i].Col.A;
 
-                    double subr = lineP0.Col.R;
-                    double subg = lineP0.Col.G;
-                    double subb = lineP0.Col.B;
-                    double suba = lineP0.Col.A;
-
-                    SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
+                    /* SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                     SDL_RenderDrawLineF(SDLGlobals.renderer,
-                    (float)projectedVerts[i].X, (float)projectedVerts[i].Y,
-                    (float)projectedVerts[i + 1].X, (float)projectedVerts[i + 1].Y);
+                        (float)projectedVerts[i].X, (float)projectedVerts[i].Y,
+                        (float)projectedVerts[i + 1].X, (float)projectedVerts[i + 1].Y); */
+
+                    RLine rl = new(
+                        projectedVerts[i].X, projectedVerts[i].Y, projectedVerts[i].Z,
+                        projectedVerts[i+1].X, projectedVerts[i+1].Y, projectedVerts[i+1].Z,
+                        subr, subg, subb, suba);
+                    drawables.Add(rl);
+                    RDrawable.drawables.Add(rl);
 
                 }
             }
@@ -1068,10 +1077,13 @@ namespace Magician
                 double subb = csts[csts.Count - 1].Col.B;
                 double suba = csts[csts.Count - 1].Col.A;
 
-                SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
+                /* SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
                 SDL_RenderDrawLineF(SDLGlobals.renderer,
-                (float)pLast.X, (float)pLast.Y,
-                (float)pFirst.X, (float)pFirst.Y);
+                    (float)pLast.X, (float)pLast.Y,
+                    (float)pFirst.X, (float)pFirst.Y); */
+                RLine rl = new(pLast.X, pLast.Y, pLast.Z, pFirst.X, pFirst.Y, pFirst.Z, subr, subg, subb, suba);
+                drawables.Add(rl);
+                RDrawable.drawables.Add(rl);
             }
 
             // Draw each constituent recursively            
@@ -1098,6 +1110,10 @@ namespace Magician
 
                     int numTriangles = (Count - 2);
                     SDL_Vertex[] vs = new SDL_Vertex[numTriangles * 3];
+                    RTriangle[] rts = new RTriangle[numTriangles];
+                    // TODO: use this dict to implement layer support
+                    //Dictionary<double, List<RTriangle>> rts = new Dictionary<double, List<RTriangle>>();
+                    RGeometry rg;
                     // Assemble the triangles from the SDLGlobals.renderer into vertices for SDL
                     for (int i = 0; i < numTriangles; i++)
                     {
@@ -1110,56 +1126,21 @@ namespace Magician
                         if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                             break;
 
-                        SDL_FPoint p0, p1, p2;
-
-                        //p0.x = (float)csts[tri0 - 1].XCartesian(xOffset);
-                        //p0.y = (float)csts[tri0 - 1].YCartesian(yOffset);
-                        //p1.x = (float)csts[tri1 - 1].XCartesian(xOffset);
-                        //p1.y = (float)csts[tri1 - 1].YCartesian(yOffset);
-                        //p2.x = (float)csts[tri2 - 1].XCartesian(xOffset);
-                        //p2.y = (float)csts[tri2 - 1].YCartesian(yOffset);
-                        p0.x = (float)projectedVerts[tri0 - 1].X;
-                        p0.y = (float)projectedVerts[tri0 - 1].Y;
-                        p1.x = (float)projectedVerts[tri1 - 1].X;
-                        p1.y = (float)projectedVerts[tri1 - 1].Y;
-                        p2.x = (float)projectedVerts[tri2 - 1].X;
-                        p2.y = (float)projectedVerts[tri2 - 1].Y;
-
-                        vs[3 * i] = new SDL_Vertex();
-                        vs[3 * i].position.x = p0.x;
-                        vs[3 * i].position.y = p0.y;
-                        vs[3 * i + 1] = new SDL_Vertex();
-                        vs[3 * i + 1].position.x = p1.x;
-                        vs[3 * i + 1].position.y = p1.y;
-                        vs[3 * i + 2] = new SDL_Vertex();
-                        vs[3 * i + 2].position.x = p2.x;
-                        vs[3 * i + 2].position.y = p2.y;
-
-                        SDL_Color c;
-                        c.r = (byte)Col.R;
-                        c.g = (byte)Col.G;
-                        c.b = (byte)Col.B;
-                        c.a = (byte)Col.A;
-
-                        // Randomly-coloured triangles for debugging
-                        /*
-                        Random rnd = new Random(i);
-                        byte rndRed = (byte)rnd.Next(256);
-                        byte rndGrn = (byte)rnd.Next(256);
-                        byte rndBlu = (byte)rnd.Next(256);
-                        c.r = rndRed;
-                        c.g = rndGrn;
-                        c.b = rndBlu;
-                        c.a = (byte)Col.A;
-                        */
-
-                        vs[3 * i].color = c;
-                        vs[3 * i + 1].color = c;
-                        vs[3 * i + 2].color = c;
+                        RTriangle rt = new(
+                            projectedVerts[tri0 - 1].X, projectedVerts[tri0 - 1].Y, projectedVerts[tri0 - 1].Z,
+                            projectedVerts[tri1 - 1].X, projectedVerts[tri1 - 1].Y, projectedVerts[tri1 - 1].Z,
+                            projectedVerts[tri2 - 1].X, projectedVerts[tri2 - 1].Y, projectedVerts[tri2 - 1].Z,
+                            Col.R, Col.G, Col.B, Col.A
+                        );
+                        rts[i] = rt;
                     }
+                    rg = new RGeometry(rts);
+                    drawables.Add(rg);
+                    RDrawable.drawables.Add(rg);
+                    //Scribe.Info($"{RDrawable.drawables.Count}");
 
-                    IntPtr ip = new IntPtr();
-                    SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
+                    //IntPtr ip = new IntPtr();
+                    //SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
                 }
                 catch (System.Exception)
                 {

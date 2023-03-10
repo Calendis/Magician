@@ -19,7 +19,7 @@ namespace Magician.Geo
         {
             Origin = new Multi().Tagged("Placeholder Origin");
             Perspective = new Multi(0, 0, -1).Parented(null);
-            FOV = 90;
+            FOV = 60;
 
             AllowedOrphans = new List<Multi>()
             {

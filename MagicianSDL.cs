@@ -98,6 +98,8 @@ namespace Magician
 
                 // Draw objects
                 Geo.Ref.Origin.Draw(0, 0, 0);
+                Renderer.RDrawable.DrawAll();
+                Renderer.RDrawable.drawables.Clear();
 
                 // SAVE FRAME TO IMAGE
                 if (Renderer.Control.saveFrame && frames != stopFrame)
