@@ -33,6 +33,7 @@ class MagicianSDL
             (SDL_GLattr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLprofile.SDL_GL_CONTEXT_PROFILE_CORE)
         );
         Renderer.SDLGlobals.sdlContext.MakeCurrent();
+        Renderer.SDLGlobals.gl = new GL(Renderer.SDLGlobals.sdlContext);
 
         // Load a spell
         Spellbook.Load(new Demos.DefaultSpell());

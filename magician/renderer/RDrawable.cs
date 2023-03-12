@@ -141,6 +141,8 @@ internal class RGeometry : RDrawable
         IntPtr ip = new();
         SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
 
+        SDLGlobals.gl.ClearColor(1, 0, 0, 0.5f);
+
         Control.RecallTarget();
     }
 }
