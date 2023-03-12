@@ -27,12 +27,12 @@ class MagicianSDL
         Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
         // Create a Silk.Net context
-        Renderer.SdlContext sdlContext = new(win, null,
+        Renderer.SDLGlobals.sdlContext = new(win, null,
             (SDL_GLattr.SDL_GL_CONTEXT_MAJOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_MINOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLprofile.SDL_GL_CONTEXT_PROFILE_CORE)
         );
-        sdlContext.MakeCurrent();
+        Renderer.SDLGlobals.sdlContext.MakeCurrent();
 
         // Load a spell
         Spellbook.Load(new Demos.DefaultSpell());
@@ -44,7 +44,6 @@ class MagicianSDL
         SDL_DestroyRenderer(SDLGlobals.renderer);
         SDL_DestroyWindow(win);
         SDL_Quit();
-
     }
 
     void MainLoop()
