@@ -34,7 +34,7 @@ class MagicianSDL
         );
         Renderer.SDLGlobals.sdlContext.MakeCurrent();
         Renderer.SDLGlobals.gl = new GL(Renderer.SDLGlobals.sdlContext);
-        //Renderer.SDLGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
+        Renderer.SDLGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
 
         // Load a spell
         Spellbook.Load(new Demos.DefaultSpell());
