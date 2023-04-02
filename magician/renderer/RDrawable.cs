@@ -22,10 +22,12 @@ internal abstract class RDrawable
         string vertexShaderSrc = @"
             #version 330 core 
             layout (location = 0) in vec3 pos;
+            out vec3 pos2;
 
             void main()
             {
                 gl_Position = vec4(pos, 1.0);
+                pos2 = pos;
             }
         ";
 
@@ -33,10 +35,11 @@ internal abstract class RDrawable
             #version 330 core
 
             out vec4 out_col;
+            in vec3 pos2;
 
             void main()
             {{
-                out_col = vec4({(float)Data.Rand.RNG.NextDouble()}, 0.0, 1.0, 0.5);
+                out_col = vec4(pos2.x, 0.0, 1.0, 0.5);
             }}
         ";
 
@@ -233,6 +236,8 @@ internal class RGeometry : RDrawable
         // Specify how to read vertex data
         gl.EnableVertexAttribArray(0);
         gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 3 * sizeof(float), (void*)0);
+
+        //gl.BindFragDataLocation()
         gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vs.Length);
 
         // End stuff

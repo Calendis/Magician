@@ -1020,7 +1020,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             {
                 projectedVerts[i] = Matrix.Perspective
                     .Mult(new Matrix(
-                        new double[,] {{ xp / zp * Data.Globals.winWidth / 2, yp / zp * Data.Globals.winHeight / 2, zp } }))
+                        new double[,] {{ xp / zp * Data.Globals.winWidth / 2, -yp / zp * Data.Globals.winHeight / 2, zp } }))
                     //.ToCartesian(xOffset, yOffset)
                     ;
             }

@@ -112,8 +112,8 @@ public class Matrix
             double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
             double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
 
-            double zNear = 0; // Offset so that the camera isn't "inside your head", if you get what I mean
-            double zFar = 1;//zNear - Ref.Perspective.Z;
+            double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
+            double zFar = 2;//zNear - Ref.Perspective.Z;
             if (zFar == zNear)
             {
                 zFar = Double.NegativeInfinity;
