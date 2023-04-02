@@ -168,6 +168,8 @@ public class TestingSpell : Spell
     public override unsafe void Loop()
     {
         Renderer.Control.Clear();
+        Origin["sqs"][0].RotatedY(0.04);
+        Origin["sqs"][1].RotatedY(-0.025);
 
         //
         

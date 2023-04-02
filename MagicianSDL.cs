@@ -36,6 +36,10 @@ class MagicianSDL
         Renderer.SDLGlobals.gl = new GL(Renderer.SDLGlobals.sdlContext);
         Renderer.SDLGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
 
+        // Generate shaders
+        // TODO: move this
+        RDrawable.GenShaders();
+
         // Load a spell
         Spellbook.Load(new Demos.DefaultSpell());
 

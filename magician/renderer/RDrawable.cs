@@ -6,6 +6,7 @@ internal abstract class RDrawable
     public byte[] rgba = new byte[4];
     public abstract void Draw();
     public static List<RDrawable> drawables = new List<RDrawable>();
+    protected static Silk.NET.OpenGL.GL gl = Renderer.SDLGlobals.gl;
 
     public static void DrawAll()
     {
@@ -13,6 +14,59 @@ internal abstract class RDrawable
         {
             rd.Draw();
         }
+    }
+
+    public static unsafe void GenShaders()
+    {
+        // GLSL
+        string vertexShaderSrc = @"
+            #version 330 core 
+            layout (location = 0) in vec3 pos;
+
+            void main()
+            {
+                gl_Position = vec4(pos, 1.0);
+            }
+        ";
+
+        string fragmentShaderSrc = $@"
+            #version 330 core
+
+            out vec4 out_col;
+
+            void main()
+            {{
+                out_col = vec4({(float)Data.Rand.RNG.NextDouble()}, 0.0, 1.0, 0.5);
+            }}
+        ";
+
+        uint vertexShader = gl.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader);
+        gl.ShaderSource(vertexShader, vertexShaderSrc);
+        gl.CompileShader(vertexShader);
+
+        // TODO: make sure vertex shader compiles correctly
+        //
+
+        uint fragmentShader = gl.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader);
+        gl.ShaderSource(fragmentShader, fragmentShaderSrc);
+        gl.CompileShader(fragmentShader);
+
+        // TODO: make sure fragment shader compiles correctly
+        //
+
+        uint prog = gl.CreateProgram();
+        gl.AttachShader(prog, vertexShader);
+        gl.AttachShader(prog, fragmentShader);
+        gl.LinkProgram(prog);
+        gl.UseProgram(prog);
+        // TODO: make sure progam compiles correctly
+        //
+
+        // Clean shaders
+        gl.DetachShader(prog, vertexShader);
+        gl.DetachShader(prog, fragmentShader);
+        gl.DeleteShader(vertexShader);
+        gl.DeleteShader(fragmentShader);
     }
 }
 
@@ -113,17 +167,17 @@ internal class RGeometry : RDrawable
             vs[3 * i + 2] = new SDL_Vertex();
             vs[3 * i + 2].position.x = currentTriangle.p2[0];
             vs[3 * i + 2].position.y = currentTriangle.p2[1]; */
-            vs[9*i]   = currentTriangle.p0[0] / Data.Globals.winWidth;
-            vs[9*i+1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
-            vs[9*i+2] = currentTriangle.p0[2]/ Data.Globals.winWidth;
-            
-            vs[9*i+3] = currentTriangle.p1[0] / Data.Globals.winWidth;
-            vs[9*i+4] = currentTriangle.p1[1] / -Data.Globals.winHeight;
-            vs[9*i+5] = currentTriangle.p1[2]/ Data.Globals.winWidth;
+            vs[9 * i] = currentTriangle.p0[0] / Data.Globals.winWidth;
+            vs[9 * i + 1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
+            vs[9 * i + 2] = currentTriangle.p0[2] / Data.Globals.winWidth;
 
-            vs[9*i+6] = currentTriangle.p2[0] / Data.Globals.winWidth;
-            vs[9*i+7] = currentTriangle.p2[1] / -Data.Globals.winHeight;
-            vs[9*i+8] = currentTriangle.p2[2]/ Data.Globals.winWidth;
+            vs[9 * i + 3] = currentTriangle.p1[0] / Data.Globals.winWidth;
+            vs[9 * i + 4] = currentTriangle.p1[1] / -Data.Globals.winHeight;
+            vs[9 * i + 5] = currentTriangle.p1[2] / Data.Globals.winWidth;
+
+            vs[9 * i + 6] = currentTriangle.p2[0] / Data.Globals.winWidth;
+            vs[9 * i + 7] = currentTriangle.p2[1] / -Data.Globals.winHeight;
+            vs[9 * i + 8] = currentTriangle.p2[2] / Data.Globals.winWidth;
             // Color
             //SDL_Color c0;
             //c0.r = rts[i].rgba[0]; c0.g = rts[i].rgba[1]; c0.b = rts[i].rgba[2]; c0.a = rts[i].rgba[3];
@@ -153,7 +207,6 @@ internal class RGeometry : RDrawable
         //SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
 
         // Create vertex array object
-        Silk.NET.OpenGL.GL gl = Renderer.SDLGlobals.gl;
         uint vao = gl.GenVertexArray();
         gl.BindVertexArray(vao);
 
@@ -177,61 +230,10 @@ internal class RGeometry : RDrawable
             gl.BufferData(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, (nuint)(vs.Length * sizeof(float)), buf, Silk.NET.OpenGL.BufferUsageARB.StaticDraw);
         }
 
-        // GLSL
-        string vertexShaderSrc = @"
-            #version 330 core 
-            layout (location = 0) in vec3 pos;
-
-            void main()
-            {
-                gl_Position = vec4(pos, 1.0);
-            }
-        ";
-
-        string fragmentShaderSrc = $@"
-            #version 330 core
-
-            out vec4 out_col;
-
-            void main()
-            {{
-                out_col = vec4({(float)Data.Rand.RNG.NextDouble()}, 0.0, 1.0, 0.5);
-            }}
-        ";
-
-        uint vertexShader = gl.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader);
-        gl.ShaderSource(vertexShader, vertexShaderSrc);
-        gl.CompileShader(vertexShader);
-
-        // TODO: make sure vertex shader compiles correctly
-        //
-
-        uint fragmentShader = gl.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader);
-        gl.ShaderSource(fragmentShader, fragmentShaderSrc);
-        gl.CompileShader(fragmentShader);
-
-        // TODO: make sure fragment shader compiles correctly
-        //
-
-        uint prog = gl.CreateProgram();
-        gl.AttachShader(prog, vertexShader);
-        gl.AttachShader(prog, fragmentShader);
-        gl.LinkProgram(prog);
-        gl.UseProgram(prog);
-        // TODO: make sure progam compiles correctly
-        //
-
         // Specify how to read vertex data
         gl.EnableVertexAttribArray(0);
         gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 3 * sizeof(float), (void*)0);
-
         gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vs.Length);
-
-        // Clean shaders
-        gl.DetachShader(prog, vertexShader);
-        gl.DetachShader(prog, fragmentShader);
-        gl.DeleteShader(vertexShader);
-        gl.DeleteShader(fragmentShader);
 
         // End stuff
         gl.DeleteVertexArray(vao);
