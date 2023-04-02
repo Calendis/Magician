@@ -17,15 +17,15 @@ public class Texture : IDisposable
 
         Width = width;
         Height = height;
-        IntPtr surface = SDL2.SDL_image.IMG_Load(filepath);
-        if (surface == IntPtr.Zero)
+        //IntPtr surface = SDL2.SDL_image.IMG_Load(filepath);
+        /* if (surface == IntPtr.Zero)
         {
             Console.WriteLine($"Could not load {filepath}");
             surface = SDL2.SDL_image.IMG_Load("magician/ui/assets/default.png");
-        }
+        } */
 
-        texture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, surface);
-        SDL_FreeSurface(surface);
+        //texture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, surface);
+        //SDL_FreeSurface(surface);
     }
 
     // Create a texture from a given SDL texture
@@ -44,12 +44,13 @@ public class Texture : IDisposable
     public void Draw(double xOffset = 0, double yOffset = 0)
     {
 
+        return;
         // Options
-        SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+        //SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
         SDL_SetTextureBlendMode(texture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
         // Draw objects
-        SDL_SetRenderTarget(SDLGlobals.renderer, texture);
+        //SDL_SetRenderTarget(SDLGlobals.renderer, texture);
         SDL_Rect srcRect = new()
         {
             x = 0,
@@ -65,7 +66,7 @@ public class Texture : IDisposable
             h = Height,
         };
 
-        SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
+        //SDL_RenderCopy(SDLGlobals.renderer, texture, ref srcRect, ref dstRect);
     }
 
     /* IDisposable implementation */

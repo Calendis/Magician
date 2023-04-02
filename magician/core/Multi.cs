@@ -1001,7 +1001,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
 
         Control.SaveTarget();
-        SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
         double r = col.R;
         double g = col.G;
         double b = col.B;

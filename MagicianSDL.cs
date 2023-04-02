@@ -42,7 +42,7 @@ class MagicianSDL
         magicianSDL.MainLoop();
 
         // Cleanup
-        SDL_DestroyRenderer(SDLGlobals.renderer);
+        //SDL_DestroyRenderer(SDLGlobals.renderer);
         SDL_DestroyWindow(win);
         SDL_Quit();
     }
@@ -51,8 +51,7 @@ class MagicianSDL
     {
         // Create a texture from the surface
         // Textures are hardware-acclerated, while surfaces use CPU rendering
-        SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
-            Data.Globals.winWidth, Data.Globals.winHeight);
+        //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
 
         while (!done)
         {
@@ -72,8 +71,7 @@ class MagicianSDL
                             case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
                                 Data.Globals.winWidth = windowEvent.data1;
                                 Data.Globals.winHeight = windowEvent.data2;
-                                SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
-                                    Data.Globals.winWidth, Data.Globals.winHeight);
+                                //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
                                 break;
                         }
                         break;
@@ -103,8 +101,8 @@ class MagicianSDL
         if (Renderer.Control.doRender)
         {
             // Options
-            SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-            SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+            //SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+            //SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
             // Draw objects
             Geo.Ref.Origin.Render(0, 0, 0);
@@ -114,7 +112,7 @@ class MagicianSDL
             // SAVE FRAME TO IMAGE
             if (Renderer.Control.saveFrame && frames != stopFrame)
             {
-                IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
+                /* IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
                 IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
 
                 int width, height;
@@ -138,7 +136,7 @@ class MagicianSDL
 
                     SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
                 }
-                SDL_DestroyTexture(texture);
+                SDL_DestroyTexture(texture); */
             }
 
             // Display
@@ -155,9 +153,10 @@ class MagicianSDL
 
             if (Renderer.Control.display)
             {
-                SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-                SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
-                SDL_RenderPresent(SDLGlobals.renderer);
+                //SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
+                //SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
+                //SDL_RenderPresent(SDLGlobals.renderer);
+                SDL_GL_SwapWindow(win);
             }
             //SDL_Delay(1/6);
         }
@@ -188,15 +187,15 @@ class MagicianSDL
     }
     void CreateRenderer()
     {
-        // With VSync
-        SDLGlobals.renderer = SDL_CreateRenderer(win, -1,
-        SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC | SDL_RendererFlags.SDL_RENDERER_TARGETTEXTURE);
+        //// With VSync
+        //SDLGlobals.renderer = SDL_CreateRenderer(win, -1,
+        //SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC | SDL_RendererFlags.SDL_RENDERER_TARGETTEXTURE);
 
-        // No VSync
-        //SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
-        if (SDLGlobals.renderer == IntPtr.Zero)
-        {
-            Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
-        }
+        //// No VSync
+        ////SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+        //if (SDLGlobals.renderer == IntPtr.Zero)
+        //{
+        //    Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
+        //}
     }
 }

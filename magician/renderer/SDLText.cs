@@ -26,7 +26,7 @@ public class Text : IDisposable
         fontPath = fp == "" ? FallbackFontPath : fp;
         // WIP text support
         // Open the default font
-        font = TTF_OpenFont(fontPath, size);
+        //font = TTF_OpenFont(fontPath, size);
     }
 
     public Texture Render()
@@ -37,24 +37,23 @@ public class Text : IDisposable
         }
 
         // Create an SDL color from a Color
-        SDL_Color sdlC;
-        sdlC.r = (byte)c.R;
-        sdlC.g = (byte)c.G;
-        sdlC.b = (byte)c.B;
-        sdlC.a = (byte)c.A;
+        //SDL_Color sdlC;
+        //sdlC.r = (byte)c.R;
+        //sdlC.g = (byte)c.G;
+        //sdlC.b = (byte)c.B;
+        //sdlC.a = (byte)c.A;
         //IntPtr textSurface = TTF_RenderText_Solid(font, s, sdlC);
-        IntPtr textSurface = TTF_RenderText_Blended(font, s, sdlC);
+        //IntPtr textSurface = TTF_RenderText_Blended(font, s, sdlC);
         //IntPtr textSurface = TTF_RenderText_Shaded(font, s, sdlC, Data.Col.UIDefault.BG);
-        if (textSurface == IntPtr.Zero)
+        /* if (textSurface == IntPtr.Zero)
         {
             Scribe.Error($"{SDL_GetError()}");
-        }
+        } */
 
-        IntPtr textTexture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, textSurface);
-        SDL_FreeSurface(textSurface);
-        return new Texture(textTexture);
-
-        //throw new NotImplementedException("Text as Texture not supported. Please file an issue at https://github.com/Calendis/Magician");
+        //IntPtr textTexture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, textSurface);
+        //SDL_FreeSurface(textSurface);
+        //return new Texture(textTexture);
+        return new Texture("todo", 80, 80);
     }
 
     Multi AsMulti()

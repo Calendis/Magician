@@ -35,6 +35,7 @@ public class DefaultSpell : Spell
         () =>
         {
             Spellbook.Cache(new TestingSpell());
+            Scribe.Info("Switching Spells...");
         }
 
         );
@@ -164,9 +165,13 @@ public class TestingSpell : Spell
         );
     }
 
-    public override void Loop()
+    public override unsafe void Loop()
     {
         Renderer.Control.Clear();
+
+        //
+        
+        //
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
