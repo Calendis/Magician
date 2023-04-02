@@ -1019,14 +1019,17 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             if (scale3d)
             {
                 projectedVerts[i] = Matrix.Perspective
-                    .Mult(new Matrix(new double[,] { { xp / zp * Data.Globals.winWidth / 2, yp / zp * Data.Globals.winHeight / 2, zp } }))
-                    .ToCartesian(xOffset, yOffset);
+                    .Mult(new Matrix(
+                        new double[,] {{ xp / zp * Data.Globals.winWidth / 2, yp / zp * Data.Globals.winHeight / 2, -zp } }))
+                    //.ToCartesian(xOffset, yOffset)
+                    ;
             }
             else
             {
                 projectedVerts[i] = Matrix.Orthographic
-                    .Mult(new Matrix(new double[,] { { xp, yp, zp } }))
-                    .ToCartesian(xOffset, yOffset);
+                    .Mult(new Matrix(new double[,] { { xp*2, -yp*2, zp } }))
+                    ;
+                    //.ToCartesian(xOffset, yOffset);
             }
         }
 
