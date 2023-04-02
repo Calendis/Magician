@@ -22,7 +22,7 @@ class MagicianSDL
 
         magicianSDL.InitSDL();
         magicianSDL.CreateWindow();
-        magicianSDL.CreateRenderer();
+        //magicianSDL.CreateRenderer();
         SDL2.SDL_ttf.TTF_Init();
         Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
@@ -34,6 +34,7 @@ class MagicianSDL
         );
         Renderer.SDLGlobals.sdlContext.MakeCurrent();
         Renderer.SDLGlobals.gl = new GL(Renderer.SDLGlobals.sdlContext);
+        //Renderer.SDLGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
 
         // Load a spell
         Spellbook.Load(new Demos.DefaultSpell());
@@ -103,6 +104,10 @@ class MagicianSDL
             // Options
             //SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             //SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
+
+            // TODO: this may not work?
+            //SDLGlobals.gl.ClearDepth(0);
+            SDLGlobals.gl.Clear((uint)(Silk.NET.OpenGL.GLEnum.ColorBufferBit | Silk.NET.OpenGL.GLEnum.DepthBufferBit));
 
             // Draw objects
             Geo.Ref.Origin.Render(0, 0, 0);

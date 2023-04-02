@@ -115,15 +115,15 @@ internal class RGeometry : RDrawable
             vs[3 * i + 2].position.y = currentTriangle.p2[1]; */
             vs[9*i]   = currentTriangle.p0[0] / Data.Globals.winWidth;
             vs[9*i+1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
-            vs[9*i+2] = currentTriangle.p0[2]/ -Data.Globals.winWidth;
+            vs[9*i+2] = currentTriangle.p0[2]/ Data.Globals.winWidth;
             
             vs[9*i+3] = currentTriangle.p1[0] / Data.Globals.winWidth;
             vs[9*i+4] = currentTriangle.p1[1] / -Data.Globals.winHeight;
-            vs[9*i+5] = currentTriangle.p1[2]/ -Data.Globals.winWidth;
+            vs[9*i+5] = currentTriangle.p1[2]/ Data.Globals.winWidth;
 
             vs[9*i+6] = currentTriangle.p2[0] / Data.Globals.winWidth;
             vs[9*i+7] = currentTriangle.p2[1] / -Data.Globals.winHeight;
-            vs[9*i+8] = currentTriangle.p2[2]/ -Data.Globals.winWidth;
+            vs[9*i+8] = currentTriangle.p2[2]/ Data.Globals.winWidth;
             // Color
             //SDL_Color c0;
             //c0.r = rts[i].rgba[0]; c0.g = rts[i].rgba[1]; c0.b = rts[i].rgba[2]; c0.a = rts[i].rgba[3];
