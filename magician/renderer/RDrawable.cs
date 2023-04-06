@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Magician.Renderer;
 
 internal abstract class RDrawable
@@ -20,9 +22,12 @@ internal abstract class RDrawable
     {
         // GLSL
         string vertexShaderSrc = @"
-            #version 330 core 
+            #version 330 core
+
             layout (location = 0) in vec3 pos;
+            layout (location = 1) in vec4 rbga;
             out vec3 pos2;
+            out vec4 rgba;
 
             void main()
             {
@@ -34,12 +39,13 @@ internal abstract class RDrawable
         string fragmentShaderSrc = $@"
             #version 330 core
 
-            out vec4 out_col;
             in vec3 pos2;
+            in vec4 rgba;
+            out vec4 out_col;
 
             void main()
             {{
-                out_col = vec4(pos2.x, 0.0, 1.0, 0.5);
+                out_col = vec4(rgba.x, rgba.y, rgba.z, 0.4);
             }}
         ";
 
@@ -148,81 +154,43 @@ internal class RTriangle : RDrawable
 
 internal class RGeometry : RDrawable
 {
-    //SDL_Vertex[] vs;
     float[] vs;
     public RGeometry(params RTriangle[] rts)
     {
         int numTriangles = rts.Length;
-        //List<RTriangle> rtsl = rts.ToList().Sort((rt0, rt1) => rt0.)
-        //vs = new SDL_Vertex[numTriangles * 3];
-        vs = new float[numTriangles * 9];  // x y z x y z x y z ...
+        int dataLength = 13;
+        vs = new float[numTriangles * dataLength];  // x y z r g b a x y z r g b a x y z r g b a ...
         for (int i = 0; i < numTriangles; i++)
         {
             RTriangle currentTriangle = rts[i];
-            /* vs[3 * i] = new SDL_Vertex();
-            vs[3 * i].position.x = currentTriangle.p0[0];
-            vs[3 * i].position.y = currentTriangle.p0[1];
 
-            vs[3 * i + 1] = new SDL_Vertex();
-            vs[3 * i + 1].position.x = currentTriangle.p1[0];
-            vs[3 * i + 1].position.y = currentTriangle.p1[1];
+            vs[dataLength * i] = currentTriangle.p0[0] / Data.Globals.winWidth;
+            vs[dataLength * i + 1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
+            vs[dataLength * i + 2] = currentTriangle.p0[2] / Data.Globals.winWidth;
 
-            vs[3 * i + 2] = new SDL_Vertex();
-            vs[3 * i + 2].position.x = currentTriangle.p2[0];
-            vs[3 * i + 2].position.y = currentTriangle.p2[1]; */
-            vs[9 * i] = currentTriangle.p0[0] / Data.Globals.winWidth;
-            vs[9 * i + 1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
-            vs[9 * i + 2] = currentTriangle.p0[2] / Data.Globals.winWidth;
+            vs[dataLength * i + 3] = currentTriangle.p1[0] / Data.Globals.winWidth;
+            vs[dataLength * i + 4] = currentTriangle.p1[1] / -Data.Globals.winHeight;
+            vs[dataLength * i + 5] = currentTriangle.p1[2] / Data.Globals.winWidth;
 
-            vs[9 * i + 3] = currentTriangle.p1[0] / Data.Globals.winWidth;
-            vs[9 * i + 4] = currentTriangle.p1[1] / -Data.Globals.winHeight;
-            vs[9 * i + 5] = currentTriangle.p1[2] / Data.Globals.winWidth;
-
-            vs[9 * i + 6] = currentTriangle.p2[0] / Data.Globals.winWidth;
-            vs[9 * i + 7] = currentTriangle.p2[1] / -Data.Globals.winHeight;
-            vs[9 * i + 8] = currentTriangle.p2[2] / Data.Globals.winWidth;
+            vs[dataLength * i + 6] = currentTriangle.p2[0] / Data.Globals.winWidth;
+            vs[dataLength * i + 7] = currentTriangle.p2[1] / -Data.Globals.winHeight;
+            vs[dataLength * i + 8] = currentTriangle.p2[2] / Data.Globals.winWidth;
+            
             // Color
-            //SDL_Color c0;
-            //c0.r = rts[i].rgba[0]; c0.g = rts[i].rgba[1]; c0.b = rts[i].rgba[2]; c0.a = rts[i].rgba[3];
-
-            // Randomly-coloured triangles for debugging
-            /* Random rnd = new Random(i);
-            byte rndRed = (byte)rnd.Next(256);
-            byte rndGrn = (byte)rnd.Next(256);
-            byte rndBlu = (byte)rnd.Next(256);
-            c0.r = rndRed;
-            c0.g = rndGrn;
-            c0.b = rndBlu;
-            c0.a = rts[i].rgba[3]; */
-
-            //vs[3 * i].color = c0;
-            //vs[3 * i + 1].color = c0;
-            //vs[3 * i + 2].color = c0;
+            vs[dataLength * i + 9] = rts[i].rgba[0] / 255f;
+            vs[dataLength * i +10] = rts[i].rgba[1] / 255f;
+            vs[dataLength * i +11] = rts[i].rgba[2] / 255f;
+            vs[dataLength * i +12] = rts[i].rgba[3] / 255f;
         }
     }
 
     public override unsafe void Draw()
     {
         Control.SaveTarget();
-        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-
-        //IntPtr ip = new();
-        //SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
 
         // Create vertex array object
         uint vao = gl.GenVertexArray();
         gl.BindVertexArray(vao);
-
-        // Example vertices
-        /* float[] vertices =
-        {
-             0.5f,  -0.5f, 0.0f,
-             0.5f, 0.5f, 0.0f,
-            -0.5f, 0.5f, 0.0f,
-            -0.5f, -0.5f, 0.0f,
-            -0.5f, 0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f
-        }; */
 
         uint vbo = gl.GenBuffer();
         gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, vbo);
@@ -234,9 +202,12 @@ internal class RGeometry : RDrawable
         }
 
         // Specify how to read vertex data
+        gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 7*sizeof(float), (void*)0);
+        gl.VertexAttribPointer(1, 4, Silk.NET.OpenGL.GLEnum.Float, false, 4*sizeof(float), (void*)(3*sizeof(float)));
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 3 * sizeof(float), (void*)0);
-
+        gl.EnableVertexAttribArray(1);
+        
+        
         //gl.BindFragDataLocation()
         gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vs.Length);
 

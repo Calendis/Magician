@@ -161,19 +161,19 @@ public class TestingSpell : Spell
         ;
 
         Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000), z => 200 + 90 * Math.Sin(z))
-        .MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 15).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
+        .MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 64).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
         );
     }
 
     public override unsafe void Loop()
     {
         Renderer.Control.Clear();
-        Origin["sqs"][0].RotatedY(0.04);
-        Origin["sqs"][1].RotatedY(-0.025);
-        Origin["sqs"][0].RotatedZ(0.013);
-        Origin["sqs"][0].RotatedX(0.017);
-        Origin["sqs"][1].RotatedX(0.0117);
-        Origin["sqs"][1].RotatedZ(0.0113);
+        //Origin["sqs"][1].RotatedY(-0.025);
+        //Origin["sqs"][0].RotatedZ(0.013);
+        //Origin["sqs"][0].RotatedX(0.017);
+        //Origin["sqs"][0].RotatedY(0.04);
+        //Origin["sqs"][1].RotatedX(0.0117);
+        //Origin["sqs"][1].RotatedZ(0.0113);
 
         //
         
