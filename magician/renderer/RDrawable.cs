@@ -157,42 +157,45 @@ internal class RTriangle : RDrawable
 internal class RGeometry : RDrawable
 {
     float[] vs;
+
+    static int posLength = 3;
+    static int rgbLength = 4;
+    static int dataLength = 3*(posLength+rgbLength);
     public RGeometry(params RTriangle[] rts)
     {
         int numTriangles = rts.Length;
-        int dataLength = 21;
         vs = new float[numTriangles * dataLength];  // x y z r g b a x y z r g b a x y z r g b a ...
         for (int i = 0; i < numTriangles; i++)
         {
             RTriangle currentTriangle = rts[i];
 
-            vs[dataLength * i] = currentTriangle.p0[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 1] = currentTriangle.p0[1] / -Data.Globals.winHeight;
-            vs[dataLength * i + 2] = currentTriangle.p0[2] / Data.Globals.winWidth;
+            vs[dataLength * i + 0] = currentTriangle.p0[0] / Data.Globals.winWidth;
+            vs[dataLength * i + 1] = currentTriangle.p0[1] / Data.Globals.winHeight;
+            vs[dataLength * i + 2] = currentTriangle.p0[2] / 800;
 
             vs[dataLength * i + 7] = currentTriangle.p1[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 8] = currentTriangle.p1[1] / -Data.Globals.winHeight;
-            vs[dataLength * i + 9] = currentTriangle.p1[2] / Data.Globals.winWidth;
+            vs[dataLength * i + 8] = currentTriangle.p1[1] / Data.Globals.winHeight;
+            vs[dataLength * i + 9] = currentTriangle.p1[2] / 800;
 
             vs[dataLength * i + 14] = currentTriangle.p2[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 15] = currentTriangle.p2[1] / -Data.Globals.winHeight;
-            vs[dataLength * i + 16] = currentTriangle.p2[2] / Data.Globals.winWidth;
+            vs[dataLength * i + 15] = currentTriangle.p2[1] / Data.Globals.winHeight;
+            vs[dataLength * i + 16] = currentTriangle.p2[2] / 800;
             
             // Color
-            vs[dataLength * i + 3] = 1.0f;// rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 4] = 0.0f;//rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 5] = 0.7f;//rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 6] = 1.0f;//rts[i].rgba[3] / 255f;
+            vs[dataLength * i + 3] = rts[i].rgba[0] / 255f;
+            vs[dataLength * i + 4] = rts[i].rgba[1] / 255f;
+            vs[dataLength * i + 5] = rts[i].rgba[2] / 255f;
+            vs[dataLength * i + 6] = rts[i].rgba[3] / 255f;
 
-            vs[dataLength * i + 10] = 1.0f;//rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 11] = 0.0f;//rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 12] = 0.7f;//rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 13] = 1.0f;//rts[i].rgba[3] / 255f;
+            vs[dataLength * i + 10] = rts[i].rgba[0] / 255f;
+            vs[dataLength * i + 11] = rts[i].rgba[1] / 255f;
+            vs[dataLength * i + 12] = rts[i].rgba[2] / 255f;
+            vs[dataLength * i + 13] = rts[i].rgba[3] / 255f;
 
-            vs[dataLength * i + 17] = 1.0f;//rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 18] = 0.0f;//rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 19] = 0.7f;//rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 20] = 1.0f;//rts[i].rgba[3] / 255f;
+            vs[dataLength * i + 17] = rts[i].rgba[0] / 255f;
+            vs[dataLength * i + 18] = rts[i].rgba[1] / 255f;
+            vs[dataLength * i + 19] = rts[i].rgba[2] / 255f;
+            vs[dataLength * i + 20] = rts[i].rgba[3] / 255f;
         }
     }
 
@@ -215,10 +218,10 @@ internal class RGeometry : RDrawable
 
         //gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 3*sizeof(float), (void*)0);
         // Specify how to read vertex data
-        gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 7*sizeof(float), (void*)0);
-        gl.VertexAttribPointer(1, 4, Silk.NET.OpenGL.GLEnum.Float, false, 4*sizeof(float), (void*)(3*sizeof(float)));
-        gl.EnableVertexAttribArray(0);
+        gl.VertexAttribPointer(0, posLength, Silk.NET.OpenGL.GLEnum.Float, false, (uint)(posLength+rgbLength)*sizeof(float), (void*)0);
+        gl.VertexAttribPointer(1, rgbLength, Silk.NET.OpenGL.GLEnum.Float, true, (uint)(posLength+rgbLength)*sizeof(float), (void*)(posLength*sizeof(float)));
         gl.EnableVertexAttribArray(1);
+        gl.EnableVertexAttribArray(0);
         
         
         //gl.BindFragDataLocation()

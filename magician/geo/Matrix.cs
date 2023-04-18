@@ -76,62 +76,6 @@ public class Matrix
     public static Matrix Orthographic = new Matrix(new double[,] { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } });
     // TODO: fix this
     public static Matrix Isometric = new Matrix(new double[,] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } });
-    /* public static Matrix Perspective(double x, double y, double z)
-    {
-
-        double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
-        double xScale = 1 / Data.Globals.winWidth;
-        double yScale = 1 / Data.Globals.winHeight;
-        double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
-
-        double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
-        double zFar = zNear+0;// - Ref.Perspective.Z;
-
-        double xp, yp, zp;
-        xp = x + Ref.Perspective.X;     
-        yp = y + Ref.Perspective.Y;     
-        zp = z - Ref.Perspective.Z;     
-
-        return new Matrix(new double[,]
-        {
-            {s*xp/zp, 0, 0},
-            {0, s*yp/zp, 0},
-            {0, 0, zFar/(zFar-zNear)}
-        })
-        .Mult(RotationX(Ref.Perspective.HeadingX))
-        .Mult(RotationY(Ref.Perspective.HeadingY))
-        .Mult(RotationZ(Ref.Perspective.HeadingZ))
-        ;
-
-    } */
-
-    public static Matrix Perspective
-    {
-        get
-        {
-            double s = 1 / Math.Tan(Ref.FOV * Math.PI / 360);
-            double aspect = (double)Data.Globals.winHeight / Data.Globals.winWidth;
-
-            double zNear = 1; // Offset so that the camera isn't "inside your head", if you get what I mean
-            double zFar = 2;//zNear - Ref.Perspective.Z;
-            if (zFar == zNear)
-            {
-                zFar = Double.NegativeInfinity;
-            }
-
-            return new Matrix(new double[,]
-            {
-                {s*aspect, 0, 0},
-                {0, s, 0},
-                {0, 0, zFar/(zFar-zNear)}
-            })
-            //.Mult(RotationX(Ref.Perspective.HeadingX))
-            //.Mult(RotationY(Ref.Perspective.HeadingY))
-            //.Mult(RotationZ(Ref.Perspective.HeadingZ))
-            ;
-        }
-
-    }
 
     public override string ToString()
     {

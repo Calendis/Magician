@@ -4,6 +4,7 @@
 using System.Collections;
 using Magician.Geo;
 using Magician.Renderer;
+using Silk.NET.Maths;
 using static SDL2.SDL;
 
 namespace Magician;
@@ -1018,18 +1019,27 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
             if (scale3d)
             {
-                projectedVerts[i] = Matrix.Perspective
-                    .Mult(new Matrix(
-                        new double[,] {{ xp / zp * Data.Globals.winWidth / 2, -yp / zp * Data.Globals.winHeight / 2, zp } }))
-                    //.ToCartesian(xOffset, yOffset)
-                    ;
+                Matrix4X4<double> perspMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV/360d*2*Math.PI, Data.Globals.winWidth/Data.Globals.winHeight, 0.1, 800.1);
+                Vector4D<double> triVec = Vector4D<double>.Zero;
+                triVec.X = xp/zp*Data.Globals.winWidth;
+                triVec.Y = yp/zp*Data.Globals.winWidth;
+                triVec.Z = -zp;
+                triVec.W = 1;
+                Vector4D<double> perspTriVec = Vector4D.Multiply<double>(triVec, perspMat);
+                projectedVerts[i] = new Matrix(new double[,]
+                {
+                    {perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W}
+                }
+                );
+                
+                
             }
             else
             {
                 projectedVerts[i] = Matrix.Orthographic
-                    .Mult(new Matrix(new double[,] { { xp*2, -yp*2, zp } }))
+                    .Mult(new Matrix(new double[,] { { xp * 2, yp * 2, zp } }))
                     ;
-                    //.ToCartesian(xOffset, yOffset);
+                //.ToCartesian(xOffset, yOffset);
             }
         }
 
@@ -1092,7 +1102,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         foreach (Multi m in this)
         {
             m.Render(xOffset, yOffset, zOffset);//), (m.Y.Evaluate(yOffset)));
-                                              //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
+                                                //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
         }
 
         // If the flag is set, and there are at least 3 constituents, fill the shape

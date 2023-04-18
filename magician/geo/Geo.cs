@@ -19,7 +19,7 @@ public static class Ref
     {
         Origin = new Multi().Tagged("Placeholder Origin");
         Perspective = new Multi(0, 0, -1).Parented(null);
-        FOV = 60;
+        FOV = 90;
 
         AllowedOrphans = new List<Multi>()
             {
@@ -205,12 +205,11 @@ public static class Create
 
     public static Multi3D Cube(double x, double y, double z, double radius)
     {
-        Multi3D cube = new Multi3D(x, y, z,
+        Multi3D cube = new Multi3D(x, y, z, Create.RegularPolygon(4, radius).Add(
             Create.RegularPolygon(4, radius)
-            .Add(
-     Create.RegularPolygon(4, radius).Sub(m => m.Translated(0, 0, -radius * 2)).Constituents.ToArray()
-            ).ToArray())
-        .FacesCube();
+            .Sub(m => m.Translated(0, 0, radius*Math.Sqrt(2)))  // radius is half the diagonal
+            .Constituents.ToArray()).ToArray()
+        ).FacesCube();
         return cube;
     }
 }

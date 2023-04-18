@@ -160,9 +160,9 @@ public class TestingSpell : Spell
         Origin["cube"] = Create.Cube(0, 0, 90, 10)
         ;
 
-        Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000), z => 200 + 90 * Math.Sin(z))
-        .MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 64).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
-        );
+        //Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000), z => 200 + 90 * Math.Sin(z))
+        //.MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 64).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
+        //);
     }
 
     public override unsafe void Loop()
