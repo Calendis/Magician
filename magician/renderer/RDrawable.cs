@@ -216,7 +216,6 @@ internal class RGeometry : RDrawable
             gl.BufferData(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, (nuint)(vs.Length * sizeof(float)), buf, Silk.NET.OpenGL.BufferUsageARB.StaticDraw);
         }
 
-        //gl.VertexAttribPointer(0, 3, Silk.NET.OpenGL.GLEnum.Float, false, 3*sizeof(float), (void*)0);
         // Specify how to read vertex data
         gl.VertexAttribPointer(0, posLength, Silk.NET.OpenGL.GLEnum.Float, false, (uint)(posLength+rgbLength)*sizeof(float), (void*)0);
         gl.VertexAttribPointer(1, rgbLength, Silk.NET.OpenGL.GLEnum.Float, true, (uint)(posLength+rgbLength)*sizeof(float), (void*)(posLength*sizeof(float)));

@@ -224,6 +224,11 @@ public static class Triangulator
     }
 
     // Initialize arrays and read segments from Multi
+
+    /* public static List<int[]> Triangulate(double[][])
+    {
+        //
+    } */
     public static List<int[]> Triangulate(Magician.Multi m)
     {
         //Magician.Multi m = new Magician.Multi();

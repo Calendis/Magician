@@ -1,4 +1,4 @@
-namespace Magician.Geo;
+/* namespace Magician.Geo;
 public class Matrix
 {
     public int width;
@@ -100,4 +100,4 @@ public class Matrix
         }
         return this;
     }
-}
+} */

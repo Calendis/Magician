@@ -5,7 +5,6 @@ using System.Collections;
 using Magician.Geo;
 using Magician.Renderer;
 using Silk.NET.Maths;
-using static SDL2.SDL;
 
 namespace Magician;
 
@@ -427,15 +426,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             _SetZ(this, (double)z);
         }
         return this;
-    }
-    public Multi Positioned(Matrix mx)
-    {
-        double pz = z.Evaluate();
-        if (mx.width == 3)
-        {
-            pz = mx.Get(0, 2);
-        }
-        return Positioned(mx.Get(0, 0), mx.Get(0, 1), pz);
     }
 
     /* Rotation methods */
@@ -988,6 +978,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
     public bool IsReadOnly => false;
 
+    // TODO: write a better comment
     public virtual void Render(double xOffset, double yOffset, double zOffset, bool scale3d = false)
     {
         if (stale)
@@ -1009,7 +1000,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         double a = col.A;
 
         // Get a projection of each constituent
-        Matrix[] projectedVerts = new Matrix[Count];
+        double[][] projectedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
             double xp, yp, zp;
@@ -1026,18 +1017,17 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 triVec.Z = -zp;
                 triVec.W = 1;
                 Vector4D<double> perspTriVec = Vector4D.Multiply<double>(triVec, perspMat);
-                projectedVerts[i] = new Matrix(new double[,]
+                projectedVerts[i] = new double[]
                 {
-                    {perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W}
+                    perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W
                 }
-                );
+                ;
                 
                 
             }
             else
             {
-                projectedVerts[i] = Matrix.Orthographic
-                    .Mult(new Matrix(new double[,] { { xp * 2, yp * 2, zp } }))
+                projectedVerts[i] = new double[] {xp * 2, yp * 2, zp };
                     ;
                 //.ToCartesian(xOffset, yOffset);
             }
@@ -1063,15 +1053,11 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 double subb = csts[i].Col.B;
                 double suba = csts[i].Col.A;
 
-                /* SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
-                SDL_RenderDrawLineF(SDLGlobals.renderer,
-                    (float)projectedVerts[i].X, (float)projectedVerts[i].Y,
-                    (float)projectedVerts[i + 1].X, (float)projectedVerts[i + 1].Y); */
-
                 RLine rl = new(
-                    projectedVerts[i].X, projectedVerts[i].Y, projectedVerts[i].Z,
-                    projectedVerts[i + 1].X, projectedVerts[i + 1].Y, projectedVerts[i + 1].Z,
+                    projectedVerts[i][0], projectedVerts[i][1], projectedVerts[i][2],
+                    projectedVerts[i + 1][1], projectedVerts[i + 1][1], projectedVerts[i + 1][2],
                     subr, subg, subb, suba);
+
                 drawables.Add(rl);
                 RDrawable.drawables.Add(rl);
 
@@ -1081,8 +1067,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         // If the Multi is a closed shape, connect the first and last constituent with a line
         if ((drawMode & DrawMode.CONNECTED) > 0 && csts.Count > 0)
         {
-            Matrix pLast = projectedVerts[csts.Count - 1];
-            Matrix pFirst = projectedVerts[0];
+            double[] pLast = projectedVerts[csts.Count - 1];
+            double[] pFirst = projectedVerts[0];
 
             double subr = csts[csts.Count - 1].Col.R;
             double subg = csts[csts.Count - 1].Col.G;
@@ -1091,9 +1077,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
             /* SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
             SDL_RenderDrawLineF(SDLGlobals.renderer,
-                (float)pLast.X, (float)pLast.Y,
-                (float)pFirst.X, (float)pFirst.Y); */
-            RLine rl = new(pLast.X, pLast.Y, pLast.Z, pFirst.X, pFirst.Y, pFirst.Z, subr, subg, subb, suba);
+                (float)pLast[0], (float)pLast[1],
+                (float)pFirst[0], (float)pFirst[1]); */
+            RLine rl = new(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subg, subb, suba);
             drawables.Add(rl);
             RDrawable.drawables.Add(rl);
         }
@@ -1111,7 +1097,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
             try
             {
+                /* TODO: MOVE TRIANGULATION TO POST-RENDERING */
                 List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
+                //List<int[]> vertices = Seidel.Triangulator.Triangulate(projectedVerts);
                 // If the render fails for some reason, try with reverse order
                 // This is a hack, but oh well
                 // TODO: resolve rendering bugs properly
@@ -1121,7 +1109,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 }
 
                 int numTriangles = (Count - 2);
-                SDL_Vertex[] vs = new SDL_Vertex[numTriangles * 3];
                 RTriangle[] rts = new RTriangle[numTriangles];
                 // TODO: use this dict to implement layer support
                 //Dictionary<double, List<RTriangle>> rts = new Dictionary<double, List<RTriangle>>();
@@ -1139,9 +1126,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                         break;
 
                     RTriangle rt = new(
-                        projectedVerts[tri0 - 1].X, projectedVerts[tri0 - 1].Y, projectedVerts[tri0 - 1].Z,
-                        projectedVerts[tri1 - 1].X, projectedVerts[tri1 - 1].Y, projectedVerts[tri1 - 1].Z,
-                        projectedVerts[tri2 - 1].X, projectedVerts[tri2 - 1].Y, projectedVerts[tri2 - 1].Z,
+                        projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
+                        projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
+                        projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
                         Col.R, Col.G, Col.B, Col.A
                     );
                     rts[i] = rt;
@@ -1156,9 +1143,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             }
             catch (System.Exception)
             {
-                //Scribe.Warn($"Failed to render {this}");
+                Scribe.Warn($"Failed to render {this}");
                 //Scribe.Warn(" You may have forgotten to set draw flags. Falling back to OUTERP...");
-                //DrawFlags(DrawMode.OUTERP);
+                //WithFlags(DrawMode.OUTERP);
                 //throw Magician.Scribe.Error("Render error");
             }
 

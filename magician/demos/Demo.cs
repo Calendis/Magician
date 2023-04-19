@@ -157,27 +157,23 @@ public class TestingSpell : Spell
     public override void PreLoop()
     {
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-        Origin["cube"] = Create.Cube(0, 0, 90, 10)
-        ;
+        Origin["cube"] = Create.Cube(0, 0, 90, 10);
 
-        //Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000), z => 200 + 90 * Math.Sin(z))
-        //.MultisAlong(0, 800, 100, Create.Cube(0, 0, 0, 64).RotatedX(0.1).RotatedY(-0.1).RotatedZ(-0.03))
-        //);
+        Origin["2"] = Create.Cube(0, 0, 200, 16);
+        Origin["tetra"] = Create.Tetrahedron(-100, 0, 200, 16);
     }
 
     public override unsafe void Loop()
     {
         Renderer.Control.Clear();
-        //Origin["sqs"][1].RotatedY(-0.025);
-        //Origin["sqs"][0].RotatedZ(0.013);
-        //Origin["sqs"][0].RotatedX(0.017);
-        //Origin["sqs"][0].RotatedY(0.04);
-        //Origin["sqs"][1].RotatedX(0.0117);
-        //Origin["sqs"][1].RotatedZ(0.0113);
+        Origin["2"].RotatedX(-0.0025);
+        Origin["2"].RotatedY(-0.003);
+        Origin["2"].RotatedZ(-0.004);
 
-        //
+        Origin["tetra"].RotatedX(-0.0025);
+        Origin["tetra"].RotatedY(-0.003);
+        Origin["tetra"].RotatedZ(-0.004);
         
-        //
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
