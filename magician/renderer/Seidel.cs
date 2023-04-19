@@ -224,11 +224,17 @@ public static class Triangulator
     }
 
     // Initialize arrays and read segments from Multi
-
-    /* public static List<int[]> Triangulate(double[][])
+    public static List<int[]> Triangulate(double[][] vss)
     {
-        //
-    } */
+        // Construct an appropriate Multi from the given vertices
+        Magician.Multi m = new Magician.Multi();
+        foreach (double[]vs in vss)
+        {
+            Magician.Multi mvs = new Magician.Multi(vs[0], vs[1], vs[2]);
+            m.Add(mvs);
+        }
+        return Triangulate(m);
+    }
     public static List<int[]> Triangulate(Magician.Multi m)
     {
         //Magician.Multi m = new Magician.Multi();

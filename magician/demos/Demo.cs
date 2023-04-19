@@ -159,20 +159,19 @@ public class TestingSpell : Spell
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
         Origin["cube"] = Create.Cube(0, 0, 90, 10);
 
-        Origin["2"] = Create.Cube(0, 0, 200, 16);
-        Origin["tetra"] = Create.Tetrahedron(-100, 0, 200, 16);
+        //Origin["2"] = Create.Cube(0, 0, 200, 16);
+        //Origin["tetra"] = Create.Tetrahedron(-100, 0, 200, 16);
     }
 
     public override unsafe void Loop()
     {
         Renderer.Control.Clear();
-        Origin["2"].RotatedX(-0.0025);
-        Origin["2"].RotatedY(-0.003);
-        Origin["2"].RotatedZ(-0.004);
-
-        Origin["tetra"].RotatedX(-0.0025);
-        Origin["tetra"].RotatedY(-0.003);
-        Origin["tetra"].RotatedZ(-0.004);
+        //Origin["2"].RotatedX(-0.0025);
+        //Origin["2"].RotatedY(-0.003);
+        //Origin["2"].RotatedZ(-0.004);
+        //Origin["tetra"].RotatedX(-0.0025);
+        //Origin["tetra"].RotatedY(-0.003);
+        //Origin["tetra"].RotatedZ(-0.004);
         
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])

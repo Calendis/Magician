@@ -1020,16 +1020,13 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 projectedVerts[i] = new double[]
                 {
                     perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W
-                }
-                ;
+                };
                 
                 
             }
             else
             {
                 projectedVerts[i] = new double[] {xp * 2, yp * 2, zp };
-                    ;
-                //.ToCartesian(xOffset, yOffset);
             }
         }
 
@@ -1087,8 +1084,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         // Draw each constituent recursively            
         foreach (Multi m in this)
         {
-            m.Render(xOffset, yOffset, zOffset);//), (m.Y.Evaluate(yOffset)));
-                                                //m.Draw(X.Evaluate(xOffset), Y.Evaluate(yOffset));
+            m.Render(xOffset, yOffset, zOffset);
         }
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
@@ -1098,20 +1094,26 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             try
             {
                 /* TODO: MOVE TRIANGULATION TO POST-RENDERING */
-                List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
-                //List<int[]> vertices = Seidel.Triangulator.Triangulate(projectedVerts);
+                //List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
+                List<int[]> vertices = Seidel.Triangulator.Triangulate(projectedVerts);
+                
                 // If the render fails for some reason, try with reverse order
                 // This is a hack, but oh well
-                // TODO: resolve rendering bugs properly
                 if (vertices[0][0] + vertices[0][1] + vertices[0][2] + vertices[1][0] + vertices[1][1] + vertices[1][2] == 0)
                 {
-                    vertices = Seidel.Triangulator.Triangulate(Copy().Reversed());
+                    double[][] reverseProjectedVerts = new double[Count][];
+                    for (int revI = 0; revI < Count; revI++)
+                    {
+                        reverseProjectedVerts[Count-revI-1] = projectedVerts[revI];
+                    }
+                    vertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
                 }
 
                 int numTriangles = (Count - 2);
                 RTriangle[] rts = new RTriangle[numTriangles];
                 // TODO: use this dict to implement layer support
                 //Dictionary<double, List<RTriangle>> rts = new Dictionary<double, List<RTriangle>>();
+                
                 RGeometry rg;
                 // Assemble the triangles from the SDLGlobals.renderer into vertices for SDL
                 for (int i = 0; i < numTriangles; i++)
