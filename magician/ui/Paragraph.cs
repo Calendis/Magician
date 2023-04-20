@@ -175,7 +175,7 @@ public class RichParagraph : Paragraph
                 {
                     // Add words
                     Text t = new Text(groupedFormats[row][column].ToString(), colStack.Peek(), sizStack.Peek());
-                    Texture txr = t.Render();
+                    _SDLTexture txr = t.Render();
 
                     // Determine position
                     double lineX = runningLength;

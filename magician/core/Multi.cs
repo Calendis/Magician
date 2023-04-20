@@ -216,8 +216,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
     }
 
-    protected Texture? texture;
-    public Texture Texture
+    protected _SDLTexture? texture;
+    public _SDLTexture Texture
     {
         get => texture ?? throw Scribe.Error($"Got null texture of {this}");
     }
@@ -554,7 +554,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         return new Multi(result.Get(0,0), result.Get(1,1), result.Get(2,2));
     } */
 
-    public static void _Texture(Multi m, Renderer.Texture t)
+    public static void _Texture(Multi m, Renderer._SDLTexture t)
     {
         if (m.texture != null)
         {
@@ -567,7 +567,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
         m.texture = t;
     }
-    public Multi Textured(Renderer.Texture t)
+    public Multi Textured(Renderer._SDLTexture t)
     {
         _Texture(this, t);
         return this;
@@ -1079,10 +1079,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 double suba = csts[csts.Count - 1].Col.A;
 
                 rLineArray[rLineArray.Length - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
-            }
-            if (rLineArray[rLineArray.Length - 1] is null)
-            {
-                Scribe.Warn("Null vertex");
             }
             rLines = new(rLineArray);
             drawables.Add(rLines);

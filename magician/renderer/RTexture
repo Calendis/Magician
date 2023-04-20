@@ -1,0 +1,6 @@
+namespace Magician.Renderer;
+
+public class RTexture
+{
+    //
+}

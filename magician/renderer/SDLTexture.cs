@@ -3,7 +3,7 @@ using static SDL2.SDL;
 // Wrapper around an SDL texture
 namespace Magician.Renderer;
 
-public class Texture : IDisposable
+public class _SDLTexture : IDisposable
 {
     IntPtr texture;
     public int Width { get; private set; }
@@ -12,7 +12,7 @@ public class Texture : IDisposable
     bool disposed = false;
 
     // Create a texture from an image file
-    public Texture(string filepath, int width, int height)
+    public _SDLTexture(string filepath, int width, int height)
     {
 
         Width = width;
@@ -29,7 +29,7 @@ public class Texture : IDisposable
     }
 
     // Create a texture from a given SDL texture
-    public Texture(IntPtr texture)
+    public _SDLTexture(IntPtr texture)
     {
         this.texture = texture;
 
@@ -92,7 +92,7 @@ public class Texture : IDisposable
         }
     }
 
-    ~Texture()
+    ~_SDLTexture()
     {
         Dispose(false);
     }

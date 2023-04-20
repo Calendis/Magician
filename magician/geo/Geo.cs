@@ -190,6 +190,7 @@ public static class Check
         }
 
         // For other shapes, grab the triangles from Siedel's algo and check each
+        // TODO: account for perspective
         List<int[]> triangles = Seidel.Triangulator.Triangulate(polygon);
         foreach (int[] vertexIdx in triangles)
         {
@@ -254,7 +255,7 @@ public static class Find
     {
         return Distance(m0.X, m1.X, m0.Y, m1.Y);
     }
-    public static double Distance(Multi m)
+    public static double Length(Multi m)
     {
         if (m.Count != 2)
         {
@@ -262,8 +263,16 @@ public static class Find
         }
         return Distance(m[0], m[1]);
     }
+}
 
-    //public static double
+public static class Sample
+{
+    public static Vec UnitCircle(double phase, double radius=1)
+    {
+        double x = radius*Math.Cos(phase);
+        double y = radius*Math.Sin(phase);
+        return new Vec(x, y);
+    }
 }
 
 

@@ -87,7 +87,7 @@ public interface IMap
             }
 
             Text tx = new Text(msg.Substring(j, 1), c, (int)size);
-            Texture txr = tx.Render();
+            _SDLTexture txr = tx.Render();
 
             Multi tmp = new Multi().Textured(txr);
             if (truth.Invoke(i) >= threshold)
@@ -252,7 +252,7 @@ public class IOMap : IMap
                 continue;
             }
             Text tx = new Text(msg.Substring(j, 1), c, (int)size);
-            Texture txr = tx.Render();
+            _SDLTexture txr = tx.Render();
 
             Multi tmp = new Multi().Textured(txr).Tagged(msg.Substring(j, 1));
             //tmp.parent=m;

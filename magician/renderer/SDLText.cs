@@ -29,7 +29,7 @@ public class Text : IDisposable
         //font = TTF_OpenFont(fontPath, size);
     }
 
-    public Texture Render()
+    public _SDLTexture Render()
     {
         if (font == IntPtr.Zero)
         {
@@ -53,7 +53,7 @@ public class Text : IDisposable
         //IntPtr textTexture = SDL_CreateTextureFromSurface(SDLGlobals.renderer, textSurface);
         //SDL_FreeSurface(textSurface);
         //return new Texture(textTexture);
-        return new Texture("todo", 80, 80);
+        return new _SDLTexture("todo", 80, 80);
     }
 
     Multi AsMulti()

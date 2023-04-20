@@ -24,6 +24,7 @@ namespace Magician.Geo
                 v[i] = new Quantity(vals[i]);
             }
         }
+        public Vec(params double[] vals) : this(vals.Length, vals) {}
 
         public Quantity x
         {
