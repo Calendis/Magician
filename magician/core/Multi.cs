@@ -1052,8 +1052,11 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         // Draw lines
         if ((drawMode & DrawMode.PLOT) > 0)
         {
-            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0;
+            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && Count >= 3;
             int numLines = Count - (connected ? 0 : 1);
+            if (numLines < 1)
+                return;
+            
             RLine[] rLineArray = new RLine[numLines];
             RLines rLines;
 
@@ -1075,7 +1078,11 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 double subb = csts[csts.Count - 1].Col.B;
                 double suba = csts[csts.Count - 1].Col.A;
 
-                rLineArray[Count - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
+                rLineArray[rLineArray.Length - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
+            }
+            if (rLineArray[rLineArray.Length - 1] is null)
+            {
+                Scribe.Warn("Null vertex");
             }
             rLines = new(rLineArray);
             drawables.Add(rLines);

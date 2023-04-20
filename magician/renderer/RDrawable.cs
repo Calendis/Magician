@@ -159,7 +159,6 @@ internal class RPoints : RDrawable
         for (int i = 0; i < numPts; i++)
         {
             RPoint currentPoint = pts[i];
-            Scribe.Info(currentPoint);
             // TODO: remove the magic 800s
             vertices[dataLength * i + 0] = currentPoint.pos[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 1] = currentPoint.pos[1] / Data.Globals.winHeight;
