@@ -21,6 +21,11 @@ public static class Scribe
     {
         Console.Write($"WARNING: {s}\n");
     }
+    public static void WarnIf(bool condition, string s)
+    {
+        if (condition)
+            Warn(s);
+    }
     public static void List<T>(List<T> l)
     {
         if (l == null)

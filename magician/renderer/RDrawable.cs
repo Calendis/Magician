@@ -8,7 +8,18 @@ internal abstract class RDrawable
     public byte[] rgba = new byte[4];
     public abstract void Draw();
     public static List<RDrawable> drawables = new List<RDrawable>();
-    protected static Silk.NET.OpenGL.GL gl = Renderer.SDLGlobals.gl;
+    protected static Silk.NET.OpenGL.GL gl;
+
+    protected float[]? vertices;
+    protected static int posLength = 3;
+    protected static int colLength = 4;
+
+    static RDrawable()
+    {
+        if (Renderer.RGlobals.gl is null)
+            throw Scribe.Error("Must create a gl context before creating an RDrawable");
+        gl = Renderer.RGlobals.gl;
+    }
 
     public static void DrawAll()
     {
@@ -79,6 +90,46 @@ internal abstract class RDrawable
         gl.DeleteShader(vertexShader);
         gl.DeleteShader(fragmentShader);
     }
+
+    // Common code called before gl.DrawArrays
+    protected internal static unsafe uint PrepareDraw(float[] vs, int[] dataLens)
+    {
+        Scribe.WarnIf(dataLens.Length < 2, "incomplete data in PrepareDraw");
+        Scribe.WarnIf(dataLens.Length > 2, "unsupported data in PrepareDraw");  // TODO: support more shader data!
+        uint stride = (uint)dataLens.Sum();
+        int posLength = dataLens[0];
+        int colLength = dataLens[1];
+        
+        // Create vertex array object
+        uint vao = gl.GenVertexArray();
+        gl.BindVertexArray(vao);
+
+        uint vbo = gl.GenBuffer();
+        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, vbo);
+
+        // Upload to the VAO
+        fixed (float* buf = vs)
+        {
+            gl.BufferData(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, (nuint)(vs.Length * sizeof(float)), buf, Silk.NET.OpenGL.BufferUsageARB.StaticDraw);
+        }
+
+        // Specify how to read vertex data
+        gl.VertexAttribPointer(0, posLength, Silk.NET.OpenGL.GLEnum.Float, false, (uint)(posLength +colLength) * sizeof(float), (void*)0);
+        gl.VertexAttribPointer(1, colLength, Silk.NET.OpenGL.GLEnum.Float, true, (uint)(posLength + colLength) * sizeof(float), (void*)(posLength * sizeof(float)));
+        gl.EnableVertexAttribArray(1);
+        gl.EnableVertexAttribArray(0);
+        //gl.BindFragDataLocation()
+        return vao;
+    }
+
+    protected internal static void PostDraw(uint vao)
+    {
+        // End stuff
+        gl.DeleteVertexArray(vao);
+        gl.BindVertexArray(0);
+        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, 0);
+        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ElementArrayBuffer, 0);
+    }
 }
 
 
@@ -92,14 +143,40 @@ internal class RPoint : RDrawable
     }
     public override void Draw()
     {
-        Control.SaveTarget();
-        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+        Scribe.Warn("single-point drawing not supported");
+    }
+}
 
-        //SDL_SetRenderDrawColor(SDLGlobals.renderer, rgba[0], rgba[1], rgba[2], rgba[3]);
-        // TODO: This corrupts the state
-        //SDL_RenderDrawPointF(SDLGlobals.renderer, pos[0], pos[1]);
+// Handles drawing of points
+internal class RPoints : RDrawable
+{
+    protected static int dataLength = posLength + colLength;
+    public RPoints(RPoint[] pts)
+    {
+        int numPts = pts.Length;
+        vertices = new float[numPts * dataLength];
 
-        Control.RecallTarget();
+        for (int i = 0; i < numPts; i++)
+        {
+            RPoint currentPoint = pts[i];
+            Scribe.Info(currentPoint);
+            // TODO: remove the magic 800s
+            vertices[dataLength * i + 0] = currentPoint.pos[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 1] = currentPoint.pos[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 2] = currentPoint.pos[2] / 800;
+            // Color
+            vertices[dataLength * i + 3] = pts[i].rgba[0] / 255f;
+            vertices[dataLength * i + 4] = pts[i].rgba[1] / 255f;
+            vertices[dataLength * i + 5] = pts[i].rgba[2] / 255f;
+            vertices[dataLength * i + 6] = pts[i].rgba[3] / 255f;
+        }
+    }
+
+    public override void Draw()
+    {
+        uint vao = PrepareDraw(vertices!, new int[]{posLength, colLength});
+        gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Points, 0, (uint)vertices!.Length);
+        PostDraw(vao);
     }
 }
 
@@ -107,28 +184,59 @@ internal class RLine : RDrawable
 {
     public float[] p0 = new float[3];
     public float[] p1 = new float[3];
-    public RLine(double x0, double y0, double z0, double x1, double y1, double z1, double r, double g, double b, double a)
+    public RLine(
+    double x0, double y0, double z0,
+    double x1, double y1, double z1,
+    double r, double g, double b, double a)
     {
         p0[0] = (float)x0; p0[1] = (float)y0; p0[2] = (float)z0;
         p1[0] = (float)x1; p1[1] = (float)y1; p1[2] = (float)z1;
         rgba[0] = (byte)r; rgba[1] = (byte)g; rgba[2] = (byte)b; rgba[3] = (byte)a;
     }
-
     public override void Draw()
     {
-        Control.SaveTarget();
-        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+        Scribe.Warn("single-line drawing not supported");
+    }
+}
 
-        /* SDL_SetRenderDrawColor(SDLGlobals.renderer, rgba[0], rgba[1], rgba[2], rgba[3]);
-        SDL_RenderDrawLineF(SDLGlobals.renderer,
-            p0[0], p0[1],
-            p1[0], p1[1]); */
+internal class RLines : RDrawable
+{
+    protected static int dataLength = 2 * (posLength + colLength);
+    public RLines(RLine[] lines)
+    {
+        int numLines = lines.Length;
+        vertices = new float[numLines * dataLength];
+        for (int i = 0; i < numLines; i++)
+        {
+            RLine currentLine = lines[i];
 
-        //SDLGlobals.gl.
+            // TODO: remove the magic 800s
+            vertices[dataLength * i + 0] = currentLine.p0[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 1] = currentLine.p0[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 2] = currentLine.p0[2] / 800;
+            vertices[dataLength * i + 7] = currentLine.p1[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 8] = currentLine.p1[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 9] = currentLine.p1[2] / 800;
 
-        Control.RecallTarget();
+            // Color
+            vertices[dataLength * i +  3] = lines[i].rgba[0] / 255f;
+            vertices[dataLength * i +  4] = lines[i].rgba[1] / 255f;
+            vertices[dataLength * i +  5] = lines[i].rgba[2] / 255f;
+            vertices[dataLength * i +  6] = lines[i].rgba[3] / 255f;
+            vertices[dataLength * i + 10] = lines[i].rgba[0] / 255f;
+            vertices[dataLength * i + 11] = lines[i].rgba[1] / 255f;
+            vertices[dataLength * i + 12] = lines[i].rgba[2] / 255f;
+            vertices[dataLength * i + 13] = lines[i].rgba[3] / 255f;
+
+        }
     }
 
+    public override unsafe void Draw()
+    {
+        uint vao = PrepareDraw(vertices!, new int[]{posLength, colLength});
+        gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Lines, 0, (uint)vertices!.Length);
+        PostDraw(vao);
+    }
 }
 
 internal class RTriangle : RDrawable
@@ -146,95 +254,58 @@ internal class RTriangle : RDrawable
 
     public override void Draw()
     {
-        Control.SaveTarget();
-        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
-
-        Control.RecallTarget();
-        throw Scribe.Error("For now, drawing RTriangles is disabled");
+        throw Scribe.Error("For now, drawing RTriangle is disabled");
     }
 }
 
-internal class RGeometry : RDrawable
+// Handles drawing of filled polygons
+internal class RTriangles : RDrawable
 {
-    float[] vs;
-
-    static int posLength = 3;
-    static int rgbLength = 4;
-    static int dataLength = 3*(posLength+rgbLength);
-    public RGeometry(params RTriangle[] rts)
+    protected static int dataLength = 3 * (posLength + colLength);
+    public RTriangles(params RTriangle[] tris)
     {
-        int numTriangles = rts.Length;
-        vs = new float[numTriangles * dataLength];  // x y z r g b a x y z r g b a x y z r g b a ...
+        int numTriangles = tris.Length;
+        vertices = new float[numTriangles * dataLength];
         for (int i = 0; i < numTriangles; i++)
         {
-            RTriangle currentTriangle = rts[i];
+            RTriangle currentTriangle = tris[i];
 
-            vs[dataLength * i + 0] = currentTriangle.p0[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 1] = currentTriangle.p0[1] / Data.Globals.winHeight;
-            vs[dataLength * i + 2] = currentTriangle.p0[2] / 800;
+            // TODO: remove the magic 800s
+            vertices[dataLength * i + 0] = currentTriangle.p0[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 1] = currentTriangle.p0[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 2] = currentTriangle.p0[2] / 800;
 
-            vs[dataLength * i + 7] = currentTriangle.p1[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 8] = currentTriangle.p1[1] / Data.Globals.winHeight;
-            vs[dataLength * i + 9] = currentTriangle.p1[2] / 800;
+            vertices[dataLength * i + 7] = currentTriangle.p1[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 8] = currentTriangle.p1[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 9] = currentTriangle.p1[2] / 800;
 
-            vs[dataLength * i + 14] = currentTriangle.p2[0] / Data.Globals.winWidth;
-            vs[dataLength * i + 15] = currentTriangle.p2[1] / Data.Globals.winHeight;
-            vs[dataLength * i + 16] = currentTriangle.p2[2] / 800;
-            
+            vertices[dataLength * i + 14] = currentTriangle.p2[0] / Data.Globals.winWidth;
+            vertices[dataLength * i + 15] = currentTriangle.p2[1] / Data.Globals.winHeight;
+            vertices[dataLength * i + 16] = currentTriangle.p2[2] / 800;
+
             // Color
-            vs[dataLength * i + 3] = rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 4] = rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 5] = rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 6] = rts[i].rgba[3] / 255f;
+            vertices[dataLength * i + 3] = tris[i].rgba[0] / 255f;
+            vertices[dataLength * i + 4] = tris[i].rgba[1] / 255f;
+            vertices[dataLength * i + 5] = tris[i].rgba[2] / 255f;
+            vertices[dataLength * i + 6] = tris[i].rgba[3] / 255f;
 
-            vs[dataLength * i + 10] = rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 11] = rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 12] = rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 13] = rts[i].rgba[3] / 255f;
+            vertices[dataLength * i + 10] = tris[i].rgba[0] / 255f;
+            vertices[dataLength * i + 11] = tris[i].rgba[1] / 255f;
+            vertices[dataLength * i + 12] = tris[i].rgba[2] / 255f;
+            vertices[dataLength * i + 13] = tris[i].rgba[3] / 255f;
 
-            vs[dataLength * i + 17] = rts[i].rgba[0] / 255f;
-            vs[dataLength * i + 18] = rts[i].rgba[1] / 255f;
-            vs[dataLength * i + 19] = rts[i].rgba[2] / 255f;
-            vs[dataLength * i + 20] = rts[i].rgba[3] / 255f;
+            vertices[dataLength * i + 17] = tris[i].rgba[0] / 255f;
+            vertices[dataLength * i + 18] = tris[i].rgba[1] / 255f;
+            vertices[dataLength * i + 19] = tris[i].rgba[2] / 255f;
+            vertices[dataLength * i + 20] = tris[i].rgba[3] / 255f;
         }
     }
 
     public override unsafe void Draw()
     {
-        Control.SaveTarget();
-
-        // Create vertex array object
-        uint vao = gl.GenVertexArray();
-        gl.BindVertexArray(vao);
-
-        uint vbo = gl.GenBuffer();
-        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, vbo);
-
-        // Upload to the VAO
-        fixed (float* buf = vs)
-        {
-            gl.BufferData(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, (nuint)(vs.Length * sizeof(float)), buf, Silk.NET.OpenGL.BufferUsageARB.StaticDraw);
-        }
-
-        // Specify how to read vertex data
-        gl.VertexAttribPointer(0, posLength, Silk.NET.OpenGL.GLEnum.Float, false, (uint)(posLength+rgbLength)*sizeof(float), (void*)0);
-        gl.VertexAttribPointer(1, rgbLength, Silk.NET.OpenGL.GLEnum.Float, true, (uint)(posLength+rgbLength)*sizeof(float), (void*)(posLength*sizeof(float)));
-        gl.EnableVertexAttribArray(1);
-        gl.EnableVertexAttribArray(0);
-        
-        
-        //gl.BindFragDataLocation()
-        gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vs.Length);
-
-        // End stuff
-        gl.DeleteVertexArray(vao);
-        gl.BindVertexArray(0);
-        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, 0);
-        gl.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ElementArrayBuffer, 0);
-
-        //SDLGlobals.gl.ClearColor(1, 0, 0, 0.5f);
-
-
-        Control.RecallTarget();
+        // Vertices isn't null here because it was initialized in the constructor
+        uint vao = PrepareDraw(vertices!, new int[]{posLength, colLength});
+        gl.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vertices!.Length);
+        PostDraw(vao);
     }
 }

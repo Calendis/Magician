@@ -17,7 +17,9 @@ public class Multi3D : Multi
 
     public override void Render(double xOffset, double yOffset, double zOffset, bool scale3d = true)
     {
-        //base.Draw(xOffset, yOffset);
+        if (faces is null)
+            throw Scribe.Error($"Must define faces of Multi3D {this}");
+            
         int cc = 0;
         foreach (List<int> face in faces)
         {

@@ -104,7 +104,7 @@ public static class Create
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.INNER);
+        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.FILLED);
 
     }
     public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -131,7 +131,7 @@ public static class Create
             ps.Add(Point(outerX, outerY, col));
         }
 
-        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.INNER);
+        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.FILLED);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
     public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
@@ -143,56 +143,8 @@ public static class Create
         return Star(0, 0, sides, innerRadius, outerRadius);
     }
 
-    // This approach to 3d objects is impractical
-    // For more info, see Multi3D
-    public static Multi ImpractiCube(double x, double y, double z, double radius)
-    {
-        Multi cube = new Multi(x, y, z);
-
-        cube.Add(new Multi(
-            Point(radius / 2, radius / 2, 0),
-            Point(-radius / 2, radius / 2, 0),
-            Point(-radius / 2, -radius / 2, 0),
-            Point(radius / 2, -radius / 2, 0)
-        ).Positioned(0, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xff0000d0)));
-        cube.Add(new Multi(
-            Point(radius / 2, radius / 2, 0),
-            Point(-radius / 2, radius / 2, 0),
-            Point(-radius / 2, -radius / 2, 0),
-            Point(radius / 2, -radius / 2, 0)
-        ).Positioned(0, 0, -radius / 2).WithFlags(DrawMode.FULL).Colored(new RGBA(0x00ffffd0)));
-
-        cube.Add(new Multi(
-            Point(0, radius / 2, radius / 2),
-            Point(0, radius / 2, -radius / 2),
-            Point(0, -radius / 2, -radius / 2),
-            Point(0, -radius / 2, radius / 2)
-        ).Positioned(radius / 2, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xffff00d0)));
-        cube.Add(new Multi(
-            Point(0, radius / 2, radius / 2),
-            Point(0, radius / 2, -radius / 2),
-            Point(0, -radius / 2, -radius / 2),
-            Point(0, -radius / 2, radius / 2)
-        ).Positioned(-radius / 2, 0, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0x0000ffd0)));
-
-        cube.Add(new Multi(
-            Point(radius / 2, 0, radius / 2),
-            Point(-radius / 2, 0, radius / 2),
-            Point(-radius / 2, 0, -radius / 2),
-            Point(radius / 2, 0, -radius / 2)
-        ).Positioned(0, radius / 2, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0x00ff00d0)));
-        cube.Add(new Multi(
-            Point(radius / 2, 0, radius / 2),
-            Point(-radius / 2, 0, radius / 2),
-            Point(-radius / 2, 0, -radius / 2),
-            Point(radius / 2, 0, -radius / 2)
-        ).Positioned(0, -radius / 2, 0).WithFlags(DrawMode.FULL).Colored(new RGBA(0xff00ffd0)));
-
-        return cube.WithFlags(DrawMode.INVISIBLE);
-    }
-
     /* Create 3D shapes! */
-    public static Multi3D Tetrahedron(double x, double y, double z, double radius)
+    public static Multi3D TriPyramid(double x, double y, double z, double radius)
     {
         Multi3D tetra = new Multi3D(x, y, z,
             Create.RegularPolygon(3, radius)
@@ -205,18 +157,20 @@ public static class Create
 
     public static Multi3D Cube(double x, double y, double z, double radius)
     {
-        Multi3D cube = new Multi3D(x, y, z, Create.RegularPolygon(4, radius).Add(
+        Multi3D cube = new Multi3D(x, y, z,
+        Create.RegularPolygon(4, radius).Add(
             Create.RegularPolygon(4, radius)
-            .Sub(m => m.Translated(0, 0, radius*Math.Sqrt(2)))  // radius is half the diagonal
-            .Constituents.ToArray()).ToArray()
+                .Sub(m => m.Translated(0, 0, radius*Math.Sqrt(2)))  // radius is half the diagonal
+                .Constituents.ToArray())  // array of point Multis
+            .ToArray()  // array of all 8 points
         ).FacesCube();
+        
         return cube;
     }
 }
 
 public static class Check
 {
-    // TODO: implement this by making the triangulated triangles global and linking each Multi to its set of vertices
     public static bool PointInPolygon(double x, double y, Multi polygon)
     {
         // Special case for rectangles

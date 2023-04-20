@@ -1,8 +1,7 @@
 namespace Magician.Library
 {
-    public static class Spellbook
+    public static class Spellcaster
     {
-        // I never knew 'static public' was allowed
         static public List<Spell> Spells { get; set; }
         static int toSwitchTo = -1;
         public static Spell CurrentSpell
@@ -17,7 +16,7 @@ namespace Magician.Library
             }
         }
         static public int idx = 0;
-        static Spellbook()
+        static Spellcaster()
         {
             Spells = new List<Spell>();
         }
@@ -57,7 +56,7 @@ namespace Magician.Library
                 // Clear events, TODO: do this more
                 Interactive.Events.Click = false;
                 // Clear renderer to prevent artifacts during switch
-                Renderer.Control.Clear();
+                Renderer.RControl.Clear();
                 DoSwitch();
                 toSwitchTo = -1;
             }

@@ -27,21 +27,21 @@ class MagicianSDL
         Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
         // Create a Silk.Net context
-        Renderer.SDLGlobals.sdlContext = new(win, null,
+        Renderer.RGlobals.sdlContext = new(win, null,
             (SDL_GLattr.SDL_GL_CONTEXT_MAJOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_MINOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLprofile.SDL_GL_CONTEXT_PROFILE_CORE)
         );
-        Renderer.SDLGlobals.sdlContext.MakeCurrent();
-        Renderer.SDLGlobals.gl = new GL(Renderer.SDLGlobals.sdlContext);
-        Renderer.SDLGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
+        Renderer.RGlobals.sdlContext.MakeCurrent();
+        Renderer.RGlobals.gl = new GL(Renderer.RGlobals.sdlContext);
+        Renderer.RGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
 
         // Generate shaders
         // TODO: move this
         RDrawable.GenShaders();
 
         // Load a spell
-        Spellbook.Load(new Demos.DefaultSpell());
+        Spellcaster.Load(new Demos.DefaultSpell());
 
         // Run
         magicianSDL.MainLoop();
@@ -60,7 +60,7 @@ class MagicianSDL
 
         while (!done)
         {
-            Spellbook.Loop(frames * timeResolution);
+            Spellcaster.Loop(frames * timeResolution);
 
             // Event handling
             while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
@@ -103,15 +103,14 @@ class MagicianSDL
     // Renders each frame to a texture and displays the texture
     void Render()
     {
-        if (Renderer.Control.doRender)
+        if (Renderer.RControl.doRender)
         {
             // Options
             //SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             //SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
 
-            // TODO: this may not work?
-            //SDLGlobals.gl.ClearDepth(0);
-            SDLGlobals.gl.Clear((uint)(Silk.NET.OpenGL.GLEnum.ColorBufferBit | Silk.NET.OpenGL.GLEnum.DepthBufferBit));
+            // gl won't be null here, and if it is, it's not my fault
+            RGlobals.gl!.Clear((uint)(Silk.NET.OpenGL.GLEnum.ColorBufferBit | Silk.NET.OpenGL.GLEnum.DepthBufferBit));
 
             // Draw objects
             Geo.Ref.Origin.Render(0, 0, 0);
@@ -119,8 +118,9 @@ class MagicianSDL
             Renderer.RDrawable.drawables.Clear();
 
             // SAVE FRAME TO IMAGE
-            if (Renderer.Control.saveFrame && frames != stopFrame)
+            if (Renderer.RControl.saveFrame && frames != stopFrame)
             {
+                throw Scribe.Issue("Save frame not implemented.");
                 /* IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
                 IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
 
@@ -148,26 +148,10 @@ class MagicianSDL
                 SDL_DestroyTexture(texture); */
             }
 
-            // Display
-            SDL_Rect srcRect;
-            srcRect.x = 0;
-            srcRect.y = 0;
-            srcRect.w = Data.Globals.winWidth;
-            srcRect.h = Data.Globals.winHeight;
-            SDL_Rect dstRect;
-            dstRect.x = 0;
-            dstRect.y = 0;
-            dstRect.w = Data.Globals.winWidth;
-            dstRect.h = Data.Globals.winHeight;
-
-            if (Renderer.Control.display)
+            if (Renderer.RControl.display)
             {
-                //SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-                //SDL_RenderCopy(SDLGlobals.renderer, SDLGlobals.renderedTexture, ref srcRect, ref dstRect);
-                //SDL_RenderPresent(SDLGlobals.renderer);
                 SDL_GL_SwapWindow(win);
             }
-            //SDL_Delay(1/6);
         }
         frames++;
     }
@@ -193,18 +177,5 @@ class MagicianSDL
         {
             Console.WriteLine($"Error creating the window: {SDL_GetError()}");
         }
-    }
-    void CreateRenderer()
-    {
-        //// With VSync
-        //SDLGlobals.renderer = SDL_CreateRenderer(win, -1,
-        //SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC | SDL_RendererFlags.SDL_RENDERER_TARGETTEXTURE);
-
-        //// No VSync
-        ////SDLGlobals.renderer = SDL_CreateRenderer(win, -1, SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
-        //if (SDLGlobals.renderer == IntPtr.Zero)
-        //{
-        //    Console.WriteLine($"Error creating the renderer: {SDL_GetError()}");
-        //}
     }
 }

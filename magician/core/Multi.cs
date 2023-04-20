@@ -12,9 +12,9 @@ public enum DrawMode : short
 {
     INVISIBLE = 0b0000,
     PLOT = 0b1000,
-    CONNECTED = 0b0100,
-    INNER = 0b0010,
-    POINT = 0b0001,
+    CONNECTINGLINE = 0b0100,
+    FILLED = 0b0010,
+    POINTS = 0b0001,
     OUTER = 0b1100,
     FULL = 0b1110,
     OUTERP = 0b1101
@@ -947,7 +947,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
                 Scribe.Info($"{this.Parent} is distributing indices...");
                 _IndexConstituents(Parent);
-                return (int)index!;  // just learned about this bad boy
+                return (int)index!;
             }
             return (int)index;
         }
@@ -992,8 +992,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             return;
         }
 
-        Control.SaveTarget();
-        //SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
         double r = col.R;
         double g = col.G;
         double b = col.B;
@@ -1010,10 +1008,10 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
             if (scale3d)
             {
-                Matrix4X4<double> perspMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV/360d*2*Math.PI, Data.Globals.winWidth/Data.Globals.winHeight, 0.1, 800.1);
+                Matrix4X4<double> perspMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 0.1, 800.1);
                 Vector4D<double> triVec = Vector4D<double>.Zero;
-                triVec.X = xp/zp*Data.Globals.winWidth;
-                triVec.Y = yp/zp*Data.Globals.winWidth;
+                triVec.X = xp / zp * Data.Globals.winWidth;
+                triVec.Y = yp / zp * Data.Globals.winWidth;
                 triVec.Z = -zp;
                 triVec.W = 1;
                 Vector4D<double> perspTriVec = Vector4D.Multiply<double>(triVec, perspMat);
@@ -1021,64 +1019,11 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 {
                     perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W
                 };
-                
-                
             }
             else
             {
-                projectedVerts[i] = new double[] {xp * 2, yp * 2, zp };
+                projectedVerts[i] = new double[] { xp * 2, yp * 2, zp };
             }
-        }
-
-        // If the flag is set, draw the relative origin
-        if ((drawMode & DrawMode.POINT) > 0)
-        {
-            //SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)r, (byte)g, (byte)b, (byte)a);
-            //SDL_RenderDrawPointF(SDLGlobals.renderer, (float)XCartesian(xOffset), (float)YCartesian(yOffset));
-            RPoint rp = new RPoint(X, Y, Z, Col.R, Col.G, Col.B, Col.A);
-            drawables.Add(rp);
-            RDrawable.drawables.Add(rp);
-        }
-
-        // If lined, draw lines between the constituents as if they were vertices in a polygon
-        for (int i = 0; i < csts.Count - 1; i++)
-        {
-            if ((drawMode & DrawMode.PLOT) > 0)
-            {
-                double subr = csts[i].Col.R;
-                double subg = csts[i].Col.G;
-                double subb = csts[i].Col.B;
-                double suba = csts[i].Col.A;
-
-                RLine rl = new(
-                    projectedVerts[i][0], projectedVerts[i][1], projectedVerts[i][2],
-                    projectedVerts[i + 1][1], projectedVerts[i + 1][1], projectedVerts[i + 1][2],
-                    subr, subg, subb, suba);
-
-                drawables.Add(rl);
-                RDrawable.drawables.Add(rl);
-
-            }
-        }
-
-        // If the Multi is a closed shape, connect the first and last constituent with a line
-        if ((drawMode & DrawMode.CONNECTED) > 0 && csts.Count > 0)
-        {
-            double[] pLast = projectedVerts[csts.Count - 1];
-            double[] pFirst = projectedVerts[0];
-
-            double subr = csts[csts.Count - 1].Col.R;
-            double subg = csts[csts.Count - 1].Col.G;
-            double subb = csts[csts.Count - 1].Col.B;
-            double suba = csts[csts.Count - 1].Col.A;
-
-            /* SDL_SetRenderDrawColor(SDLGlobals.renderer, (byte)subr, (byte)subg, (byte)subb, (byte)suba);
-            SDL_RenderDrawLineF(SDLGlobals.renderer,
-                (float)pLast[0], (float)pLast[1],
-                (float)pFirst[0], (float)pFirst[1]); */
-            RLine rl = new(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subg, subb, suba);
-            drawables.Add(rl);
-            RDrawable.drawables.Add(rl);
         }
 
         // Draw each constituent recursively            
@@ -1087,38 +1032,82 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             m.Render(xOffset, yOffset, zOffset);
         }
 
+        // Draw points
+        if ((drawMode & DrawMode.POINTS) > 0)
+        {
+            int numPoints = Count;
+            RPoint[] rPointArray = new RPoint[numPoints];
+            RPoints rPoints;
+
+            for (int i = 0; i < numPoints; i++)
+            {
+                rPointArray[i] = new RPoint(projectedVerts[i][0], projectedVerts[i][1], projectedVerts[i][2],
+                    csts[i].Col.R, csts[i].Col.G, csts[i].Col.B, 255);
+            }
+            rPoints = new(rPointArray);
+            drawables.Add(rPoints);
+            RDrawable.drawables.Add(rPoints);
+        }
+
+        // Draw lines
+        if ((drawMode & DrawMode.PLOT) > 0)
+        {
+            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0;
+            int numLines = Count - (connected ? 0 : 1);
+            RLine[] rLineArray = new RLine[numLines];
+            RLines rLines;
+
+            for (int i = 0; i < Count - 1; i++)
+            {
+                double x0 = projectedVerts[i][0]; double x1 = projectedVerts[i + 1][0];
+                double y0 = projectedVerts[i][1]; double y1 = projectedVerts[i + 1][1];
+                double z0 = projectedVerts[i][2]; double z1 = projectedVerts[i + 1][2];
+                rLineArray[i] = new RLine(x0, y0, z0, x1, y1, z1, csts[i].Col.R, csts[i].Col.G, csts[i].Col.B, csts[i].Col.A);
+            }
+            // If the Multi is a closed shape, connect the first and last constituent with a line
+            if (connected && csts.Count >= 3)
+            {
+                double[] pLast = projectedVerts[csts.Count - 1];
+                double[] pFirst = projectedVerts[0];
+
+                double subr = csts[csts.Count - 1].Col.R;
+                double subg = csts[csts.Count - 1].Col.G;
+                double subb = csts[csts.Count - 1].Col.B;
+                double suba = csts[csts.Count - 1].Col.A;
+
+                rLineArray[Count - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
+            }
+            rLines = new(rLineArray);
+            drawables.Add(rLines);
+            RDrawable.drawables.Add(rLines);
+        }
+
         // If the flag is set, and there are at least 3 constituents, fill the shape
-        if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
+        if (((drawMode & DrawMode.FILLED) > 0) && Count >= 3)
         {
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
             try
             {
-                /* TODO: MOVE TRIANGULATION TO POST-RENDERING */
-                //List<int[]> vertices = Seidel.Triangulator.Triangulate(this);
-                List<int[]> vertices = Seidel.Triangulator.Triangulate(projectedVerts);
-                
+                List<int[]> projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
                 // If the render fails for some reason, try with reverse order
-                // This is a hack, but oh well
-                if (vertices[0][0] + vertices[0][1] + vertices[0][2] + vertices[1][0] + vertices[1][1] + vertices[1][2] == 0)
+                // This is a hack, but oh well. Maybe I should specify ccw or cw?
+                if (projectedTriangleVertices[0][0] + projectedTriangleVertices[0][1] + projectedTriangleVertices[0][2] + projectedTriangleVertices[1][0] + projectedTriangleVertices[1][1] + projectedTriangleVertices[1][2] == 0)
                 {
                     double[][] reverseProjectedVerts = new double[Count][];
                     for (int revI = 0; revI < Count; revI++)
                     {
-                        reverseProjectedVerts[Count-revI-1] = projectedVerts[revI];
+                        reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
                     }
-                    vertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
+                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
                 }
 
-                int numTriangles = (Count - 2);
-                RTriangle[] rts = new RTriangle[numTriangles];
-                // TODO: use this dict to implement layer support
-                //Dictionary<double, List<RTriangle>> rts = new Dictionary<double, List<RTriangle>>();
-                
-                RGeometry rg;
-                // Assemble the triangles from the SDLGlobals.renderer into vertices for SDL
+                int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
+                RTriangle[] rTriArray = new RTriangle[numTriangles];
+                RTriangles rTris;
+
                 for (int i = 0; i < numTriangles; i++)
                 {
-                    int[] vertexIndices = vertices[i];
+                    int[] vertexIndices = projectedTriangleVertices[i];
                     int tri0 = vertexIndices[0];
                     int tri1 = vertexIndices[1];
                     int tri2 = vertexIndices[2];
@@ -1127,28 +1116,28 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                     if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
                         break;
 
-                    RTriangle rt = new(
+                    RTriangle rTri = new(
                         projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
                         projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
                         projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
                         Col.R, Col.G, Col.B, Col.A
                     );
-                    rts[i] = rt;
+                    rTriArray[i] = rTri;
                 }
-                rg = new RGeometry(rts);
-                drawables.Add(rg);
-                RDrawable.drawables.Add(rg);
-                //Scribe.Info($"{RDrawable.drawables.Count}");
 
-                //IntPtr ip = new IntPtr();
-                //SDL_RenderGeometry(SDLGlobals.renderer, ip, vs, vs.Length, null, 0);
+                rTris = new RTriangles(rTriArray);
+                drawables.Add(rTris);
+                RDrawable.drawables.Add(rTris);
             }
             catch (System.Exception)
             {
-                Scribe.Warn($"Failed to render {this}");
-                //Scribe.Warn(" You may have forgotten to set draw flags. Falling back to OUTERP...");
-                //WithFlags(DrawMode.OUTERP);
-                //throw Magician.Scribe.Error("Render error");
+                if (drawMode == DrawMode.OUTERP)
+                {
+                    throw Scribe.Issue($"The triangulator has failed");
+                }
+
+                Scribe.Warn($"Failed to render {this}. Falling back to OUTERP");
+                WithFlags(DrawMode.OUTERP);
             }
 
         }
@@ -1158,8 +1147,6 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         {
             texture.Draw(XCartesian(xOffset), YCartesian(yOffset));
         }
-        Control.RecallTarget();
-
     }
 
     string Title()

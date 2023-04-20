@@ -26,7 +26,7 @@ public class DefaultSpell : Spell
         );
 
         // Non-square mouseover
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140);
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
         /* Testing area */
@@ -34,13 +34,13 @@ public class DefaultSpell : Spell
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
-            Spellbook.Cache(new TestingSpell());
+            Spellcaster.Cache(new TestingSpell());
             Scribe.Info("Switching Spells...");
         }
 
         );
         //Origin["testRect"] = Geo.Create.Rect(-150, 100, 300, 250).Colored(new RGBA(0x70ff00d0));
-        Origin["myMulti"] = new Multi().WithFlags(DrawMode.INNER);
+        Origin["myMulti"] = new Multi().WithFlags(DrawMode.FILLED);
         Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
 
     }
@@ -51,7 +51,7 @@ public class DefaultSpell : Spell
 
     public override void Loop()
     {
-        Renderer.Control.Clear();
+        Renderer.RControl.Clear();
         Origin["my star"].RotatedZ(0.01);
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
@@ -62,7 +62,7 @@ public class DefaultSpell : Spell
         //Origin["testRect"].RotatedX(0.04);
         //Origin["testRect"].RotatedY(0.02);
         //Origin["btn"].RotatedZ(0.01);
-        Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINT)));
+        Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
         {
             Origin["savMyMulti"].RotatedZ(0.03);
@@ -134,13 +134,13 @@ public class WavingText : Spell
 {
     public override void PreLoop()
     {
-        Renderer.Control.Clear();
+        Renderer.RControl.Clear();
     }
 
     // For stuff that needs to redefined every frame
     public override void Loop()
     {
-        Renderer.Control.Clear();
+        Renderer.RControl.Clear();
         Origin["parametric"] = new IOMap(1,
             x => 180 * Math.Cos(x / 3) + 10 * Math.Sin(Time / 2),
             y => 180 * Math.Sin(y / 7 + Time)
@@ -159,19 +159,17 @@ public class TestingSpell : Spell
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
         Origin["cube"] = Create.Cube(0, 0, 90, 10);
 
-        //Origin["2"] = Create.Cube(0, 0, 200, 16);
-        //Origin["tetra"] = Create.Tetrahedron(-100, 0, 200, 16);
+        Origin["2"] = Create.Cube(0, 0, 200, 16);
+        Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
     }
 
     public override unsafe void Loop()
     {
-        Renderer.Control.Clear();
-        //Origin["2"].RotatedX(-0.0025);
-        //Origin["2"].RotatedY(-0.003);
-        //Origin["2"].RotatedZ(-0.004);
-        //Origin["tetra"].RotatedX(-0.0025);
-        //Origin["tetra"].RotatedY(-0.003);
-        //Origin["tetra"].RotatedZ(-0.004);
+        Renderer.RControl.Clear();
+        Origin["2"].RotatedZ(-0.009);
+        Origin["tetra"].RotatedX(-0.0025);
+        Origin["tetra"].RotatedY(-0.003);
+        Origin["tetra"].RotatedZ(-0.004);
         
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
@@ -260,7 +258,7 @@ public class Spinner10K : Spell
 
     public override void Loop()
     {
-        Renderer.Control.Clear();
+        Renderer.RControl.Clear();
         //Scribe.Info(Origin);
     }
 }
