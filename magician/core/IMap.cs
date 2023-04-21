@@ -160,6 +160,7 @@ public class CustomMap : IMap
 
 // IMap with an arbitrary amount of input and output dimensions
 // (FKA MultiMap)
+// TODO: Maybe IMaps should implement IOMap, not the other way around
 public class IOMap : IMap
 {
     // Functionality
@@ -297,7 +298,8 @@ public class IOMap : IMap
             throw Scribe.Error($"Number of provided arguments ({args.Length}) does not match input dimensionality ({Ins})");
         }
 
-        if (Ins != Outs)
+        //if (Ins != Outs)
+        if (Ins < Outs)
         {
             /* With one input, resolution is trivial. Simply pass the input to each output */
             if (Ins == 1)
@@ -318,7 +320,7 @@ public class IOMap : IMap
                 return Resolved(pairs).Evaluate(args);
             }
         }
-        else
+        else if (Ins == Outs)
         {
             /* Inputs and out are equal, map 1-1 */
             int counter = 0;
@@ -326,6 +328,10 @@ public class IOMap : IMap
             {
                 output[counter] = (imaps[counter++].Evaluate(x));
             }
+        }
+        else
+        {
+            //
         }
         return output;
     }
