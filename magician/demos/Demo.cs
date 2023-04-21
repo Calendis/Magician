@@ -279,6 +279,11 @@ public class Plots : Spell
         Oper scale = N(1);
         Fulcrum equalsSign = Fulcrum.EQUALS;
         Equation e = new(hyperbola, equalsSign, scale);
+        //MathCache.freeVars.Clear();
+
+        Oper leftHand = new Plus(new Mult(Let("x"), Let("y")), N(-1));
+        Oper rightHand = new Mult(new Plus(N(2), Let("x", -1)), new Plus(N(3), Let("y")));
+        Equation f = new(leftHand, equalsSign, rightHand);
     }
 
     public override void Loop()

@@ -8,11 +8,13 @@ public class Oper
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
+    // TODO: I can't store layer like this, because like terms are shared
+    protected int? layer;
     public Oper[] args;
     public Oper(params Oper[] cstArgs)
     {
         numArgs = cstArgs.Length;
-        args = new Oper[numArgs];
+        args = cstArgs;
         //foreach (Variable v in cstArgs)
         foreach (Oper o in cstArgs)
         {
@@ -75,6 +77,28 @@ public class Oper
         newArgs.Add(temp.args[idx0]);
         args = newArgs.ToArray();
     }
+
+    public void CollectVariables(ref List<Variable> varBasket, ref int knowns, ref int unknowns, int counter=0)
+    {
+        if (args.Length == 0)
+        {
+            varBasket.Add((Variable)this);
+            layer = counter;
+            if (((Variable)this).found)
+            {
+                knowns++;
+            }
+            else
+            {
+                unknowns++;
+            }
+            return;
+        }
+        foreach (Oper o in args)
+        {
+            o.CollectVariables(ref varBasket, ref knowns, ref unknowns, counter+1);
+        }
+    }
 }
 /* public static class AssociativeBlockMgr
 {
@@ -128,7 +152,7 @@ public class Oper
 
 public class Variable : Oper
 {
-    bool found = false;
+    public bool found = false;
     Quantity foundVal = new Quantity(0);
     public double Val
     {
@@ -156,6 +180,8 @@ public class Variable : Oper
     public Variable(string n) : base(new Oper[0])
     {
         name = n;
+        // IMPORTANT: A variable has numArgs=1, but args.Length = 0
+        //            This is the only case where these two values will not match
         numArgs = 1;
     }
     public Variable(string n, double v) : this(n)
@@ -164,6 +190,11 @@ public class Variable : Oper
     }
     public Variable(double v) : this("untitled", v) { }
     // public Oper Implicit() {}
+
+    public override string ToString()
+    {
+        return $"{name}({layer})";
+    }
 
 }
 

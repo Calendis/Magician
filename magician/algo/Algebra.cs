@@ -8,10 +8,17 @@ public static class Algebra
     {
         if (freeVars.ContainsKey(name))
         {
-            return freeVars[name];
+            //return freeVars[name];
         }
         Variable v = new Variable(name);
-        freeVars.Add(name, v);
+        //freeVars.Add(name, v);
+        return v;
+    }
+
+    public static Variable Let(string name, double x)
+    {
+        Variable v = new Variable(name);
+        v.Coefficient = x;
         return v;
     }
 
@@ -21,7 +28,7 @@ public static class Algebra
         return new Variable(v);
     }
 }
-internal static class MathCache
+static class MathCache
 {
     public static Dictionary<string, Variable> freeVars = new();
 }
