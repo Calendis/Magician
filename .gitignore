@@ -2,7 +2,7 @@ bin/
 obj/
 .vscode/
 saved/
-log.txt
+logs/
 TODO.txt
 Acknowledgements.txt
 test.png
