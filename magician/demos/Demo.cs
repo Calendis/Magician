@@ -277,12 +277,14 @@ public class Plots : Spell
         // Algebra testing
         Oper hyperbola = new Mult(Let("x"), Let("y"));
         Oper scale = N(1);
-        Fulcrum equalsSign = Fulcrum.EQUALS;
-        Equation e = new(hyperbola, equalsSign, scale);
-        //MathCache.freeVars.Clear();
+        Equation.Fulcrum equalsSign = Equation.Fulcrum.EQUALS;
+        //Equation e = new(hyperbola, equalsSign, scale);
+        
+        //Scribe.Info("### CLEARING CACHE ###");
+        MathCache.freeVars.Clear();
 
-        Oper leftHand = new Plus(new Mult(Let("x"), Let("y")), N(-1));
-        Oper rightHand = new Mult(new Plus(N(2), Let("x", -1)), new Plus(N(3), Let("y")));
+        Oper leftHand = Let("y");
+        Oper rightHand = new Mult(Let("x"), new Plus(Let("x"), N(-1)));
         Equation f = new(leftHand, equalsSign, rightHand);
     }
 

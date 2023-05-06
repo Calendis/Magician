@@ -8,7 +8,6 @@ public class _SDLTexture : IDisposable
     IntPtr texture;
     public int Width { get; private set; }
     public int Height { get; private set; }
-
     bool disposed = false;
 
     // Create a texture from an image file
