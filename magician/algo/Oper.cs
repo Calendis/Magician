@@ -3,13 +3,13 @@ namespace Magician.Algo;
 public class Oper
 {
     protected string name = "DEFAULT OPERATOR";
+    public string Name => name;
     public int numArgs;
     public int hasUnknownVars = 0;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
-    // TODO: I can't store layer like this, because like terms are shared
-    protected int? layer;
+
     public Oper[] args;
     public Oper(params Oper[] cstArgs)
     {
@@ -30,12 +30,19 @@ public class Oper
         }
     }
 
+    public Oper New(string name, params Oper[] cstArgs)
+    {
+        Oper o = new Oper(cstArgs);
+        o.name = $"{name}_(built)";
+        return o;
+    }
+
     public virtual Oper Eval()
     {
         throw Scribe.Error("Operator is undefined");
     }
 
-    public virtual Oper Inverse()
+    public virtual Oper Inverse(Variable? v=null)
     {
         throw Scribe.Error("Operator could not be inverted");
     }
@@ -78,25 +85,35 @@ public class Oper
         args = newArgs.ToArray();
     }
 
-    public void CollectVariables(ref List<Variable> varBasket, ref int knowns, ref int unknowns, int counter=0)
+    // Recursively gather all variables, constants, and operators in an Oper
+    public void CollectOpers(ref List<Oper> varBasket, ref List<int> layerBasket, ref int knowns, ref int unknowns, int counter = 0)
     {
-        if (args.Length == 0)
+        // This will occur because each time "x" appears in the equation, it refers to a sole instance...
+        // ... of Variable with the name "x" 
+        bool likeTermSeen = varBasket.Contains(this);
+        if (this is Variable v_)
         {
-            varBasket.Add((Variable)this);
-            layer = counter;
-            if (((Variable)this).found)
+            // Handles constants
+            if (v_.found)
             {
                 knowns++;
             }
-            else
+            // Handles free variables
+            else if (!likeTermSeen)
             {
                 unknowns++;
             }
+            // Track all variables in the basket
+            varBasket.Add((Variable)this);
+            layerBasket.Add(counter);
             return;
         }
+        varBasket.Add(this);
+        layerBasket.Add(counter);
+        // Collect opers recursively
         foreach (Oper o in args)
         {
-            o.CollectVariables(ref varBasket, ref knowns, ref unknowns, counter+1);
+            o.CollectOpers(ref varBasket, ref layerBasket, ref knowns, ref unknowns, counter + 1);
         }
     }
 }
@@ -168,11 +185,7 @@ public class Variable : Oper
             found = true;
         }
     }
-    public double Coefficient
-    {
-        get => foundVal.Evaluate();
-        set => foundVal.Set(value);
-    }
+
     public bool Found
     {
         get => found;
@@ -188,12 +201,12 @@ public class Variable : Oper
     {
         Val = v;
     }
-    public Variable(double v) : this("untitled", v) { }
+    public Variable(double v) : this($"constant({v})", v) { }
     // public Oper Implicit() {}
 
     public override string ToString()
     {
-        return $"{name}({layer})";
+        return $"{name}";
     }
 
 }
@@ -214,6 +227,39 @@ public class Plus : Oper
             sum += v.Val;
         }
         return new Variable(sum);
+    }
+    public override Oper Inverse(Variable? v=null)
+    {
+        if (v == null)
+        {
+            return new Minus(args);
+        }
+        List<Oper> filteredArgs = args.Where(o =>
+        {
+            if (o is Variable _v)
+            {
+                return v == _v;
+            }
+            return false;
+        }).ToList();
+        return new Minus(filteredArgs.ToArray());
+    }
+}
+
+public class Minus : Oper
+{
+    public Minus(params Oper[] ops) : base(ops)
+    {
+        name = "minus";
+    }
+    public override Oper Eval()
+    {
+        double negativeSum = 0;
+        foreach (Variable v in args)
+        {
+            negativeSum -= v.Val;
+        }
+        return new Variable(negativeSum);
     }
 }
 
