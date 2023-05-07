@@ -172,7 +172,7 @@ public class TestingSpell : Spell
         Origin["tetra"].RotatedX(-0.0025);
         Origin["tetra"].RotatedY(-0.003);
         Origin["tetra"].RotatedZ(-0.004);
-        
+
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
@@ -279,13 +279,15 @@ public class Plots : Spell
         Oper scale = N(1);
         Equation.Fulcrum equalsSign = Equation.Fulcrum.EQUALS;
         //Equation e = new(hyperbola, equalsSign, scale);
-        
+
         //Scribe.Info("### CLEARING CACHE ###");
         MathCache.freeVars.Clear();
 
-        Oper leftHand = Let("y");
+        Oper leftHand = new Plus(Let("x"), new Mult(N(3), Let("y")));
         Oper rightHand = new Mult(Let("x"), new Plus(Let("x"), N(-1)));
-        Equation f = new(leftHand, equalsSign, rightHand);
+        Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
+
+        Scribe.Info(f.Layers);
     }
 
     public override void Loop()

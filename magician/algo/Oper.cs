@@ -4,8 +4,9 @@ public class Oper
 {
     protected string name = "DEFAULT OPERATOR";
     public string Name => name;
-    public int numArgs;
-    public int hasUnknownVars = 0;
+    protected int numArgs;
+    public int NumArgs => numArgs;
+    //public int hasUnknownVars = 0;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
@@ -23,7 +24,7 @@ public class Oper
                 if (!v.Found)
                 {
                     //Scribe.Warn("  variable is unknown");
-                    hasUnknownVars++;
+                    //hasUnknownVars++;
                 }
             }
             //Scribe.Warn($"Variable {v.name}");
@@ -36,15 +37,28 @@ public class Oper
         o.name = $"{name}_(built)";
         return o;
     }
+    public virtual Oper Inverse(Variable? v=null)
+    {
+        throw Scribe.Error("Operator could not be inverted");
+    }
 
-    public virtual Oper Eval()
+    public virtual Variable Eval()
     {
         throw Scribe.Error("Operator is undefined");
     }
 
-    public virtual Oper Inverse(Variable? v=null)
+    public Oper DeepEval()
     {
-        throw Scribe.Error("Operator could not be inverted");
+        //foreach (Oper arg in args)
+        for (int i = 0; i < args.Length; i++)
+        {
+            Oper arg = args[i];
+            // Assume this variable is defined
+            Oper o_ = arg is Variable v ? v.Eval() : arg.DeepEval();
+            args[i] = o_;
+        }
+        //
+        return this;
     }
 
     public virtual void Commute(int arg0, int arg1)
@@ -84,12 +98,13 @@ public class Oper
         newArgs.Add(temp.args[idx0]);
         args = newArgs.ToArray();
     }
+    /*                            */
 
     // Recursively gather all variables, constants, and operators in an Oper
     public void CollectOpers(ref List<Oper> varBasket, ref List<int> layerBasket, ref int knowns, ref int unknowns, int counter = 0)
     {
         // This will occur because each time "x" appears in the equation, it refers to a sole instance...
-        // ... of Variable with the name "x" 
+        // ... of Variable with the name "x"
         bool likeTermSeen = varBasket.Contains(this);
         if (this is Variable v_)
         {
@@ -151,7 +166,7 @@ public class Oper
             {
                 variableBasket.Add((Variable)opSub);
             }
-            
+
             // Recurse
             if (opSub.GetType().Name == op.GetType().Name)
             {
@@ -219,12 +234,20 @@ public class Plus : Oper
         associative = true;
         commutative = true;
     }
-    public override Oper Eval()
+    public override Variable Eval()
     {
         double sum = 0;
-        foreach (Variable v in args)
+        foreach (Oper o in args)
         {
-            sum += v.Val;
+            if (o is Variable v)
+            {
+                sum += v.Val;
+            }
+            else
+            {
+                sum += ((Variable)o.Eval()).Val;
+            }
+
         }
         return new Variable(sum);
     }
@@ -234,15 +257,7 @@ public class Plus : Oper
         {
             return new Minus(args);
         }
-        List<Oper> filteredArgs = args.Where(o =>
-        {
-            if (o is Variable _v)
-            {
-                return v == _v;
-            }
-            return false;
-        }).ToList();
-        return new Minus(filteredArgs.ToArray());
+        return new Minus(args.OfType<Variable>().Where(v2 => v == v2).ToArray());
     }
 }
 
@@ -252,7 +267,7 @@ public class Minus : Oper
     {
         name = "minus";
     }
-    public override Oper Eval()
+    public override Variable Eval()
     {
         double negativeSum = 0;
         foreach (Variable v in args)
@@ -272,7 +287,7 @@ public class Mult : Oper
         commutative = true;
     }
 
-    public override Oper Eval()
+    public override Variable Eval()
     {
         double prod = 1;
         foreach (Variable v in args)
@@ -280,5 +295,13 @@ public class Mult : Oper
             prod *= v.Val;
         }
         return new Variable(prod);
+    }
+}
+
+public class Polynom : Oper
+{
+    public Polynom(params double[] coefficients)
+    {
+        //
     }
 }
