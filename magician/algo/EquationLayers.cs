@@ -96,7 +96,7 @@ internal class EquationLayers
                 if (replacedOuterRHLayer == null)
                 {
                     Scribe.Warn("right con 1");
-                    replacedOuterRHLayer = new List<Oper>(){innerOpers[0]};
+                    replacedOuterRHLayer = new List<Oper>() { innerOpers[0] };
                 }
                 else
                 {
@@ -125,7 +125,7 @@ internal class EquationLayers
                     currentArgs.Add(innerOpers[i]);
                 }
                 runningTotalArgs += numArgs;
-                replacedOuterRHLayer.Add(outerOper.New(outerOper.Name, currentArgs.ToArray()));
+                replacedOuterRHLayer.Add(outerOper.New(currentArgs.ToArray()));
             }
 
             if (replacedOuterRHLayer?.Count == 1)
@@ -163,7 +163,7 @@ internal class EquationLayers
                 if (replacedOuterLHLayer == null)
                 {
                     Scribe.Warn("left con 1");
-                    replacedOuterLHLayer = new List<Oper>(){innerOpers[0]};
+                    replacedOuterLHLayer = new List<Oper>() { innerOpers[0] };
                 }
                 else
                 {
@@ -191,7 +191,7 @@ internal class EquationLayers
                     currentArgs.Add(innerOpers[i]);
                 }
                 runningTotalArgs += numArgs;
-                replacedOuterLHLayer.Add(outerOper.New(outerOper.Name, currentArgs.ToArray()));
+                replacedOuterLHLayer.Add(outerOper.New(currentArgs.ToArray()));
             }
 
             if (replacedOuterLHLayer?.Count == 1)
@@ -211,14 +211,53 @@ internal class EquationLayers
         return new Equation(newLeftHand, Equation.Fulcrum.EQUALS, newRightHand);
     }
 
+    public Equation RewrittenRewrittenBuild()
+    {
+        // Debug.Assert(fulcrum == Equation.Fulcrum.EQUALS);
+        (Oper lhs, int _) = RewrittenRewrittenBuildInner(hand: 0, layer: 0, index: 0, offset: 0);
+        (Oper rhs, int _) = RewrittenRewrittenBuildInner(hand: 1, layer: 0, index: 0, offset: 0);
+        return new Equation(lhs, Equation.Fulcrum.EQUALS, rhs);
+    }
+
+    public (Oper, int) RewrittenRewrittenBuildInner(int hand, int layer, int index, int offset)
+    {
+        //Console.WriteLine($"RewrittenRewrittenBuildInner(hand {hand}, layer {layer}, index {index}, offset {offset})");
+        List<Oper> currentLayer = sides[hand][layer];
+        Oper oper = currentLayer[index];
+        List<Oper> args = new();
+        if (oper is Variable v)
+        {
+            return (v, 0);
+        }
+        for (int argIndex = 0; argIndex < oper.NumArgs; argIndex++)
+        {
+            (Oper arg, int consumed) = RewrittenRewrittenBuildInner(hand: hand, layer: layer + 1, index: argIndex, offset: offset);
+            offset += consumed;
+            args.Add(arg);
+        }
+        return (oper.New(args.ToArray()), offset);
+    }
+
     public Equation RewrittenBuild()
     {
         for (int handIndex = 0; handIndex < sides.Length; handIndex++)
         {
-            //
+            int mole = 0;
+            //int maxDepth = sides[handIndex].Keys.ToList().Sorted;
+            List<int> tunnelLengths = new();
         }
-        throw Scribe.Issue("not implemented");
+
+        throw Scribe.Issue("this does not work");
     }
+
+    void GetParentOper(int layer, int pos)
+    {
+        if (layer == 0)
+            throw Scribe.Error("Oper on layer 0 does not and may not have a parent");
+
+
+    }
+
     public bool HoldsLeft(Variable v)
     {
         foreach (int k in leftHand.Keys)
@@ -314,7 +353,7 @@ internal class EquationLayers
             leftHandStr += $"Layer {k}\n";
             foreach (Oper o in leftHand[k])
             {
-                leftHandStr += $"    {o}\n";
+                leftHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
             }
         }
         foreach (int k in rightHand.Keys)
@@ -322,7 +361,7 @@ internal class EquationLayers
             rightHandStr += $"Layer {k}\n";
             foreach (Oper o in rightHand[k])
             {
-                rightHandStr += $"    {o}\n";
+                rightHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
             }
         }
         leftHandStr += "---";

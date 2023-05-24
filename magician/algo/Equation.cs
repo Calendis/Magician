@@ -8,9 +8,13 @@ public class Equation
     int isolates;
     EquationLayers layers;
     internal EquationLayers Layers => layers;
+    public Oper Left => layers.leftHand[0][0];
+    public Oper Right => layers.rightHand[0][0];
+    public Fulcrum TheFulcrum { get; private set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
         layers = new(o0, o1);
+        TheFulcrum = f;
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
@@ -51,7 +55,7 @@ public class Equation
                 {
                     if (currentExpression[0] is Variable v_ && v_ == v)
                     {
-                        Console.WriteLine("solved!");
+                        //Console.WriteLine("solved!");
                         //solved = true;
                         break;
                     }
@@ -103,7 +107,7 @@ public class Equation
                     // After inversion, we need to manually add the shed arguments to layer 1 of the opposite side
                     layers.sides[1 - chosenSide][1].AddRange(shedArgs);
 
-                    Scribe.Info($"Solve step:\n============{layers}");
+                    //Scribe.Info($"Solve step:\n============{layers}");
                     break;
 
                 }
@@ -120,7 +124,7 @@ public class Equation
                 //
             }
         }
-        return layers.Build();
+        return layers.RewrittenRewrittenBuild();
     }
 
     public void Evaluate()
@@ -135,6 +139,29 @@ public class Equation
             throw Scribe.Error("TODO: write this error msg");
         }
         throw Scribe.Issue("Not supported");
+    }
+
+    public override string ToString()
+    {
+        string fulcrumString = "";
+        switch (TheFulcrum) {
+        case Fulcrum.EQUALS:
+            fulcrumString = "=";
+            break;
+        case Fulcrum.LESSTHAN:
+            fulcrumString = "<";
+            break;
+        case Fulcrum.GREATERTHAN:
+            fulcrumString = ">";
+            break;
+        case Fulcrum.LSTHANOREQTO:
+            fulcrumString = "<=";
+            break;
+        case Fulcrum.GRTHANOREQTO:
+            fulcrumString = ">=";
+            break;
+        }
+        return $"{Left} {fulcrumString} {Right}";
     }
 
     /* public string Say()

@@ -28,4 +28,14 @@ public class Tests
         Variable result = twoTimesTen.Eval();
         Assert.That(result.Val, Is.EqualTo(20));
     }
+
+    [Test]
+    public void SolveEquationWithSum()
+    {
+        Equation equation = new Equation(new Plus(Let("x"), N(2)), Equation.Fulcrum.EQUALS, N(10));
+        Assert.That(equation.ToString(), Is.EqualTo(@"Plus(Variable(x`ariable(2)) = Variable(10)"));
+
+        Equation solved = equation.Solve(Let("x"));
+        Assert.That(solved.ToString(), Is.EqualTo(@"Variable(x) = Minus(Variable(10), Variable(2))"));
+    }
 }

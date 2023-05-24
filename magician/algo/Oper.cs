@@ -1,6 +1,8 @@
+using System.Diagnostics;
+
 namespace Magician.Algo;
 
-public class Oper
+public abstract class Oper
 {
     protected string name = "DEFAULT OPERATOR";
     public string Name => name;
@@ -12,7 +14,7 @@ public class Oper
     protected bool invertable = true;
 
     public Oper[] args;
-    public Oper(params Oper[] cstArgs)
+    protected Oper(params Oper[] cstArgs)
     {
         numArgs = cstArgs.Length;
         args = cstArgs;
@@ -31,12 +33,8 @@ public class Oper
         }
     }
 
-    public Oper New(string name, params Oper[] cstArgs)
-    {
-        Oper o = new Oper(cstArgs);
-        o.name = $"{name}_(built)";
-        return o;
-    }
+    public abstract Oper New( params Oper[] cstArgs);
+
     //public virtual Oper Inverse(Variable? v=null)
     public virtual Oper Inverse(Oper? v=null)
     {
@@ -107,10 +105,10 @@ public class Oper
         // This will occur because each time "x" appears in the equation, it refers to a sole instance...
         // ... of Variable with the name "x"
         bool likeTermSeen = varBasket.Contains(this);
-        if (this is Variable v_)
+        if (this is Variable v)
         {
             // Handles constants
-            if (v_.found)
+            if (v.found)
             {
                 knowns++;
             }
@@ -222,9 +220,13 @@ public class Variable : Oper
 
     public override string ToString()
     {
-        return $"{name}";
+        return $"Variable({(found ? Val : name)})";
     }
 
+    public override Oper New(params Oper[] cstArgs)
+    {
+        throw Scribe.Issue("This should never occur.");
+    }
 }
 
 // Plus produces a sum
@@ -260,7 +262,23 @@ public class Plus : Oper
         {
             return new Minus(args);
         }
-        return new Minus(args.Where(v2 => v != v2).ToArray());
+        //Debug.Assert(args.Length <= 2, "Minus is alternating, so we can't inverse this without more work");
+        // have: x + 2 + 3
+        // want: inverse(x)
+        // Minus(0, Plus(remaining))
+        // 0 - (2 + 3)
+        // Minus(0, 2)
+        return new Minus(new Variable(0), new Plus(args.Where(v2 => v != v2).ToArray()));
+    }
+
+    public override Oper New(params Oper[] cstArgs)
+    {
+        return new Plus(cstArgs);
+    }
+
+    public override string ToString()
+    {
+        return $"Plus({string.Join(", ", args.Select(x => x.ToString()))})";
     }
 }
 
@@ -280,6 +298,17 @@ public class Minus : Oper
             alternSum += v.Val * count++ % 2 == 0 ? 1 : -1;
         }
         return new Variable(alternSum);
+    }
+
+    public override Oper New(params Oper[] cstArgs)
+    {
+        return new Minus(cstArgs);
+    }
+
+
+    public override string ToString()
+    {
+        return $"Minus({string.Join(", ", args.Select(x => x.ToString()))})";
     }
 }
 
@@ -301,6 +330,11 @@ public class Mult : Oper
         }
         return new Variable(prod);
     }
+
+    public override Oper New(params Oper[] cstArgs)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class Polynom : Oper
@@ -308,5 +342,10 @@ public class Polynom : Oper
     public Polynom(params double[] coefficients)
     {
         //
+    }
+
+    public override Oper New(params Oper[] cstArgs)
+    {
+        throw new NotImplementedException();
     }
 }
