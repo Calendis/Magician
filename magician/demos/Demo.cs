@@ -1,8 +1,6 @@
 using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
-using Magician.Algo;
-using static Magician.Algo.Algebra;
 
 namespace Magician.Demos;
 public class DefaultSpell : Spell
@@ -36,7 +34,7 @@ public class DefaultSpell : Spell
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
-            Spellcaster.Cache(new Plots());
+            Spellcaster.Cache(new Demos.Tests.Plots());
             Scribe.Info("Switching Spells...");
         }
 
@@ -129,169 +127,5 @@ public class DefaultSpell : Spell
                 Origin["myMulti"].Clear();
             }
         }
-    }
-}
-
-public class WavingText : Spell
-{
-    public override void PreLoop()
-    {
-        Renderer.RControl.Clear();
-    }
-
-    // For stuff that needs to redefined every frame
-    public override void Loop()
-    {
-        Renderer.RControl.Clear();
-        Origin["parametric"] = new IOMap(1,
-            x => 180 * Math.Cos(x / 3) + 10 * Math.Sin(Time / 2),
-            y => 180 * Math.Sin(y / 7 + Time)
-        ).TextAlong(-49, 49, 0.3, "Here's an example of a Multimap with 1 input and two outputs being used to draw text parametrically"
-        , new RGBA(0x00ff9080));
-    }
-}
-
-public class TestingSpell : Spell
-{
-    Brush? b;
-    double walkSpeed = 0.3;
-
-    public override void PreLoop()
-    {
-        b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-        Origin["cube"] = Create.Cube(0, 0, 90, 10);
-
-        Origin["2"] = Create.Cube(0, 0, 200, 16);
-        Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
-    }
-
-    public override unsafe void Loop()
-    {
-        Renderer.RControl.Clear();
-        Origin["2"].RotatedZ(-0.009);
-        Origin["tetra"].RotatedX(-0.0025);
-        Origin["tetra"].RotatedY(-0.003);
-        Origin["tetra"].RotatedZ(-0.004);
-
-
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
-        {
-            Ref.Perspective.z.Delta(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
-        {
-            Ref.Perspective.x.Delta(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s])
-        {
-            Ref.Perspective.z.Delta(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d])
-        {
-            Ref.Perspective.x.Delta(walkSpeed);
-        }
-
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
-        {
-            Ref.Perspective.y.Delta(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT])
-        {
-            Ref.Perspective.y.Delta(-walkSpeed);
-        }
-
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_x])
-        {
-            Origin["cube"].RotatedX(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_y])
-        {
-            Origin["cube"].RotatedY(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
-        {
-            Origin["cube"].RotatedZ(0.01);
-        }
-
-        // TODO: camera rotation
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_o])
-        {
-            Ref.Origin.RotatedX(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
-        {
-            Ref.Origin.RotatedY(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_k])
-        {
-            Ref.Origin.RotatedZ(0.01);
-        }
-
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
-        {
-            Origin["cube"].y.Delta(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_DOWN])
-        {
-            Origin["cube"].y.Delta(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LEFT])
-        {
-            Origin["cube"].x.Delta(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RIGHT])
-        {
-            Origin["cube"].x.Delta(walkSpeed);
-        }
-    }
-}
-
-public class Spinner10K : Spell
-{
-    public override void PreLoop()
-    {
-        Origin["sqs"] = (new IOMap(1, x => x % 1000, y => 20 * Math.Floor(y / 1000))
-        .MultisAlong(0, 20000, 20, Create.RegularPolygon(4, 10))
-        );
-        Origin["sqs"].Sub(d => d.Sub(m => m
-            .DrivenPM(p => p + 0.1, m => m)
-        )).Positioned(-500, -300);
-    }
-
-    public override void Loop()
-    {
-        Renderer.RControl.Clear();
-        //Scribe.Info(Origin);
-    }
-}
-
-public class Plots : Spell
-{
-    public override void PreLoop()
-    {
-        Origin["plot0"] = ((IMap)new CustomMap(x => 60 * Math.Sin(x/6))).Plot(0, 0, 0, 96*Math.PI, 1, HSLA.RandomVisible());
-        Origin["plot1"] = new IOMap(1, t => 60*Math.Sin(t), t => 60*Math.Cos(t/5)).Plot(-300, -300, 0, 96*Math.PI, 1, HSLA.RandomVisible());
-        //Origin["plot2"] = new IOMap(2, (x, y) => x + Math.Sin(y)).Plot();
-        //Origin["plot2"] = new IOMap(2, x => x + Math.Sin(x)).Plot();
-
-        // Algebra testing
-        Oper hyperbola = new Mult(Let("x"), Let("y"));
-        Oper scale = N(1);
-        Equation.Fulcrum equalsSign = Equation.Fulcrum.EQUALS;
-        //Equation e = new(hyperbola, equalsSign, scale);
-
-        //Scribe.Info("### CLEARING CACHE ###");
-        MathCache.freeVars.Clear();
-
-        Oper leftHand = new Plus(Let("x"), new Mult(N(3), Let("y")));
-        Oper rightHand = new Mult(Let("x"), new Plus(Let("x"), N(-1)));
-        Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-
-        Scribe.Info(f.Layers);
-    }
-
-    public override void Loop()
-    {
-        //
     }
 }
