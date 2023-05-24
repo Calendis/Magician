@@ -21,6 +21,16 @@ public static class Scribe
     {
         Console.Write($"WARNING: {s}\n");
     }
+    public static void Warn(object? o)
+    {
+        if (o == null)
+        {
+            Warn("NULL");
+            return;
+        }
+        Warn(o.ToString());
+        return;
+    }
     public static void WarnIf(bool condition, string s)
     {
         if (condition)

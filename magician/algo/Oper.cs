@@ -37,7 +37,8 @@ public class Oper
         o.name = $"{name}_(built)";
         return o;
     }
-    public virtual Oper Inverse(Variable? v=null)
+    //public virtual Oper Inverse(Variable? v=null)
+    public virtual Oper Inverse(Oper? v=null)
     {
         throw Scribe.Error("Operator could not be inverted");
     }
@@ -226,6 +227,7 @@ public class Variable : Oper
 
 }
 
+// Plus produces a sum
 public class Plus : Oper
 {
     public Plus(params Oper[] ops) : base(ops)
@@ -251,16 +253,18 @@ public class Plus : Oper
         }
         return new Variable(sum);
     }
-    public override Oper Inverse(Variable? v=null)
+    //public override Oper Inverse(Variable? v=null)
+    public override Minus Inverse(Oper? v=null)
     {
         if (v == null)
         {
             return new Minus(args);
         }
-        return new Minus(args.OfType<Variable>().Where(v2 => v == v2).ToArray());
+        return new Minus(args.Where(v2 => v != v2).ToArray());
     }
 }
 
+// Minus produces an alternating sum
 public class Minus : Oper
 {
     public Minus(params Oper[] ops) : base(ops)
@@ -269,12 +273,13 @@ public class Minus : Oper
     }
     public override Variable Eval()
     {
-        double negativeSum = 0;
+        double alternSum = 0;
+        int count = 0;
         foreach (Variable v in args)
         {
-            negativeSum -= v.Val;
+            alternSum += v.Val * count++ % 2 == 0 ? 1 : -1;
         }
-        return new Variable(negativeSum);
+        return new Variable(alternSum);
     }
 }
 

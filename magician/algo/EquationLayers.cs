@@ -4,8 +4,8 @@ namespace Magician.Algo;
 internal class EquationLayers
 {
     // All constants, variables, and operators for each side
-    public Dictionary<int, List<Oper>> leftHand = new();
-    public Dictionary<int, List<Oper>> rightHand = new();
+    public Dictionary<int, List<Oper>> leftHand => sides[0];
+    public Dictionary<int, List<Oper>> rightHand => sides[1];
     public Dictionary<int, List<Oper>>[] sides;
     // Number of variables with a set value, or "constants"
     public int knowns;
@@ -17,6 +17,8 @@ internal class EquationLayers
     public List<Variable> vars = new();
     public EquationLayers(Oper o0, Oper o1)
     {
+        sides = new Dictionary<int, List<Oper>>[2];
+        sides[0] = new(); sides[1] = new();
         List<Oper> opers = new();
         List<int> layers = new();
         knowns = 0;
@@ -53,7 +55,7 @@ internal class EquationLayers
     }
 
     // Re-create the equation from the layer dictionaries
-    // TODO: test this
+    // TODO: rewrite this, as it doesn't work
     public Equation Build()
     {
         // Find the bottom layer of both hands
@@ -76,15 +78,40 @@ internal class EquationLayers
         while (rightHandHeight >= 0)
         {
             List<Oper> innerOpers = rightHand[rightHandHeight];
-            List<Oper> outerOpers = rightHand[rightHandHeight - 1];
+            List<Oper> outerOpers;
+            int numOuterOpers;
+            if (rightHandHeight > 0)
+            {
+                outerOpers = rightHand[rightHandHeight - 1];
+                numOuterOpers = replacedOuterRHLayer == null ? outerOpers.Count : replacedOuterRHLayer.Count;
+            }
+            else  // lone variable
+            {
+                numOuterOpers = 0;
+                outerOpers = null;
+                if (innerOpers.Count != 1)
+                {
+                    throw Scribe.Issue("TODO: write this issue message");
+                }
+                if (replacedOuterRHLayer == null)
+                {
+                    Scribe.Warn("right con 1");
+                    replacedOuterRHLayer = new List<Oper>(){innerOpers[0]};
+                }
+                else
+                {
+                    Scribe.Warn("right con 2");
+                    replacedOuterRHLayer.Add(innerOpers[0]);
+                }
+            }
+
             int runningTotalArgs = 0;
-            int numOuterOpers = replacedOuterRHLayer == null ? outerOpers.Count : replacedOuterRHLayer.Count;
             for (int j = 0; j < numOuterOpers; j++)
             {
                 Oper outerOper;
                 if (replacedOuterRHLayer == null)
                 {
-                    outerOper = outerOpers[j];
+                    outerOper = outerOpers![j];
                     replacedOuterRHLayer = new();
                 }
                 else
@@ -103,7 +130,7 @@ internal class EquationLayers
 
             if (replacedOuterRHLayer?.Count == 1)
             {
-                Scribe.Info("Top of right hand reached");
+                //Scribe.Info("Top of right hand reached");
                 newRightHand = replacedOuterRHLayer[0];
             }
 
@@ -112,13 +139,40 @@ internal class EquationLayers
 
         Oper? newLeftHand = null;
         List<Oper>? replacedOuterLHLayer = null;
-        while (rightHandHeight >= 0)
+        while (leftHandHeight >= 0)
         {
             List<Oper> innerOpers = leftHand[leftHandHeight];
-            List<Oper> outerOpers = leftHand[leftHandHeight - 1];
+            List<Oper> outerOpers;
+            int numOuterOpers;
+
+            Scribe.Info($"LH: {innerOpers[0]}");
+            if (leftHandHeight > 0)
+            {
+                outerOpers = leftHand[leftHandHeight - 1];
+                numOuterOpers = replacedOuterLHLayer == null ? outerOpers.Count : replacedOuterLHLayer.Count;
+            }
+            else
+            {
+                numOuterOpers = 0;
+                outerOpers = null;
+                if (innerOpers.Count != 1)
+                {
+                    throw Scribe.Issue("TODO: write this issue message");
+                }
+
+                if (replacedOuterLHLayer == null)
+                {
+                    Scribe.Warn("left con 1");
+                    replacedOuterLHLayer = new List<Oper>(){innerOpers[0]};
+                }
+                else
+                {
+                    Scribe.Warn("left con 2");
+                    replacedOuterLHLayer.Add(innerOpers[0]);
+                }
+            }
             int runningTotalArgs = 0;
-            int numOuterOpers = replacedOuterLHLayer == null ? outerOpers.Count : replacedOuterLHLayer.Count;
-            for (int j = 0; j < numOuterOpers; j++)
+            for (int j = 0; j < numOuterOpers - 1; j++)
             {
                 Oper outerOper;
                 if (replacedOuterLHLayer == null)
@@ -142,7 +196,7 @@ internal class EquationLayers
 
             if (replacedOuterLHLayer?.Count == 1)
             {
-                Scribe.Info("Top of left hand reached");
+                //Scribe.Info("Top of left hand reached");
                 newLeftHand = replacedOuterLHLayer[0];
             }
 
@@ -215,12 +269,32 @@ internal class EquationLayers
 
     public void IncrKeys(int side)
     {
-        //
+        Dictionary<int, List<Oper>> incrd = new();
+        foreach (int k in sides[side].Keys)
+        {
+            incrd.Add(k + 1, sides[side][k]);
+        }
+        sides[side] = incrd;
     }
 
     public void DecrKeys(int side)
     {
-        //
+        Dictionary<int, List<Oper>> decrd = new();
+        foreach (int k in sides[side].Keys)
+        {
+            if (k > 0)
+                decrd.Add(k - 1, sides[side][k]);
+        }
+        sides[side] = decrd;
+    }
+
+    void InvertKeys(int side)
+    {
+        Dictionary<int, List<Oper>> inverted = new();// sides[side];
+        foreach (int k in sides[side].Keys)
+        {
+            inverted.Add(k * -1, sides[side][k]);
+        }
     }
 
     public override string ToString()
