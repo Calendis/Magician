@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="MagicianSDL.cs" />
+    <ProjectReference Include="..\magician\Magician.csproj" />
   </ItemGroup>
-
 </Project>

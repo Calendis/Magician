@@ -211,6 +211,14 @@ internal class EquationLayers
         return new Equation(newLeftHand, Equation.Fulcrum.EQUALS, newRightHand);
     }
 
+    public Equation RewrittenBuild()
+    {
+        for (int handIndex = 0; handIndex < sides.Length; handIndex++)
+        {
+            //
+        }
+        throw Scribe.Issue("not implemented");
+    }
     public bool HoldsLeft(Variable v)
     {
         foreach (int k in leftHand.Keys)

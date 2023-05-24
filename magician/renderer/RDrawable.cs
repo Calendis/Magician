@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Magician.Renderer;
 
-internal abstract class RDrawable
+public abstract class RDrawable
 {
     public int Layer { get; set; }
     public byte[] rgba = new byte[4];
@@ -99,7 +99,7 @@ internal abstract class RDrawable
         uint stride = (uint)dataLens.Sum();
         int posLength = dataLens[0];
         int colLength = dataLens[1];
-        
+
         // Create vertex array object
         uint vao = gl.GenVertexArray();
         gl.BindVertexArray(vao);

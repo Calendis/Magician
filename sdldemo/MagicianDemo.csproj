@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Reference Include="SDL2">
-      <HintPath>sdl/SDL2-CS.dll</HintPath>
+        <HintPath>../sdl/SDL2-CS.dll</HintPath>
     </Reference>
 
     <PackageReference Include="Silk.NET" Version="2.16.0" />
@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="MagicianTests.cs" />
+    <ProjectReference Include="..\magician\Magician.csproj" />
   </ItemGroup>
 
 </Project>
