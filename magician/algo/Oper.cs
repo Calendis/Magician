@@ -9,6 +9,8 @@ public abstract class Oper
     protected int numArgs;
     public int NumArgs => numArgs;
     //public int hasUnknownVars = 0;
+    List<Variable> eventuallyContains = new();
+    public bool Contains(Variable v) => eventuallyContains.Contains(v);
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
@@ -18,28 +20,22 @@ public abstract class Oper
     {
         numArgs = cstArgs.Length;
         args = cstArgs;
-        //foreach (Variable v in cstArgs)
+
         foreach (Oper o in cstArgs)
         {
             if (o is Variable v)
             {
                 if (!v.Found)
                 {
-                    //Scribe.Warn("  variable is unknown");
-                    //hasUnknownVars++;
+                    eventuallyContains.Add(v);
                 }
             }
-            //Scribe.Warn($"Variable {v.name}");
+            eventuallyContains = eventuallyContains.Union(o.eventuallyContains).ToList();
         }
     }
 
     public abstract Oper New( params Oper[] cstArgs);
-
-    //public virtual Oper Inverse(Variable? v=null)
-    public virtual Oper Inverse(Oper? v=null)
-    {
-        throw Scribe.Error("Operator could not be inverted");
-    }
+    public abstract Oper Inverse(Oper? v=null);
 
     public virtual Variable Eval()
     {
@@ -227,6 +223,10 @@ public class Variable : Oper
     {
         throw Scribe.Issue("This should never occur.");
     }
+    public override Oper Inverse(Oper? v = null)
+    {
+        throw Scribe.Issue("This should never occur");
+    }
 }
 
 // Plus produces a sum
@@ -255,19 +255,12 @@ public class Plus : Oper
         }
         return new Variable(sum);
     }
-    //public override Oper Inverse(Variable? v=null)
     public override Minus Inverse(Oper? v=null)
     {
         if (v == null)
         {
             return new Minus(args);
         }
-        //Debug.Assert(args.Length <= 2, "Minus is alternating, so we can't inverse this without more work");
-        // have: x + 2 + 3
-        // want: inverse(x)
-        // Minus(0, Plus(remaining))
-        // 0 - (2 + 3)
-        // Minus(0, 2)
         return new Minus(new Variable(0), new Plus(args.Where(v2 => v != v2).ToArray()));
     }
 
@@ -305,11 +298,24 @@ public class Minus : Oper
         return new Minus(cstArgs);
     }
 
+    public override Plus Inverse(Oper? v=null)
+    {
+        if (v == null)
+        {
+            return new Plus(args);
+        }
+        //return new Plus(args[1].args.Union(args.Where(v2 => v != v2)).ToArray());
+        Scribe.Warn($"{this} needs to be inverted");
+        Plus i = new Plus(args.Where(v2 => v != v2).ToArray());
+        Scribe.Warn($"Got {i}");
+        return i;
+    }
 
     public override string ToString()
     {
         return $"Minus({string.Join(", ", args.Select(x => x.ToString()))})";
     }
+
 }
 
 public class Mult : Oper
@@ -335,6 +341,10 @@ public class Mult : Oper
     {
         throw new NotImplementedException();
     }
+    public override Oper Inverse(Oper? v = null)
+    {
+        throw Scribe.Issue("Reciprocal not yet implemented");
+    }
 }
 
 public class Polynom : Oper
@@ -347,5 +357,9 @@ public class Polynom : Oper
     public override Oper New(params Oper[] cstArgs)
     {
         throw new NotImplementedException();
+    }
+    public override Oper Inverse(Oper? v = null)
+    {
+        throw Scribe.Issue("Polynomial inversion not implemented");
     }
 }
