@@ -66,7 +66,6 @@ internal class EquationLayers
 
     public (Oper, int) RewrittenRewrittenBuildInner(int hand, int layer, int index, int offset)
     {
-        //Console.WriteLine($"RewrittenRewrittenBuildInner(hand {hand}, layer {layer}, index {index}, offset {offset})");
         List<Oper> currentLayer = sides[hand][layer];
         Oper oper = currentLayer[index];
         List<Oper> args = new();
@@ -74,8 +73,7 @@ internal class EquationLayers
         {
             return (v, 0);
         }
-        //int parentArgs = index == 0 ? 0 : sides[hand][layer-1].Count;
-        //for (int argIndex = 0; argIndex < parentArgs; argIndex++)
+
         for (int argIndex = 0; argIndex < oper.NumArgs; argIndex++)
         {
             (Oper arg, int consumed) = RewrittenRewrittenBuildInner(hand: hand, layer: layer + 1, index: argIndex, offset: offset);
