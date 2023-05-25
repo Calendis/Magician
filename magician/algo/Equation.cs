@@ -102,7 +102,7 @@ public class Equation
                 // another layer will be added (new layer 0) to the other side
                 // the new layer 1 (old layer 0) will have the removed Opers appended
                 Oper axis = directMatches == 1 ? v : currentExpression.args[liveBranchIndex];
-                Scribe.Info($"Inverting {currentExpression} around {axis}...");
+                //Scribe.Info($"Inverting {currentExpression} around {axis}...");
 
                 // Shed, and do the same to the other side
                 layers.IncrKeys(1 - chosenSide);
@@ -112,13 +112,13 @@ public class Equation
                 layers.DecrKeys(chosenSide);
                 currentExpressionLayer = layers.OuterLayer(chosenSide);
                 List<Oper> shedArgs = new();
-                if (true || layers.sides[chosenSide].Count > 0)
+                if (layers.sides[chosenSide].Count > 0)
                 {
                     shedArgs = currentExpressionLayer.Except(
                         currentExpressionLayer.Where(v2 => v2 == axis)
-                    ).ToList<Oper>();
-                    // this line seems sus
-                    layers.sides[chosenSide][0] = currentExpressionLayer.Where(v2 => v2 == axis).ToList<Oper>();
+                    ).ToList();
+                    //
+                    layers.sides[chosenSide][0] = currentExpressionLayer.Where(v2 => v2 == axis).ToList();
 
                     //List<Oper> newOuter = currentExpressionLayer.Where(v2 => v2 == axis).ToList<Oper>();
                     //newOuter.AddRange(layers.sides[chosenSide][0].Skip(1));
@@ -127,6 +127,11 @@ public class Equation
 
                 // After inversion, we need to manually add the shed arguments to layer 1 of the opposite side
                 layers.sides[1 - chosenSide][1].AddRange(shedArgs);
+                layers.sides[1 - chosenSide][0][0].args = layers.sides[1 - chosenSide][0][0].args.ToList().Concat(shedArgs).ToArray();
+
+                // We also need to correct the numargs of the new layer 0
+                layers.sides[1-chosenSide][0][0].NumArgs = layers.sides[1 - chosenSide][0][0].args.Length;
+                layers.sides[1-chosenSide][0][0].NumArgs = layers.sides[1 - chosenSide][1].Count;
                 
             }
             // Multiple direct matches
@@ -144,9 +149,11 @@ public class Equation
             {
                 throw Scribe.Issue("Multiple matches not implemented");
             }
-            Scribe.Info($"Solve step: \n{layers}");
+            //Scribe.Info($"Solve step: \n{layers.RewrittenRewrittenBuild()}");
         }
-        return layers.RewrittenRewrittenBuild();
+        Equation solved = layers.RewrittenRewrittenBuild();
+        layers = layers = new(solved.Left, solved.Right);
+        return solved;
     }
 
     public void Evaluate()

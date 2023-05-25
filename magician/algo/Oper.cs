@@ -7,7 +7,11 @@ public abstract class Oper
     protected string name = "DEFAULT OPERATOR";
     public string Name => name;
     protected int numArgs;
-    public int NumArgs => numArgs;
+    public int NumArgs
+    {
+        get => numArgs;
+        set => numArgs = value;
+    }
     //public int hasUnknownVars = 0;
     List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
@@ -305,9 +309,7 @@ public class Minus : Oper
             return new Plus(args);
         }
         //return new Plus(args[1].args.Union(args.Where(v2 => v != v2)).ToArray());
-        Scribe.Warn($"{this} needs to be inverted");
         Plus i = new Plus(args.Where(v2 => v != v2).ToArray());
-        Scribe.Warn($"Got {i}");
         return i;
     }
 

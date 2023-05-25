@@ -22,16 +22,16 @@ public class Plots : Spell
         //Scribe.Info("### CLEARING CACHE ###");
         MathCache.freeVars.Clear();
 
-        //Oper leftHand = new Plus(Let("y"), N(3));
-        //Oper rightHand = new Plus(Let("x"), N(4));
-        //Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-        //Scribe.Info(f);
-        //Scribe.Info("Solving for x...");
-        //Equation solved = f.Solve(Let("x"));
-        //Scribe.Info(solved);
-        //Scribe.Info("Solving for y...");
-        //solved = f.Solve(Let("y"));
-        //Scribe.Info(solved);
+        Oper leftHand = new Plus(Let("y"), N(3));
+        Oper rightHand = new Plus(Let("x"), N(4));
+        Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
+        Scribe.Info(f);
+        Scribe.Info("Solving for x...");
+        Equation solved = f.Solve(Let("x"));
+        Scribe.Info(solved);
+        Scribe.Info("Solving for y...");
+        solved = f.Solve(Let("y"));
+        Scribe.Info(solved);
 
         //Oper leftHand = new Plus(new Minus(Let("x"), N(5)), N(9));
         //Oper rightHand = new Plus(Let("y"), N(4));
@@ -42,14 +42,14 @@ public class Plots : Spell
         //Scribe.Info("Done.");
         //Scribe.Info(solved);
 
-        Oper leftHand =  new Minus(Let("x"), N(5)); 
-        Oper rightHand = new Minus(new Plus(Let("y"), N(4)), N(9));
-        Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-        Scribe.Info(f);
-        Scribe.Info("Solving for x...");
-        Equation solved = f.Solve(Let("x"));
-        Scribe.Info("Done");
-        Scribe.Info(solved);
+        //Oper leftHand =  new Minus(Let("x"), N(5)); 
+        //Oper rightHand = new Plus(new Plus(Let("y"), N(4)), N(9));
+        //Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
+        //Scribe.Info(f);
+        //Scribe.Info("Solving for x...");
+        //Equation solved = f.Solve(Let("x"));
+        //Scribe.Info("Done");
+        //Scribe.Info(solved);
     }
 
     public override void Loop()
