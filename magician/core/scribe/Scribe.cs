@@ -49,6 +49,11 @@ public static class Scribe
         }
     }
 
+    public static void List<T>(params T[] l)
+    {
+        List(l.ToList());
+    }
+
     /// <summary><exception>
     /// bruhException
     /// </exception></summary>

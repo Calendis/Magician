@@ -14,42 +14,24 @@ public class Plots : Spell
         //Origin["plot2"] = new IOMap(2, x => x + Math.Sin(x)).Plot();
 
         // Algebra testing
-        Oper hyperbola = new Mult(Let("x"), Let("y"));
-        Oper scale = N(1);
-        Equation.Fulcrum equalsSign = Equation.Fulcrum.EQUALS;
-        //Equation e = new(hyperbola, equalsSign, scale);
-
-        //Scribe.Info("### CLEARING CACHE ###");
-        MathCache.freeVars.Clear();
-
-        Oper leftHand = new Plus(Let("y"), N(3));
-        Oper rightHand = new Plus(Let("x"), N(4));
-        Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-        Scribe.Info(f);
-        Scribe.Info("Solving for x...");
-        Equation solved = f.Solve(Let("x"));
-        Scribe.Info(solved);
-        Scribe.Info("Solving for y...");
-        solved = f.Solve(Let("y"));
-        Scribe.Info(solved);
-
-        //Oper leftHand = new Plus(new Minus(Let("x"), N(5)), N(9));
-        //Oper rightHand = new Plus(Let("y"), N(4));
-        //Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-        //Scribe.Info(f);
+        Oper lhs = new Fraction(new SumDiff(Let("x"), N(0), N(1)), new SumDiff(N(4), Let("y")));
+        Oper rhs = new Fraction(N(3), N(1), Let("z"));
+        Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
+        
+        Scribe.Info("Equation:");
+        Scribe.Info(e);
+        
         //Scribe.Info("Solving for x...");
-        //Equation solved = f.Solve(Let("x"));
-        //Scribe.Info("Done.");
-        //Scribe.Info(solved);
-
-        //Oper leftHand =  new Minus(Let("x"), N(5)); 
-        //Oper rightHand = new Plus(new Plus(Let("y"), N(4)), N(9));
-        //Equation f = new(leftHand, Equation.Fulcrum.EQUALS, rightHand);
-        //Scribe.Info(f);
-        //Scribe.Info("Solving for x...");
-        //Equation solved = f.Solve(Let("x"));
-        //Scribe.Info("Done");
-        //Scribe.Info(solved);
+        //Equation sx = e.Solve(Let("x"));
+        //Scribe.Info(sx);
+        
+        //Scribe.Info("Solving for y...");
+        //Equation sy = e.Solve(Let("y"));
+        //Scribe.Info(sy);
+        
+        Scribe.Info("Solving for z...");
+        Equation sz = e.Solve(Let("z"));
+        Scribe.Info(sz);
     }
 
     public override void Loop()

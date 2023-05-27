@@ -56,15 +56,15 @@ internal class EquationLayers
 
     // Re-create the equation from the layer dictionaries
     // TODO: rewrite this, as it doesn't work
-    public Equation RewrittenRewrittenBuild()
+    public Equation Build()
     {
         // Debug.Assert(fulcrum == Equation.Fulcrum.EQUALS);
-        (Oper lhs, int _) = RewrittenRewrittenBuildInner(hand: 0, layer: 0, index: 0, offset: 0);
-        (Oper rhs, int _) = RewrittenRewrittenBuildInner(hand: 1, layer: 0, index: 0, offset: 0);
+        (Oper lhs, int _) = BuildInner(hand: 0, layer: 0, index: 0, offset: 0);
+        (Oper rhs, int _) = BuildInner(hand: 1, layer: 0, index: 0, offset: 0);
         return new Equation(lhs, Equation.Fulcrum.EQUALS, rhs);
     }
 
-    public (Oper, int) RewrittenRewrittenBuildInner(int hand, int layer, int index, int offset)
+    public (Oper, int) BuildInner(int hand, int layer, int index, int offset)
     {
         List<Oper> currentLayer = sides[hand][layer];
         Oper oper = currentLayer[index];
@@ -76,31 +76,11 @@ internal class EquationLayers
 
         for (int argIndex = 0; argIndex < oper.NumArgs; argIndex++)
         {
-            (Oper arg, int consumed) = RewrittenRewrittenBuildInner(hand: hand, layer: layer + 1, index: argIndex, offset: offset);
+            (Oper arg, int consumed) = BuildInner(hand: hand, layer: layer + 1, index: argIndex, offset: offset);
             offset += consumed;
             args.Add(arg);
         }
         return (oper.New(args.ToArray()), offset);
-    }
-
-    public Equation RewrittenBuild()
-    {
-        for (int handIndex = 0; handIndex < sides.Length; handIndex++)
-        {
-            int mole = 0;
-            //int maxDepth = sides[handIndex].Keys.ToList().Sorted;
-            List<int> tunnelLengths = new();
-        }
-
-        throw Scribe.Issue("this does not work");
-    }
-
-    void GetParentOper(int layer, int pos)
-    {
-        if (layer == 0)
-            throw Scribe.Error("Oper on layer 0 does not and may not have a parent");
-
-
     }
 
     public bool HoldsLeft(Variable v)
@@ -133,60 +113,6 @@ internal class EquationLayers
             }
         }
         return false;
-    }
-
-    public List<Oper> OuterLayer(int side)
-    {
-        List<int> keys = sides[side].Keys.ToList();
-        keys.Sort();
-        foreach (int k in keys)
-        {
-            if (sides[side][k].Count > 0)
-                return sides[side][k];
-        }
-        throw Scribe.Error($"Side {side} is empty");
-    }
-    public List<Oper> InnerLayer(int side)
-    {
-        List<int> keys = sides[side].Keys.ToList();
-        keys.Sort();
-        keys.Reverse();
-        foreach (int k in keys)
-        {
-            if (sides[side][k].Count > 0)
-                return sides[side][k];
-        }
-        throw Scribe.Error($"Side {side} is empty");
-    }
-
-    public void IncrKeys(int side)
-    {
-        Dictionary<int, List<Oper>> incrd = new();
-        foreach (int k in sides[side].Keys)
-        {
-            incrd.Add(k + 1, sides[side][k]);
-        }
-        sides[side] = incrd;
-    }
-
-    public void DecrKeys(int side)
-    {
-        Dictionary<int, List<Oper>> decrd = new();
-        foreach (int k in sides[side].Keys)
-        {
-            if (k > 0)
-                decrd.Add(k - 1, sides[side][k]);
-        }
-        sides[side] = decrd;
-    }
-
-    void InvertKeys(int side)
-    {
-        Dictionary<int, List<Oper>> inverted = new();// sides[side];
-        foreach (int k in sides[side].Keys)
-        {
-            inverted.Add(k * -1, sides[side][k]);
-        }
     }
 
     public override string ToString()

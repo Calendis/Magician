@@ -4,7 +4,7 @@ namespace Magician.Algo;
 
 public abstract class Oper
 {
-    protected string name = "DEFAULT OPERATOR";
+    protected string name;
     public string Name => name;
     protected int numArgs;
     public int NumArgs
@@ -15,13 +15,16 @@ public abstract class Oper
     //public int hasUnknownVars = 0;
     List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
+    protected int identity;
+    public int Identity => identity;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
 
     public Oper[] args;
-    protected Oper(params Oper[] cstArgs)
+    protected Oper(string name, params Oper[] cstArgs)
     {
+        this.name = name;
         numArgs = cstArgs.Length;
         args = cstArgs;
 
@@ -38,14 +41,12 @@ public abstract class Oper
         }
     }
 
-    public abstract Oper New( params Oper[] cstArgs);
-    public abstract Oper Inverse(Oper? v=null);
-
+    public abstract Oper New(params Oper[] cstArgs);
+    public abstract Oper Inverse(int argIndex);
     public virtual Variable Eval()
     {
         throw Scribe.Error("Operator is undefined");
     }
-
     public Oper DeepEval()
     {
         //foreach (Oper arg in args)
@@ -130,56 +131,12 @@ public abstract class Oper
             o.CollectOpers(ref varBasket, ref layerBasket, ref knowns, ref unknowns, counter + 1);
         }
     }
+
+    public virtual Oper Copy()
+    {
+        return New(args.Select((o, i) => o.Copy()).ToArray());
+    }
 }
-/* public static class AssociativeBlockMgr
-{
-    static Dictionary<Oper, int> assocBlockKeys = new Dictionary<Oper, int>();
-    static List<Variable[]> assocBlocks = new List<Variable[]>();
-    public Variable[] GetAssociativeBlock(Oper op)
-    {
-        // Check the cache
-        if (assocBlockKeys.ContainsKey(op))
-            return assocBlocks[assocBlockKeys[op]];
-
-        List<Variable> newAssocBlock = new();
-        List<Oper> newAssocBlockKeys = new(){op};
-
-        // Recurse down the operator tree
-        return
-
-    }
-
-    // Build a tree of those Opers which
-    public static List<Variable> CollectArgs(Oper op)
-    {
-        List<Variable> variableBasket = new();
-        if (op.args.Length == 0)
-        {
-            return variableBasket;
-        }
-
-        foreach (Oper opSub in op.args)
-        {
-            // Oper is a Variable
-            if (opSub.args.Length == 0)
-            {
-                variableBasket.Add((Variable)opSub);
-            }
-
-            // Recurse
-            if (opSub.GetType().Name == op.GetType().Name)
-            {
-                variableBasket.AddRange(CollectArgs(opSub));
-            }
-            // TODO: make sure this occurs
-            else
-            {
-                Scribe.Info($"differing opers {opSub.GetType().Name} and {op.GetType().Name} do not associate");
-            }
-        }
-        return variableBasket;
-    }
-} */
 
 public class Variable : Oper
 {
@@ -204,9 +161,8 @@ public class Variable : Oper
     {
         get => found;
     }
-    public Variable(string n) : base(new Oper[0])
+    public Variable(string n) : base(n, new Oper[0])
     {
-        name = n;
         // IMPORTANT: A variable has numArgs=1, but args.Length = 0
         //            This is the only case where these two values will not match
         numArgs = 1;
@@ -216,75 +172,38 @@ public class Variable : Oper
         Val = v;
     }
     public Variable(double v) : this($"constant({v})", v) { }
-    // public Oper Implicit() {}
 
     public override string ToString()
     {
-        return $"Variable({(found ? Val : name)})";
+        //return $"Variable({(found ? Val : name)})";
+        return found ? Val.ToString() : name;
     }
 
     public override Oper New(params Oper[] cstArgs)
-    {
-        throw Scribe.Issue("This should never occur.");
-    }
-    public override Oper Inverse(Oper? v = null)
     {
         throw Scribe.Issue("This should never occur");
     }
-}
-
-// Plus produces a sum
-public class Plus : Oper
-{
-    public Plus(params Oper[] ops) : base(ops)
+    public override Oper Inverse(int argIndex)
     {
-        name = "plus";
-        associative = true;
-        commutative = true;
+        throw Scribe.Issue("This should never occur");
     }
-    public override Variable Eval()
+
+    public override Oper Copy()
     {
-        double sum = 0;
-        foreach (Oper o in args)
+        if (!found)
         {
-            if (o is Variable v)
-            {
-                sum += v.Val;
-            }
-            else
-            {
-                sum += ((Variable)o.Eval()).Val;
-            }
-
+            return this;
         }
-        return new Variable(sum);
-    }
-    public override Minus Inverse(Oper? v=null)
-    {
-        if (v == null)
-        {
-            return new Minus(args);
-        }
-        return new Minus(new Variable(0), new Plus(args.Where(v2 => v != v2).ToArray()));
-    }
-
-    public override Oper New(params Oper[] cstArgs)
-    {
-        return new Plus(cstArgs);
-    }
-
-    public override string ToString()
-    {
-        return $"Plus({string.Join(", ", args.Select(x => x.ToString()))})";
+        return new Variable(Val);
     }
 }
 
 // Minus produces an alternating sum
-public class Minus : Oper
+public class SumDiff : Oper
 {
-    public Minus(params Oper[] ops) : base(ops)
+    public SumDiff(params Oper[] ops) : base("sumdiff", ops)
     {
-        name = "minus";
+        identity = 0;
     }
     public override Variable Eval()
     {
@@ -299,69 +218,88 @@ public class Minus : Oper
 
     public override Oper New(params Oper[] cstArgs)
     {
-        return new Minus(cstArgs);
+        return new SumDiff(cstArgs);
     }
 
-    public override Plus Inverse(Oper? v=null)
+    public override SumDiff Inverse(int argIndex)
     {
-        if (v == null)
+        SumDiff inverse = new SumDiff(args);
+        inverse.args[argIndex] = new Variable(identity);
+        if (argIndex % 2 == 0)
         {
-            return new Plus(args);
+            inverse.args = new Oper[] { new Variable(identity) }.Concat(inverse.args).ToArray();
+            inverse.numArgs = inverse.args.Length;
         }
-        //return new Plus(args[1].args.Union(args.Where(v2 => v != v2)).ToArray());
-        Plus i = new Plus(args.Where(v2 => v != v2).ToArray());
-        return i;
+        return inverse;
     }
 
     public override string ToString()
     {
-        return $"Minus({string.Join(", ", args.Select(x => x.ToString()))})";
+        string argsSigns = $"{string.Join("", args.Select((a, i) => i % 2 == 0 ? $"+{a.ToString()}" : $"-{a.ToString()}"))}";
+        return "(" + string.Join("", argsSigns.Skip(1)) + ")";
     }
 
 }
 
-public class Mult : Oper
+// Alternating reciprocal
+public class Fraction : Oper
 {
-    public Mult(params Oper[] ops) : base(ops)
+    public Fraction(params Oper[] ops) : base("fraction", ops)
     {
-        name = "mult";
-        associative = true;
-        commutative = true;
+        identity = 1;
     }
 
     public override Variable Eval()
     {
-        double prod = 1;
+        double quo = 1;
+        int count = 0;
         foreach (Variable v in args)
         {
-            prod *= v.Val;
+            quo = count++ % 2 == 0 ? quo * v.Val : quo / v.Val;
         }
-        return new Variable(prod);
+        return new Variable(quo);
     }
 
     public override Oper New(params Oper[] cstArgs)
     {
-        throw new NotImplementedException();
-    }
-    public override Oper Inverse(Oper? v = null)
-    {
-        throw Scribe.Issue("Reciprocal not yet implemented");
-    }
-}
-
-public class Polynom : Oper
-{
-    public Polynom(params double[] coefficients)
-    {
-        //
+        return new Fraction(cstArgs);
     }
 
-    public override Oper New(params Oper[] cstArgs)
+    public override Fraction Inverse(int argIndex)
     {
-        throw new NotImplementedException();
+        Fraction inverse = new Fraction(args);
+        inverse.args[argIndex] = new Variable(identity);
+        if (argIndex % 2 == 0)
+        {
+            inverse.args = new Oper[] { new Variable(identity) }.Concat(inverse.args).ToArray();
+            inverse.numArgs = inverse.args.Length;
+        }
+        return inverse;
     }
-    public override Oper Inverse(Oper? v = null)
+
+    public override string ToString()
     {
-        throw Scribe.Issue("Polynomial inversion not implemented");
+        string numerator = "";
+        string denominator = "";
+        string[] frs = new[] {numerator, denominator};
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] is Variable v)
+            {
+                if (v.Found)
+                {
+                    frs[i%2] += "*";
+                }
+            }
+            else
+            {
+                frs[i%2] += "*";
+            }
+            frs[i%2] += args[i].ToString();
+        }
+
+        return $"({frs[0].TrimStart('*')} / {frs[1].TrimStart('*')})";
+        //return $"Fraction({string.Join(", ", args.Select(x => x.ToString()))})";
     }
 }

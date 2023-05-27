@@ -7,13 +7,14 @@ public class Equation
     int unknowns;
     int isolates;
     EquationLayers layers;
-    internal EquationLayers Layers => layers;
+    EquationLayers layersBackup;
     public Oper Left => layers.leftHand[0][0];
     public Oper Right => layers.rightHand[0][0];
     public Fulcrum TheFulcrum { get; private set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
         layers = new(o0, o1);
+        layersBackup = new(o0.Copy(), o1.Copy());
         TheFulcrum = f;
     }
 
@@ -49,14 +50,15 @@ public class Equation
             varOnLeft = layers.HoldsLeft(v);
             varOnRight = layers.HoldsRight(v);
             List<Oper> currentExpressionLayer = layers.sides[chosenSide][0];//layers.OuterLayer(chosenSide);
-            Oper currentExpression = currentExpressionLayer[0];
+            Oper outerExpression = currentExpressionLayer[0];
+            Scribe.Info($"Saw: {outerExpression}");
             if (varOnLeft ^ varOnRight)
             {
                 if (currentExpressionLayer.Count == 1)
                 {
-                    if (currentExpression is Variable v_ && v_ == v)
+                    if (outerExpression is Variable v_ && v_ == v)
                     {
-                        Console.WriteLine("solved!");
+                        Scribe.Info("solved!");
                         //solved = true;
                         break;
                     }
@@ -68,24 +70,26 @@ public class Equation
             if (currentExpressionLayer.Count != 1)
             {
                 Scribe.Warn(currentExpressionLayer[1]);
-                throw Scribe.Issue($"Outer expression {currentExpression} not strictly above other members");
+                throw Scribe.Issue($"Outer expression {outerExpression} not strictly above other members");
             }
-            if (currentExpression.args.Length < 1)
+            if (outerExpression.args.Length < 1)
             {
-                throw Scribe.Issue($"Erroneously isolated {currentExpression}");
+                throw Scribe.Issue($"Erroneously isolated {outerExpression}");
                 //break;
             }
             // Iterate through args and invert based on args
             int directMatches = 0;
             int indirectMatches = 0;
             int liveBranchIndex = -1;
-            for (int i = 0; i < currentExpression.NumArgs; i++)
+            int directMatchIndex = -1;
+            for (int i = 0; i < outerExpression.NumArgs; i++)
             {
-                Oper o = currentExpression.args[i];
+                Oper o = outerExpression.args[i];
                 // Count how many times the expression contains our variable
                 if (o is Variable v_ && v_ == v)
                 {
                     directMatches++;
+                    directMatchIndex = i;
                 }
                 else if (o.Contains(v))
                 {
@@ -93,46 +97,53 @@ public class Equation
                     liveBranchIndex = i;
                 }
             }
+            if (directMatches + indirectMatches == 0)
+            {
+                Scribe.Info("solved!2");
+                break;
+            }
             // One total match
-            if (directMatches + indirectMatches == 1)
+            else if (directMatches + indirectMatches == 1)
             {
                 // invert around the chosen variable
                 // shed the outer layer, leaving the current layer as the new layer 0 for the current side
                 // that variable will be the only member of the current layer
                 // another layer will be added (new layer 0) to the other side
                 // the new layer 1 (old layer 0) will have the removed Opers appended
-                Oper axis = directMatches == 1 ? v : currentExpression.args[liveBranchIndex];
-                //Scribe.Info($"Inverting {currentExpression} around {axis}...");
 
-                // Shed, and do the same to the other side
-                layers.IncrKeys(1 - chosenSide);
-                layers.sides[1 - chosenSide].Add(0, new() { currentExpression.Inverse(axis) });
-
-                // The shed actually occurs here
-                layers.DecrKeys(chosenSide);
-                currentExpressionLayer = layers.OuterLayer(chosenSide);
-                List<Oper> shedArgs = new();
-                if (layers.sides[chosenSide].Count > 0)
+                Oper inverse;
+                Oper newLeftRoot;
+                if (directMatches == 1)
                 {
-                    shedArgs = currentExpressionLayer.Except(
-                        currentExpressionLayer.Where(v2 => v2 == axis)
-                    ).ToList();
-                    //
-                    layers.sides[chosenSide][0] = currentExpressionLayer.Where(v2 => v2 == axis).ToList();
+                    inverse = outerExpression.Inverse(directMatchIndex);
+                    newLeftRoot = layers.sides[chosenSide][1][directMatchIndex];
+                }
+                else
+                {
+                    inverse = outerExpression.Inverse(liveBranchIndex);
+                    newLeftRoot = layers.sides[chosenSide][1][liveBranchIndex];
+                }
+                Scribe.Info($"Inverted to: {inverse}");
+                Oper newRightRoot;
+                Scribe.Info($"Current off hand is {layers.sides[1 - chosenSide][0][0]}");
+                Scribe.Info($"Now we can combine the current off hand with the inverted expression");
+                Oper[] nRRArgs = inverse.args.Concat(new Oper[]{layers.sides[1-chosenSide][0][0]}).ToArray();
+                newRightRoot = inverse.New(nRRArgs);
+                Scribe.Info($"Created {newRightRoot}, with {newRightRoot.NumArgs} args");
 
-                    //List<Oper> newOuter = currentExpressionLayer.Where(v2 => v2 == axis).ToList<Oper>();
-                    //newOuter.AddRange(layers.sides[chosenSide][0].Skip(1));
-                    //layers.sides[chosenSide][0] = newOuter;
+                if (inverse.args.Length % 2 != 0)
+                {
+                    newRightRoot = inverse.New(inverse.args.Concat(new Oper[] { new Variable(inverse.Identity) }).Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
+                }
+                else
+                {
+                    newRightRoot = inverse.New(inverse.args.Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
                 }
 
-                // After inversion, we need to manually add the shed arguments to layer 1 of the opposite side
-                layers.sides[1 - chosenSide][1].AddRange(shedArgs);
-                layers.sides[1 - chosenSide][0][0].args = layers.sides[1 - chosenSide][0][0].args.ToList().Concat(shedArgs).ToArray();
 
-                // We also need to correct the numargs of the new layer 0
-                layers.sides[1-chosenSide][0][0].NumArgs = layers.sides[1 - chosenSide][0][0].args.Length;
-                layers.sides[1-chosenSide][0][0].NumArgs = layers.sides[1 - chosenSide][1].Count;
-                
+                layers = new(newLeftRoot, newRightRoot);
+                Scribe.Info($"Solve step: {newLeftRoot} = {newRightRoot}");
+
             }
             // Multiple direct matches
             else if (indirectMatches == 0)
@@ -149,10 +160,11 @@ public class Equation
             {
                 throw Scribe.Issue("Multiple matches not implemented");
             }
-            //Scribe.Info($"Solve step: \n{layers.RewrittenRewrittenBuild()}");
         }
-        Equation solved = layers.RewrittenRewrittenBuild();
-        layers = layers = new(solved.Left, solved.Right);
+        Equation solved = layers.Build();
+
+        // Revert
+        //layers = layersBackup;
         return solved;
     }
 
