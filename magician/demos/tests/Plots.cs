@@ -18,7 +18,7 @@ public class Plots : Spell
         Oper rhs = new Fraction(N(3), N(1), Let("z"));
         Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
 
-        Scribe.Info($"Original equation: {e}");
+        Scribe.Info($"thisisatestOriginal equation: {e}");
 
         //Scribe.Info("Solving for x...");
         //Equation sx = e.Solve(Let("x"));
