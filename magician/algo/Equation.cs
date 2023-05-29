@@ -52,20 +52,17 @@ public class Equation
             varOnRight = layers.HoldsRight(v);
             List<Oper> currentExpressionLayer = layers.sides[chosenSide][0];//layers.OuterLayer(chosenSide);
             Oper outerExpression = currentExpressionLayer[0];
-            Scribe.Info($"Saw: {outerExpression}");
             if (varOnLeft ^ varOnRight)
             {
                 if (currentExpressionLayer.Count == 1)
                 {
                     if (outerExpression is Variable v_ && v_ == v)
                     {
-                        Scribe.Info("solved!");
-                        //solved = true;
+                        //Scribe.Info("solved!");
                         break;
                     }
                 }
             }
-            Scribe.Info($"left: {varOnLeft}, right: {varOnRight}");
 
             // Iterate through each Oper in the current layer
             // The outer layer should always contain only one Oper
