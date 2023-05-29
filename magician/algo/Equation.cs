@@ -41,6 +41,7 @@ public class Equation
         //bool solved = false;
         //Dictionary<int, List<Oper>> hand = layers.sides[chosenSide];
         //Dictionary<int, List<Oper>> offHand = layers.sides[chosenSide];
+        Equation? solved = null;
         while (true)
         {
             // Check to see if the equation is solved
@@ -64,6 +65,7 @@ public class Equation
                     }
                 }
             }
+            Scribe.Info($"left: {varOnLeft}, right: {varOnRight}");
 
             // Iterate through each Oper in the current layer
             // The outer layer should always contain only one Oper
@@ -75,7 +77,6 @@ public class Equation
             if (outerExpression.args.Length < 1)
             {
                 throw Scribe.Issue($"Erroneously isolated {outerExpression}");
-                //break;
             }
             // Iterate through args and invert based on args
             int directMatches = 0;
@@ -99,8 +100,7 @@ public class Equation
             }
             if (directMatches + indirectMatches == 0)
             {
-                Scribe.Info("solved!2");
-                break;
+                throw Scribe.Issue("No matches found, likely solved on the wrong side");
             }
             // One total match
             else if (directMatches + indirectMatches == 1)
@@ -112,37 +112,45 @@ public class Equation
                 // the new layer 1 (old layer 0) will have the removed Opers appended
 
                 Oper inverse;
-                Oper newLeftRoot;
+                Oper newChosenSideRoot;
                 if (directMatches == 1)
                 {
                     inverse = outerExpression.Inverse(directMatchIndex);
-                    newLeftRoot = layers.sides[chosenSide][1][directMatchIndex];
+                    newChosenSideRoot = layers.sides[chosenSide][1][directMatchIndex];
                 }
                 else
                 {
                     inverse = outerExpression.Inverse(liveBranchIndex);
-                    newLeftRoot = layers.sides[chosenSide][1][liveBranchIndex];
+                    newChosenSideRoot = layers.sides[chosenSide][1][liveBranchIndex];
                 }
-                Scribe.Info($"Inverted to: {inverse}");
-                Oper newRightRoot;
-                Scribe.Info($"Current off hand is {layers.sides[1 - chosenSide][0][0]}");
-                Scribe.Info($"Now we can combine the current off hand with the inverted expression");
-                Oper[] nRRArgs = inverse.args.Concat(new Oper[]{layers.sides[1-chosenSide][0][0]}).ToArray();
-                newRightRoot = inverse.New(nRRArgs);
-                Scribe.Info($"Created {newRightRoot}, with {newRightRoot.NumArgs} args");
-
-                if (inverse.args.Length % 2 != 0)
+                bool needsExtraInvert = false;
+                if (Math.Max(directMatchIndex, liveBranchIndex) % 2 != 0)
                 {
-                    newRightRoot = inverse.New(inverse.args.Concat(new Oper[] { new Variable(inverse.Identity) }).Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
+                    needsExtraInvert = true;
+                }
+                if (inverse.NumArgs % 2 != 0)
+                {
+                    inverse.AppendIdentity();
+                }
+
+                Oper newOffHandRoot;
+                newOffHandRoot = inverse.New(inverse.args.Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
+                if (needsExtraInvert)
+                {
+                    newOffHandRoot.PushIdentity();
+                }
+
+                if (chosenSide == 0)
+                {
+                    layers = new(newChosenSideRoot, newOffHandRoot);
+                    solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();
                 }
                 else
                 {
-                    newRightRoot = inverse.New(inverse.args.Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
+                    layers = new(newOffHandRoot, newChosenSideRoot);
+                    solved = new EquationLayers(newOffHandRoot, newChosenSideRoot).Build();
                 }
-
-
-                layers = new(newLeftRoot, newRightRoot);
-                Scribe.Info($"Solve step: {newLeftRoot} = {newRightRoot}");
+                Scribe.Info($"Solve step: {newChosenSideRoot} = {newOffHandRoot}");
 
             }
             // Multiple direct matches
@@ -161,10 +169,14 @@ public class Equation
                 throw Scribe.Issue("Multiple matches not implemented");
             }
         }
-        Equation solved = layers.Build();
+        //Equation solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();//layers.Build();
 
         // Revert
-        //layers = layersBackup;
+        layers = layersBackup;
+        if (solved == null)
+        {
+            throw Scribe.Error("Could not solve");
+        }
         return solved;
     }
 

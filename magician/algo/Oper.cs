@@ -61,6 +61,18 @@ public abstract class Oper
         return this;
     }
 
+    public void PushIdentity()
+    {
+        args = new Oper[]{new Variable(identity)}.Concat(args).ToArray();
+        numArgs = args.Length;
+    }
+
+    public void AppendIdentity()
+    {
+        args = args.Concat(new Oper[]{new Variable(identity)}).ToArray();
+        numArgs = args.Length;
+    }
+
     public virtual void Commute(int arg0, int arg1)
     {
         if (!commutative)
@@ -175,7 +187,6 @@ public class Variable : Oper
 
     public override string ToString()
     {
-        //return $"Variable({(found ? Val : name)})";
         return found ? Val.ToString() : name;
     }
 
@@ -218,18 +229,14 @@ public class SumDiff : Oper
 
     public override Oper New(params Oper[] cstArgs)
     {
-        return new SumDiff(cstArgs);
+        return new SumDiff(cstArgs.Select(a => a.Copy()).ToArray());
     }
 
     public override SumDiff Inverse(int argIndex)
     {
         SumDiff inverse = new SumDiff(args);
         inverse.args[argIndex] = new Variable(identity);
-        if (argIndex % 2 == 0)
-        {
-            inverse.args = new Oper[] { new Variable(identity) }.Concat(inverse.args).ToArray();
-            inverse.numArgs = inverse.args.Length;
-        }
+        inverse.PushIdentity();
         return inverse;
     }
 
@@ -262,18 +269,14 @@ public class Fraction : Oper
 
     public override Oper New(params Oper[] cstArgs)
     {
-        return new Fraction(cstArgs);
+        return new Fraction(cstArgs.Select(a => a.Copy()).ToArray());
     }
 
     public override Fraction Inverse(int argIndex)
     {
         Fraction inverse = new Fraction(args);
         inverse.args[argIndex] = new Variable(identity);
-        if (argIndex % 2 == 0)
-        {
-            inverse.args = new Oper[] { new Variable(identity) }.Concat(inverse.args).ToArray();
-            inverse.numArgs = inverse.args.Length;
-        }
+        inverse.PushIdentity();
         return inverse;
     }
 
@@ -281,7 +284,7 @@ public class Fraction : Oper
     {
         string numerator = "";
         string denominator = "";
-        string[] frs = new[] {numerator, denominator};
+        string[] frs = new[] { numerator, denominator };
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -289,14 +292,14 @@ public class Fraction : Oper
             {
                 if (v.Found)
                 {
-                    frs[i%2] += "*";
+                    frs[i % 2] += "*";
                 }
             }
             else
             {
-                frs[i%2] += "*";
+                frs[i % 2] += "*";
             }
-            frs[i%2] += args[i].ToString();
+            frs[i % 2] += args[i].ToString();
         }
 
         return $"({frs[0].TrimStart('*')} / {frs[1].TrimStart('*')})";
