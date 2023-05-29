@@ -54,8 +54,7 @@ internal class EquationLayers
         sides = new[] { leftHand, rightHand };
     }
 
-    // Re-create the equation from the layer dictionaries
-    // TODO: rewrite this, as it doesn't work
+    /*    
     public Equation Build()
     {
         // Debug.Assert(fulcrum == Equation.Fulcrum.EQUALS);
@@ -82,6 +81,7 @@ internal class EquationLayers
         }
         return (oper.New(args.ToArray()), offset);
     }
+    */
 
     public bool HoldsLeft(Variable v)
     {

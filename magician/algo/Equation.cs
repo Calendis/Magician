@@ -131,7 +131,7 @@ public class Equation
                 }
 
                 Oper newOffHandRoot;
-                newOffHandRoot = inverse.New(inverse.args.Concat(new Oper[]{layers.sides[1 - chosenSide][0][0]}).ToArray());
+                newOffHandRoot = inverse.New(inverse.args.Concat(new Oper[] { layers.sides[1 - chosenSide][0][0] }).ToArray());
                 if (needsExtraInvert)
                 {
                     newOffHandRoot.PushIdentity();
@@ -140,14 +140,14 @@ public class Equation
                 if (chosenSide == 0)
                 {
                     layers = new(newChosenSideRoot, newOffHandRoot);
-                    solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();
+                    //solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();
                 }
                 else
                 {
                     layers = new(newOffHandRoot, newChosenSideRoot);
-                    solved = new EquationLayers(newOffHandRoot, newChosenSideRoot).Build();
                 }
                 Scribe.Info($"Solve step: {newChosenSideRoot} = {newOffHandRoot}");
+                solved = new Equation(newChosenSideRoot, TheFulcrum, newOffHandRoot);
 
             }
             // Multiple direct matches
@@ -166,7 +166,7 @@ public class Equation
                 throw Scribe.Issue("Multiple matches not implemented");
             }
         }
-        //Equation solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();//layers.Build();
+        //solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();//layers.Build();
 
         // Revert
         layers = layersBackup;
