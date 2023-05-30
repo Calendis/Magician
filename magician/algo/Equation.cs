@@ -166,13 +166,13 @@ public class Equation
                 throw Scribe.Issue("Multiple matches not implemented");
             }
         }
-        //solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();//layers.Build();
 
         // Revert
         layers = layersBackup;
+        layersBackup = new(layersBackup.leftHand[0][0].Copy(), layersBackup.rightHand[0][0].Copy());
         if (solved == null)
         {
-            throw Scribe.Error("Could not solve");
+            throw Scribe.Error($"Could not even begin to solve {this}");
         }
         return solved;
     }

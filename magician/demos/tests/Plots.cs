@@ -17,20 +17,24 @@ public class Plots : Spell
         Oper lhs = new Fraction(new SumDiff(Let("x"), N(0), N(1)), new SumDiff(N(4), Let("y")));
         Oper rhs = new Fraction(N(3), N(1), Let("z"));
         Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
-
         Scribe.Info($"Original equation: {e}");
 
-        //Scribe.Info("Solving for x...");
-        //Equation sx = e.Solve(Let("x"));
-        //Scribe.Info(sx);
 
-        //Scribe.Info("\nSolving for y...");
-        //Equation sy = e.Solve(Let("y"));
-        //Scribe.Info($"\nSolved for y: {sy}");
+        Scribe.Info("Solving for x...");
+        Equation sx = e.Solve(Let("x"));
+        Scribe.Info(sx);
+        Scribe.Info($"Equation after x: {e}");
 
+        Scribe.Info("Solving for y...");
+        Equation sy = e.Solve(Let("y"));
+        Scribe.Info(sy);
+        Scribe.Info($"Equation after y: {e}");
+
+        Scribe.Info($"Original equation: {e}");
         Scribe.Info("Solving for z...");
         Equation sz = e.Solve(Let("z"));
         Scribe.Info(sz);
+        Scribe.Info($"Equation after z: {e}");
 
         //Oper lhs2 = new SumDiff(Let("x"), N(0), N(3));
         //Oper rhs2 = new Fraction(N(2), Let("y"));
