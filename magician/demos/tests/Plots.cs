@@ -30,7 +30,6 @@ public class Plots : Spell
         Scribe.Info(sy);
         Scribe.Info($"Equation after y: {e}");
 
-        Scribe.Info($"Original equation: {e}");
         Scribe.Info("Solving for z...");
         Equation sz = e.Solve(Let("z"));
         Scribe.Info(sz);
