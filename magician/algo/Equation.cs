@@ -134,7 +134,7 @@ public class Equation
                 newOffHandRoot = inverse.New(inverse.args.Concat(new Oper[] { layers.sides[1 - chosenSide][0][0] }).ToArray());
                 if (needsExtraInvert)
                 {
-                    newOffHandRoot.PushIdentity();
+                    newOffHandRoot.PrependIdentity();
                 }
 
                 if (chosenSide == 0)
@@ -146,7 +146,7 @@ public class Equation
                 {
                     layers = new(newOffHandRoot, newChosenSideRoot);
                 }
-                Scribe.Info($"Solve step: {newChosenSideRoot} = {newOffHandRoot}");
+                //Scribe.Info($"Solve step: {newChosenSideRoot} = {newOffHandRoot}");
                 solved = new Equation(newChosenSideRoot, TheFulcrum, newOffHandRoot);
 
             }
