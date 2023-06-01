@@ -15,7 +15,7 @@ internal class EquationLayers
     public int symbolsLeft;
     public int symbolsRight;
     public List<Variable> vars = new();
-    public EquationLayers(Oper o0, Oper o1)
+    public EquationLayers(Oper o0, Oper o1, Variable[]? unknownVars=null)
     {
         sides = new Dictionary<int, List<Oper>>[2];
         sides[0] = new(); sides[1] = new();
@@ -53,35 +53,6 @@ internal class EquationLayers
         }
         sides = new[] { leftHand, rightHand };
     }
-
-    /*    
-    public Equation Build()
-    {
-        // Debug.Assert(fulcrum == Equation.Fulcrum.EQUALS);
-        (Oper lhs, int _) = BuildInner(hand: 0, layer: 0, index: 0, offset: 0);
-        (Oper rhs, int _) = BuildInner(hand: 1, layer: 0, index: 0, offset: 0);
-        return new Equation(lhs, Equation.Fulcrum.EQUALS, rhs);
-    }
-
-    public (Oper, int) BuildInner(int hand, int layer, int index, int offset)
-    {
-        List<Oper> currentLayer = sides[hand][layer];
-        Oper oper = currentLayer[index];
-        List<Oper> args = new();
-        if (oper is Variable v)
-        {
-            return (v, 0);
-        }
-
-        for (int argIndex = 0; argIndex < oper.NumArgs; argIndex++)
-        {
-            (Oper arg, int consumed) = BuildInner(hand: hand, layer: layer + 1, index: argIndex, offset: offset);
-            offset += consumed;
-            args.Add(arg);
-        }
-        return (oper.New(args.ToArray()), offset);
-    }
-    */
 
     public bool HoldsLeft(Variable v)
     {

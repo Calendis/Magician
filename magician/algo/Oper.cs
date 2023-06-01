@@ -12,11 +12,9 @@ public abstract class Oper
         get => numArgs;
         set => numArgs = value;
     }
-    //public int hasUnknownVars = 0;
-    List<Variable> eventuallyContains = new();
+    public List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
-    protected int identity;
-    public int Identity => identity;
+    protected int identity = -999;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
@@ -43,33 +41,28 @@ public abstract class Oper
 
     public abstract Oper New(params Oper[] cstArgs);
     public abstract Oper Inverse(int argIndex);
-    public virtual Variable Eval()
+    public abstract Variable Eval();
+    public virtual Oper Optimized()
     {
-        throw Scribe.Error("Operator is undefined");
-    }
-    public Oper DeepEval()
-    {
-        //foreach (Oper arg in args)
-        for (int i = 0; i < args.Length; i++)
+        int counter = 0;
+        List<Oper> newArgs = new();
+        foreach (Oper o in args)
         {
-            Oper arg = args[i];
-            // Assume this variable is defined
-            Oper o_ = arg is Variable v ? v.Eval() : arg.DeepEval();
-            args[i] = o_;
+            args[counter] = o.Optimized();
+            counter++;
         }
-        //
         return this;
     }
 
-    public void PushIdentity()
+    public void PrependIdentity()
     {
-        args = new Oper[]{new Variable(identity)}.Concat(args).ToArray();
+        args = new Oper[] { new Variable(identity) }.Concat(args).ToArray();
         numArgs = args.Length;
     }
 
     public void AppendIdentity()
     {
-        args = args.Concat(new Oper[]{new Variable(identity)}).ToArray();
+        args = args.Concat(new Oper[] { new Variable(identity) }).ToArray();
         numArgs = args.Length;
     }
 
@@ -153,18 +146,18 @@ public abstract class Oper
 public class Variable : Oper
 {
     public bool found = false;
-    Quantity foundVal = new Quantity(0);
+    Quantity q = new Quantity(0);
     public double Val
     {
         get
         {
             if (!found)
-                throw Scribe.Error($"Variable {name} is undefined");
-            return foundVal.Evaluate();
+                throw Scribe.Error($"Variable {name} is unknown");
+            return q.Evaluate();
         }
         set
         {
-            foundVal.Set(value);
+            q.Set(value);
             found = true;
         }
     }
@@ -173,6 +166,11 @@ public class Variable : Oper
     {
         get => found;
     }
+    public void Reset()
+    {
+        found = false;
+    }
+
     public Variable(string n) : base(n, new Oper[0])
     {
         // IMPORTANT: A variable has numArgs=1, but args.Length = 0
@@ -185,20 +183,6 @@ public class Variable : Oper
     }
     public Variable(double v) : this($"constant({v})", v) { }
 
-    public override string ToString()
-    {
-        return found ? Val.ToString() : name;
-    }
-
-    public override Oper New(params Oper[] cstArgs)
-    {
-        throw Scribe.Issue("This should never occur");
-    }
-    public override Oper Inverse(int argIndex)
-    {
-        throw Scribe.Issue("This should never occur");
-    }
-
     public override Oper Copy()
     {
         if (!found)
@@ -207,6 +191,25 @@ public class Variable : Oper
         }
         return new Variable(Val);
     }
+    public override string ToString()
+    {
+        return found ? Val.ToString() : name;
+    }
+
+    /* This is good design */
+    public override Oper New(params Oper[] cstArgs)
+    {
+        throw Scribe.Issue("This should never occur");
+    }
+    public override Oper Inverse(int argIndex)
+    {
+        throw Scribe.Issue("This should never occur");
+    }
+    public override Variable Eval()
+    {
+        throw Scribe.Issue("This should never occur");
+    }
+
 }
 
 // Minus produces an alternating sum
@@ -220,14 +223,22 @@ public class SumDiff : Oper
     {
         double alternSum = 0;
         int count = 0;
-        foreach (Variable v in args)
+        foreach (Oper o in args)
         {
-            alternSum += v.Val * count++ % 2 == 0 ? 1 : -1;
+            if (o is Variable v)
+            {
+                alternSum += v.Val * ((count % 2 == 0) ? 1 : -1);
+            }
+            else
+            {
+                alternSum += o.Eval().Val * ((count % 2 == 0) ? 1 : -1);
+            }
+            count++;
         }
         return new Variable(alternSum);
     }
 
-    public override Oper New(params Oper[] cstArgs)
+    public override SumDiff New(params Oper[] cstArgs)
     {
         return new SumDiff(cstArgs.Select(a => a.Copy()).ToArray());
     }
@@ -236,8 +247,107 @@ public class SumDiff : Oper
     {
         SumDiff inverse = new SumDiff(args);
         inverse.args[argIndex] = new Variable(identity);
-        inverse.PushIdentity();
+        inverse.PrependIdentity();
         return inverse;
+    }
+
+    public override SumDiff Optimized()
+    {
+        // A sumdiff can always be expressed with a maximum of 2+n arguments, where n is the number of unknowns
+        double total = 0;
+        int counter = 0;
+        Dictionary<Oper, int> unknownsAndOpers = new();
+        foreach (Oper o in args)
+        {
+            if (o is Variable v)
+            {
+                if (v.Found)
+                {
+                    total += v.Val * ((counter % 2 == 0) ? 1 : -1);
+                }
+                else
+                {
+                    if (unknownsAndOpers.Keys.Contains(v))
+                    {
+                        unknownsAndOpers[v] += counter % 2 == 0 ? 1 : -1;
+                    }
+                    else
+                    {
+                        unknownsAndOpers.Add(v, counter % 2 == 0 ? 1 : -1);
+                    }
+                }
+            }
+            else
+            {
+                unknownsAndOpers.Add(o, counter % 2 == 0 ? 1 : -1);
+            }
+            counter++;
+        }
+        List<Oper> positiveTerms = new();
+        List<Oper> negativeTerms = new();
+        if (total < 0)
+        {
+            negativeTerms.Add(new Variable(-total));
+        }
+        else if (total > 0)
+        {
+            positiveTerms.Add(new Variable(total));
+        }
+
+        foreach ((Oper o, int i) in unknownsAndOpers)
+        {
+            Oper newOper;
+            int absI = Math.Abs(i);
+            if (absI == 0)
+            {
+                continue;
+            }
+            if (absI != 1)
+            {
+                newOper = new Fraction(new Variable(absI), new Variable(1), o);
+            }
+            else
+            {
+                newOper = o;
+            }
+            if (i < 0)
+            {
+                negativeTerms.Add(newOper);
+            }
+            else if (i > 0)
+            {
+                positiveTerms.Add(newOper);
+            }
+        }
+
+        int imbalance = positiveTerms.Count - negativeTerms.Count;
+        for (int i = 0; i < Math.Abs(imbalance); i++)
+        {
+            if (imbalance < 0)
+            {
+                positiveTerms.Add(new Variable(identity));
+            }
+            else
+            {
+                negativeTerms.Add(new Variable(identity));
+            }
+        }
+        if (positiveTerms.Count != negativeTerms.Count)
+        {
+            throw Scribe.Issue("we broke it");
+        }
+        List<Oper> newArgs = new();
+        foreach((Oper pos, Oper neg) in Enumerable.Zip(positiveTerms, negativeTerms))
+        {
+            newArgs.Add(pos);
+            newArgs.Add(neg);
+        }
+        while (newArgs.Last() is Variable v_ && v_.Found && v_.Val == identity)
+        {
+            newArgs.RemoveAt(newArgs.Count-1);
+        }
+
+        return New(newArgs.ToArray());
     }
 
     public override string ToString()
@@ -260,9 +370,17 @@ public class Fraction : Oper
     {
         double quo = 1;
         int count = 0;
-        foreach (Variable v in args)
+        foreach (Oper o in args)
         {
-            quo = count++ % 2 == 0 ? quo * v.Val : quo / v.Val;
+            if (o is Variable v)
+            {
+                quo = count % 2 == 0 ? quo * v.Val : quo / v.Val;
+            }
+            else
+            {
+                quo = count % 2 == 0 ? quo*o.Eval().Val : quo / o.Eval().Val;
+            }
+            count++;
         }
         return new Variable(quo);
     }
@@ -276,7 +394,7 @@ public class Fraction : Oper
     {
         Fraction inverse = new Fraction(args);
         inverse.args[argIndex] = new Variable(identity);
-        inverse.PushIdentity();
+        inverse.PrependIdentity();
         return inverse;
     }
 

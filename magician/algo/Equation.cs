@@ -3,19 +3,31 @@ namespace Magician.Algo;
 // Re-write of IMap
 public class Equation
 {
-    int knowns;
-    int unknowns;
-    int isolates;
+    int noUnknowns;
+    public Variable[] unknowns;
     EquationLayers layers;
     EquationLayers layersBackup;
-    public Oper Left => layers.leftHand[0][0];
-    public Oper Right => layers.rightHand[0][0];
     public Fulcrum TheFulcrum { get; private set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
-        layers = new(o0, o1);
-        layersBackup = new(o0.Copy(), o1.Copy());
+        Oper opt0 = o0.Optimized();
         TheFulcrum = f;
+        Oper opt1 = o1.Optimized();
+
+        layers = new(opt0, opt1);
+        layersBackup = new(opt0.Copy(), opt1.Copy());
+        List<Variable> isolates = new();
+        if (opt0 is Variable v && !v.Found)
+        {
+            isolates.Add(v);
+        }
+        if (opt1 is Variable v2 && !v2.Found)
+        {
+            isolates.Add(v2);
+        }
+
+        unknowns = opt0.eventuallyContains.Concat(opt1.eventuallyContains).Union(isolates).ToArray();
+        noUnknowns = unknowns.Length;
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
@@ -38,9 +50,6 @@ public class Equation
         else
             chosenSide = varOnRight ? 1 : 0;
 
-        //bool solved = false;
-        //Dictionary<int, List<Oper>> hand = layers.sides[chosenSide];
-        //Dictionary<int, List<Oper>> offHand = layers.sides[chosenSide];
         Equation? solved = null;
         while (true)
         {
@@ -140,7 +149,6 @@ public class Equation
                 if (chosenSide == 0)
                 {
                     layers = new(newChosenSideRoot, newOffHandRoot);
-                    //solved = new EquationLayers(newChosenSideRoot, newOffHandRoot).Build();
                 }
                 else
                 {
@@ -153,7 +161,17 @@ public class Equation
             // Multiple direct matches
             else if (indirectMatches == 0)
             {
-                throw Scribe.Issue("Multiple matches not implemented");
+                 //layers.sides[chosenSide][0][0] = layers.sides[chosenSide][0][0].Optimized();
+                 //if (chosenSide == 0)
+                 //{
+                 //   layers = new(layers.sides[chosenSide][0][0].Optimized(), layers.sides[1-chosenSide][0][0]);
+                 //}
+                 //else
+                 //{
+                 //   layers = new(layers.sides[1-chosenSide][0][0], layers.sides[chosenSide][0][0].Optimized());
+                 //}
+                 //continue;
+                 throw Scribe.Issue("Multiple matches not implemented");
             }
             // Multiple indirect matches
             else if (directMatches == 0)
@@ -177,14 +195,43 @@ public class Equation
         return solved;
     }
 
-    public void Evaluate()
+    public double Evaluate(Variable v, params double[] vals)
     {
-        //
+        if (vals.Length != noUnknowns-1)
+        {
+            throw Scribe.Error($"Equation expected {noUnknowns-1} arguments, got {vals.Length}");
+        }
+        int counter = 0;
+        List<Variable> knowns = unknowns.ToList();
+        knowns.Remove(v);
+        foreach (Variable x in knowns)
+        {
+            x.Val = vals[counter++];
+        }
+
+        // Find the side we're evaluating
+        Oper solvedSide;
+        if (v == layers.leftHand[0][0])
+        {
+            solvedSide = layers.rightHand[0][0];
+        }
+        else if (v == layers.rightHand[0][0])
+        {
+            solvedSide = layers.leftHand[0][0];
+        }
+        else
+        {
+            throw Scribe.Error($"Equation {this} has not been solved for {v}");
+        }
+
+        double result = solvedSide.Eval().Val;
+        Array.ForEach(unknowns, v => v.Reset());
+        return result;
     }
 
     public Multi Plot(AxisSpecifier[] outs)
     {
-        if (outs.Length >= unknowns)
+        if (outs.Length >= noUnknowns)
         {
             throw Scribe.Error("TODO: write this error msg");
         }
@@ -212,7 +259,7 @@ public class Equation
                 fulcrumString = ">=";
                 break;
         }
-        return $"{Left} {fulcrumString} {Right}";
+        return $"{layers.leftHand[0][0]} {fulcrumString} {layers.rightHand[0][0]}";
     }
 
     /* public string Say()
