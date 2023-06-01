@@ -1,7 +1,7 @@
 using System;
 
 namespace Magician;
-public class Brush : ParametricMap
+public class Brush : IOMap
 {
     public Brush(IMap im0, IMap im1) : base(im0, im1)
     {

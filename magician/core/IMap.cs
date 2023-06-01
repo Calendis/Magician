@@ -4,6 +4,7 @@ using static Magician.Geo.Create;
 namespace Magician;
 public interface IMap
 {
+    // Used for absolute driving
     public abstract bool IsAbs { get; set; }
     public abstract double Evaluate(double x = 0);
 
@@ -160,7 +161,7 @@ public class CustomMap : IMap
 
 // IMap with an arbitrary amount of input and output dimensions
 // TODO: Maybe IMaps should implement IOMap, not the other way around
-public class ParametricMap : IMap
+public class IOMap : IMap
 {
     // Functionality
     List<IMap> imaps = new List<IMap>();
@@ -170,12 +171,12 @@ public class ParametricMap : IMap
     // Dimensionality
     public int Outs { get; set; }
 
-    public ParametricMap(params IMap[] outs)
+    public IOMap(params IMap[] outs)
     {
         imaps.AddRange(outs);
         Outs = imaps.Count;
     }
-    public ParametricMap(params Func<double, double>[] outs)
+    public IOMap(params Func<double, double>[] outs)
     {
         foreach (Func<double, double> f in outs)
         {
@@ -243,7 +244,6 @@ public class ParametricMap : IMap
             _SDLTexture txr = tx.Render();
 
             Multi tmp = new Multi().Textured(txr).Tagged(msg.Substring(j, 1));
-            //tmp.parent=m;
             double[] out0 = new double[2];
             out0[0] = imaps[0].Evaluate(i);
             out0[1] = imaps[1].Evaluate(i);
@@ -256,7 +256,7 @@ public class ParametricMap : IMap
         return m.WithFlags(DrawMode.INVISIBLE);
     }
 
-    public ParametricMap Paired(int[][] pairs)
+    public IOMap Paired(int[][] pairs)
     {
         this.pairs = pairs;
         return this;

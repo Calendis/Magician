@@ -6,7 +6,7 @@ public class Spinner10K : Spell
 {
     public override void PreLoop()
     {
-        Origin["sqs"] = (new ParametricMap(x => x % 1000, y => 20 * Math.Floor(y / 1000))
+        Origin["sqs"] = (new IOMap(x => x % 1000, y => 20 * Math.Floor(y / 1000))
         .MultisAlong(0, 20000, 20, Create.RegularPolygon(4, 10))
         );
         Origin["sqs"].Sub(d => d.Sub(m => m

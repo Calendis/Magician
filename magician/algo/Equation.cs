@@ -1,6 +1,6 @@
 namespace Magician.Algo;
+using static Magician.Geo.Create;
 
-// Re-write of IMap
 public class Equation
 {
     int noUnknowns;
@@ -68,6 +68,10 @@ public class Equation
                     if (outerExpression is Variable v_ && v_ == v)
                     {
                         //Scribe.Info("solved!");
+                        if (solved == null)
+                        {
+                            solved = new Equation(layers.sides[chosenSide][0][0], TheFulcrum, layers.sides[1-chosenSide][0][0]);
+                        }
                         break;
                     }
                 }
@@ -161,17 +165,17 @@ public class Equation
             // Multiple direct matches
             else if (indirectMatches == 0)
             {
-                 //layers.sides[chosenSide][0][0] = layers.sides[chosenSide][0][0].Optimized();
-                 //if (chosenSide == 0)
-                 //{
-                 //   layers = new(layers.sides[chosenSide][0][0].Optimized(), layers.sides[1-chosenSide][0][0]);
-                 //}
-                 //else
-                 //{
-                 //   layers = new(layers.sides[1-chosenSide][0][0], layers.sides[chosenSide][0][0].Optimized());
-                 //}
-                 //continue;
-                 throw Scribe.Issue("Multiple matches not implemented");
+                //layers.sides[chosenSide][0][0] = layers.sides[chosenSide][0][0].Optimized();
+                //if (chosenSide == 0)
+                //{
+                //   layers = new(layers.sides[chosenSide][0][0].Optimized(), layers.sides[1-chosenSide][0][0]);
+                //}
+                //else
+                //{
+                //   layers = new(layers.sides[1-chosenSide][0][0], layers.sides[chosenSide][0][0].Optimized());
+                //}
+                //continue;
+                throw Scribe.Issue("Multiple matches not implemented");
             }
             // Multiple indirect matches
             else if (directMatches == 0)
@@ -198,9 +202,9 @@ public class Equation
     // Evaluate a solved equation with an isolated variable
     public double Evaluate(Variable v, params double[] vals)
     {
-        if (vals.Length != noUnknowns-1)
+        if (vals.Length != noUnknowns - 1)
         {
-            throw Scribe.Error($"Equation expected {noUnknowns-1} arguments, got {vals.Length}");
+            throw Scribe.Error($"Equation expected {noUnknowns - 1} arguments, got {vals.Length}");
         }
         int counter = 0;
         List<Variable> knowns = unknowns.ToList();
@@ -211,6 +215,14 @@ public class Equation
         }
 
         // Find the side we're evaluating
+        Oper solvedSide = SolvedSide(v);
+        double result = solvedSide.Eval().Val;
+        Array.ForEach(unknowns, v => v.Reset());
+        return result;
+    }
+
+    Oper SolvedSide(Variable v)
+    {
         Oper solvedSide;
         if (v == layers.leftHand[0][0])
         {
@@ -224,10 +236,7 @@ public class Equation
         {
             throw Scribe.Error($"Equation {this} has not been solved for {v}");
         }
-
-        double result = solvedSide.Eval().Val;
-        Array.ForEach(unknowns, v => v.Reset());
-        return result;
+        return solvedSide;
     }
 
     // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
@@ -236,18 +245,60 @@ public class Equation
         throw Scribe.Issue("not implemented");
     }
 
-    public Multi Plot()
+    //public Multi Plot(params AxisSpecifier[] outs)
+    public Multi Plot(double res, params Tuple<Variable, AxisSpecifier, double, double>[] axes)
     {
-        throw Scribe.Issue("not implemented");
-    }
-
-    public Multi Plot(AxisSpecifier[] outs)
-    {
-        if (outs.Length >= noUnknowns)
+        if (axes.Length != noUnknowns)
         {
-            throw Scribe.Error("TODO: write this error msg");
+            throw Scribe.Error("Axis specifiers must match number of unknowns");
         }
-        throw Scribe.Issue("Not supported");
+        Dictionary<Variable, AxisSpecifier> varAxisMap = new();
+        for (int i = 0; i < noUnknowns; i++)
+        {
+            varAxisMap.Add(axes[i].Item1, axes[i].Item2);
+        }
+        Variable outVar = axes[0].Item1;
+        Variable[] inVars = axes.Skip(1).Select(t => t.Item1).ToArray();
+        Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
+        
+        // TODO: I think I pass the outVar into the counter as well. This isn't necessary
+        NDCounter solveSpace = new NDCounter(res, axes.Select(ax => new Tuple<double, double>(ax.Item3, ax.Item4)).ToArray());
+        Multi plot = new Multi().WithFlags(DrawMode.PLOT);
+        while (!solveSpace.done)
+        {
+            // Inject arguments
+            for (int i = 0; i < inVars.Length; i++)
+            {
+                inVars[i].Val = solveSpace.Get(i);
+            }
+
+            // Get output
+            outVar.Val = solvedExpr.Eval().Val;
+
+            double[] argsByAxis = new double[Math.Max(3, inVars.Length + 1)];
+            if (argsByAxis.Length > 3)
+            {
+                throw Scribe.Issue("Extra variables unsupported so far");
+            }
+            argsByAxis[(int)varAxisMap[outVar]] = outVar.Val;
+            foreach (Variable v in inVars)
+            {
+                argsByAxis[(int)varAxisMap[v]] = v.Val;
+            }
+            while (argsByAxis.Length < 3)
+            {
+                argsByAxis = argsByAxis.Append(0).ToArray();
+            }
+            Scribe.List(argsByAxis);
+            Multi point = new Multi(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
+            plot.Add(point);
+            solveSpace.Increment();
+        }
+        Array.ForEach(inVars, v => v.Reset());
+        outVar.Reset();
+        return plot;
+
+        //throw Scribe.Issue("Not supported");
     }
 
     public override string ToString()
@@ -287,7 +338,7 @@ public class Equation
     }
     public enum AxisSpecifier
     {
-        X, Y, Z, HUE, TIME
+        X=0, Y=1, Z=2, HUE=3
     }
 
     public enum SolveState
