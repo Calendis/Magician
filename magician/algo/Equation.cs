@@ -31,7 +31,7 @@ public class Equation
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
-    public Equation Solve(Variable v)
+    public Equation Solved(Variable v)
     {
         // Make sure variable v exists
         if (!layers.vars.Contains(v))
@@ -195,6 +195,7 @@ public class Equation
         return solved;
     }
 
+    // Evaluate a solved equation with an isolated variable
     public double Evaluate(Variable v, params double[] vals)
     {
         if (vals.Length != noUnknowns-1)
@@ -227,6 +228,17 @@ public class Equation
         double result = solvedSide.Eval().Val;
         Array.ForEach(unknowns, v => v.Reset());
         return result;
+    }
+
+    // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
+    public double Approximate(Variable v)
+    {
+        throw Scribe.Issue("not implemented");
+    }
+
+    public Multi Plot()
+    {
+        throw Scribe.Issue("not implemented");
     }
 
     public Multi Plot(AxisSpecifier[] outs)

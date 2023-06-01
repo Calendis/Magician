@@ -2,7 +2,7 @@ using System;
 
 namespace Magician.Geo
 {
-    public class Vec : IOMap
+    public class Vec
     {
         int dims;
         Quantity[] v;
@@ -11,7 +11,7 @@ namespace Magician.Geo
             XY,
             PM
         }
-        public Vec(int d, params double[] vals) : base(1)  // TODO: test if 0 ins works
+        public Vec(int d, params double[] vals)
         {
             if (d != vals.Length)
             {

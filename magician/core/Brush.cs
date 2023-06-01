@@ -1,9 +1,9 @@
 using System;
 
 namespace Magician;
-public class Brush : IOMap
+public class Brush : ParametricMap
 {
-    public Brush(IMap im0, IMap im1) : base(1, im0, im1)
+    public Brush(IMap im0, IMap im1) : base(im0, im1)
     {
         //
     }

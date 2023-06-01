@@ -159,9 +159,8 @@ public class CustomMap : IMap
 }
 
 // IMap with an arbitrary amount of input and output dimensions
-// (FKA MultiMap)
 // TODO: Maybe IMaps should implement IOMap, not the other way around
-public class IOMap : IMap
+public class ParametricMap : IMap
 {
     // Functionality
     List<IMap> imaps = new List<IMap>();
@@ -169,37 +168,25 @@ public class IOMap : IMap
     public bool IsAbs { get; set; }
 
     // Dimensionality
-    public int Ins { get; set; }
     public int Outs { get; set; }
 
-    public IOMap(int ins, params IMap[] outs)
+    public ParametricMap(params IMap[] outs)
     {
         imaps.AddRange(outs);
         Outs = imaps.Count;
-        Ins = ins;
     }
-    public IOMap(int ins, params Func<double, double>[] outs)
+    public ParametricMap(params Func<double, double>[] outs)
     {
         foreach (Func<double, double> f in outs)
         {
             imaps.Add(new CustomMap(f));
         }
-        Ins = ins;
         Outs = imaps.Count;
-    }
-    // If you want to specifiy the inputs, and calculate the outputs later
-    public IOMap(int ins)
-    {
-        Ins = ins;
     }
 
     // Parametric 2D Multisalong
     public Multi MultisAlong(double lb, double ub, double dx, Multi tmp, double xOffset = 0, double yOffset = 0, double zOffset = 0, Func<double, double>? truth = null, double threshold = 0)
     {
-        if (Ins != 1)
-        {
-            throw new InvalidDataException("Multimap nust have 1 input for MultisAlong");
-        }
         if (truth is null)
         {
             truth = x => 1;
@@ -269,7 +256,7 @@ public class IOMap : IMap
         return m.WithFlags(DrawMode.INVISIBLE);
     }
 
-    public IOMap Paired(int[][] pairs)
+    public ParametricMap Paired(int[][] pairs)
     {
         this.pairs = pairs;
         return this;
@@ -281,7 +268,7 @@ public class IOMap : IMap
     }
     public double Evaluate(double x)
     {
-        if (Ins != 1 || Outs != 1)
+        if (Outs != 1)
         {
             throw Scribe.Issue("This should never occur");
         }
@@ -293,34 +280,15 @@ public class IOMap : IMap
     {
         int noArgs = args.Length;
         double[] output = new double[Outs];
-        if (noArgs != Ins)
-        {
-            throw Scribe.Error($"Number of provided arguments ({args.Length}) does not match input dimensionality ({Ins})");
-        }
 
-        //if (Ins != Outs)
-        if (Ins < Outs)
+        if (1 < Outs)
         {
-            /* With one input, resolution is trivial. Simply pass the input to each output */
-            if (Ins == 1)
+            for (int i = 0; i < Outs; i++)
             {
-                for (int i = 0; i < Outs; i++)
-                {
-                    output[i] = imaps[i].Evaluate(args[0]);
-                }
-            }
-
-            /* In all other cases, we need to resolve the multiplex using a pair-mapping */
-            else
-            {
-                if (pairs == null)
-                {
-                    throw new InvalidDataException("Since this Multimap has more outputs than inputs, a pairs must be specified");
-                }
-                return Resolved(pairs).Evaluate(args);
+                output[i] = imaps[i].Evaluate(args[0]);
             }
         }
-        else if (Ins == Outs)
+        else if (1 == Outs)
         {
             /* Inputs and out are equal, map 1-1 */
             int counter = 0;
@@ -329,111 +297,46 @@ public class IOMap : IMap
                 output[counter] = (imaps[counter++].Evaluate(x));
             }
         }
-        else
-        {
-            //
-        }
+
         return output;
     }
 
     public Multi Plot(double x, double y, double start, double end, double dt, Color c)
     {
-        // One-input parametric plots
-        if (Ins == 1)
+        switch (Outs)
         {
-            switch (Outs)
-            {
-                // Normal plot
-                case 1:
-                    return imaps[0].Plot(x, y, start, end, dt, c);
+            // Normal plot
+            case 1:
+                return imaps[0].Plot(x, y, start, end, dt, c);
 
-                // Parametric
-                case 2:
-                    Multi parametricPlot = new Multi().WithFlags(DrawMode.PLOT);
-                    for (double t = start; t < end; t += dt)
-                    {
-                        double[] out0 = new double[2];
-                        out0[0] = imaps[0].Evaluate(t);
-                        out0[1] = imaps[1].Evaluate(t);
+            // Parametric
+            case 2:
+                Multi parametricPlot = new Multi().WithFlags(DrawMode.PLOT);
+                for (double t = start; t < end; t += dt)
+                {
+                    double[] out0 = new double[2];
+                    out0[0] = imaps[0].Evaluate(t);
+                    out0[1] = imaps[1].Evaluate(t);
 
-                        double[] out1 = new double[2];
-                        out1[0] = imaps[0].Evaluate(t + dt);
-                        out1[1] = imaps[1].Evaluate(t + dt);
+                    double[] out1 = new double[2];
+                    out1[0] = imaps[0].Evaluate(t + dt);
+                    out1[1] = imaps[1].Evaluate(t + dt);
 
-                        parametricPlot.Add(
-                            Point(out0[0], out0[1]).Colored(c),
-                            Point(out1[0], out1[1]).Colored(c)
-                        );
+                    parametricPlot.Add(
+                        Point(out0[0], out0[1]).Colored(c),
+                        Point(out1[0], out1[1]).Colored(c)
+                    );
 
-                    }
-                    return parametricPlot.Positioned(x, y);
+                }
+                return parametricPlot.Positioned(x, y);
 
-                // Parametric with hue
-                case 3:
-                    break;
+            // Parametric with hue
+            case 3:
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
         }
-        else
-
-        // Square value-plots
-        if (Ins == 2)
-        {
-            switch (Outs)
-            {
-                // Rectangular plot via hue
-                case 1:
-                    break;
-
-                // Rectangular plor via value and hue
-                case 2:
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        throw new NotImplementedException($"Multiplex plotting for ins: {Ins} not working yet. File an issue at https://github.com/Calendis");
-    }
-
-    public IOMap Resolved(int[][] pairs)
-    {
-        IMap[] resolvedIns = new IMap[Outs];
-        int combines = Ins - Outs;
-
-        if (pairs.Length != Math.Abs(combines))
-        {
-            throw new InvalidDataException("Number of pairs must be equal to the difference of inputs and outputs");
-        }
-
-        // More inputs than outputs, so we reduce the number of inputs by composition
-        if (combines > 0)
-        {
-            for (int i = 0; i < combines; i++)
-            {
-                IMap in0 = imaps[pairs[i][0]];
-                IMap in1 = imaps[pairs[i][1]];
-                // TODO: allow for arbitrary relations rather than just composition
-                resolvedIns.Append(in0.Compose(in1));
-            }
-
-            return new IOMap(Outs, resolvedIns);
-        }
-        else
-        // Fewer inputs than outputs. This is evil
-        if (combines < 0)
-        {
-            throw new InvalidDataException("Cannot resolve!");
-        }
-
-        Scribe.Warn("IOResolver: nothing to resolve");
-        return this;
-    }
-
-    public override string ToString()
-    {
-        return $"IOMap ({Ins}, {Outs})";
+        throw new NotImplementedException($"Multiplex plotting for outs: {Outs} not working yet. File an issue at https://github.com/Calendis");
     }
 }
