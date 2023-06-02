@@ -246,7 +246,7 @@ public class Equation
     }
 
     //public Multi Plot(params AxisSpecifier[] outs)
-    public Multi Plot(double res, params Tuple<Variable, AxisSpecifier, double, double>[] axes)
+    public Multi Plot(double res, params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX)[] axes)
     {
         if (axes.Length != noUnknowns)
         {
@@ -255,14 +255,14 @@ public class Equation
         Dictionary<Variable, AxisSpecifier> varAxisMap = new();
         for (int i = 0; i < noUnknowns; i++)
         {
-            varAxisMap.Add(axes[i].Item1, axes[i].Item2);
+            varAxisMap.Add(axes[i].VAR, axes[i].AXIS);
         }
-        Variable outVar = axes[0].Item1;
-        Variable[] inVars = axes.Skip(1).Select(t => t.Item1).ToArray();
+        Variable outVar = axes[0].VAR;
+        Variable[] inVars = axes.Skip(1).Select(t => t.VAR).ToArray();
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
         
         // TODO: I think I pass the outVar into the counter as well. This isn't necessary
-        NDCounter solveSpace = new NDCounter(res, axes.Select(ax => new Tuple<double, double>(ax.Item3, ax.Item4)).ToArray());
+        NDCounter solveSpace = new NDCounter(res, axes.Select(ax => new Tuple<double, double>(ax.MIN, ax.MAX)).ToArray());
         Multi plot = new Multi().WithFlags(DrawMode.PLOT);
         while (!solveSpace.done)
         {
@@ -289,7 +289,7 @@ public class Equation
             {
                 argsByAxis = argsByAxis.Append(0).ToArray();
             }
-            Scribe.List(argsByAxis);
+            //Scribe.List(argsByAxis);
             Multi point = new Multi(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
             plot.Add(point);
             solveSpace.Increment();

@@ -34,10 +34,8 @@ public class Plots : Spell
         Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
 
         Origin["plotEq"] = e.Plot(3,
-            new Tuple<Variable, Equation.AxisSpecifier, double, double>
-            (Let("y"), Equation.AxisSpecifier.Y, -60, 60),
-            new Tuple<Variable, Equation.AxisSpecifier, double, double>
-            (Let("x"), Equation.AxisSpecifier.X, -60, 60)
+            (Let("y"), Equation.AxisSpecifier.Y, -60d, 60d),
+            (Let("x"), Equation.AxisSpecifier.X, -60d, 60d)
         );
 
     }
