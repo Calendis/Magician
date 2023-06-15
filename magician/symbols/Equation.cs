@@ -1,5 +1,4 @@
-namespace Magician.Algo;
-using static Magician.Geo.Create;
+namespace Magician.Symbols;
 
 public class Equation
 {

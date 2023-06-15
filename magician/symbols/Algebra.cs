@@ -1,4 +1,4 @@
-namespace Magician.Algo;
+namespace Magician.Symbols;
 using static MathCache;
 
 public static class Algebra

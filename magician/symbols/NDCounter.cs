@@ -1,4 +1,4 @@
-namespace Magician.Algo;
+namespace Magician.Symbols;
 
 internal class NDCounter
 {

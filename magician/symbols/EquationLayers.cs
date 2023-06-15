@@ -1,4 +1,4 @@
-namespace Magician.Algo;
+namespace Magician.Symbols;
 
 // Formats the Oper tree in a convenient-to-use way
 internal class EquationLayers

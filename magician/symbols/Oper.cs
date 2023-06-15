@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Magician.Algo;
+namespace Magician.Symbols;
 
 public abstract class Oper
 {
