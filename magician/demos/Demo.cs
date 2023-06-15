@@ -43,6 +43,10 @@ public class DefaultSpell : Spell
         Origin["myMulti"] = new Multi().WithFlags(DrawMode.FILLED);
         Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
 
+        Scribe.Info($"Star heading: {Origin["my star"].Heading}");
+        Origin["my star"].Heading = new(1, 1, 0);
+        Scribe.Info($"Star heading: {Origin["my star"].Heading}");
+
     }
     Brush b = new Brush(
         new CustomMap(x => Events.MouseX),
@@ -52,7 +56,8 @@ public class DefaultSpell : Spell
     public override void Loop()
     {
         Renderer.RControl.Clear();
-        Origin["my star"].RotatedZ(0.01);
+        Origin["my star"].Forward(1);
+        Origin["my star"].RotatedZ(0.02);
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
         // Perform a Matrix rotation

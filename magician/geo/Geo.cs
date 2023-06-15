@@ -21,8 +21,8 @@ public static class Ref
         Origin = new Multi().Tagged("Placeholder Origin");
         // TODO: find out why -600 works here...
         Perspective = new Multi(0, 0, -600).Parented(null);
-        Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
         FOV = 90;
+        Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
 
         AllowedOrphans = new List<Multi>()
             {

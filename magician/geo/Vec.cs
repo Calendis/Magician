@@ -1,4 +1,6 @@
 using System;
+// TODO: don't rely on these
+using Silk.NET.Maths;
 
 namespace Magician.Geo
 {
@@ -19,17 +21,6 @@ namespace Magician.Geo
             vecArgs = qs;
         }
 
-        public void AssignVector(params Quantity[] qs)
-        {
-            if (qs.Length != Dims)
-            {
-                throw Scribe.Error($"Invalid number of arguments {qs.Length} to {Dims}-vector");
-            }
-            for (int i = 0; i < Dims; i++)
-            {
-                vecArgs[i] = qs[i];
-            }
-        }
         public Quantity x
         {
             get => vecArgs[0];
@@ -44,7 +35,7 @@ namespace Magician.Geo
         }
 
         /* Measured phase */
-        public virtual double PhaseZ
+        public virtual double XYAngle
         {
             get
             {
@@ -53,7 +44,7 @@ namespace Magician.Geo
                 return p;
             }
         }
-        public virtual double PhaseY
+        public virtual double XZAngle
         {
             get
             {
@@ -62,7 +53,7 @@ namespace Magician.Geo
                 return p;
             }
         }
-        public virtual double PhaseX
+        public virtual double YZAngle
         {
             get
             {
@@ -71,25 +62,31 @@ namespace Magician.Geo
                 return p;
             }
         }
-        
-        public double MagnitudeZ
+
+        public double XYDist
         {
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate());
         }
-        public double MagnitudeX
+        public double YZDist
         {
             get => Math.Sqrt(z.Evaluate() * z.Evaluate() + y.Evaluate() * y.Evaluate());
         }
-        public double MagnitudeY
+        public double XZDist
         {
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
         }
 
-        public static Vec operator -(Vec v1, Vec v2)
+        public static Vec operator +(Vec v1, Vec v2)
         {
-            return new(v1.vecArgs.Select((x, i) => x-v2.vecArgs[i]).ToArray());
+            return new(v1.vecArgs.Select((x, i) => x+v2.vecArgs[i]).ToArray());
+        }
+        // Scalar multiplication
+        public static Vec operator *(Vec v1, double x)
+        {
+            return new(v1.vecArgs.Select(va => va.Evaluate()*x).ToArray());
         }
 
+        // TODO: how does this behave in n dimensions? (where n != 3)
         public Vec Cross(Vec v)
         {
             if (Dims != v.Dims)
@@ -104,6 +101,28 @@ namespace Magician.Geo
                 results[i] = vecArgs[j].Evaluate() * v.vecArgs[k].Evaluate() - vecArgs[k].Evaluate() * v.vecArgs[j].Evaluate();
             }
             return new Vec(results);
+        }
+
+        public Vec Rotated(double yaw, double pitch, double roll)
+        {
+            if (Dims != 3)
+            {
+                throw Scribe.Error("Not implemented");
+            }
+            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
+            //Vector3D<double> v = Vector3D.Multiply<double>();
+            Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(x.Evaluate(), y.Evaluate(), z.Evaluate()), rotMat);
+            return new(rotated.X, rotated.Y, rotated.Z);
+        }
+
+        public override string ToString()
+        {
+            string s = "(";
+            foreach (Quantity q in vecArgs)
+            {
+                s += $"{q.Evaluate()}, ";
+            }
+            return s+")";
         }
 
     }

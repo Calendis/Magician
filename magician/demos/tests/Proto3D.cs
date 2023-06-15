@@ -18,28 +18,32 @@ public class Proto3D : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
-            Ref.Perspective.z.Delta(walkSpeed);
+            //Ref.Perspective.z.Delta(walkSpeed);
+            Ref.Perspective.Forward(-walkSpeed);
             //Origin["tetra"].z.Delta(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
         {
-            Ref.Perspective.x.Delta(-walkSpeed);
+            //Ref.Perspective.x.Delta(-walkSpeed);
+            Ref.Perspective.Strafe(-walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s])
         {
-            Ref.Perspective.z.Delta(-walkSpeed);
+            //Ref.Perspective.z.Delta(-walkSpeed);
+            Ref.Perspective.Forward(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d])
         {
-            Ref.Perspective.x.Delta(walkSpeed);
+            //Ref.Perspective.x.Delta(walkSpeed);
+            Ref.Perspective.Strafe(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
-            Ref.Perspective.RotatedY(0.05);
+            Ref.Perspective.RotatedY(0.01);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
-            Ref.Perspective.RotatedY(-0.05);
+            Ref.Perspective.RotatedY(-0.01);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -97,7 +101,7 @@ public class Proto3D : Spell
         Origin["spring"] = new ParamMap(
             t => 120 * Math.Sin(t * 2),  // x
             t => 120 * Math.Cos(t * 2),  // y
-            t => t * 40)                // z
+            t => t * 40)                 // z
             .Plot(0, 0, 0, 0, 20 * Math.PI, 0.1, new RGBA(0x00ffff));
         Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
 

@@ -57,9 +57,9 @@ public class Quantity : CustomMap
         return new Quantity(q + x);
     }
 
-    public static Quantity operator -(Quantity q1, Quantity q2)
+    public static Quantity operator +(Quantity q1, Quantity q2)
     {
-        return new Quantity(q1.q - q2.q);
+        return new Quantity(q1.q + q2.q);
     }
 
     // Driver code
