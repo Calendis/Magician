@@ -14,6 +14,8 @@ public abstract class RDrawable
     protected static int posLength = 3;
     protected static int colLength = 4;
 
+    protected static float zFactor = 2000;
+
     static RDrawable()
     {
         if (Renderer.RGlobals.gl is null)
@@ -162,7 +164,7 @@ internal class RPoints : RDrawable
             // TODO: remove the magic 800s
             vertices[dataLength * i + 0] = currentPoint.pos[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 1] = currentPoint.pos[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 2] = currentPoint.pos[2] / 800;
+            vertices[dataLength * i + 2] = currentPoint.pos[2] / zFactor;
             // Color
             vertices[dataLength * i + 3] = pts[i].rgba[0] / 255f;
             vertices[dataLength * i + 4] = pts[i].rgba[1] / 255f;
@@ -212,10 +214,10 @@ internal class RLines : RDrawable
             // TODO: remove the magic 800s
             vertices[dataLength * i + 0] = currentLine.p0[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 1] = currentLine.p0[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 2] = currentLine.p0[2] / 800;
+            vertices[dataLength * i + 2] = currentLine.p0[2] / zFactor;
             vertices[dataLength * i + 7] = currentLine.p1[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 8] = currentLine.p1[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 9] = currentLine.p1[2] / 800;
+            vertices[dataLength * i + 9] = currentLine.p1[2] / zFactor;
 
             // Color
             vertices[dataLength * i +  3] = lines[i].rgba[0] / 255f;
@@ -272,15 +274,15 @@ internal class RTriangles : RDrawable
             // TODO: remove the magic 800s
             vertices[dataLength * i + 0] = currentTriangle.p0[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 1] = currentTriangle.p0[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 2] = currentTriangle.p0[2] / 800;
+            vertices[dataLength * i + 2] = currentTriangle.p0[2] / zFactor;
 
             vertices[dataLength * i + 7] = currentTriangle.p1[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 8] = currentTriangle.p1[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 9] = currentTriangle.p1[2] / 800;
+            vertices[dataLength * i + 9] = currentTriangle.p1[2] / zFactor;
 
             vertices[dataLength * i + 14] = currentTriangle.p2[0] / Data.Globals.winWidth;
             vertices[dataLength * i + 15] = currentTriangle.p2[1] / Data.Globals.winHeight;
-            vertices[dataLength * i + 16] = currentTriangle.p2[2] / 800;
+            vertices[dataLength * i + 16] = currentTriangle.p2[2] / zFactor;
 
             // Color
             vertices[dataLength * i + 3] = tris[i].rgba[0] / 255f;
