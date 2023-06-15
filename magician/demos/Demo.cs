@@ -34,7 +34,7 @@ public class DefaultSpell : Spell
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
-            Spellcaster.Cache(new Demos.Tests.Plots());
+            Spellcaster.Cache(new Demos.Tests.Proto3D());
             Scribe.Info("Switching Spells...");
         }
 
