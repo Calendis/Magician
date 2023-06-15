@@ -4,42 +4,43 @@ namespace Magician.Geo
 {
     public class Vec
     {
-        int dims;
-        Quantity[] v;
-        enum VecMode
+        Quantity[] vecArgs;
+        int Dims => vecArgs.Length;
+        public Vec(params double[] vals)
         {
-            XY,
-            PM
-        }
-        public Vec(int d, params double[] vals)
-        {
-            if (d != vals.Length)
+            vecArgs = new Quantity[vals.Length];
+            for (int i = 0; i < vals.Length; i++)
             {
-                throw Scribe.Error($"Cannot store {vals.Length} values in {dims}-dimensional vector");
-            }
-            dims = d;
-            v = new Quantity[dims];
-            for (int i = 0; i < dims; i++)
-            {
-                v[i] = new Quantity(vals[i]);
+                vecArgs[i] = new Quantity(vals[i]);
             }
         }
-        public Vec(params double[] vals) : this(vals.Length, vals) {}
+        public Vec(params Quantity[] qs)
+        {
+            vecArgs = qs;
+        }
 
+        public void AssignVector(params Quantity[] qs)
+        {
+            if (qs.Length != Dims)
+            {
+                throw Scribe.Error($"Invalid number of arguments {qs.Length} to {Dims}-vector");
+            }
+            for (int i = 0; i < Dims; i++)
+            {
+                vecArgs[i] = qs[i];
+            }
+        }
         public Quantity x
         {
-            get => v[0];
-            set => v[0].From(value);
+            get => vecArgs[0];
         }
         public Quantity y
         {
-            get => v[1];
-            set => v[1].From(value);
+            get => vecArgs[1];
         }
         public Quantity z
         {
-            get => v[2];
-            set => v[2].From(value);
+            get => vecArgs[2];
         }
 
         /* Measured phase */
@@ -82,6 +83,27 @@ namespace Magician.Geo
         public double MagnitudeY
         {
             get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
+        }
+
+        public static Vec operator -(Vec v1, Vec v2)
+        {
+            return new(v1.vecArgs.Select((x, i) => x-v2.vecArgs[i]).ToArray());
+        }
+
+        public Vec Cross(Vec v)
+        {
+            if (Dims != v.Dims)
+            {
+                throw Scribe.Error("Vectors must be of same length");
+            }
+            double[] results = new double[Dims];
+            for (int i = 0; i < Dims; i++)
+            {
+                int j = (i + 1) % Dims;
+                int k = (i + 2) % Dims;
+                results[i] = vecArgs[j].Evaluate() * v.vecArgs[k].Evaluate() - vecArgs[k].Evaluate() * v.vecArgs[j].Evaluate();
+            }
+            return new Vec(results);
         }
 
     }
