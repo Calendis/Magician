@@ -15,7 +15,7 @@ public class Multi3D : Multi
     public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
     public Multi3D(Multi m) : base(m.x.Evaluate(), m.y.Evaluate(), m.z.Evaluate(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
 
-    public override void Render(double xOffset, double yOffset, double zOffset, bool scale3d = true)
+    public override void Render(double xOffset, double yOffset, double zOffset)
     {
         if (faces is null)
             throw Scribe.Error($"Must define faces of Multi3D {this}");
@@ -24,6 +24,7 @@ public class Multi3D : Multi
         foreach (List<int> face in faces)
         {
             // Do not draw faces behind the camera
+            // TODO: this should be general behaviour for a Multi
             bool occluded = false;
             for (int j = 0; j < face.Count; j++)
             {
@@ -37,17 +38,17 @@ public class Multi3D : Multi
             {
                 continue;
             }
-            if (faces == null)
-            {
-                throw Scribe.Error($"Faces of {this} were null");
-            }
-            Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate()).Colored(new HSLA((cc++ * Math.PI) / Math.PI, 1, 1, 120))
+
+            Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate())
             .WithFlags(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {
                 f.Add(csts[idx]);
+                f.Colored(csts[idx].Col);
+                // TODO: remove this faux-lighting
+                f.Col.L = 1-(((float)idx)/10);
             }
-            f.Render(xOffset, yOffset, zOffset, true);
+            f.Render(xOffset, yOffset, zOffset);
         }
     }
 
