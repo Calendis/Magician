@@ -57,14 +57,19 @@ public static class Scribe
     /// <summary><exception>
     /// bruhException
     /// </exception></summary>
-    public static Exception Error(string s)
+    public static Typo Error(string s)
     {
         Console.Write($"ERROR: {s}\n");
-        return new Exception(s);
+        return new Typo(s);
     }
-    public static Exception Issue(string s)
+    public static Typo Issue(string s)
     {
         Console.WriteLine($"ERROR: {s}\nPlease file an issue at https://github.com/Calendis");
-        return new Exception(s);
+        return new Typo(s);
+    }
+
+    public class Typo : Exception
+    {
+        public Typo(string s) : base(s) { }
     }
 }
