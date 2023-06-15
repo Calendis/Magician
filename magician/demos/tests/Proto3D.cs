@@ -7,7 +7,7 @@ namespace Magician.Demos.Tests;
 public class Proto3D : Spell
 {
     Brush? b;
-    double walkSpeed = 0.3;
+    double walkSpeed = 4.0;
     public override void Loop()
     {
         Renderer.RControl.Clear();
@@ -16,10 +16,10 @@ public class Proto3D : Spell
         Origin["tetra"].RotatedY(-0.003);
         Origin["tetra"].RotatedZ(-0.004);
 
-
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
             Ref.Perspective.z.Delta(walkSpeed);
+            //Origin["tetra"].z.Delta(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
         {
@@ -32,6 +32,14 @@ public class Proto3D : Spell
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d])
         {
             Ref.Perspective.x.Delta(walkSpeed);
+        }
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
+        {
+            Ref.Perspective.RotatedY(0.05);
+        }
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
+        {
+            Ref.Perspective.RotatedY(-0.05);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -56,19 +64,6 @@ public class Proto3D : Spell
             Origin["cube"].RotatedZ(0.01);
         }
 
-        // TODO: camera rotation
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_o])
-        {
-            Ref.Origin.RotatedX(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
-        {
-            Ref.Origin.RotatedY(0.01);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_k])
-        {
-            Ref.Origin.RotatedZ(0.01);
-        }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
         {
@@ -86,6 +81,9 @@ public class Proto3D : Spell
         {
             Origin["cube"].x.Delta(walkSpeed);
         }
+        //Ref.Perspective.x.Set(10 * Math.Sin(Time / 10));
+        //Ref.Perspective.y.Set(10 * Math.Cos(Time / 10));
+        //Scribe.Info(Ref.Perspective.z);
     }
 
     public override void PreLoop()
@@ -93,7 +91,18 @@ public class Proto3D : Spell
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
         Origin["cube"] = Create.Cube(0, 0, 90, 10);
 
-        Origin["2"] = Create.Cube(0, 0, 200, 16);
+        Origin["2"] = Create.Cube(0, 0, 200, 50);
         Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
+
+        Origin["spring"] = new ParamMap(
+            t => 120 * Math.Sin(t * 2),  // x
+            t => 120 * Math.Cos(t * 2),  // y
+            t => t * 40)                // z
+            .Plot(0, 0, 0, 0, 20 * Math.PI, 0.1, new RGBA(0x00ffff));
+        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
+
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
+
+        Origin["cube"].Colored(new RGBA(0x6020ffff));
     }
 }
