@@ -1,10 +1,9 @@
 namespace Magician;
 using static Magician.Geo.Create;
 
-// Re-write of IMap in terms of Multimap
+// General equation with multiple branches
 public class NeoMap
 {
-    public bool IsAbs { get; set; }
     Func<double[], double[]> map;
     public NeoMap(Func<double[], double[]> m)
     {
@@ -13,19 +12,14 @@ public class NeoMap
     public double[] Evaluate(double[] xs)
     {
         return map.Invoke(xs);
-        //return maps.Select((m, i) => m.Invoke(xs[i])).ToArray();
     }
-    public Multi Plot()
+    public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
-        throw Scribe.Issue("not implemented");
-    }
-    public virtual NeoMap AsAbsolute()
-    {
-        IsAbs = true;
-        return this;
+        throw Scribe.Error("Not implemented");
     }
 }
 
+// General quation
 public class InverseParamMap : NeoMap
 {
     int ins;
@@ -37,12 +31,13 @@ public class InverseParamMap : NeoMap
         return base.Evaluate(xs)[0];
     }
 
-    public Multi Plot()
+    public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
-        throw Scribe.Error("not implemented");
+        throw Scribe.Error("not implemented. Use an Equation instead");
     }
 }
 
+// Parametric equation
 public class ParamMap : NeoMap
 {
     public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray()) { }
@@ -51,7 +46,7 @@ public class ParamMap : NeoMap
     {
         return base.Evaluate(new double[] { x });
     }
-    public Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
+    public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
         Multi plot = new Multi().WithFlags(DrawMode.PLOT);
         for (double t = start; t < end; t += dt)
