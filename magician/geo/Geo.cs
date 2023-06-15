@@ -9,6 +9,7 @@ public static class Ref
     // Reference to the Origin of the current Spell (see Spellcaster.Load)
     public static Multi Origin { get; internal set; }
     public static Multi Perspective { get; }
+    public static Multi Undefined { get; internal set; }
     public static List<Multi> AllowedOrphans;
     public static double FOV
     {
@@ -18,13 +19,16 @@ public static class Ref
     static Ref()
     {
         Origin = new Multi().Tagged("Placeholder Origin");
-        Perspective = new Multi(0, 0, -1).Parented(null);
+        // TODO: find out why -600 works here...
+        Perspective = new Multi(0, 0, -600).Parented(null);
+        Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
         FOV = 90;
 
         AllowedOrphans = new List<Multi>()
             {
                 Origin,
-                Perspective
+                Perspective,
+                Undefined
             };
     }
 }
@@ -160,11 +164,11 @@ public static class Create
         Multi3D cube = new Multi3D(x, y, z,
         Create.RegularPolygon(4, radius).Add(
             Create.RegularPolygon(4, radius)
-                .Sub(m => m.Translated(0, 0, radius*Math.Sqrt(2)))  // radius is half the diagonal
+                .Sub(m => m.Translated(0, 0, radius * Math.Sqrt(2)))  // radius is half the diagonal
                 .Constituents.ToArray())  // array of point Multis
             .ToArray()  // array of all 8 points
         ).FacesCube();
-        
+
         return cube;
     }
 }
@@ -228,6 +232,17 @@ public static class Check
         return false;
     }
 
+    public static bool PointInRectVolume(double x, double y, double z, (double, double) xRange, (double, double) yRange, (double, double) zRange)
+    {
+        return x > xRange.Item1 && x < xRange.Item2
+        && y > yRange.Item1 && y < yRange.Item2
+        && z > zRange.Item1 && z < zRange.Item2;
+    }
+    public static bool PointInRectVolume(Multi p, (double, double) xRange, (double, double) yRange, (double, double) zRange)
+    {
+        return PointInRectVolume(p.X, p.Y, p.Z, xRange, yRange, zRange);
+    }
+
     public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)
     {
         if (m.Count != 4)
@@ -263,14 +278,46 @@ public static class Find
         }
         return Distance(m[0], m[1]);
     }
+
+    public static Vec OOBVector(double x, double y, double z, (double, double) xRange, (double, double) yRange, (double, double) zRange)
+    {
+        return new(x > 0 ? -(xRange.Item1 - x) : xRange.Item2 - x,
+        y > 0 ? -(yRange.Item1) - y : yRange.Item2 - y,
+        z > 0 ? -(zRange.Item1) - z : zRange.Item2 - z);
+    }
+    public static Vec OOBVector(Vec v, (double, double) xRange, (double, double) yRange, (double, double) zRange)
+    {
+        return OOBVector(v.x.Evaluate(), v.y.Evaluate(), v.z.Evaluate(), xRange, yRange, zRange);
+    }
+
+
+    /*
+    public static Multi Intersection(Multi seg0, Multi seg1)
+    {
+        try
+        {
+            return new(Intersection(seg0[0], seg0[1], seg1[0], seg1[1]));
+        }
+        catch (Scribe.Typo)
+        {
+            // if no intersection, return the undefined
+            return Geo.Ref.Undefined;
+        }
+    }
+    public static Vec Intersection(Vec seg0Start, Vec seg0End, Vec seg1Start, Vec seg1End)
+    {
+        //
+    }
+    */
+
 }
 
 public static class Sample
 {
-    public static Vec UnitCircle(double phase, double radius=1)
+    public static Vec UnitCircle(double phase, double radius = 1)
     {
-        double x = radius*Math.Cos(phase);
-        double y = radius*Math.Sin(phase);
+        double x = radius * Math.Cos(phase);
+        double y = radius * Math.Sin(phase);
         return new Vec(x, y);
     }
 }
