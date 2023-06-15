@@ -74,9 +74,9 @@ public class Menu1D : Multi
     public Action ControlAction { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     // Custom draw behaviour for menus
-    public override void Render(double xOffset, double yOffset, double zOffset, bool scale3d = false)
+    public override void Render(double xOffset, double yOffset, double zOffset)
     {
-        base.Render(xOffset, yOffset, zOffset, scale3d);
+        base.Render(xOffset, yOffset, zOffset);
     }
 }
 

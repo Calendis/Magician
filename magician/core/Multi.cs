@@ -19,13 +19,15 @@ public enum DrawMode : short
     FULL = 0b1110,
     OUTERP = 0b1101
 }
+/* A Multi is a drawable tree of 3-vectors with a stored heading vector */
 
 public class Multi : Vec, IDriveable, ICollection<Multi>
 {
     Multi? _parent;
     protected List<Multi> csts;
     Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
-    Quantity[] headings = new Quantity[3] { new(0), new(0), new(0) };  // I only support 3 axes of rotation
+    //Quantity[] headings = new Quantity[3] { new(0), new(0), new(0) };  // I only support 3 axes of rotation
+    public Vec Heading = new(0, 0, -1);  // By default, a Multi faces away
     double internalVal = 0;
     double tempX = 0;
     double tempY = 0;
@@ -96,18 +98,19 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
     }
     /* Inherent phase, or "heading" */
-    public double HeadingX { get => headings[0].Evaluate(); set => headings[0].Set(value); }
-    public double HeadingY { get => headings[1].Evaluate(); set => headings[1].Set(value); }
-    public double HeadingZ { get => headings[2].Evaluate(); set => headings[2].Set(value); }
+    public double HeadingX { get => Heading.x.Evaluate(); set => Heading.x.Set(value); }
+    public double HeadingY { get => Heading.y.Evaluate(); set => Heading.y.Set(value); }
+    public double HeadingZ { get => Heading.z.Evaluate(); set => Heading.z.Set(value); }
     Quantity RecursHeadingX
     {
         get
         {
+            // TODO: This is bad
             if (Ref.AllowedOrphans.Contains(this))
             {
-                return headings[0];
+                return Heading.x;
             }
-            return headings[0].GetDelta(Parent.RecursHeadingX.Evaluate());
+            return Heading.x.GetDelta(Parent.RecursHeadingX.Evaluate());
         }
     }
     Quantity RecursHeadingY
@@ -116,9 +119,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         {
             if (Ref.AllowedOrphans.Contains(this))
             {
-                return headings[1];
+                return Heading.y;
             }
-            return headings[1].GetDelta(Parent.RecursHeadingY.Evaluate());
+            return Heading.y.GetDelta(Parent.RecursHeadingY.Evaluate());
         }
     }
     Quantity RecursHeadingZ
@@ -127,9 +130,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         {
             if (Ref.AllowedOrphans.Contains(this))
             {
-                return headings[2];
+                return Heading.z;
             }
-            return headings[2].GetDelta(Parent.RecursHeadingZ.Evaluate());
+            return Heading.z.GetDelta(Parent.RecursHeadingZ.Evaluate());
         }
     }
     // Theta_x
@@ -226,12 +229,14 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     protected Color col;
 
     // Full constructor
-    public Multi(Multi? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(3, 0, 0, 0)
+    public Multi(Multi? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(x, y, z)
     {
         this._parent = parent ?? Ref.Origin;
         this.x.Set(x);
         this.y.Set(y);
         this.z.Set(z);
+        // TODO: make it so you don't need to use this hack
+        AssignVector(this.x, this.y, this.z);
         this.col = col ?? new RGBA(0xff00ffd0);
         this.drawMode = dm;
 
@@ -248,6 +253,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     public Multi(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
     // Create a multi from a list of multis
     public Multi(params Multi[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
+    public Multi(Vec pt3d) : this(pt3d.x.Evaluate(), pt3d.y.Evaluate(), pt3d.z.Evaluate()) { }
 
     public Color Col
     {
@@ -283,6 +289,10 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     public Multi Colored(Color c)
     {
         _Color(this, c);
+        foreach (Multi cst in Constituents)
+        {
+            _Color(cst, c);
+        }
         return this;
     }
     public Multi R(double r)
@@ -766,8 +776,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         //x.TransferDrivers(copy.x);
         //y.TransferDrivers(copy.y);
 
-        copy.x = new Quantity(x);
-        copy.y = new Quantity(y);
+        copy.x.From(x);
+        copy.y.From(y);
 
         foreach (IMap d in x.GetDrivers())
         {
@@ -785,9 +795,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
 
         // headings, internalval, tempx, tempy
-        copy.headings[0].From(headings[0]);
-        copy.headings[1].From(headings[1]);
-        copy.headings[2].From(headings[2]);
+        copy.Heading.x.From(Heading.x);
+        copy.Heading.y.From(Heading.y);
+        copy.Heading.z.From(Heading.z);
         copy.internalVal = internalVal;
         copy.tempX = tempX;
         copy.tempY = tempY;
@@ -979,7 +989,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     public bool IsReadOnly => false;
 
     // TODO: write a better comment
-    public virtual void Render(double xOffset, double yOffset, double zOffset, bool scale3d = false)
+    public virtual void Render(double xOffset, double yOffset, double zOffset)
     {
         if (stale)
         {
@@ -998,7 +1008,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         double a = col.A;
 
         // Get a projection of each constituent
-        double[][] projectedVerts = new double[Count][];
+        // todo: create a list of unclipped vertices, and add clipped points in
+        double[][] unclippedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
             double xp, yp, zp;
@@ -1006,25 +1017,39 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             yp = csts[i].Y - Ref.Perspective.Y;
             zp = csts[i].Z - Ref.Perspective.Z;
 
-            if (scale3d)
+            Matrix4X4<double> perspMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 1, 2000);
+            Vector4D<double> triVec = Vector4D<double>.Zero;
+            triVec.X = xp / zp * Data.Globals.winWidth;
+            triVec.Y = yp / zp * Data.Globals.winWidth;
+            triVec.Z = -zp;
+            triVec.W = 1;
+            Vector4D<double> perspTriVec = Vector4D.Multiply<double>(triVec, perspMat);
+            unclippedVerts[i] = new double[]
             {
-                Matrix4X4<double> perspMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 0.1, 800.1);
-                Vector4D<double> triVec = Vector4D<double>.Zero;
-                triVec.X = xp / zp * Data.Globals.winWidth;
-                triVec.Y = yp / zp * Data.Globals.winWidth;
-                triVec.Z = -zp;
-                triVec.W = 1;
-                Vector4D<double> perspTriVec = Vector4D.Multiply<double>(triVec, perspMat);
-                projectedVerts[i] = new double[]
-                {
-                    perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W
-                };
+                perspTriVec.X, perspTriVec.Y, perspTriVec.Z, perspTriVec.W
+            };
+        }
+
+        List<double[]> clippedVerts = new();
+        foreach (double[] v in unclippedVerts)
+        {
+            bool oob = Geo.Check.PointInRectVolume(v[0], v[1], v[2],
+                (-Data.Globals.winWidth / 2, Data.Globals.winWidth),
+                (-Data.Globals.winHeight / 2, Data.Globals.winHeight),
+                (Geo.Ref.Perspective.Z, Geo.Ref.Perspective.Z + 600));
+
+            if (!oob)
+            {
+                clippedVerts.Add(v);
             }
             else
             {
-                projectedVerts[i] = new double[] { xp * 2, yp * 2, zp };
+                // TODO: calculate clip intersection
             }
         }
+        //double[][] projectedVerts = new double[Count][];
+        // TODO: actually do clipping and then make this clippedVerts
+        double[][] projectedVerts = clippedVerts.ToArray();
 
         // Draw each constituent recursively            
         foreach (Multi m in this)
@@ -1035,7 +1060,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         // Draw points
         if ((drawMode & DrawMode.POINTS) > 0)
         {
-            int numPoints = Count;
+            int numPoints = projectedVerts.Length;
             RPoint[] rPointArray = new RPoint[numPoints];
             RPoints rPoints;
 
@@ -1053,14 +1078,14 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         if ((drawMode & DrawMode.PLOT) > 0)
         {
             bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && Count >= 3;
-            int numLines = Count - (connected ? 0 : 1);
+            int numLines = projectedVerts.Length - (connected ? 0 : 1);
             if (numLines < 1)
                 return;
-            
+
             RLine[] rLineArray = new RLine[numLines];
             RLines rLines;
 
-            for (int i = 0; i < Count - 1; i++)
+            for (int i = 0; i < projectedVerts.Length - 1; i++)
             {
                 double x0 = projectedVerts[i][0]; double x1 = projectedVerts[i + 1][0];
                 double y0 = projectedVerts[i][1]; double y1 = projectedVerts[i + 1][1];
@@ -1068,15 +1093,15 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 rLineArray[i] = new RLine(x0, y0, z0, x1, y1, z1, csts[i].Col.R, csts[i].Col.G, csts[i].Col.B, csts[i].Col.A);
             }
             // If the Multi is a closed shape, connect the first and last constituent with a line
-            if (connected && csts.Count >= 3)
+            if (connected)
             {
-                double[] pLast = projectedVerts[csts.Count - 1];
+                double[] pLast = projectedVerts[projectedVerts.Length - 1];
                 double[] pFirst = projectedVerts[0];
 
-                double subr = csts[csts.Count - 1].Col.R;
-                double subg = csts[csts.Count - 1].Col.G;
-                double subb = csts[csts.Count - 1].Col.B;
-                double suba = csts[csts.Count - 1].Col.A;
+                double subr = this[Count - 1].Col.R;
+                double subg = this[Count - 1].Col.G;
+                double subb = this[Count - 1].Col.B;
+                double suba = this[Count - 1].Col.A;
 
                 rLineArray[rLineArray.Length - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
             }
