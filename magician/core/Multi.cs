@@ -1047,6 +1047,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             Matrix4X4<double> yprMat = Matrix4X4.CreateFromYawPitchRoll<double>(
                 Ref.Perspective.yaw, Ref.Perspective.pitch, Ref.Perspective.roll
             );
+            // TODO::this doesn't do anything?
+            Matrix4X4.Invert<double>(yprMat, out yprMat);
 
             posVec = Vector3D.Transform<double>(
                 posVec,

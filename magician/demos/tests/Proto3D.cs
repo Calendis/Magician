@@ -87,6 +87,13 @@ public class Proto3D : Spell
         //Ref.Perspective.x.Set(10 * Math.Sin(Time / 10));
         //Ref.Perspective.y.Set(10 * Math.Cos(Time / 10));
         //Scribe.Info(Ref.Perspective.z);
+
+        Origin["spring"] = new ParamMap(
+            t => 120 * Math.Sin(t * 2+Math.Abs(Math.Sin(Time/10))),  // x
+            t => t*10 + 120 * Math.Cos(t * (2+Math.Abs(Math.Sin(Time/120)*4))),  // y
+            t => t * 35)                 // z
+            .Plot(0, 0, 0, 0, 15 * Math.PI, 0.05, new RGBA(0x00ffff));
+        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI + Time/4, 1, 1, 255)));
     }
 
     public override void PreLoop()
@@ -99,9 +106,9 @@ public class Proto3D : Spell
 
         Origin["spring"] = new ParamMap(
             t => 120 * Math.Sin(t * 2),  // x
-            t => 120 * Math.Cos(t * 2),  // y
-            t => t * 40)                 // z
-            .Plot(0, 0, 0, 0, 20 * Math.PI, 0.1, new RGBA(0x00ffff));
+            t => 120 * Math.Cos(t * 6),  // y
+            t => t * 35)                 // z
+            .Plot(0, 0, 0, 0, 30 * Math.PI, 0.05, new RGBA(0x00ffff));
         Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
 
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
