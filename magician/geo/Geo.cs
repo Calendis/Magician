@@ -11,6 +11,7 @@ public static class Ref
     public static Multi Perspective { get; }
     public static Multi Undefined { get; internal set; }
     public static List<Multi> AllowedOrphans;
+    public static Vec DefaultHeading = new(0,0,-1);
     public static double FOV
     {
         get => Perspective.Read();
@@ -312,14 +313,16 @@ public static class Find
 
 }
 
-public static class Sample
+public static class Unit
 {
-    public static Vec UnitCircle(double phase, double radius = 1)
+    public static Vec Circle(double phase, double radius = 1)
     {
         double x = radius * Math.Cos(phase);
         double y = radius * Math.Sin(phase);
         return new Vec(x, y);
     }
+
+    //public static Vec Length = new(1, 0, 0);
 }
 
 

@@ -44,7 +44,7 @@ public class DefaultSpell : Spell
         Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
 
         Scribe.Info($"Star heading: {Origin["my star"].Heading}");
-        Origin["my star"].Heading = new(1, 1, 0);
+        Origin["my star"].Heading = new Vec(1, 1, -1).Normalized();
         Scribe.Info($"Star heading: {Origin["my star"].Heading}");
 
     }
@@ -57,7 +57,7 @@ public class DefaultSpell : Spell
     {
         Renderer.RControl.Clear();
         Origin["my star"].Forward(1);
-        Origin["my star"].RotatedZ(0.02);
+        //Origin["my star"].RotatedZ(0.02);
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
         // Perform a Matrix rotation
@@ -132,5 +132,7 @@ public class DefaultSpell : Spell
                 Origin["myMulti"].Clear();
             }
         }
+
+        //Scribe.Info($"{Origin["my star"].Heading}");
     }
 }

@@ -31,15 +31,19 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     double pitch = 0; double yaw = 0; double roll = 0;
     public Vec Heading
     {
-        get => new Vec(1, 0, 0).Rotated(yaw, pitch, roll);
-        set { yaw = value.XZAngle; pitch = value.YZAngle; roll = value.XYAngle; }
+        get => Geo.Ref.DefaultHeading.Rotated(yaw, pitch, 0 * roll);
+        set
+        {
+            pitch = -Math.Asin(-value.y.Evaluate());
+            yaw = -Math.Atan2(value.x.Evaluate(), value.z.Evaluate());
+        }
     }
     double internalVal = 0;
     double tempX = 0;
     double tempY = 0;
     // Keep references to the rendered RDrawables so they can be removed
     List<RDrawable> drawables = new List<RDrawable>();
-    bool stale = true; // Does the Multi need to be re-rendered?
+    bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
 
     public Multi Parent
     {
@@ -237,6 +241,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         this.x.Set(x);
         this.y.Set(y);
         this.z.Set(z);
+        //Heading = Ref.DefaultHeading;
         //Scribe.Info($"yaw: {yaw}");
         //Heading = new Vec(0, 0, -1);
         //Scribe.Info($"yaw: {yaw}");
@@ -605,7 +610,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
     public void Strafe(double amount)
     {
-        Vec newPos = this + Heading.Rotated(-Math.PI / 2, 0, 0) * amount;
+        Vec newPos = this + Heading.Rotated(Math.PI / 2, 0, 0) * amount;
         x.From(newPos.x);
         y.From(newPos.y);
         z.From(newPos.z);
@@ -613,6 +618,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
     /* Driving methods */
     // Activates all the drivers
+    // TODO: remove this and re-implement driving in a smarter way
     public void DriveQuants(params double[] ds)
     {
         Update();
@@ -1015,6 +1021,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     // TODO: write a better comment
     public virtual void Render(double xOffset, double yOffset, double zOffset)
     {
+        // TODO: implement render cache
         if (stale)
         {
             //Scribe.Info($"cleaning stale");
@@ -1032,52 +1039,50 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         double a = col.A;
 
         // Get a projection of each constituent
-        // todo: create a list of unclipped vertices, and add clipped points in
+        // TODO: create a list of unclipped vertices, and add clipped points in
         double[][] unclippedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
-            double x, y, z;
-            // TODO: re-implement camera movement
-            x = this[i].X;// - Ref.Perspective.X;
-            y = this[i].Y;// - Ref.Perspective.Y;
-            z = this[i].Z;// - Ref.Perspective.Z;
+            Vector3D<double> posVec = new(this[i].X-Ref.Perspective.X, this[i].Y-Ref.Perspective.Y, this[i].Z-Ref.Perspective.Z);
+            Matrix4X4<double> yprMat = Matrix4X4.CreateFromYawPitchRoll<double>(
+                Ref.Perspective.yaw, Ref.Perspective.pitch, Ref.Perspective.roll
+            );
 
-            //Vec lookAt = Ref.Perspective.Heading;
-            //Scribe.Info(lookAt);
-            Matrix4X4<double> projectionMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 1, 2000);
+            posVec = Vector3D.Transform<double>(
+                posVec,
+                yprMat
+            );
+            posVec.X += Ref.Perspective.X;
+            posVec.Y += Ref.Perspective.Y;
+            posVec.Z += Ref.Perspective.Z;
 
-            Matrix4X4<double> camRotMat = Matrix4X4.CreateFromYawPitchRoll(Ref.Perspective.yaw, -Ref.Perspective.pitch, -Ref.Perspective.roll);
-            Matrix4X4<double> camTransMat = Matrix4X4.CreateTranslation(Ref.Perspective.x.Evaluate(), Ref.Perspective.y.Evaluate(), Ref.Perspective.z.Evaluate());
-            Matrix4X4<double> cameraMat = Matrix4X4.Multiply<double>(camTransMat, camRotMat);
+            Vec targ = Ref.Perspective + Ref.Perspective.Heading;
+            Vec up = targ.Rotated(0, Math.PI / 2, 0);
 
-            //Vec camView = Ref.Perspective.Heading + Ref.Perspective;
-            //Vec upVec = camView.Rotated(0, -Math.PI/2, 0);
-            //Matrix4X4<double> viewMat = Matrix4X4.CreateLookAt<double>(new Vector3D<double>(
-            //    Ref.Perspective.x.Evaluate(), Ref.Perspective.y.Evaluate(), Ref.Perspective.z.Evaluate()),
-            //    new Vector3D<double>(camView.x.Evaluate(), camView.y.Evaluate(), camView.z.Evaluate()),
-            //    new Vector3D<double>(upVec.x.Evaluate(), upVec.y.Evaluate(), upVec.z.Evaluate())
-            //);
+            Matrix4X4<double> projectionMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 0.1, 2000);
 
-            Matrix4X4<double> finalTransformMat = Matrix4X4.Multiply<double>(cameraMat, projectionMat);
-            //Scribe.Info(lookAt);
-            //Matrix3X3<double> rot = Matrix3X3.CreateRotationY(Math.PI/2);
-            //Vector3D<double> upward = Vector3D.Multiply<double>(new Vector3D<double> (lookAt.x.Evaluate(), lookAt.y.Evaluate(), lookAt.z.Evaluate()), rot);
-            Vector4D<double> homogenousPos = Vector4D<double>.Zero;
-            homogenousPos.X = x / z * Data.Globals.winWidth;
-            homogenousPos.Y = y / z * Data.Globals.winWidth;
-            homogenousPos.Z = -z;
-            homogenousPos.W = 1;
-            //Matrix4X4<double> the = new(
-            //    new Vector4D<double>(x / z * Data.Globals.winWidth,0,0,0),
-            //    new Vector4D<double>(0,y / z * Data.Globals.winWidth,0,0),
-            //    new Vector4D<double>(0,0,-z,0),
-            //    new Vector4D<double>(0,0,0,1))
-            //;
+            Matrix4X4<double> modelMat =
+            Matrix4X4.Multiply<double>(
+                Matrix4X4.Multiply<double>(
+                    Matrix4X4<double>.Identity,
+                    Matrix4X4.CreateTranslation<double>(posVec)
+                ),
+                Matrix4X4.CreateScale<double>(posVec)
+            );
 
-            Vector4D<double> transPos = Vector4D.Multiply<double>(homogenousPos, finalTransformMat);
+            Matrix4X4<double> finalMat = Matrix4X4.Multiply<double>(
+                projectionMat,
+                modelMat
+            );
+
+            //Vector4D<double> transPos = Vector4D.Multiply<double>(homogenousPos, finalMat);
             unclippedVerts[i] = new double[]
             {
-                transPos.X, transPos.Y, transPos.Z, transPos.W
+                //transPos.X, transPos.Y, transPos.Z, transPos.W
+                (finalMat.Row1.X+Ref.Perspective.X) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
+                (finalMat.Row2.Y+Ref.Perspective.Y) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
+                -0,
+                1
             };
         }
 
@@ -1089,7 +1094,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 (-Data.Globals.winHeight / 2, Data.Globals.winHeight),
                 (Geo.Ref.Perspective.Z, Geo.Ref.Perspective.Z + 600));
 
-            if (!oob)
+            if (true || !oob)
             {
                 clippedVerts.Add(v);
             }

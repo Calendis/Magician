@@ -68,7 +68,6 @@ public class Proto3D : Spell
             Origin["cube"].RotatedZ(0.01);
         }
 
-
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
         {
             Origin["cube"].y.Delta(walkSpeed);

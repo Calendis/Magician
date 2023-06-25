@@ -80,6 +80,10 @@ namespace Magician.Geo
         {
             return new(v1.vecArgs.Select((x, i) => x+v2.vecArgs[i]).ToArray());
         }
+        public static Vec operator-(Vec v1, Vec v2)
+        {
+            return new(v1.vecArgs.Select((x, i) => x-v2.vecArgs[i]).ToArray());
+        }
         // Scalar multiplication
         public static Vec operator *(Vec v1, double x)
         {
@@ -101,6 +105,27 @@ namespace Magician.Geo
                 results[i] = vecArgs[j].Evaluate() * v.vecArgs[k].Evaluate() - vecArgs[k].Evaluate() * v.vecArgs[j].Evaluate();
             }
             return new Vec(results);
+        }
+
+        public double Magnitude()
+        {
+            double m = 0;
+            for (int i = 0; i < Dims; i++)
+            {
+                m += Math.Pow(vecArgs[i].Evaluate(), 2);
+            }
+            return Math.Sqrt(m);
+        }
+
+        public Vec Normalized()
+        {
+            double m = Magnitude();
+            List<double> news = new();
+            foreach (Quantity q in vecArgs)
+            {
+                news.Add(q.Evaluate() / m);
+            }
+            return new(news.ToArray());
         }
 
         public Vec Rotated(double yaw, double pitch, double roll)

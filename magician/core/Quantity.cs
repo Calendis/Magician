@@ -61,6 +61,10 @@ public class Quantity : CustomMap
     {
         return new Quantity(q1.q + q2.q);
     }
+    public static Quantity operator-(Quantity q1, Quantity q2)
+    {
+        return new Quantity(q1.q - q2.q);
+    }
 
     // Driver code
     protected static void _AddDriver(Quantity q, IMap imap)
