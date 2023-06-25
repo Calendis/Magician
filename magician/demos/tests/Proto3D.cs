@@ -39,11 +39,11 @@ public class Proto3D : Spell
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
-            Ref.Perspective.RotatedY(0.01);
+            Ref.Perspective.RotatedY(0.05);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
-            Ref.Perspective.RotatedY(-0.01);
+            Ref.Perspective.RotatedY(-0.05);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])

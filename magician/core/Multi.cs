@@ -610,7 +610,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
     public void Strafe(double amount)
     {
-        Vec newPos = this + Heading.Rotated(Math.PI / 2, 0, 0) * amount;
+        Vec newPos = this + Heading.Rotated(-Math.PI / 2, 0, 0) * amount;
         x.From(newPos.x);
         y.From(newPos.y);
         z.From(newPos.z);
@@ -1043,7 +1043,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         double[][] unclippedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
-            Vector3D<double> posVec = new(this[i].X-Ref.Perspective.X, this[i].Y-Ref.Perspective.Y, this[i].Z-Ref.Perspective.Z);
+            Vector3D<double> posVec = new(this[i].X+Ref.Perspective.X, this[i].Y+Ref.Perspective.Y, this[i].Z+Ref.Perspective.Z);
             Matrix4X4<double> yprMat = Matrix4X4.CreateFromYawPitchRoll<double>(
                 Ref.Perspective.yaw, Ref.Perspective.pitch, Ref.Perspective.roll
             );
@@ -1052,9 +1052,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 posVec,
                 yprMat
             );
-            posVec.X += Ref.Perspective.X;
-            posVec.Y += Ref.Perspective.Y;
-            posVec.Z += Ref.Perspective.Z;
+            posVec.X -= Ref.Perspective.X;
+            posVec.Y -= Ref.Perspective.Y;
+            posVec.Z -= Ref.Perspective.Z;
 
             Vec targ = Ref.Perspective + Ref.Perspective.Heading;
             Vec up = targ.Rotated(0, Math.PI / 2, 0);
@@ -1079,8 +1079,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             unclippedVerts[i] = new double[]
             {
                 //transPos.X, transPos.Y, transPos.Z, transPos.W
-                (finalMat.Row1.X+Ref.Perspective.X) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
-                (finalMat.Row2.Y+Ref.Perspective.Y) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
+                (finalMat.Row1.X-Ref.Perspective.X) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
+                (finalMat.Row2.Y-Ref.Perspective.Y) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
                 -0,
                 1
             };
