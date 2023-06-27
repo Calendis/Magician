@@ -1073,17 +1073,12 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
             Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
             Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
-
-            if (Count >= 20)
-            {
-                //Scribe.Info(final);
-            }
             
             unclippedVerts[i] = new double[]
             {
                 final.X/-final.Z,
                 final.Y/-final.Z, 
-                -1,
+                -final.Z,
                 1+0*final.W
             };
         }
@@ -1092,9 +1087,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         foreach (double[] v in unclippedVerts)
         {
             bool oob = Geo.Check.PointInRectVolume(v[0], v[1], v[2],
-                (-Data.Globals.winWidth / 2, Data.Globals.winWidth),
-                (-Data.Globals.winHeight / 2, Data.Globals.winHeight),
-                (Geo.Ref.Perspective.Z, Geo.Ref.Perspective.Z + 600));
+                (-Data.Globals.winWidth / 2, Data.Globals.winWidth/2),
+                (-Data.Globals.winHeight / 2, Data.Globals.winHeight/2),
+                (-2000, 2000));
 
             if (true || !oob)
             {

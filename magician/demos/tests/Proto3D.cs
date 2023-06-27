@@ -39,11 +39,11 @@ public class Proto3D : Spell
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
-            Ref.Perspective.RotatedY(0.05);
+            Ref.Perspective.RotatedY(-0.05);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
-            Ref.Perspective.RotatedY(-0.05);
+            Ref.Perspective.RotatedY(0.05);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -88,32 +88,36 @@ public class Proto3D : Spell
         //Ref.Perspective.y.Set(10 * Math.Cos(Time / 10));
         //Scribe.Info(Ref.Perspective.z);
 
+        double loopRadius = 120;
+        double freqRatio = Math.Sin(Time/80)*2 + Math.Cos(Time/80)*5;
+        
         Origin["spring"] = new ParamMap(
-            t => 120 * Math.Sin(t * 2+Math.Abs(Math.Sin(Time/10))),  // x
-            t => t*10 + 120 * Math.Cos(t * (2+Math.Abs(Math.Sin(Time/120)*4))),  // y
-            t => t * 35)                 // z
-            .Plot(0, 0, 0, 0, 15 * Math.PI, 0.05, new RGBA(0x00ffff));
+            t => loopRadius * Math.Sin(t*freqRatio),
+            t => loopRadius * Math.Cos(t*(1-freqRatio)) + 30*Math.Sin(t*Time/100),
+            t => t * 20)
+        .Plot(0, 0, 0, 0, 25 * Math.PI, 0.05, new RGBA(0x00ffff));
+        
         Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI + Time/4, 1, 1, 255)));
     }
 
     public override void PreLoop()
     {
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
-        Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-        Origin["cube"] = Create.Cube(0, 0, 90, 10);
+        //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
+        Origin["cube"] = Create.Cube(200, 100, -200, 10);
+        Origin["cube"].Colored(new RGBA(0x6020ffff));
+        Origin["2"] = Create.Cube(0, 0, 340, 100);
 
-        Origin["2"] = Create.Cube(0, 0, 200, 50);
         Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
 
-        Origin["spring"] = new ParamMap(
-            t => 120 * Math.Sin(t * 2),  // x
-            t => 120 * Math.Cos(t * 6),  // y
-            t => t * 35)                 // z
-            .Plot(0, 0, 0, 0, 30 * Math.PI, 0.05, new RGBA(0x00ffff));
-        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
+        //Origin["spring"] = new ParamMap(
+        //    t => 120 * Math.Sin(t * 2),  // x
+        //    t => 120 * Math.Cos(t * 6),  // y
+        //    t => t * 35)                 // z
+        //    .Plot(0, 0, 0, 0, 30 * Math.PI, 0.05, new RGBA(0x00ffff));
+        //Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
 
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
 
-        Origin["cube"].Colored(new RGBA(0x6020ffff));
     }
 }
