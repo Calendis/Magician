@@ -128,6 +128,7 @@ namespace Magician.Geo
             return new(news.ToArray());
         }
 
+        // TODO: remove pointless roll
         public Vec Rotated(double yaw, double pitch, double roll)
         {
             if (Dims != 3)

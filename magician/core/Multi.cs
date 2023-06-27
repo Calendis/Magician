@@ -985,7 +985,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                     return -1;
                 }
 
-                Scribe.Info($"{this.Parent} is distributing indices...");
+                //Scribe.Info($"{this.Parent} is distributing indices...");
                 _IndexConstituents(Parent);
                 return (int)index!;
             }
@@ -1043,48 +1043,48 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         double[][] unclippedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
-            Vector3D<double> posVec = new(this[i].X+Ref.Perspective.X, this[i].Y+Ref.Perspective.Y, this[i].Z+Ref.Perspective.Z);
-            Matrix4X4<double> yprMat = Matrix4X4.CreateFromYawPitchRoll<double>(
-                Ref.Perspective.yaw, Ref.Perspective.pitch, Ref.Perspective.roll
-            );
-            // TODO::this doesn't do anything?
-            Matrix4X4.Invert<double>(yprMat, out yprMat);
+            // we don't need these for anything
+            //Vector3D<double> modelCoords = new(
+            //    this[i].x.Evaluate(),
+            //    this[i].y.Evaluate(),
+            //    this[i].z.Evaluate()
+            //);
 
-            posVec = Vector3D.Transform<double>(
-                posVec,
-                yprMat
-            );
-            posVec.X -= Ref.Perspective.X;
-            posVec.Y -= Ref.Perspective.Y;
-            posVec.Z -= Ref.Perspective.Z;
-
-            Vec targ = Ref.Perspective + Ref.Perspective.Heading;
-            Vec up = targ.Rotated(0, Math.PI / 2, 0);
-
-            Matrix4X4<double> projectionMat = Matrix4X4.CreatePerspectiveFieldOfView<double>(Ref.FOV / 360d * 2 * Math.PI, Data.Globals.winWidth / Data.Globals.winHeight, 0.1, 2000);
-
-            Matrix4X4<double> modelMat =
-            Matrix4X4.Multiply<double>(
-                Matrix4X4.Multiply<double>(
-                    Matrix4X4<double>.Identity,
-                    Matrix4X4.CreateTranslation<double>(posVec)
-                ),
-                Matrix4X4.CreateScale<double>(posVec)
+            Vector3D<double> worldCoords = new(
+                this[i].X,
+                this[i].Y,
+                this[i].Z
             );
 
-            Matrix4X4<double> finalMat = Matrix4X4.Multiply<double>(
-                projectionMat,
-                modelMat
+            Vec targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
+            Vec upV = targV.Rotated(0, Math.PI/2, 0);
+
+            Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
+                new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
+                new(targV.x.Evaluate(), targV.y.Evaluate(), targV.z.Evaluate()),
+                new (0, 1, 0)
             );
 
-            //Vector4D<double> transPos = Vector4D.Multiply<double>(homogenousPos, finalMat);
+            Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
+                Ref.FOV / 180d * Math.PI,
+                Data.Globals.winWidth / Data.Globals.winHeight,
+                0.1, 2000
+            );
+
+            Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
+            Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
+
+            if (Count >= 20)
+            {
+                //Scribe.Info(final);
+            }
+            
             unclippedVerts[i] = new double[]
             {
-                //transPos.X, transPos.Y, transPos.Z, transPos.W
-                (finalMat.Row1.X-Ref.Perspective.X) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
-                (finalMat.Row2.Y-Ref.Perspective.Y) / (this[i].Z-Ref.Perspective.Z) * Data.Globals.winWidth,
-                -0,
-                1
+                final.X/-final.Z,
+                final.Y/-final.Z, 
+                -1,
+                1+0*final.W
             };
         }
 
@@ -1222,8 +1222,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                     throw Scribe.Issue($"The triangulator has failed");
                 }
 
-                Scribe.Warn($"Failed to render {this}. Falling back to OUTERP");
-                WithFlags(DrawMode.OUTERP);
+                //Scribe.Warn($"Failed to render {this}. Falling back to OUTERP");
+                //WithFlags(DrawMode.OUTERP);
             }
 
         }

@@ -99,6 +99,7 @@ public class Proto3D : Spell
     public override void PreLoop()
     {
         b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
+        Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         Origin["cube"] = Create.Cube(0, 0, 90, 10);
 
         Origin["2"] = Create.Cube(0, 0, 200, 50);

@@ -22,8 +22,8 @@ public static class Rand
 
 public static class Globals
 {
-    public static int winWidth = 1200;
-    public static int winHeight = 800;
+    public static double winWidth = 1200;
+    public static double winHeight = 800;
     public static int fontSize = 24;
     public const double defaultTol = 1.4210854715202004E-14;
 
