@@ -7,7 +7,7 @@ namespace Magician.Geo
     public class Vec
     {
         Quantity[] vecArgs;
-        int Dims => vecArgs.Length;
+        public int Dims => vecArgs.Length;
         public Vec(params double[] vals)
         {
             vecArgs = new Quantity[vals.Length];
@@ -78,16 +78,16 @@ namespace Magician.Geo
 
         public static Vec operator +(Vec v1, Vec v2)
         {
-            return new(v1.vecArgs.Select((x, i) => x+v2.vecArgs[i]).ToArray());
+            return new(v1.vecArgs.Select((x, i) => x + v2.vecArgs[i]).ToArray());
         }
-        public static Vec operator-(Vec v1, Vec v2)
+        public static Vec operator -(Vec v1, Vec v2)
         {
-            return new(v1.vecArgs.Select((x, i) => x-v2.vecArgs[i]).ToArray());
+            return new(v1.vecArgs.Select((x, i) => x - v2.vecArgs[i]).ToArray());
         }
         // Scalar multiplication
         public static Vec operator *(Vec v1, double x)
         {
-            return new(v1.vecArgs.Select(va => va.Evaluate()*x).ToArray());
+            return new(v1.vecArgs.Select(va => va.Evaluate() * x).ToArray());
         }
 
         // TODO: how does this behave in n dimensions? (where n != 3)
@@ -128,17 +128,71 @@ namespace Magician.Geo
             return new(news.ToArray());
         }
 
-        // TODO: remove pointless roll
-        public Vec Rotated(double yaw, double pitch, double roll)
+        public double AxisDist(int axis0, int axis1)
+        {
+            double val0 = vecArgs[axis0].Evaluate();
+            double val1 = vecArgs[axis1].Evaluate();
+            return Math.Sqrt(val0 * val0 + val1 * val1);
+        }
+
+        public double AxisAngle(int axis0, int axis1)
+        {
+            double p = Math.Atan2(vecArgs[axis1].Evaluate(), vecArgs[axis0].Evaluate());
+            p = p < 0 ? p + 2 * Math.PI : p;
+            return p;
+        }
+
+        public Vec AxisRotated(int axis0, int axis1, double theta)
+        {
+            Vec n = new(vecArgs);
+            double mag = AxisDist(axis0, axis1);
+            double phase = AxisAngle(axis0, axis1);
+            n.vecArgs[axis0].Set(mag * Math.Cos(theta + phase));
+            n.vecArgs[axis1].Set(mag * Math.Sin(theta + phase));
+            return n;
+        }
+
+        public Vec AxisRotatedTo(int axis0, int axis1, double theta)
+        {
+            Vec n = new(vecArgs);
+            double mag = AxisDist(axis0, axis1);
+            n.vecArgs[axis0].Set(mag * Math.Cos(theta));
+            n.vecArgs[axis1].Set(mag * Math.Sin(theta));
+            return n;
+        }
+
+        //public Vec YawPitchRotated(double yaw, double pitch)
+        //{
+        //    Vec yawed = AxisRotatedTo(0, 2, yaw);
+        //    return yawed.AxisRotatedTo(1, 2, pitch);
+        //}
+
+        // TODO: remove pointless roll and rewrite this
+        public Vec YawPitchRotated(double yaw, double pitch)
         {
             if (Dims != 3)
             {
                 throw Scribe.Error("Not implemented");
             }
-            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
+            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, 0);
+            //Matrix3X3<double> rot = Matrix3X3.C
             //Vector3D<double> v = Vector3D.Multiply<double>();
             Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(x.Evaluate(), y.Evaluate(), z.Evaluate()), rotMat);
             return new(rotated.X, rotated.Y, rotated.Z);
+        }
+
+        public Multi Render()
+        {
+            if (Dims != 3)
+            {
+                throw Scribe.Error($"Tried to render {Dims}-vector, but only 3-vectors are renderable");
+            }
+            Multi line = new(
+                new Multi(0, 0, 0),
+                new Multi(x.Evaluate(), y.Evaluate(), z.Evaluate())
+            );
+            Multi arrowhead;
+            return line;
         }
 
         public override string ToString()
@@ -148,7 +202,7 @@ namespace Magician.Geo
             {
                 s += $"{q.Evaluate()}, ";
             }
-            return s+")";
+            return s + ")";
         }
 
     }

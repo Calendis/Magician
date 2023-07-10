@@ -40,10 +40,12 @@ public class Proto3D : Spell
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
             Ref.Perspective.RotatedY(-0.05);
+            Scribe.Info(Geo.Ref.Perspective.Heading.XZAngle);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
             Ref.Perspective.RotatedY(0.05);
+            Scribe.Info(Geo.Ref.Perspective.Heading.XZAngle);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -95,7 +97,7 @@ public class Proto3D : Spell
             t => loopRadius * Math.Sin(t*freqRatio),
             t => loopRadius * Math.Cos(t*(1-freqRatio)) + 30*Math.Sin(t*Time/100),
             t => t * 20)
-        .Plot(0, 0, 0, 0, 25 * Math.PI, 0.05, new RGBA(0x00ffff));
+        .Plot(0, 0, 0, 0, 25 * Math.PI, 0.15, new RGBA(0x00ffff));
         
         Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI + Time/4, 1, 1, 255)));
     }

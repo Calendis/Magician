@@ -25,19 +25,19 @@ public class Multi3D : Multi
         {
             // Do not draw faces behind the camera
             // TODO: this should be general behaviour for a Multi
-            bool occluded = false;
-            for (int j = 0; j < face.Count; j++)
-            {
-                if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
-                {
-                    occluded = true;
-                    break;
-                }
-            }
-            if (occluded)
-            {
-                continue;
-            }
+            //bool occluded = false;
+            //for (int j = 0; j < face.Count; j++)
+            //{
+            //    if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
+            //    {
+            //        occluded = true;
+            //        break;
+            //    }
+            //}
+            //if (occluded)
+            //{
+            //    continue;
+            //}
 
             Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate())
             .WithFlags(drawMode).Tagged($"face{cc}");

@@ -20,8 +20,8 @@ public static class Ref
     static Ref()
     {
         Origin = new Multi().Tagged("Placeholder Origin");
-        // TODO: find out why -600 works here...
-        Perspective = new Multi(0, 0, -600).Parented(null);
+        // TODO: find out why -399 works here... something to do with FOV
+        Perspective = new Multi(0, 0, -399).Parented(null);
         FOV = 90;
         Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
 
@@ -242,6 +242,12 @@ public static class Check
     public static bool PointInRectVolume(Multi p, (double, double) xRange, (double, double) yRange, (double, double) zRange)
     {
         return PointInRectVolume(p.X, p.Y, p.Z, xRange, yRange, zRange);
+    }
+    public static bool PointInRect(double pX, double pY, double rX, double rY, double rW, double rH)
+    {
+        double maxX = rX + rW;
+        double maxY = rY + rH;
+        return pX >= rX && pX <= maxX && pY >= rY && pY <= maxY;
     }
 
     public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)

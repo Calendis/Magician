@@ -26,12 +26,14 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     Multi? _parent;
     protected List<Multi> csts;
     Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
-    //Quantity[] headings = new Quantity[3] { new(0), new(0), new(0) };  // I only support 3 axes of rotation
-    //public Vec Heading = new(0, 0, -1);  // By default, a Multi faces away
     double pitch = 0; double yaw = 0; double roll = 0;
+    public Vec Abs
+    {
+        get => new Vec(X, Y, Z);
+    }
     public Vec Heading
     {
-        get => Geo.Ref.DefaultHeading.Rotated(yaw, pitch, 0 * roll);
+        get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
         set
         {
             pitch = -Math.Asin(-value.y.Evaluate());
@@ -474,7 +476,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     // Rotation, in terms of revolution
     public Multi RotatedZ(double theta)
     {
-        roll = (roll + theta) % (2 * Math.PI);
+        //roll = (roll + theta) % (2 * Math.PI);
         return Sub(
             m =>
             m.RevolvedZ(theta)
@@ -610,7 +612,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
     public void Strafe(double amount)
     {
-        Vec newPos = this + Heading.Rotated(-Math.PI / 2, 0, 0) * amount;
+        Vec newPos = this + Heading.YawPitchRotated(-Math.PI / 2, 0) * amount;
         x.From(newPos.x);
         y.From(newPos.y);
         z.From(newPos.z);
@@ -1057,7 +1059,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             );
 
             Vec targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
-            Vec upV = targV.Rotated(0, Math.PI/2, 0);
+            Vec upV = targV.YawPitchRotated(0, Math.PI/2);
 
             Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
                 new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
@@ -1084,14 +1086,20 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         }
 
         List<double[]> clippedVerts = new();
+        int counter = 0;
         foreach (double[] v in unclippedVerts)
         {
-            bool oob = Geo.Check.PointInRectVolume(v[0], v[1], v[2],
-                (-Data.Globals.winWidth / 2, Data.Globals.winWidth/2),
-                (-Data.Globals.winHeight / 2, Data.Globals.winHeight/2),
-                (-2000, 2000));
+            bool xyInBounds = true;//Geo.Check.PointInRect(v[0], v[1], -1, -1, 2, 2);
+            bool zInBounds;
+            Vec absPos = this[counter++].Abs;
+            absPos = absPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
+            Vec perPos = Ref.Perspective.Abs;
+            perPos = perPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
+            zInBounds = (absPos.z.Evaluate() - perPos.z.Evaluate() >= 0);
+            bool oob = (!xyInBounds || !zInBounds);
 
-            if (true || !oob)
+
+            if (!oob)
             {
                 clippedVerts.Add(v);
             }

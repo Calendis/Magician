@@ -14,7 +14,7 @@ public abstract class RDrawable
     protected static int posLength = 3;
     protected static int colLength = 4;
 
-    protected static float zFactor = 2000;
+    protected static float zFactor = 9999;
 
     static RDrawable()
     {
