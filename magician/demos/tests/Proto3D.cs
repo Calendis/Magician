@@ -40,12 +40,10 @@ public class Proto3D : Spell
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
             Ref.Perspective.RotatedY(-0.05);
-            Scribe.Info(Geo.Ref.Perspective.Heading.XZAngle);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
             Ref.Perspective.RotatedY(0.05);
-            Scribe.Info(Geo.Ref.Perspective.Heading.XZAngle);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
