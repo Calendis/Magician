@@ -1089,17 +1089,15 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         int counter = 0;
         foreach (double[] v in unclippedVerts)
         {
-            bool xyInBounds = true;//Geo.Check.PointInRect(v[0], v[1], -1, -1, 2, 2);
             bool zInBounds;
             Vec absPos = this[counter++].Abs;
             absPos = absPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
             Vec perPos = Ref.Perspective.Abs;
             perPos = perPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
             zInBounds = (absPos.z.Evaluate() - perPos.z.Evaluate() >= 0);
-            bool oob = (!xyInBounds || !zInBounds);
 
 
-            if (!oob)
+            if (zInBounds)
             {
                 clippedVerts.Add(v);
             }
