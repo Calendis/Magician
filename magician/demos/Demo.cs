@@ -44,7 +44,7 @@ public class DefaultSpell : Spell
         Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
 
         Scribe.Info($"Star heading: {Origin["my star"].Heading}");
-        Origin["my star"].Heading = new Vec(1, 1, -1).Normalized();
+        Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
         Scribe.Info($"Star heading: {Origin["my star"].Heading}");
 
     }

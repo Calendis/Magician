@@ -19,19 +19,19 @@ public enum DrawMode : short
     FULL = 0b1110,
     OUTERP = 0b1101
 }
-/* A Multi is a drawable tree of 3-vectors with a stored heading vector */
 
-public class Multi : Vec, IDriveable, ICollection<Multi>
+/* A Multi is a drawable tree of 3-vectors with a stored heading vector */
+public class Multi : Vec3, IDriveable, ICollection<Multi>
 {
     Multi? _parent;
     protected List<Multi> csts;
     Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
     double pitch = 0; double yaw = 0; double roll = 0;
-    public Vec Abs
+    public Vec3 Abs
     {
-        get => new Vec(X, Y, Z);
+        get => new Vec3(X, Y, Z);
     }
-    public Vec Heading
+    public Vec3 Heading
     {
         get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
         set
@@ -295,16 +295,12 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
 
     /* Colour methods */
-    public static void _Color(Multi m, Color c)
-    {
-        m.col = c;
-    }
     public Multi Colored(Color c)
     {
-        _Color(this, c);
+        col = c;
         foreach (Multi cst in Constituents)
         {
-            _Color(cst, c);
+            cst.col = c;
         }
         return this;
     }
@@ -380,203 +376,72 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
 
     /* Translation methods */
-    public static void _SetX(Multi m, double x)
-    {
-        // x is is stored as a Quantity object, so set it like this
-        m.x.Set(x);
-    }
     public Multi AtX(double offset)
     {
-        _SetX(this, offset);
+        x.Set(offset);
         return this;
-    }
-    public static void _SetY(Multi m, double y)
-    {
-        // y is is stored as a Quantity object, so set it like this
-        m.y.Set(y);
     }
     public Multi AtY(double offset)
     {
-        _SetY(this, offset);
+        y.Set(offset);
         return this;
-    }
-    public static void _SetZ(Multi m, double z)
-    {
-        m.z.Set(z);
     }
     public Multi AtZ(double offset)
     {
-        _SetZ(this, offset);
+        z.Set(offset);
         return this;
     }
 
-    public static void _Translate(Multi m, double x, double y, double? z = null)
+    public Multi Translated(double xOffset, double yOffset, double zOffset = 0)
     {
-        // x, y, and z are Quantities, so increment them like this
-        m.x.Incr(x);
-        m.y.Incr(y);
-        // TODO: why would I do it like this?
-        if (z != null)
-        {
-            m.z.Incr((double)z);
-        }
-    }
-    public Multi Translated(double x, double y, double? z = null)
-    {
-        _Translate(this, x, y, z);
-        return this;
-    }
-    public Multi XShifted(double offset)
-    {
-        _Translate(this, offset, 0);
-        return this;
-    }
-    public Multi YShifted(double offset)
-    {
-        _Translate(this, 0, offset);
-        return this;
-    }
-    public Multi ZShifted(double offset)
-    {
-        _Translate(this, 0, 0, offset);
+        x.Incr(xOffset);
+        y.Incr(yOffset);
+        z.Incr(zOffset);
         return this;
     }
     public Multi Positioned(double x, double y, double? z = null)
     {
-        _SetX(this, x);
-        _SetY(this, y);
+        this.x.Set(x);
+        this.y.Set(y);
         if (z != null)
         {
-            _SetZ(this, (double)z);
+            this.z.Set((double)z);
         }
         return this;
     }
 
     /* Rotation methods */
-    public static void _RevolveToZ(Multi m, double theta)
-    {
-        double mag = m.XYDist;
-        m.x.Set(mag * Math.Cos(theta));
-        m.y.Set(mag * Math.Sin(theta));
-    }
-    public static void _RevolveZ(Multi m, double theta)
-    {
-        _RevolveToZ(m, theta + m.XYAngle);
-    }
-    public Multi RevolvedZ(double theta)
-    {
-        _RevolveZ(this, theta);
-        return this;
-    }
-    public Multi RevolvedToZ(double offset)
-    {
-        _RevolveToZ(this, offset);
-        return this;
-    }
-    // Rotation, in terms of revolution
     public Multi RotatedZ(double theta)
     {
-        //roll = (roll + theta) % (2 * Math.PI);
+        roll = (roll + theta) % (2 * Math.PI);
         return Sub(
             m =>
-            m.RevolvedZ(theta)
+            m.PhaseXY += theta
         );
     }
-    public static void _RevolveToY(Multi m, double theta)
-    {
-        double mag = m.XZDist;
-        m.x.Set(mag * Math.Cos(theta));
-        m.z.Set(mag * Math.Sin(theta));
-    }
-    public static void _RevolveY(Multi m, double theta)
-    {
-        _RevolveToY(m, theta + m.XZAngle);
-    }
-    public Multi RevolvedY(double theta)
-    {
-        _RevolveY(this, theta);
-        return this;
-    }
-    public Multi RevolvedToY(double offset)
-    {
-        _RevolveToY(this, offset);
-        return this;
-    }
-    // Rotation, in terms of revolution
     public Multi RotatedY(double theta)
     {
         yaw = (yaw + theta) % (2 * Math.PI);
         return Sub(
             m =>
-            m.RevolvedY(theta)
+            m.PhaseXZ += theta
         );
     }
-    public static void _RevolveToX(Multi m, double theta)
-    {
-        double mag = m.YZDist;
-        m.y.Set(mag * Math.Cos(theta));
-        m.z.Set(mag * Math.Sin(theta));
-    }
-    public static void _RevolveX(Multi m, double theta)
-    {
-        _RevolveToX(m, theta + m.YZAngle);
-    }
-    public Multi RevolvedX(double theta)
-    {
-        _RevolveX(this, theta);
-        return this;
-    }
-    public Multi RevolvedToX(double offset)
-    {
-        _RevolveToX(this, offset);
-        return this;
-    }
-    // Rotation, in terms of revolution
     public Multi RotatedX(double theta)
     {
         pitch = (pitch + theta) % (2 * Math.PI);
         return Sub(
             m =>
-            m.RevolvedX(theta)
+            m.PhaseYZ += theta
         );
     }
 
     /* Scaling methods */
-    public static void _AbsoluteScale(Multi m, double mag)
-    {
-        double ph = m.XYAngle;
-        _SetX(m, mag * Math.Cos(ph));
-        _SetY(m, mag * Math.Sin(ph));
-    }
-    public Multi AbsoluteScaled(double mag)
-    {
-        _AbsoluteScale(this, mag);
-        return this;
-    }
-    public Multi AbsoluteScaleShifted(double mag)
-    {
-        _AbsoluteScale(this, mag + this.XYDist);
-        return this;
-    }
-
-    // Scale is implemented in terms of absolute scale
-    public static void _Scale(Multi m, double mag)
-    {
-        _AbsoluteScale(m, mag * m.XYDist);
-    }
     public Multi Scaled(double mag)
     {
-        _Scale(this, mag);
+        throw Scribe.Issue("TODO: re-implement scaling");
         return this;
     }
-
-    /* public Multi TransformedPoint(Matrix mx)
-    {
-        Matrix result = new Matrix(this)
-        .Mult(mx)
-        ;
-        return new Multi(result.Get(0,0), result.Get(1,1), result.Get(2,2));
-    } */
 
     public static void _Texture(Multi m, Renderer._SDLTexture t)
     {
@@ -668,7 +533,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
             x.Set(xResult);
             y.Set(yResult);
 
-            roll = XYAngle;
+            roll = PhaseXY;
         }
         //x.Delta(-tempX);
         //y.Delta(-tempY);
@@ -701,12 +566,12 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     public Multi DrivenPM(IMap imPh, IMap imMg)
     {
         // Driving of phase
-        x.Driven(x => XYDist * Math.Cos(imPh.Evaluate(XYAngle)));
-        y.Driven(y => XYDist * Math.Sin(imPh.Evaluate(XYAngle)));
+        x.Driven(x => XYDist * Math.Cos(imPh.Evaluate(PhaseXY)));
+        y.Driven(y => XYDist * Math.Sin(imPh.Evaluate(PhaseXY)));
 
         // Driving of magnitude
-        x.Driven(x => imMg.Evaluate(XYDist) * Math.Cos(XYAngle));
-        y.Driven(y => imMg.Evaluate(XYDist) * Math.Sin(XYAngle));
+        x.Driven(x => imMg.Evaluate(XYDist) * Math.Cos(PhaseXY));
+        y.Driven(y => imMg.Evaluate(XYDist) * Math.Sin(PhaseXY));
         return this;
     }
     public Multi DrivenPM(Func<double, double> fPh, Func<double, double> fMg)
@@ -735,13 +600,9 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
 
 
     /* Internal state methods */
-    public static void _Write(Multi m, double d)
-    {
-        m.internalVal = d;
-    }
     public Multi Written(double d)
     {
-        _Write(this, d);
+        internalVal = d;
         return this;
     }
     public double Read()
@@ -766,33 +627,22 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
     }
 
     /* Parenting/tagging methods */
-    static void _Parent(Multi m, Multi? p)
-    {
-        m._parent = p;
-    }
     public Multi Parented(Multi? m)
     {
-        _Parent(this, m);
+        _parent = m;
         return this;
     }
-    static bool _IsOrphan(Multi m)
-    {
-        if (Ref.AllowedOrphans.Contains(m)) { return false; }
-        if (m._parent == null) { return true; }
-        return false;
-    }
+
     public bool IsOrphan()
     {
-        return _IsOrphan(this);
+        if (Ref.AllowedOrphans.Contains(this)) { return false; }
+        if (_parent == null) { return true; }
+        return false;        
     }
 
-    static void _Tag(Multi m, string tag)
-    {
-        m.tag = tag;
-    }
     public Multi Tagged(string tag)
     {
-        _Tag(this, tag);
+        this.tag = tag;
         return this;
     }
 
@@ -1058,8 +908,8 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 this[i].Z
             );
 
-            Vec targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
-            Vec upV = targV.YawPitchRotated(0, Math.PI/2);
+            Vec3 targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
+            Vec3 upV = targV.YawPitchRotated(0, Math.PI/2);
 
             Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
                 new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
@@ -1090,12 +940,12 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
         foreach (double[] v in unclippedVerts)
         {
             bool zInBounds;
-            Vec absPos = this[counter++].Abs;
+            Vec3 absPos = this[counter++].Abs;
+            Vec3 camPos = Ref.Perspective;
+            // Rotate so that we can compare straight along the axis using a >=
             absPos = absPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            Vec perPos = Ref.Perspective.Abs;
-            perPos = perPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            zInBounds = (absPos.z.Evaluate() - perPos.z.Evaluate() >= 0);
-
+            camPos = camPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
+            zInBounds = (absPos.z.Evaluate() - camPos.z.Evaluate() >= 0);
 
             if (zInBounds)
             {
@@ -1106,6 +956,7 @@ public class Multi : Vec, IDriveable, ICollection<Multi>
                 // TODO: calculate clip intersection
             }
         }
+        
         //double[][] projectedVerts = new double[Count][];
         // TODO: actually do clipping and then make this clippedVerts
         double[][] projectedVerts = clippedVerts.ToArray();

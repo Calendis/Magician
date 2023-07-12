@@ -11,7 +11,7 @@ public static class Ref
     public static Multi Perspective { get; }
     public static Multi Undefined { get; internal set; }
     public static List<Multi> AllowedOrphans;
-    public static Vec DefaultHeading = new(0,0,-1);
+    public static Vec3 DefaultHeading = new(0,0,-1);
     public static double FOV
     {
         get => Perspective.Read();
