@@ -4,9 +4,9 @@
 */
 namespace Magician;
 
-public class Quantity : CustomMap
+public class Quantity// : CustomMap
 {
-    List<IMap> drivers = new List<IMap>();
+    //List<IMap> drivers = new List<IMap>();
 
     // Global container for created quantites
     // This can be used to Drive the quantities
@@ -21,7 +21,7 @@ public class Quantity : CustomMap
     public Quantity(Quantity qq)
     {
         q = qq.Evaluate();
-        drivers.AddRange(qq.drivers);
+        //drivers.AddRange(qq.drivers);
     }
 
     public void Set(double x)
@@ -67,30 +67,30 @@ public class Quantity : CustomMap
     }
 
     // Driver code
-    protected static void _AddDriver(Quantity q, IMap imap)
-    {
-        q.drivers.Add(imap);
-    }
-    public Quantity Driven(IMap imap)
-    {
-        _AddDriver(this, imap);
-        return this;
-    }
+    //protected static void _AddDriver(Quantity q, IMap imap)
+    //{
+    //    q.drivers.Add(imap);
+    //}
+    //public Quantity Driven(IMap imap)
+    //{
+    //    _AddDriver(this, imap);
+    //    return this;
+    //}
     // Allow driving with lambdas
-    public Quantity Driven(Func<double, double> f)
-    {
-        return Driven(new CustomMap(f));
-    }
-
-    // Remove the drivers
-    public void Eject()
-    {
-        drivers.Clear();
-    }
-    public List<IMap> GetDrivers()
-    {
-        return drivers;
-    }
+    //public Quantity Driven(Func<double, double> f)
+    //{
+    //    return Driven(new CustomMap(f));
+    //}
+//
+    //// Remove the drivers
+    //public void Eject()
+    //{
+    //    drivers.Clear();
+    //}
+    //public List<IMap> GetDrivers()
+    //{
+    //    return drivers;
+    //}
 
     public override string ToString()
     {

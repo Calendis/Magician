@@ -160,7 +160,8 @@ class MagicianSDL
     // TODO: move this responsibility to the spellcaster
     void Drive()
     {
-        Geo.Ref.Origin.DriveQuants();
+        // TODO: re-implement driving
+        //Geo.Ref.Origin.DriveQuants();
     }
     void InitSDL()
     {

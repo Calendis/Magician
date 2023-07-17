@@ -13,8 +13,8 @@ public abstract class Control : Multi
 
 public abstract class InteractiveControl : Control
 {
-    protected IMap controlSensor;
-    public InteractiveControl(double x, double y, Func<Multi, IMap> sensor, Action? a = null) : base(x, y, a)
+    protected DirectMap controlSensor;
+    public InteractiveControl(double x, double y, Func<Multi, DirectMap> sensor, Action? a = null) : base(x, y, a)
     {
         controlSensor = sensor.Invoke(this);
     }
@@ -26,7 +26,7 @@ public abstract class Clickable : InteractiveControl
     protected Clickable(double x, double y, Action? a) : base(x, y, Sensor.MouseOver, a) { }
     public override void Update()
     {
-        hovered = controlSensor.Evaluate() > 0;
+        hovered = controlSensor.Evaluate(0) > 0;
     }
 }
 
@@ -55,7 +55,7 @@ public class Button : Clickable
         }
 
         // Button is clicked
-        if (hovered && Sensor.Click.Evaluate() > 0)
+        if (hovered && Sensor.Click.Evaluate(0) > 0)
         {
             ControlAction.Invoke();
         }

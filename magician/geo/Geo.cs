@@ -148,6 +148,21 @@ public static class Create
         return Star(0, 0, sides, innerRadius, outerRadius);
     }
 
+    public static Multi Along(ParamMap pm, double start, double end, double spacing, Multi template)
+    {
+        Multi container = new();
+        for (double x = start; x < end; x += spacing)
+        {
+            List<double> pos = pm.Evaluate(x).ToList();
+            while (pos.Count < 3)
+            {
+                pos.Add(0);
+            }
+            container.Add(template.Copy().Positioned(pos[0], pos[1], pos[2]));
+        }
+        return container;
+    }
+
     /* Create 3D shapes! */
     public static Multi3D TriPyramid(double x, double y, double z, double radius)
     {

@@ -1,12 +1,9 @@
 using System;
 
 namespace Magician;
-public class Brush : IOMap
+public class Brush : ParamMap
 {
-    public Brush(IMap im0, IMap im1) : base(im0, im1)
-    {
-        //
-    }
+    public Brush(DirectMap dm0, DirectMap dm1) : base(dm0, dm1) {}
 
     public Multi Paint(double t, Multi m)
     {

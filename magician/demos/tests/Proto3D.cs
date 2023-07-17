@@ -102,7 +102,7 @@ public class Proto3D : Spell
 
     public override void PreLoop()
     {
-        b = new Brush(new CustomMap(x => Events.MouseX), new CustomMap(y => Events.MouseY));
+        b = new Brush(new DirectMap(x => Events.MouseX), new DirectMap(y => Events.MouseY));
         //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         Origin["cube"] = Create.Cube(200, 100, -200, 10);
         Origin["cube"].Colored(new RGBA(0x6020ffff));

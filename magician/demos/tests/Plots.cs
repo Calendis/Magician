@@ -9,8 +9,8 @@ public class Plots : Spell
     public override void PreLoop()
     {
         //Origin["plot0"] = ((IMap)new CustomMap(x => 60 * Math.Sin(x / 6))).Plot(0, 0, 0, 96 * Math.PI, 1, HSLA.RandomVisible());
-        Origin["plot1"] = new IOMap(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
-            .Plot(-300, 0, 0, 96 * Math.PI, 1, HSLA.RandomVisible());
+        Origin["plot1"] = new ParamMap(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
+            .Plot(-300, 0, 0, 0, 96 * Math.PI, 1, HSLA.RandomVisible());
         Origin["plot2"] = new ParamMap(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
             .Plot(300, 0, 0, 0, 96 * Math.PI, 1, HSLA.RandomVisible());
         Origin["spring"] = new ParamMap(t => 60*Math.Sin(t), t => 60*Math.Cos(t) + t*4, t => t*40)

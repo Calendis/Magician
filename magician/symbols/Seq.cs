@@ -1,35 +1,17 @@
 using System.Collections;
 
 namespace Magician.Symbols;
-public class Seq : CustomMap, ICollection<double>
+public class Seq : DirectMap
 {
     // If a generator is specified, the sequence can be shifted/extended when necessary
     // If no generator is specifed, the sequence may lose information when shifting/extending
-    IMap? generator;
-    protected double[] s;
+    DirectMap? generator;
+    //protected double[]? seq;
+    public int Length;
     public double Offset { get; set; }
 
     // Seq from literals
-    public Seq(params double[] s)
-    {
-        this.s = new double[s.Length];
-        s.CopyTo(this.s, 0);
-    }
-    // Seq from 1D generator
-    public Seq(IMap g, double start, double end, double dn)
-    {
-        generator = g;
-        int range = (int)(end - start);
-        int steps = (int)(range / dn);
-        s = new double[range];
-        int counter = 0;
-        for (double i = start; i < end; i += dn)
-        {
-            s[counter++] = (g.Evaluate(i));
-        }
-    }
-
-    public new virtual double Evaluate(double x)
+    public Seq(params double[] s) : base(x => 
     {
         double d;
         try
@@ -40,90 +22,92 @@ public class Seq : CustomMap, ICollection<double>
         {
             d = 0;
         }
-
         return d;
-    }
-    public virtual double[] Evaluate(double[] offsets)
+    })
     {
-        double[] outputs = new double[offsets.Length];
-        for (int i = 0; i < offsets.Length; i++)
-        {
-            outputs[i] = Evaluate(offsets[i]) + outputs[i];
-        }
-        return outputs;
+        Length = s.Length;
+        //seq = new double[s.Length];
+        //s.CopyTo(seq, 0);
+    }
+    // Lazy seq from 1D generator
+    public Seq(DirectMap g) : base(x => g.Evaluate(x))
+    {
+        generator = g;
     }
 
     // ICollection properties/methods
-    public int Count
-    {
-        get => s.Length;
-    }
-    public void Add(double x)
-    {
-        double[] newS = new double[s.Length + 1];
-        s.CopyTo(newS, 0);
-        newS[s.Length] = x;
-        s = newS;
-    }
+    //public int Count
+    //{
+    //    get => seq.Length;
+    //}
+    // TODO: make Seqs immutable
 
-    // TODO: test this
-    public bool Remove(double x)
-    {
-        int done = 0;
-        double[] newS = new double[s.Length - 1];
-
-        for (int i = 0; i < s.Length; i++)
-        {
-            double d = s[i];
-            if (d == x && done == 0)
-            {
-                done = 1;
-                continue;
-            }
-            newS[i] = s[i - done];
-        }
-        return done == 1;
-    }
-
-    public void Clear()
-    {
-        s = new double[] { };
-    }
-
-    public bool Contains(double d)
-    {
-        return s.Contains(d);
-    }
-
-    public void CopyTo(double[] ds, int i)
-    {
-        s.CopyTo(ds, i);
-    }
-
-    public bool IsReadOnly
-    {
-        get => false;
-    }
-
-    public IEnumerator<double> GetEnumerator()
-    {
-        return (IEnumerator<double>)(s.GetEnumerator());
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return s.GetEnumerator();
-    }
+    //public void Add(double x)
+    //{
+    //    double[] newS = new double[seq.Length + 1];
+    //    seq.CopyTo(newS, 0);
+    //    newS[seq.Length] = x;
+    //    seq = newS;
+    //}
+//
+    //// TODO: test this
+    //public bool Remove(double x)
+    //{
+    //    int done = 0;
+    //    double[] newS = new double[seq.Length - 1];
+//
+    //    for (int i = 0; i < seq.Length; i++)
+    //    {
+    //        double d = seq[i];
+    //        if (d == x && done == 0)
+    //        {
+    //            done = 1;
+    //            continue;
+    //        }
+    //        newS[i] = seq[i - done];
+    //    }
+    //    return done == 1;
+    //}
+//
+    //public void Clear()
+    //{
+    //    seq = new double[] { };
+    //}
+//
+    //public bool Contains(double d)
+    //{
+    //    return seq.Contains(d);
+    //}
+//
+    //public void CopyTo(double[] ds, int i)
+    //{
+    //    seq.CopyTo(ds, i);
+    //}
+//
+    //public bool IsReadOnly
+    //{
+    //    get => false;
+    //}
+//
+    //public IEnumerator<double> GetEnumerator()
+    //{
+    //    return (IEnumerator<double>)(seq.GetEnumerator());
+    //}
+//
+    //IEnumerator IEnumerable.GetEnumerator()
+    //{
+    //    return seq.GetEnumerator();
+    //}
 }
 
 public class Polynomial : Seq
 {
     public Polynomial(params double[] s) : base(s) { }
 
-    public override double Evaluate(double x)
+    public new double Evaluate(double x)
     {
         double y = 0;
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < Length; i++)
         {
             y += Math.Pow(x, i);
         }
@@ -135,10 +119,10 @@ public class Taylor : Seq
 {
     public Taylor(params double[] s) : base(s) { }
 
-    public override double Evaluate(double x)
+    public new double Evaluate(double x)
     {
         double y = 0;
-        for (int i = 0; i < s.Length; i++)
+        for (int i = 0; i < Length; i++)
         {
             throw new NotImplementedException("Taylor not supported");
             //y+= Math.Pow(x, i) / Math.Factorial(i);

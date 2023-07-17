@@ -19,7 +19,7 @@ public class NeoMap
     }
 }
 
-// General quation
+// General equation
 public class InverseParamMap : NeoMap
 {
     int ins;
@@ -41,6 +41,7 @@ public class InverseParamMap : NeoMap
 public class ParamMap : NeoMap
 {
     public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray()) { }
+    public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray()) {}
 
     public double[] Evaluate(double x)
     {

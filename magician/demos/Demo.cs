@@ -6,7 +6,7 @@ namespace Magician.Demos;
 public class DefaultSpell : Spell
 {
 
-    IMap? mo;
+    DirectMap? mo;
     double spin = 0.014;
     public override void PreLoop()
     {
@@ -49,16 +49,17 @@ public class DefaultSpell : Spell
 
     }
     Brush b = new Brush(
-        new CustomMap(x => Events.MouseX),
-        new CustomMap(x => Events.MouseY)
+        new DirectMap(x => Events.MouseX),
+        new DirectMap(x => Events.MouseY)
     );
 
     public override void Loop()
     {
         Renderer.RControl.Clear();
+        Origin["btn"].Update();
         //Origin["my star"].Forward(1);
         Origin["my star"].RotatedZ(0.02);
-        Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
+        Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(-1234), 255, 255));
 
         // Perform a Matrix rotation
         //Matrix mmx = new Matrix(Origin["btn"]);

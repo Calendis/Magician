@@ -28,7 +28,7 @@ public static class Scribe
             Warn("NULL");
             return;
         }
-        Warn(o.ToString());
+        Warn(o.ToString()!);
         return;
     }
     public static void WarnIf(bool condition, string s)
