@@ -26,6 +26,7 @@ public class Vec3 : Vec
         {
             double p = Math.Atan2(y.Evaluate(), x.Evaluate());
             p = p < 0 ? p + 2 * Math.PI : p;
+            Scribe.Info(p);
             return p;
         }
         set
@@ -115,7 +116,7 @@ public class Vec3 : Vec
     }
     public new Vec3 Normalized()
     {
-        double m = Magnitude();
+        double m = Magnitude;
         List<double> news = new();
         foreach (Quantity q in vecArgs)
         {

@@ -21,7 +21,7 @@ public enum DrawMode : short
 }
 
 /* A Multi is a drawable tree of 3-vectors with a stored heading vector */
-public class Multi : Vec3, IDriveable, ICollection<Multi>
+public class Multi : Vec3, ICollection<Multi>
 {
     Multi? _parent;
     protected List<Multi> csts;
@@ -167,7 +167,7 @@ public class Multi : Vec3, IDriveable, ICollection<Multi>
     public double LastX { get => tempX; }
     public double LastY { get => tempY; }
 
-    /* USERS, NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
+    /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
     ///////////////////////////////////////////////////
     // Multi m = (blah...)
     // loop {
@@ -243,12 +243,6 @@ public class Multi : Vec3, IDriveable, ICollection<Multi>
         this.x.Set(x);
         this.y.Set(y);
         this.z.Set(z);
-        //Heading = Ref.DefaultHeading;
-        //Scribe.Info($"yaw: {yaw}");
-        //Heading = new Vec(0, 0, -1);
-        //Scribe.Info($"yaw: {yaw}");
-        //yaw = Math.PI/2;
-        //Scribe.Info($"yaw: {yaw}");
 
         this.col = col ?? new RGBA(0xff00ffd0);
         this.drawMode = dm;
@@ -482,123 +476,6 @@ public class Multi : Vec3, IDriveable, ICollection<Multi>
         y.From(newPos.y);
         z.From(newPos.z);
     }
-
-    /* Driving methods */
-    // Activates all the drivers
-    // TODO: remove this and re-implement driving in a smarter way
-    //public void DriveQuants(params double[] ds)
-    //{
-    //    Update();
-    //    if (ds.Length < 2)
-    //    {
-    //        ds = new double[] { 0, 0 };
-    //    }
-    //    double xOffset = ds[0];
-    //    double yOffset = ds[1];
-    //    /*                                          TODO:                                                    */
-    //    // All driving should be done concurrently, so we need to traverse the tree and collect all the drivers
-    //    foreach (IDriveable c in csts)
-    //    {
-    //        // Pass the offsets to subdriving
-    //        // TODO: re-support dricin
-    //        //c.DriveQuants(xOffset, yOffset);
-    //    }
-//
-//
-    //    int count = x.GetDrivers().Count;
-    //    if (count != y.GetDrivers().Count)
-    //    {
-    //        throw new InvalidDataException("TODO: implement a fix for this");
-    //    }
-    //    // This drives x and y. If the driving IMap is flagged as absolute, we offset the
-    //    // result by the parent position. This corrects the offset and allows a user to
-    //    // easily drive multis based on their children
-    //    // TODO: support z-driving
-    //    double xResult = x.Evaluate();
-    //    double yResult = y.Evaluate();
-    //    //double zResult = z.Evaluate();
-    //    for (int i = 0; i < count; i++)
-    //    {
-    //        IMap xDriver = x.GetDrivers()[i];
-    //        IMap yDriver = y.GetDrivers()[i];
-    //        //IMap zDriver = z.GetDrivers()[i];
-//
-    //        // TODO: add support for absolute phase driving as well. IsAbs will need to be
-    //        // replaced with a reference to an offset value
-    //        double tempXResult = xResult;
-    //        double tempYResult = yResult;
-    //        xResult = xDriver.Evaluate(tempXResult) - (_parent is null ? 0 : ((xDriver.IsAbs ? 1 : 0) * _parent.X));
-    //        yResult = yDriver.Evaluate(tempYResult) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
-    //        //zResult = yDriver.Evaluate(zResult) - (_parent is null ? 0 : ((yDriver.IsAbs ? 1 : 0) * _parent.Y));
-//
-    //        x.Set(xResult);
-    //        y.Set(yResult);
-//
-    //        roll = PhaseXY;
-    //    }
-    //    //x.Delta(-tempX);
-    //    //y.Delta(-tempY);
-    //    tempX = X;
-    //    tempY = Y;
-    //}
-
-    // Remove all the drivers
-    //public void Eject()
-    //{
-    //    x.Eject();
-    //    y.Eject();
-    //    z.Eject();
-    //}
-    //public Multi Ejected()
-    //{
-    //    Eject();
-    //    return this;
-    //}
-    //public Multi DrivenXY(IMap im0, IMap im1)
-    //{
-    //    x.Driven(im0);
-    //    y.Driven(im1);
-    //    return this;
-    //}
-    //public Multi DrivenXY(Func<double, double> f0, Func<double, double> f1)
-    //{
-    //    return DrivenXY(new CustomMap(f0), new CustomMap(f1));
-    //}
-    //public Multi DrivenPM(IMap imPh, IMap imMg)
-    //{
-    //    // Driving of phase
-    //    x.Driven(x => XYDist * Math.Cos(imPh.Evaluate(PhaseXY)));
-    //    y.Driven(y => XYDist * Math.Sin(imPh.Evaluate(PhaseXY)));
-//
-    //    // Driving of magnitude
-    //    x.Driven(x => imMg.Evaluate(XYDist) * Math.Cos(PhaseXY));
-    //    y.Driven(y => imMg.Evaluate(XYDist) * Math.Sin(PhaseXY));
-    //    return this;
-    //}
-    //public Multi DrivenPM(Func<double, double> fPh, Func<double, double> fMg)
-    //{
-    //    return DrivenPM(new CustomMap(fPh), new CustomMap(fMg));
-    //}
-    //public Multi DrivenAbs(IMap im0, IMap im1)
-    //{
-    //    if (_parent is null)
-    //    {
-    //        return DrivenXY(im0, im1);
-    //    }
-    //    x.Driven(im0.AsAbsolute());
-    //    y.Driven(im1.AsAbsolute());
-    //    return this;
-    //}
-    //public Multi DrivenAbs(Func<double, double> f0, Func<double, double> f1)
-    //{
-    //    return DrivenAbs(new CustomMap(f0), new CustomMap(f1));
-    //}
-//
-    //public Multi DrivenRGBA(Func<double, double> r, Func<double, double> g, Func<double, double> b, Func<double, double> a)
-    //{
-    //    throw new NotImplementedException("DrivenRGBA not supported yet");
-    //}
-
 
     /* Internal state methods */
     public Multi Written(double d)

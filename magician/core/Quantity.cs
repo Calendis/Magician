@@ -4,7 +4,7 @@
 */
 namespace Magician;
 
-public class Quantity// : CustomMap
+public class Quantity : IArithmetic
 {
     //List<IMap> drivers = new List<IMap>();
 

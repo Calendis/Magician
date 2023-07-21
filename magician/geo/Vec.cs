@@ -3,7 +3,7 @@ using Silk.NET.Maths;
 
 namespace Magician.Geo
 {
-    public class Vec
+    public class Vec : IArithmetic
     {
         protected Quantity[] vecArgs;
         public int Dims => vecArgs.Length;
@@ -51,25 +51,45 @@ namespace Magician.Geo
             return new(v1.vecArgs.Select(va => va.Evaluate() * x).ToArray());
         }
 
-        public double Magnitude()
+        //public double Magnitude()
+        //{
+        //    double m = 0;
+        //    for (int i = 0; i < Dims; i++)
+        //    {
+        //        m += Math.Pow(vecArgs[i].Evaluate(), 2);
+        //    }
+        //    return Math.Sqrt(m);
+        //}
+
+        public double Magnitude
         {
-            double m = 0;
-            for (int i = 0; i < Dims; i++)
+            get
             {
-                m += Math.Pow(vecArgs[i].Evaluate(), 2);
+                double m = 0;
+                for (int i = 0; i < Dims; i++)
+                {
+                    m += Math.Pow(vecArgs[i].Evaluate(), 2);
+                }
+                return Math.Sqrt(m);
             }
-            return Math.Sqrt(m);
+            set
+            {
+                double m = Magnitude;
+                Normalize();
+                foreach (Quantity q in vecArgs)
+                {
+                    q.Set(q.Evaluate() * m);
+                }
+            }
         }
 
-        public Vec Normalized()
+        public void Normalize()
         {
-            double m = Magnitude();
-            List<double> news = new();
+            double m = Magnitude;
             foreach (Quantity q in vecArgs)
             {
-                news.Add(q.Evaluate() / m);
+                q.Set(q.Evaluate() / m);
             }
-            return new(news.ToArray());
         }
 
         public override string ToString()

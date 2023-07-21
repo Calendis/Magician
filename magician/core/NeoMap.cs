@@ -2,10 +2,10 @@ namespace Magician;
 using static Magician.Geo.Create;
 
 // General equation with multiple branches
-public class NeoMap
+public class RelationalMap
 {
     Func<double[], double[]> map;
-    public NeoMap(Func<double[], double[]> m)
+    public RelationalMap(Func<double[], double[]> m)
     {
         map = m;
     }
@@ -20,11 +20,11 @@ public class NeoMap
 }
 
 // General equation
-public class InverseParamMap : NeoMap
+public class InverseParamMap : RelationalMap
 {
     int ins;
     int outs;
-    public InverseParamMap(Func<double[], double> f) : base(xs => new double[]{f.Invoke(xs)}) {}
+    public InverseParamMap(Func<double[], double> f) : base(xs => new double[] { f.Invoke(xs) }) { }
 
     public new double Evaluate(double[] xs)
     {
@@ -33,17 +33,40 @@ public class InverseParamMap : NeoMap
 
     public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
+        // TODO: move plotting code here
         throw Scribe.Error("not implemented. Use an Equation instead");
     }
 }
 
 // Parametric equation
-public class ParamMap : NeoMap
+public class ParamMap : RelationalMap
 {
-    public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray()) { }
-    public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray()) {}
+    public int Params {get; set;}
+    public Func<double, double>[] Maps;
+    public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
+    {
+        Params = fs.Length;
+        Func<double, double>[] fs2 = new Func<double, double>[fs.Length];
+        int c = 0;
+        foreach (Func<double, double> f in fs)
+        {
+            fs2[c++] = f.Invoke;
+        }
+        Maps = fs2;
+    }
+    public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
+    {
+        Params = fs.Length;
+        Func<double, double>[] fs2 = new Func<double, double>[fs.Length];
+        int c = 0;
+        foreach (DirectMap dm in fs)
+        {
+            fs2[c++] = dm.Evaluate;
+        }
+        Maps = fs2;
+    }
 
-    public double[] Evaluate(double x)
+    public double[] Evaluate(double x=0)
     {
         return base.Evaluate(new double[] { x });
     }
@@ -54,16 +77,16 @@ public class ParamMap : NeoMap
         {
             double[] out0 = Evaluate(t);
             double[] out1 = Evaluate(t + dt);
-            double[] pos0 = {0, 0, 0};
-            double[] pos1 = {0, 0, 0};
-            double[][] outs = new[]{out0, out1};
-            double[][] poss = new[]{pos0, pos1};
+            double[] pos0 = { 0, 0, 0 };
+            double[] pos1 = { 0, 0, 0 };
+            double[][] outs = new[] { out0, out1 };
+            double[][] poss = new[] { pos0, pos1 };
             int counter = 0;
             int innerCounter;
             foreach (double[] ou in outs)
             {
                 innerCounter = 0;
-                foreach(double d in ou)
+                foreach (double d in ou)
                 {
                     poss[counter][innerCounter] = d;
                     innerCounter++;
@@ -83,7 +106,7 @@ public class ParamMap : NeoMap
 public class DirectMap : ParamMap
 {
     public DirectMap(Func<double, double> f) : base(f) { }
-    public new double Evaluate(double x)
+    public new double Evaluate(double x=0)
     {
         return base.Evaluate(x)[0];
     }

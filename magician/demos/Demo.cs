@@ -8,8 +8,9 @@ public class DefaultSpell : Spell
 
     DirectMap? mo;
     double spin = 0.014;
+    Driver rotator;
     public override void PreLoop()
-    {
+    {   
         // bg
         Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
@@ -29,8 +30,11 @@ public class DefaultSpell : Spell
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
-        /* Testing area */
+        // Spin the star
+        ParamMap pm = new(x => 0, y => 0.1, z => 0);
+        rotator = new Driver(Origin["my star"], pm, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT);
 
+        /* Testing area */
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
@@ -58,16 +62,10 @@ public class DefaultSpell : Spell
         Renderer.RControl.Clear();
         Origin["btn"].Update();
         //Origin["my star"].Forward(1);
-        Origin["my star"].RotatedZ(0.02);
-        Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(-1234), 255, 255));
+        //Origin["my star"].RotatedZ(0.02);
+        Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
+        rotator.Drive(Time);
 
-        // Perform a Matrix rotation
-        //Matrix mmx = new Matrix(Origin["btn"]);
-        //Matrix result = Matrix.Rotation(0.004).Mult(mmx);
-        //Origin["btn"].Positioned(result);
-        //Origin["testRect"].RotatedX(0.04);
-        //Origin["testRect"].RotatedY(0.02);
-        //Origin["btn"].RotatedZ(0.01);
         Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
         {
@@ -128,12 +126,9 @@ public class DefaultSpell : Spell
         {
             if (Origin["myMulti"].Count >= 3)
             {
-                //Origin["myMulti"].Written(Origin["myMulti"].Evaluate()+1);
                 Origin[$"savMyMulti"].Add(Origin["myMulti"].Copy().Colored(HSLA.RandomVisible()));
                 Origin["myMulti"].Clear();
             }
         }
-
-        //Scribe.Info($"{Origin["my star"].Heading}");
     }
 }
