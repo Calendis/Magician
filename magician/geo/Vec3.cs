@@ -26,7 +26,6 @@ public class Vec3 : Vec
         {
             double p = Math.Atan2(y.Evaluate(), x.Evaluate());
             p = p < 0 ? p + 2 * Math.PI : p;
-            Scribe.Info(p);
             return p;
         }
         set

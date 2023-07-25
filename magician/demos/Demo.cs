@@ -10,7 +10,7 @@ public class DefaultSpell : Spell
     double spin = 0.014;
     Driver rotator;
     public override void PreLoop()
-    {   
+    {
         // bg
         Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
@@ -30,10 +30,6 @@ public class DefaultSpell : Spell
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
-        // Spin the star
-        ParamMap pm = new(x => 0, y => 0.1, z => 0);
-        rotator = new Driver(Origin["my star"], pm, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT);
-
         /* Testing area */
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
@@ -51,6 +47,12 @@ public class DefaultSpell : Spell
         Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
         Scribe.Info($"Star heading: {Origin["my star"].Heading}");
 
+        Origin["my star"].PhaseXY = 0;
+
+        // Spin the star
+        ParamMap pm = new(x => 0, y => 0.02, z => 0);
+        rotator = new Driver(Origin["my star"], pm, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT);
+
     }
     Brush b = new Brush(
         new DirectMap(x => Events.MouseX),
@@ -62,7 +64,7 @@ public class DefaultSpell : Spell
         Renderer.RControl.Clear();
         Origin["btn"].Update();
         //Origin["my star"].Forward(1);
-        //Origin["my star"].RotatedZ(0.02);
+        Origin["my star"].RotatedZ(0.02);
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
         rotator.Drive(Time);
 

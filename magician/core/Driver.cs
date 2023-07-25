@@ -6,14 +6,14 @@ public class Driver
     public DriverMode DMode;
     public TargetMode TMode;
     public Multi Target { get; set; }
-    public delegate double Eval(double t);
-    protected Eval X;
-    protected Eval Y;
-    protected Eval Z;
+    protected Func<double, double> X;
+    protected Func<double, double> Y;
+    protected Func<double, double> Z;
 
     public Driver(Multi m, DirectMap dm1, DirectMap dm2, DirectMap dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT) :
     this(m, new ParamMap(dm1, dm2, dm3), coordMode, driverMode, targetMode)
     {
+        // these aren't actually necessary
         X = dm1.Evaluate;
         Y = dm2.Evaluate;
         Z = dm3.Evaluate;
@@ -29,9 +29,9 @@ public class Driver
         DMode = driverMode;
         TMode = targetMode;
         Target = m;
-        X = pm.Maps[0].Invoke;
-        Y = pm.Maps[1].Invoke;
-        Z = pm.Maps[2].Invoke;
+        X = pm.Maps[0];
+        Y = pm.Maps[1];
+        Z = pm.Maps[2];
     }
 
     public void Drive(double t)
@@ -59,11 +59,10 @@ public class Driver
                 break;
             case CoordMode.POLAR:
                 double mag   = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.Magnitude);
-                double theta = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseXY);
-                double phi   = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseYZ);
-                // TODO: This can't work due to needing a temp variable
                 Target.Magnitude = mag;
-                Target.PhaseXY = theta + theta;
+                double theta = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseXY);
+                Target.PhaseXY = theta;
+                double phi   = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseYZ);
                 Target.PhaseYZ = phi;
                 break;
             case CoordMode.BRANCHED:
