@@ -8,7 +8,6 @@ public class DefaultSpell : Spell
 
     DirectMap? mo;
     double spin = 0.014;
-    Driver rotator;
     public override void PreLoop()
     {
         // bg
@@ -27,7 +26,9 @@ public class DefaultSpell : Spell
         );
 
         // Non-square mouseover
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED)
+        .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.SUB)  // spins the star
+        ;
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
 
         /* Testing area */
@@ -39,19 +40,10 @@ public class DefaultSpell : Spell
         }
 
         );
-        //Origin["testRect"] = Geo.Create.Rect(-150, 100, 300, 250).Colored(new RGBA(0x70ff00d0));
+
         Origin["myMulti"] = new Multi().WithFlags(DrawMode.FILLED);
         Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
-
-        Scribe.Info($"Star heading: {Origin["my star"].Heading}");
         Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
-        Scribe.Info($"Star heading: {Origin["my star"].Heading}");
-
-        Origin["my star"].PhaseXY = 0;
-
-        // Spin the star
-        ParamMap pm = new(x => 0, y => 0.02, z => 0);
-        rotator = new Driver(Origin["my star"], pm, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT);
 
     }
     Brush b = new Brush(
@@ -63,10 +55,8 @@ public class DefaultSpell : Spell
     {
         Renderer.RControl.Clear();
         Origin["btn"].Update();
-        //Origin["my star"].Forward(1);
-        Origin["my star"].RotatedZ(0.02);
+        Origin["my star"].Update();
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
-        rotator.Drive(Time);
 
         Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])

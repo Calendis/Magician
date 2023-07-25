@@ -86,12 +86,6 @@ class MagicianSDL
                 }
             }
 
-            // Drive things
-            if (frames >= driveDelay)
-            {
-                Drive();
-            }
-
             // Draw things
             if (frames != stopFrame)
             {
@@ -156,13 +150,6 @@ class MagicianSDL
         frames++;
     }
 
-    // Drive the dynamics of Multis and Quantities
-    // TODO: move this responsibility to the spellcaster
-    void Drive()
-    {
-        // TODO: re-implement driving
-        //Geo.Ref.Origin.DriveQuants();
-    }
     void InitSDL()
     {
         if (SDL_Init(SDL_INIT_VIDEO) < 0)

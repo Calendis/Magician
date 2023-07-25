@@ -97,7 +97,7 @@ public class Proto3D : Spell
             t => t * 20)
         .Plot(0, 0, 0, 0, 25 * Math.PI, 0.15, new RGBA(0x00ffff));
         
-        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI + Time/4, 1, 1, 255)));
+        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.NormIdx * 2 * Math.PI + Time/4, 1, 1, 255)));
     }
 
     public override void PreLoop()

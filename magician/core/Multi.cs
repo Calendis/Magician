@@ -20,32 +20,18 @@ public enum DrawMode : short
     OUTERP = 0b1101
 }
 
-/* A Multi is a drawable tree of 3-vectors with a stored heading vector */
+/* A Multi is a drawable tree of 3-vectors (more Multis) with a stored heading vector, and a list of Drivers */
 public class Multi : Vec3, ICollection<Multi>
 {
     Multi? _parent;
     protected List<Multi> csts;
     Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
     double pitch = 0; double yaw = 0; double roll = 0;
-    public Vec3 Abs
-    {
-        get => new Vec3(X, Y, Z);
-    }
-    public Vec3 Heading
-    {
-        get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
-        set
-        {
-            pitch = -Math.Asin(-value.y.Evaluate());
-            yaw = -Math.Atan2(value.x.Evaluate(), value.z.Evaluate());
-        }
-    }
     double internalVal = 0;
-    double tempX = 0;
-    double tempY = 0;
     // Keep references to the rendered RDrawables so they can be removed
     List<RDrawable> drawables = new List<RDrawable>();
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
+    List<Driver> drivers = new();
 
     public Multi Parent
     {
@@ -71,6 +57,19 @@ public class Multi : Vec3, ICollection<Multi>
     /*
     *  Positional Properties
     */
+    public Vec3 Abs
+    {
+        get => new Vec3(X, Y, Z);
+    }
+    public Vec3 Heading
+    {
+        get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
+        set
+        {
+            pitch = -Math.Asin(-value.y.Evaluate());
+            yaw = -Math.Atan2(value.x.Evaluate(), value.z.Evaluate());
+        }
+    }
     Quantity RecursX
     {
         get
@@ -163,9 +162,6 @@ public class Multi : Vec3, ICollection<Multi>
     {
         get => RecursZ.Evaluate();
     }
-    // These values are set by the driving process
-    public double LastX { get => tempX; }
-    public double LastY { get => tempY; }
 
     /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
     ///////////////////////////////////////////////////
@@ -458,7 +454,18 @@ public class Multi : Vec3, ICollection<Multi>
 
     public virtual void Update()
     {
-        //
+        foreach (Driver d in drivers)
+        {
+            d.Drive(0);
+        }
+    }
+
+    public Multi Driven(Func<double, double> f0, Func<double, double> f1, Func<double, double> f2, CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
+    {
+        ParamMap pm = new(f0, f1, f2);
+        Driver d = new(this, pm, cm, dm, tm);
+        drivers.Add(d);
+        return this;
     }
 
     // TODO: standardize method format, eg. _static voids?
@@ -496,7 +503,7 @@ public class Multi : Vec3, ICollection<Multi>
 
     // Indexes the constituents of a Multi in the internal values of the constituents
     // This is useful because getting the index using IndexOf is too expensive
-    public static void _IndexConstituents(Multi m)
+    public static void IndexConstituents(Multi m)
     {
         for (int i = 0; i < m.Count; i++)
         {
@@ -515,7 +522,7 @@ public class Multi : Vec3, ICollection<Multi>
     {
         if (Ref.AllowedOrphans.Contains(this)) { return false; }
         if (_parent == null) { return true; }
-        return false;        
+        return false;
     }
 
     public Multi Tagged(string tag)
@@ -560,8 +567,6 @@ public class Multi : Vec3, ICollection<Multi>
         copy.Heading.y.From(Heading.y);
         copy.Heading.z.From(Heading.z);
         copy.internalVal = internalVal;
-        copy.tempX = tempX;
-        copy.tempY = tempY;
 
         return copy;
     }
@@ -719,15 +724,14 @@ public class Multi : Vec3, ICollection<Multi>
                 }
 
                 //Scribe.Info($"{this.Parent} is distributing indices...");
-                _IndexConstituents(Parent);
+                IndexConstituents(Parent);
                 return (int)index!;
             }
             return (int)index;
         }
     }
 
-    // TODO: rename this
-    public double Normal
+    public double NormIdx
     {
         get => (double)Index / Parent.Count;
     }
@@ -790,12 +794,12 @@ public class Multi : Vec3, ICollection<Multi>
             );
 
             Vec3 targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
-            Vec3 upV = targV.YawPitchRotated(0, Math.PI/2);
+            Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
 
             Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
                 new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
                 new(targV.x.Evaluate(), targV.y.Evaluate(), targV.z.Evaluate()),
-                new (0, 1, 0)
+                new(0, 1, 0)
             );
 
             Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
@@ -806,11 +810,11 @@ public class Multi : Vec3, ICollection<Multi>
 
             Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
             Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
-            
+
             unclippedVerts[i] = new double[]
             {
                 final.X/-final.Z,
-                final.Y/-final.Z, 
+                final.Y/-final.Z,
                 -final.Z,
                 1+0*final.W
             };
@@ -837,7 +841,7 @@ public class Multi : Vec3, ICollection<Multi>
                 // TODO: calculate clip intersection
             }
         }
-        
+
         //double[][] projectedVerts = new double[Count][];
         // TODO: actually do clipping and then make this clippedVerts
         double[][] projectedVerts = clippedVerts.ToArray();
