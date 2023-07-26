@@ -117,7 +117,7 @@ public class Proto3D : Spell
         //    .Plot(0, 0, 0, 0, 30 * Math.PI, 0.05, new RGBA(0x00ffff));
         //Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
 
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED);
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.FILLED);
 
     }
 }

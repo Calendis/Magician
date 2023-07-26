@@ -14,7 +14,7 @@ public static class Ref
     public static Vec3 DefaultHeading = new(0,0,-1);
     public static double FOV
     {
-        get => Perspective.Read();
+        get => Perspective.Val;
         set => Perspective.Written(value);
     }
     static Ref()
@@ -39,7 +39,7 @@ public static class Create
     /* TODO: remove parent arguement from Create methods */
     public static Multi Point(Multi? parent, double x, double y, double z, Color? col)
     {
-        return new Multi(parent, x, y, z, col).WithFlags(DrawMode.INVISIBLE);
+        return new Multi(parent, x, y, z, col).Flagged(DrawMode.INVISIBLE);
     }
     public static Multi Point(Multi? parent, double x, double y, Color? col)
     {
@@ -47,7 +47,7 @@ public static class Create
     }
     public static Multi Point(double x, double y, double z = 0, Color? col = null)
     {
-        return Point(Ref.Origin, x, y, z, col).WithFlags(DrawMode.INVISIBLE);
+        return Point(Ref.Origin, x, y, z, col).Flagged(DrawMode.INVISIBLE);
     }
     public static Multi Point(double x, double y, Color col)
     {
@@ -109,7 +109,7 @@ public static class Create
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.FILLED);
+        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.FILLED);
 
     }
     public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -136,7 +136,7 @@ public static class Create
             ps.Add(Point(outerX, outerY, col));
         }
 
-        return ps.Positioned(xOffset, yOffset).Colored(col).WithFlags(DrawMode.FILLED);
+        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.FILLED);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
     public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
@@ -309,7 +309,7 @@ public static class Find
     }
     public static Vec OOBVector(Vec v, (double, double) xRange, (double, double) yRange, (double, double) zRange)
     {
-        return OOBVector(v.x.Evaluate(), v.y.Evaluate(), v.z.Evaluate(), xRange, yRange, zRange);
+        return OOBVector(v.x.Get(), v.y.Get(), v.z.Get(), xRange, yRange, zRange);
     }
 
 

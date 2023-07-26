@@ -1,5 +1,8 @@
-// This class is where you create your stuff
-// It's static for now
+/* 
+    The Spell provides the environment for the simulation. It does nothing until you pass it to the
+    Spellcaster.Cast method
+ */
+
 
 using Magician.Renderer;
 using Magician.UI;
@@ -16,26 +19,15 @@ namespace Magician.Library
         public double RandX => RNG.NextDouble() * Globals.winWidth - Globals.winWidth / 2;
         public double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
 
-        // The Origin is the eventual parent Multi for all Multis. Each Spell has its own Origin, and ..
-        // ... when a Spell is loaded into the Spellcaster, Geo.Ref.Origin is set to that Spell's Origin
-        protected Multi Origin = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
-        .WithFlags(DrawMode.INVISIBLE)
+        // The Origin is the root for a tree of Multis
+        public Multi Origin {get; set;} = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
+        .Flagged(DrawMode.INVISIBLE)
         .Tagged("Spell origin")
         ;
 
-        // Initializations
-        public Spell()
-        {
-            //
-        }
-
+        // Sets the initial condirions for the Spell. This is called automatically by the Spellcaster
         public abstract void PreLoop();
+        // The main loop of the spell. This is called automatically by the spellcaster
         public abstract void Loop();
-
-        public Multi GetOrigin()
-        {
-            return Origin;
-        }
-
     }
 }

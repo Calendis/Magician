@@ -1,9 +1,14 @@
+/*
+    The static Spellcaster is the outer layer of the Magician library. It is responsible for managing
+    Spells, which are views of 3D (or 2D) Geometry, represented by Multis
+ */
 namespace Magician.Library
 {
     public static class Spellcaster
     {
-        static public List<Spell> Spells { get; set; }
-        static int toSwitchTo = -1;
+        static public List<Spell> Spells { get; set; } = new();
+        // Index of the cached Spell
+        static int toSwitchTo = 0;  // 0 for no switch
         public static Spell CurrentSpell
         {
             get
@@ -16,15 +21,14 @@ namespace Magician.Library
             }
         }
         static public int idx = 0;
-        static Spellcaster()
-        {
-            Spells = new List<Spell>();
-        }
 
-        public static void PrepareSpell(int i)
+        // Clears a spell and readies it for casting by setting its initial conditions through the
+        // static Spell.PreLoop method.
+        public static void Cast(int i)
         {
             CurrentSpell.Time = 0;
-            Geo.Ref.Origin = Spells[i].GetOrigin();
+            // Sets the static Origin reference to point to our prepared Spell
+            Geo.Ref.Origin = Spells[i].Origin;
             Spells[i].PreLoop();
         }
 
@@ -33,33 +37,16 @@ namespace Magician.Library
             Geo.Ref.Origin.DisposeAllTextures();
         }
 
-        public static void Cache(Spell s)
+        // Caches a spell so it can be loaded
+        public static void Prepare(Spell s)
         {
             Spells.Add(s);
             toSwitchTo = Spells.Count - 1;
-        }
-
-        public static void Load(Spell s)
-        {
-            Cache(s);
             DoSwitch();
         }
 
-        public static void SwapTo(int i)
+        public static void SetTime(double t)
         {
-            toSwitchTo = i < Spells.Count ? i : Spells.Count;
-        }
-        public static void Loop(double t)
-        {
-            if (toSwitchTo > 0)
-            {
-                // Clear events, TODO: do this more
-                Interactive.Events.Click = false;
-                // Clear renderer to prevent artifacts during switch
-                Renderer.RControl.Clear();
-                DoSwitch();
-                toSwitchTo = -1;
-            }
             CurrentSpell.Time = t;
             CurrentSpell.Loop();
         }
@@ -67,7 +54,7 @@ namespace Magician.Library
         public static void DoSwitch()
         {
             idx = toSwitchTo;
-            PrepareSpell(toSwitchTo);
+            Cast(toSwitchTo);
         }
     }
 }

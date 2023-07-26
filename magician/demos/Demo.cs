@@ -26,7 +26,7 @@ public class DefaultSpell : Spell
         );
 
         // Non-square mouseover
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).WithFlags(DrawMode.FILLED)
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.FILLED)
         .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.SUB)  // spins the star
         ;
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
@@ -35,14 +35,14 @@ public class DefaultSpell : Spell
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
-            Spellcaster.Cache(new Demos.Tests.Proto3D());
+            Spellcaster.Prepare(new Demos.Tests.Proto3D());
             Scribe.Info("Switching Spells...");
         }
 
         );
 
-        Origin["myMulti"] = new Multi().WithFlags(DrawMode.FILLED);
-        Origin["savMyMulti"] = new Multi().WithFlags(DrawMode.INVISIBLE);
+        Origin["myMulti"] = new Multi().Flagged(DrawMode.FILLED);
+        Origin["savMyMulti"] = new Multi().Flagged(DrawMode.INVISIBLE);
         Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
 
     }
@@ -58,7 +58,7 @@ public class DefaultSpell : Spell
         Origin["my star"].Update();
         Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
 
-        Origin["myMulti"].AddCautiously(b.Paint(Events.Click ? 1 : 0, new Multi().WithFlags(DrawMode.POINTS)));
+        Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Multi().Flagged(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
         {
             Origin["savMyMulti"].RotatedZ(0.03);

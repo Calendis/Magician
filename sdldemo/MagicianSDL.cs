@@ -41,7 +41,7 @@ class MagicianSDL
         RDrawable.GenShaders();
 
         // Load a spell
-        Spellcaster.Load(new Demos.DefaultSpell());
+        Spellcaster.Prepare(new Demos.DefaultSpell());
 
         // Run
         magicianSDL.MainLoop();
@@ -60,7 +60,7 @@ class MagicianSDL
 
         while (!done)
         {
-            Spellcaster.Loop(frames * timeResolution);
+            Spellcaster.SetTime(frames * timeResolution);
 
             // Event handling
             while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)

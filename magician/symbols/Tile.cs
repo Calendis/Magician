@@ -54,6 +54,6 @@ public class Hexagonal : ITiling
                 hexGrid.Add(hexagon);
             }
         }
-        return hexGrid.WithFlags(DrawMode.INVISIBLE);
+        return hexGrid.Flagged(DrawMode.INVISIBLE);
     }
 }

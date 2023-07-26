@@ -24,7 +24,7 @@ public class Vec3 : Vec
     {
         get
         {
-            double p = Math.Atan2(y.Evaluate(), x.Evaluate());
+            double p = Math.Atan2(y.Get(), x.Get());
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
@@ -39,7 +39,7 @@ public class Vec3 : Vec
     {
         get
         {
-            double p = Math.Atan2(z.Evaluate(), x.Evaluate());
+            double p = Math.Atan2(z.Get(), x.Get());
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
@@ -54,7 +54,7 @@ public class Vec3 : Vec
     {
         get
         {
-            double p = Math.Atan2(z.Evaluate(), y.Evaluate());
+            double p = Math.Atan2(z.Get(), y.Get());
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
@@ -68,15 +68,15 @@ public class Vec3 : Vec
 
     public double XYDist
     {
-        get => Math.Sqrt(x.Evaluate() * x.Evaluate() + y.Evaluate() * y.Evaluate());
+        get => Math.Sqrt(x.Get() * x.Get() + y.Get() * y.Get());
     }
     public double YZDist
     {
-        get => Math.Sqrt(z.Evaluate() * z.Evaluate() + y.Evaluate() * y.Evaluate());
+        get => Math.Sqrt(z.Get() * z.Get() + y.Get() * y.Get());
     }
     public double XZDist
     {
-        get => Math.Sqrt(x.Evaluate() * x.Evaluate() + z.Evaluate() * z.Evaluate());
+        get => Math.Sqrt(x.Get() * x.Get() + z.Get() * z.Get());
     }
 
     public Vec3 YawPitchRotated(double yaw, double pitch)
@@ -84,7 +84,7 @@ public class Vec3 : Vec
         Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, 0);
         //Matrix3X3<double> rot = Matrix3X3.C
         //Vector3D<double> v = Vector3D.Multiply<double>();
-        Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(x.Evaluate(), y.Evaluate(), z.Evaluate()), rotMat);
+        Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(x.Get(), y.Get(), z.Get()), rotMat);
         return new(rotated.X, rotated.Y, rotated.Z);
     }
 
@@ -92,7 +92,7 @@ public class Vec3 : Vec
     {
         Multi line = new(
             new Multi(0, 0, 0),
-            new Multi(x.Evaluate(), y.Evaluate(), z.Evaluate())
+            new Multi(x.Get(), y.Get(), z.Get())
         );
         // TODO: draw the arrowhead
         Multi arrowhead;
@@ -111,7 +111,7 @@ public class Vec3 : Vec
     // Scalar multiplication
     public static Vec3 operator *(Vec3 v1, double x)
     {
-        return new(v1.vecArgs.Select(va => va.Evaluate() * x).ToArray());
+        return new(v1.vecArgs.Select(va => va.Get() * x).ToArray());
     }
     public new Vec3 Normalized()
     {
@@ -119,7 +119,7 @@ public class Vec3 : Vec
         List<double> news = new();
         foreach (Quantity q in vecArgs)
         {
-            news.Add(q.Evaluate() / m);
+            news.Add(q.Get() / m);
         }
         return new(news.ToArray());
     }

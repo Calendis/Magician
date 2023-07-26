@@ -153,7 +153,7 @@ public class Variable : Oper
         {
             if (!found)
                 throw Scribe.Error($"Variable {name} is unknown");
-            return q.Evaluate();
+            return q.Get();
         }
         set
         {

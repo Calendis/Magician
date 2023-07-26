@@ -1,16 +1,14 @@
 /*
     A Quantity is the basic "unit" math object in Magician
     from which more complex kinds of objects are derived
+    TODO:
+        make this a subclass of Oper
 */
 namespace Magician;
 
 public class Quantity : IArithmetic
 {
     //List<IMap> drivers = new List<IMap>();
-
-    // Global container for created quantites
-    // This can be used to Drive the quantities
-    public static List<Quantity> ExtantQuantites = new List<Quantity>();
 
     protected double q;
     // Setting the relative offset is useful when you want to offset a quantity while keeping the same reference
@@ -20,7 +18,7 @@ public class Quantity : IArithmetic
     }
     public Quantity(Quantity qq)
     {
-        q = qq.Evaluate();
+        q = qq.Get();
         //drivers.AddRange(qq.drivers);
     }
 
@@ -28,22 +26,16 @@ public class Quantity : IArithmetic
     {
         q = x;
     }
-    public Quantity As(double x)
+    public void Set(Quantity oq)
     {
-        q = x;
-        return this;
-    }
-    public void From(Quantity oq)
-    {
-        q = oq.q;
+        this.q = oq.q;
     }
 
     public void Incr(double x)
     {
         q += x;
     }
-    // Converts to double
-    public new double Evaluate(double offset = 0)
+    public double Get(double offset = 0)
     {
         return q + offset;
     }

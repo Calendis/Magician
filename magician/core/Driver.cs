@@ -52,9 +52,9 @@ public class Driver
         switch (CMode)
         {
             case CoordMode.XYZ:
-                double x = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.x.Evaluate());
-                double y = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.y.Evaluate());
-                double z = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.z.Evaluate());
+                double x = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.x.Get());
+                double y = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.y.Get());
+                double z = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.z.Get());
                 Target.Positioned(x, y, z);
                 break;
             case CoordMode.POLAR:

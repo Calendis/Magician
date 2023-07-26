@@ -48,7 +48,7 @@ namespace Magician.Geo
         // Scalar multiplication
         public static Vec operator *(Vec v1, double x)
         {
-            return new(v1.vecArgs.Select(va => va.Evaluate() * x).ToArray());
+            return new(v1.vecArgs.Select(va => va.Get() * x).ToArray());
         }
 
         //public double Magnitude()
@@ -68,7 +68,7 @@ namespace Magician.Geo
                 double m = 0;
                 for (int i = 0; i < Dims; i++)
                 {
-                    m += Math.Pow(vecArgs[i].Evaluate(), 2);
+                    m += Math.Pow(vecArgs[i].Get(), 2);
                 }
                 return Math.Sqrt(m);
             }
@@ -78,7 +78,7 @@ namespace Magician.Geo
                 Normalize();
                 foreach (Quantity q in vecArgs)
                 {
-                    q.Set(q.Evaluate() * m);
+                    q.Set(q.Get() * m);
                 }
             }
         }
@@ -88,7 +88,7 @@ namespace Magician.Geo
             double m = Magnitude;
             foreach (Quantity q in vecArgs)
             {
-                q.Set(q.Evaluate() / m);
+                q.Set(q.Get() / m);
             }
         }
 
@@ -97,7 +97,7 @@ namespace Magician.Geo
             string s = "(";
             foreach (Quantity q in vecArgs)
             {
-                s += $"{q.Evaluate()}, ";
+                s += $"{q.Get()}, ";
             }
             s = String.Concat(s.SkipLast(2));
             return s + ")";

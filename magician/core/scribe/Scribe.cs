@@ -40,12 +40,12 @@ public static class Scribe
     {
         if (l == null)
         {
-            throw Scribe.Error($"Could not print null list");
+            Scribe.Warn($"Could not list null");
         }
         int c = 0;
         foreach (T o in l)
         {
-            Console.WriteLine($"LIST {c++}: {o}");
+            Console.WriteLine($"..{c++}: {o}");
         }
     }
 
@@ -57,19 +57,19 @@ public static class Scribe
     /// <summary><exception>
     /// bruhException
     /// </exception></summary>
-    public static Typo Error(string s)
+    public static MagicianError Error(string s)
     {
         Console.Write($"ERROR: {s}\n");
-        return new Typo(s);
+        return new MagicianError(s);
     }
-    public static Typo Issue(string s)
+    public static MagicianError Issue(string s)
     {
         Console.WriteLine($"ERROR: {s}\nPlease file an issue at https://github.com/Calendis");
-        return new Typo(s);
+        return new MagicianError(s);
     }
 
-    public class Typo : Exception
+    public class MagicianError : Exception
     {
-        public Typo(string s) : base(s) { }
+        public MagicianError(string s) : base(s) { }
     }
 }

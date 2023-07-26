@@ -4,14 +4,14 @@ using static Magician.Geo.Create;
 // General equation with multiple branches
 public class RelationalMap
 {
-    Func<double[], double[]> map;
+    public Func<double[], double[]> Map;
     public RelationalMap(Func<double[], double[]> m)
     {
-        map = m;
+        Map = m;
     }
     public double[] Evaluate(double[] xs)
     {
-        return map.Invoke(xs);
+        return Map.Invoke(xs);
     }
     public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
@@ -72,7 +72,7 @@ public class ParamMap : RelationalMap
     }
     public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
-        Multi plot = new Multi().WithFlags(DrawMode.PLOT);
+        Multi plot = new Multi().Flagged(DrawMode.PLOT);
         for (double t = start; t < end; t += dt)
         {
             double[] out0 = Evaluate(t);

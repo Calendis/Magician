@@ -20,14 +20,15 @@ public enum DrawMode : short
     OUTERP = 0b1101
 }
 
-/* A Multi is a drawable tree of 3-vectors (more Multis) with a stored heading vector, and a list of Drivers */
+/* A Multi is a drawable tree of 3-vectors (more Multis) */
 public class Multi : Vec3, ICollection<Multi>
 {
-    Multi? _parent;
-    protected List<Multi> csts;
-    Dictionary<string, Multi> tags = new Dictionary<string, Multi>();
+    // The origin will have a null parent
+    Multi? parent;
+    protected List<Multi> constituents;
+    Dictionary<string, Multi> constituentTags = new Dictionary<string, Multi>();
     double pitch = 0; double yaw = 0; double roll = 0;
-    double internalVal = 0;
+    public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
     List<RDrawable> drawables = new List<RDrawable>();
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
@@ -37,17 +38,17 @@ public class Multi : Vec3, ICollection<Multi>
     {
         get
         {
-            if (IsOrphan())
+            if (parent is null)
             {
-                Scribe.Warn($"Orphan detected {tag}");
+                throw Scribe.Error($"Orphan detected {tag}");
             }
-            return _parent!;
+            return parent;
         }
     }
 
     public IReadOnlyList<Multi> Constituents
     {
-        get => csts;
+        get => constituents;
     }
     public DrawMode DrawFlags
     {
@@ -66,8 +67,8 @@ public class Multi : Vec3, ICollection<Multi>
         get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
         set
         {
-            pitch = -Math.Asin(-value.y.Evaluate());
-            yaw = -Math.Atan2(value.x.Evaluate(), value.z.Evaluate());
+            pitch = -Math.Asin(-value.y.Get());
+            yaw = -Math.Atan2(value.x.Get(), value.z.Get());
         }
     }
     Quantity RecursX
@@ -81,7 +82,7 @@ public class Multi : Vec3, ICollection<Multi>
             }
 
             // Recurse up the tree of Multis to find your position relative to the origin
-            return x.GetDelta(Parent.RecursX.Evaluate());
+            return x.GetDelta(Parent.RecursX.Get());
         }
     }
     Quantity RecursY
@@ -94,7 +95,7 @@ public class Multi : Vec3, ICollection<Multi>
                 return y;
             }
             // Recurse up the tree of Multis to find your position relative to the origin
-            return y.GetDelta(Parent.RecursY.Evaluate());
+            return y.GetDelta(Parent.RecursY.Get());
         }
     }
     Quantity RecursZ
@@ -105,7 +106,7 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 return z;
             }
-            return z.GetDelta(Parent.RecursZ.Evaluate());
+            return z.GetDelta(Parent.RecursZ.Get());
         }
     }
     Quantity RecursHeadingX
@@ -117,7 +118,7 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 return Heading.x;
             }
-            return Heading.x.GetDelta(Parent.RecursHeadingX.Evaluate());
+            return Heading.x.GetDelta(Parent.RecursHeadingX.Get());
         }
     }
     Quantity RecursHeadingY
@@ -128,7 +129,7 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 return Heading.y;
             }
-            return Heading.y.GetDelta(Parent.RecursHeadingY.Evaluate());
+            return Heading.y.GetDelta(Parent.RecursHeadingY.Get());
         }
     }
     Quantity RecursHeadingZ
@@ -139,28 +140,28 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 return Heading.z;
             }
-            return Heading.z.GetDelta(Parent.RecursHeadingZ.Evaluate());
+            return Heading.z.GetDelta(Parent.RecursHeadingZ.Get());
         }
     }
     // Theta_x
-    public double thX => RecursHeadingX.Evaluate();
-    public double thY => RecursHeadingY.Evaluate();
-    public double thZ => RecursHeadingZ.Evaluate();
+    public double thX => RecursHeadingX.Get();
+    public double thY => RecursHeadingY.Get();
+    public double thZ => RecursHeadingZ.Get();
 
     // Big X is the x-position relative to (0, 0)
     public double X
     {
-        get => RecursX.Evaluate();
+        get => RecursX.Get();
     }
     // Big Y is the Y-position relative to (0, 0)
     public double Y
     {
-        get => RecursY.Evaluate();
+        get => RecursY.Get();
     }
     // Big Z is the z-position relative to (0, 0)
     public double Z
     {
-        get => RecursZ.Evaluate();
+        get => RecursZ.Get();
     }
 
     /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
@@ -180,7 +181,7 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
             }
-            return csts[i];
+            return constituents[i];
         }
         set
         {
@@ -188,37 +189,37 @@ public class Multi : Vec3, ICollection<Multi>
             {
                 throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
             }
-            csts[i].DisposeAllTextures();
+            constituents[i].DisposeAllTextures();
             RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
-            csts[i] = value.Parented(this);
+            constituents[i] = value.Parented(this);
         }
     }
     public Multi this[string tag]
     {
         get
         {
-            if (tags.ContainsKey(tag))
+            if (constituentTags.ContainsKey(tag))
             {
-                return tags[tag];
+                return constituentTags[tag];
             }
             throw new KeyNotFoundException($"tag {tag} does not exist in {this}");
         }
         set
         {
             // Create new Multi associated with the tag
-            if (!tags.ContainsKey(tag))
+            if (!constituentTags.ContainsKey(tag))
             {
                 //Scribe.Info($"Creating tag \"{tag}\"");
-                tags.Add(tag, value);
+                constituentTags.Add(tag, value);
                 Add(value.Tagged(tag));
                 return;
             }
 
             // Destroy the old Multi, and tag the new one with the same tag
-            tags[tag].DisposeAllTextures();
+            constituentTags[tag].DisposeAllTextures();
             RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
-            Remove(tags[tag]);
-            tags[tag] = value;
+            Remove(constituentTags[tag]);
+            constituentTags[tag] = value;
             Add(value);
         }
     }
@@ -235,7 +236,7 @@ public class Multi : Vec3, ICollection<Multi>
     // Full constructor
     public Multi(Multi? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(x, y, z)
     {
-        this._parent = parent ?? Ref.Origin;
+        this.parent = parent ?? Ref.Origin;
         this.x.Set(x);
         this.y.Set(y);
         this.z.Set(z);
@@ -243,7 +244,7 @@ public class Multi : Vec3, ICollection<Multi>
         this.col = col ?? new RGBA(0xff00ffd0);
         this.drawMode = dm;
 
-        csts = new List<Multi> { };
+        constituents = new List<Multi> { };
         foreach (Multi c in cs)
         {
             Add(c);
@@ -256,7 +257,7 @@ public class Multi : Vec3, ICollection<Multi>
     public Multi(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
     // Create a multi from a list of multis
     public Multi(params Multi[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
-    public Multi(Vec pt3d) : this(pt3d.x.Evaluate(), pt3d.y.Evaluate(), pt3d.z.Evaluate()) { }
+    public Multi(Vec pt3d) : this(pt3d.x.Get(), pt3d.y.Get(), pt3d.z.Get()) { }
 
     public Color Col
     {
@@ -270,7 +271,7 @@ public class Multi : Vec3, ICollection<Multi>
         {
             Add(c);
         }
-        return Colored(m.Col).WithFlags(m.drawMode);
+        return Colored(m.Col).Flagged(m.drawMode);
     }
 
 
@@ -460,7 +461,14 @@ public class Multi : Vec3, ICollection<Multi>
         }
     }
 
-    public Multi Driven(Func<double, double> f0, Func<double, double> f1, Func<double, double> f2, CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
+    /*
+        Custom driving for Multis, specified as parametric functions on XYZ, or magnitude, XY-angle, YZ-angle
+        The driver can either set the valuese or just increment them, operating on either the target Multi or
+        its constituents. 
+     */
+    public Multi Driven(
+        Func<double, double> f0, Func<double, double> f1, Func<double, double> f2,
+        CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
     {
         ParamMap pm = new(f0, f1, f2);
         Driver d = new(this, pm, cm, dm, tm);
@@ -468,34 +476,34 @@ public class Multi : Vec3, ICollection<Multi>
         return this;
     }
 
-    // TODO: standardize method format, eg. _static voids?
+
+    /*
+        Movement methods 
+     */
     public void Forward(double amount)
     {
         Vec newPos = this + Heading * amount;
-        x.From(newPos.x);
-        y.From(newPos.y);
-        z.From(newPos.z);
+        x.Set(newPos.x);
+        y.Set(newPos.y);
+        z.Set(newPos.z);
     }
     public void Strafe(double amount)
     {
         Vec newPos = this + Heading.YawPitchRotated(-Math.PI / 2, 0) * amount;
-        x.From(newPos.x);
-        y.From(newPos.y);
-        z.From(newPos.z);
+        x.Set(newPos.x);
+        y.Set(newPos.y);
+        z.Set(newPos.z);
     }
 
     /* Internal state methods */
     public Multi Written(double d)
     {
-        internalVal = d;
+        Val = d;
         return this;
     }
-    public double Read()
-    {
-        return internalVal;
-    }
 
-    public Multi WithFlags(DrawMode dm)
+    // Sets the draw flags
+    public Multi Flagged(DrawMode dm)
     {
         drawMode = dm;
         return this;
@@ -507,24 +515,18 @@ public class Multi : Vec3, ICollection<Multi>
     {
         for (int i = 0; i < m.Count; i++)
         {
-            m.csts[i].index = i;
+            m.constituents[i].index = i;
         }
     }
 
     /* Parenting/tagging methods */
     public Multi Parented(Multi? m)
     {
-        _parent = m;
+        parent = m;
         return this;
     }
 
-    public bool IsOrphan()
-    {
-        if (Ref.AllowedOrphans.Contains(this)) { return false; }
-        if (_parent == null) { return true; }
-        return false;
-    }
-
+    // The tag is the name of the Spell. A spell can be referenced via parent[tag]
     public Multi Tagged(string tag)
     {
         this.tag = tag;
@@ -534,7 +536,7 @@ public class Multi : Vec3, ICollection<Multi>
     // Create a copy of the Multi
     public virtual Multi Copy()
     {
-        Multi copy = new Multi(x.Evaluate(), y.Evaluate(), col.Copy(), drawMode);
+        Multi copy = new Multi(x.Get(), y.Get(), col.Copy(), drawMode);
         // Don't copy the texture, or create reference to it!
         //copy.texture = texture;
 
@@ -543,8 +545,8 @@ public class Multi : Vec3, ICollection<Multi>
         //x.TransferDrivers(copy.x);
         //y.TransferDrivers(copy.y);
 
-        copy.x.From(x);
-        copy.y.From(y);
+        copy.x.Set(x);
+        copy.y.Set(y);
 
         // TODO: re-implement driver copying
         //foreach (IMap d in x.GetDrivers())
@@ -563,10 +565,10 @@ public class Multi : Vec3, ICollection<Multi>
         }
 
         // headings, internalval, tempx, tempy
-        copy.Heading.x.From(Heading.x);
-        copy.Heading.y.From(Heading.y);
-        copy.Heading.z.From(Heading.z);
-        copy.internalVal = internalVal;
+        copy.Heading.x.Set(Heading.x);
+        copy.Heading.y.Set(Heading.y);
+        copy.Heading.z.Set(Heading.z);
+        copy.Val = Val;
 
         return copy;
     }
@@ -586,14 +588,14 @@ public class Multi : Vec3, ICollection<Multi>
     {
         List<double> xs = new List<double>();
         List<double> ys = new List<double>();
-        Multi c = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate());
-        foreach (Multi cst in csts)
+        Multi c = new Multi().Positioned(x.Get(), y.Get(), z.Get());
+        foreach (Multi cst in constituents)
         {
             bool addMe = true;
             // Check for this position
             for (int i = 0; i < xs.Count; i++)
             {
-                if (xs[i] == cst.x.Evaluate() && ys[i] == cst.y.Evaluate())
+                if (xs[i] == cst.x.Get() && ys[i] == cst.y.Get())
                 {
                     addMe = false;
                     break;
@@ -610,15 +612,15 @@ public class Multi : Vec3, ICollection<Multi>
     // Inherit the constituents of another multi
     public Multi FlatAdjoin(Multi m)
     {
-        csts.AddRange(m.csts);
+        constituents.AddRange(m.constituents);
         return this;
     }
 
     // Replace a constituent
     public void AddAt(Multi m, int n)
     {
-        m.Translated(csts[n].X, csts[n].Y);
-        csts[n] = m;
+        m.Translated(constituents[n].X, constituents[n].Y);
+        constituents[n] = m;
     }
 
     // Add both multis to a new parent Multi
@@ -675,7 +677,7 @@ public class Multi : Vec3, ICollection<Multi>
         for (int i = 0; i < Count; i++)
         {
             Multi outerCopy = outer.Copy();
-            csts[i].Become(outerCopy);
+            constituents[i].Become(outerCopy);
         }
 
         return this;
@@ -691,21 +693,13 @@ public class Multi : Vec3, ICollection<Multi>
         //thisSurroundingInner.y.Set(y.Evaluate());
         //return thisSurroundingInner;//.Wielding(this);
     }
-    public Multi Surrounding(Multi inner, Func<Multi, Multi> F)
-    {
-        return Surrounding(F(inner));
-    }
 
     public Multi Recursed()
     {
         return Wielding(Copy());
     }
-    public Multi Recursed(Func<Multi, Multi> F)
-    {
-        return Wielding(F.Invoke(Copy()));
-    }
 
-    /* Getter roperties for indices and tags */
+    /* Getter properties for indices and tags */
     int? index = null;
     string tag = "";
     public int Index
@@ -740,7 +734,7 @@ public class Multi : Vec3, ICollection<Multi>
         get => tag;
     }
 
-    public int Count => csts.Count;
+    public int Count => constituents.Count;
     public int DeepCount
     {
         get
@@ -755,7 +749,9 @@ public class Multi : Vec3, ICollection<Multi>
     }
     public bool IsReadOnly => false;
 
-    // TODO: write a better comment
+    /* 
+        Renders the Multi's geometry. The DrawFlags will affect the draw behahviour, (filled, lines, points)
+     */
     public virtual void Render(double xOffset, double yOffset, double zOffset)
     {
         // TODO: implement render cache
@@ -775,8 +771,7 @@ public class Multi : Vec3, ICollection<Multi>
         double b = col.B;
         double a = col.A;
 
-        // Get a projection of each constituent
-        // TODO: create a list of unclipped vertices, and add clipped points in
+        // Get a projection of each constituent point
         double[][] unclippedVerts = new double[Count][];
         for (int i = 0; i < Count; i++)
         {
@@ -787,30 +782,32 @@ public class Multi : Vec3, ICollection<Multi>
             //    this[i].z.Evaluate()
             //);
 
+            // The absolute position of the multi
             Vector3D<double> worldCoords = new(
                 this[i].X,
                 this[i].Y,
                 this[i].Z
             );
 
+            // These two vectors define the camera
             Vec3 targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
             Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
 
+            // Matrix magic
             Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
                 new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
-                new(targV.x.Evaluate(), targV.y.Evaluate(), targV.z.Evaluate()),
+                new(targV.x.Get(), targV.y.Get(), targV.z.Get()),
                 new(0, 1, 0)
             );
-
             Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
                 Ref.FOV / 180d * Math.PI,
                 Data.Globals.winWidth / Data.Globals.winHeight,
                 0.1, 2000
             );
-
             Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
             Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
 
+            // Format the projected vertices for GLSL
             unclippedVerts[i] = new double[]
             {
                 final.X/-final.Z,
@@ -824,13 +821,15 @@ public class Multi : Vec3, ICollection<Multi>
         int counter = 0;
         foreach (double[] v in unclippedVerts)
         {
+            // Check to see if the constituent's z-coordinate is out-of-bounds
+            // It is considered OOB when it is not in front of the camera along the axis parallel to the camera
             bool zInBounds;
             Vec3 absPos = this[counter++].Abs;
             Vec3 camPos = Ref.Perspective;
             // Rotate so that we can compare straight along the axis using a >=
             absPos = absPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
             camPos = camPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            zInBounds = (absPos.z.Evaluate() - camPos.z.Evaluate() >= 0);
+            zInBounds = (absPos.z.Get() - camPos.z.Get() >= 0);
 
             if (zInBounds)
             {
@@ -838,19 +837,12 @@ public class Multi : Vec3, ICollection<Multi>
             }
             else
             {
-                // TODO: calculate clip intersection
+                // Seems to work fine without calculating clipping intersections, so do nothing
             }
         }
 
-        //double[][] projectedVerts = new double[Count][];
-        // TODO: actually do clipping and then make this clippedVerts
+        // The vertices are GLSL-ready
         double[][] projectedVerts = clippedVerts.ToArray();
-
-        // Draw each constituent recursively
-        foreach (Multi m in this)
-        {
-            m.Render(xOffset, yOffset, zOffset);
-        }
 
         // Draw points
         if ((drawMode & DrawMode.POINTS) > 0)
@@ -862,7 +854,7 @@ public class Multi : Vec3, ICollection<Multi>
             for (int i = 0; i < numPoints; i++)
             {
                 rPointArray[i] = new RPoint(projectedVerts[i][0], projectedVerts[i][1], projectedVerts[i][2],
-                    csts[i].Col.R, csts[i].Col.G, csts[i].Col.B, 255);
+                    constituents[i].Col.R, constituents[i].Col.G, constituents[i].Col.B, 255);
             }
             rPoints = new(rPointArray);
             drawables.Add(rPoints);
@@ -885,7 +877,7 @@ public class Multi : Vec3, ICollection<Multi>
                 double x0 = projectedVerts[i][0]; double x1 = projectedVerts[i + 1][0];
                 double y0 = projectedVerts[i][1]; double y1 = projectedVerts[i + 1][1];
                 double z0 = projectedVerts[i][2]; double z1 = projectedVerts[i + 1][2];
-                rLineArray[i] = new RLine(x0, y0, z0, x1, y1, z1, csts[i].Col.R, csts[i].Col.G, csts[i].Col.B, csts[i].Col.A);
+                rLineArray[i] = new RLine(x0, y0, z0, x1, y1, z1, constituents[i].Col.R, constituents[i].Col.G, constituents[i].Col.B, constituents[i].Col.A);
             }
             // If the Multi is a closed shape, connect the first and last constituent with a line
             if (connected)
@@ -909,20 +901,11 @@ public class Multi : Vec3, ICollection<Multi>
         if (((drawMode & DrawMode.FILLED) > 0) && Count >= 3)
         {
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
+            List<int[]> projectedTriangleVertices;
             try
             {
-                List<int[]> projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-                // If the render fails for some reason, try with reverse order
-                // This is a hack, but oh well. Maybe I should specify ccw or cw?
-                if (projectedTriangleVertices[0][0] + projectedTriangleVertices[0][1] + projectedTriangleVertices[0][2] + projectedTriangleVertices[1][0] + projectedTriangleVertices[1][1] + projectedTriangleVertices[1][2] == 0)
-                {
-                    double[][] reverseProjectedVerts = new double[Count][];
-                    for (int revI = 0; revI < Count; revI++)
-                    {
-                        reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
-                    }
-                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
-                }
+                projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
+
 
                 int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
                 RTriangle[] rTriArray = new RTriangle[numTriangles];
@@ -954,21 +937,36 @@ public class Multi : Vec3, ICollection<Multi>
             }
             catch (System.Exception)
             {
-                if (drawMode == DrawMode.OUTERP)
+
+                // If the render fails for some reason, try with reverse order
+                // This is a hack, but oh well. Maybe I should specify ccw or cw?
+                double[][] reverseProjectedVerts = new double[Count][];
+                for (int revI = 0; revI < Count; revI++)
                 {
-                    throw Scribe.Issue($"The triangulator has failed");
+                    reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
                 }
-
-                //Scribe.Warn($"Failed to render {this}. Falling back to OUTERP");
-                //WithFlags(DrawMode.OUTERP);
+                try
+                {
+                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
+                }
+                catch (System.Exception)
+                {
+                    //throw Scribe.Issue($"The triangulator encountered a fatal error in rendering {this}");
+                    // TODO: possibly write some routine to correct/interpret invalid Multis?
+                }
             }
-
         }
 
         // If not null, draw the texture
         if (texture != null)
         {
             texture.Draw(XCartesian(xOffset), YCartesian(yOffset));
+        }
+
+        // Draw each constituent recursively
+        foreach (Multi m in this)
+        {
+            m.Render(xOffset, yOffset, zOffset);
         }
     }
 
@@ -1003,14 +1001,14 @@ public class Multi : Vec3, ICollection<Multi>
         string s = Title(); ;
 
         string xAbs = X.ToString("F1");
-        string xRel = x.Evaluate().ToString("F1");
+        string xRel = x.Get().ToString("F1");
         string yAbs = Y.ToString("F1");
-        string yRel = y.Evaluate().ToString("F1");
+        string yRel = y.Get().ToString("F1");
         string zAbs = Z.ToString("F1");
-        string zRel = z.Evaluate().ToString("F1");
+        string zRel = z.Get().ToString("F1");
         s += $" at ({xRel},{yRel},{zRel})rel, ({xAbs},{yAbs},{zAbs})abs";
 
-        foreach (Multi m in csts)
+        foreach (Multi m in constituents)
         {
             s += "\n";
             for (int i = 0; i <= depth; i++)
@@ -1033,26 +1031,26 @@ public class Multi : Vec3, ICollection<Multi>
     // Interface methods
     public IEnumerator<Multi> GetEnumerator()
     {
-        return ((IEnumerable<Multi>)csts).GetEnumerator();
+        return ((IEnumerable<Multi>)constituents).GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable)csts).GetEnumerator();
+        return ((IEnumerable)constituents).GetEnumerator();
     }
 
     public void Add(Multi item)
     {
         if (item == this)
         {
-            throw Scribe.Error($"A Multi may not have itself as a consituent! Offending Multi: {this}, belonging to {Parent}");
+            throw Scribe.Error($"A Multi may not have itself as a consituent. Offending Multi: {this}, belonging to {Parent}");
         }
         if (item == Parent)
         {
-            throw Scribe.Error("A Multi may not have its parent as a constituent");
+            throw Scribe.Error("A Multi may not have its parent as a constituent!");
         }
-        item._parent = this;
-        csts.Add(item);
+        item.parent = this;
+        constituents.Add(item);
     }
     public Multi Add(params Multi[] items)
     {
@@ -1062,10 +1060,9 @@ public class Multi : Vec3, ICollection<Multi>
         }
         return this;
     }
-    public void AddCautiously(Multi m)
+    public void AddFiltered(Multi m, string filter="empty paint")
     {
-        // Don't add empty pains
-        if (m.Tag == "empty paint")
+        if (m.Tag == filter)
         {
             return;
         }
@@ -1080,33 +1077,33 @@ public class Multi : Vec3, ICollection<Multi>
 
     public void Clear()
     {
-        foreach (Multi c in csts)
+        foreach (Multi c in constituents)
         {
             c.DisposeAllTextures();
         }
-        csts.Clear();
+        constituents.Clear();
     }
 
     public bool Contains(Multi item)
     {
-        return csts.Contains(item);
+        return constituents.Contains(item);
     }
 
     public Multi Reversed()
     {
-        csts.Reverse();
+        constituents.Reverse();
         return this;
     }
 
     // Some interface method
     public void CopyTo(Multi[] array, int arrayIndex)
     {
-        csts.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
+        constituents.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
     }
 
     public bool Remove(Multi item)
     {
-        return csts.Remove(item);
+        return constituents.Remove(item);
     }
 
     public void DisposeAllTextures()

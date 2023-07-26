@@ -17,7 +17,7 @@ public class Paragraph : Multi
             Text t = new Text(sentences[i], col, (int)size, fontPath);
             this[$"line{i}"] = new Multi(0, -i * (int)size)
             .Textured(t.Render())
-            .WithFlags(DrawMode.INVISIBLE)
+            .Flagged(DrawMode.INVISIBLE)
             ;
             t.Dispose();
         }
@@ -105,12 +105,12 @@ public class RichParagraph : Paragraph
         int maxSize = sizStack.Peek();
         /* The bool[] represents wasColorChanged, wasSizeChanged */
         Stack<bool[]> deltas = new Stack<bool[]>();
-        Multi phrases = new Multi().WithFlags(DrawMode.INVISIBLE);
+        Multi phrases = new Multi().Flagged(DrawMode.INVISIBLE);
         // Used for justification
         int maxLineWidth = 0;
         for (int row = 0; row < groupedFormats.Count; row++)
         {
-            Multi wordsInLine = new Multi().WithFlags(DrawMode.INVISIBLE);
+            Multi wordsInLine = new Multi().Flagged(DrawMode.INVISIBLE);
             int runningLength = 0;
             for (int column = 0; column < groupedFormats[row].Length; column++)
             {
@@ -196,10 +196,10 @@ public class RichParagraph : Paragraph
         for (int i = 0; i < Count; i++)
         {
             Multi m = this[Count - i - 1];
-            double dRightMargin = maxLineWidth - m.x.Evaluate() - m.Texture.Width;
+            double dRightMargin = maxLineWidth - m.x.Get() - m.Texture.Width;
             m.Written(dRightMargin - trail);
             trail += m.Texture.Width;
-            if (m.x.Evaluate() == 0)
+            if (m.x.Get() == 0)
             {
                 trail = 0;
             }
@@ -213,11 +213,11 @@ public class RichParagraph : Paragraph
                 break;
 
             case (Justification.CENTRE):
-                Sub((m, i) => m.Translated(m.Read() / 2, 0));
+                Sub((m, i) => m.Translated(m.Val / 2, 0));
                 break;
 
             case (Justification.RIGHT):
-                Sub((m, i) => m.Translated(m.Read(), 0));
+                Sub((m, i) => m.Translated(m.Val, 0));
                 break;
         }
     }

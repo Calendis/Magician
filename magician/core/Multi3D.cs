@@ -13,7 +13,7 @@ public class Multi3D : Multi
     // Full constructor
     public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) { }
     public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
-    public Multi3D(Multi m) : base(m.x.Evaluate(), m.y.Evaluate(), m.z.Evaluate(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public Multi3D(Multi m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
 
     public override void Render(double xOffset, double yOffset, double zOffset)
     {
@@ -39,12 +39,12 @@ public class Multi3D : Multi
             //    continue;
             //}
 
-            Multi f = new Multi().Positioned(x.Evaluate(), y.Evaluate(), z.Evaluate())
-            .WithFlags(drawMode).Tagged($"face{cc}");
+            Multi f = new Multi().Positioned(x.Get(), y.Get(), z.Get())
+            .Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {
-                f.Add(csts[idx]);
-                f.Colored(csts[idx].Col);
+                f.Add(constituents[idx]);
+                f.Colored(constituents[idx].Col);
                 // TODO: remove this faux-lighting
                 f.Col.L = 1-(((float)idx)/10);
             }

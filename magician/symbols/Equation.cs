@@ -262,7 +262,7 @@ public class Equation
         
         // TODO: I think I pass the outVar into the counter as well. This isn't necessary
         NDCounter solveSpace = new NDCounter(res, axes.Select(ax => new Tuple<double, double>(ax.MIN, ax.MAX)).ToArray());
-        Multi plot = new Multi().WithFlags(DrawMode.PLOT);
+        Multi plot = new Multi().Flagged(DrawMode.PLOT);
         while (!solveSpace.done)
         {
             // Inject arguments
