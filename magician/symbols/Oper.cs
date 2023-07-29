@@ -41,7 +41,7 @@ public abstract class Oper
 
     public abstract Oper New(params Oper[] cstArgs);
     public abstract Oper Inverse(int argIndex);
-    public abstract Variable Eval();
+    public abstract Variable Solution();
     public virtual Oper Optimized()
     {
         int counter = 0;
@@ -205,7 +205,7 @@ public class Variable : Oper
     {
         throw Scribe.Issue("This should never occur");
     }
-    public override Variable Eval()
+    public override Variable Solution()
     {
         throw Scribe.Issue("This should never occur");
     }
@@ -219,7 +219,7 @@ public class SumDiff : Oper
     {
         identity = 0;
     }
-    public override Variable Eval()
+    public override Variable Solution()
     {
         double alternSum = 0;
         int count = 0;
@@ -231,7 +231,7 @@ public class SumDiff : Oper
             }
             else
             {
-                alternSum += o.Eval().Val * ((count % 2 == 0) ? 1 : -1);
+                alternSum += o.Solution().Val * ((count % 2 == 0) ? 1 : -1);
             }
             count++;
         }
@@ -366,7 +366,7 @@ public class Fraction : Oper
         identity = 1;
     }
 
-    public override Variable Eval()
+    public override Variable Solution()
     {
         double quo = 1;
         int count = 0;
@@ -378,7 +378,7 @@ public class Fraction : Oper
             }
             else
             {
-                quo = count % 2 == 0 ? quo*o.Eval().Val : quo / o.Eval().Val;
+                quo = count % 2 == 0 ? quo*o.Solution().Val : quo / o.Solution().Val;
             }
             count++;
         }

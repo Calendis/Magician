@@ -1,6 +1,8 @@
 using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
+using Magician.Symbols;
+using static Magician.Symbols.Algebra;
 
 namespace Magician.Demos.Tests;
 
@@ -88,16 +90,14 @@ public class Proto3D : Spell
         //Ref.Perspective.y.Set(10 * Math.Cos(Time / 10));
         //Scribe.Info(Ref.Perspective.z);
 
-        double loopRadius = 120;
         double freqRatio = Math.Sin(Time/80)*2 + Math.Cos(Time/80)*5;
         
-        Origin["spring"] = new ParamMap(
-            t => loopRadius * Math.Sin(t*freqRatio),
-            t => loopRadius * Math.Cos(t*(1-freqRatio)) + 30*Math.Sin(t*Time/100),
-            t => t * 20)
-        .Plot(0, 0, 0, 0, 25 * Math.PI, 0.15, new RGBA(0x00ffff));
-        
-        Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.NormIdx * 2 * Math.PI + Time/4, 1, 1, 255)));
+        //Origin["spring"] = new ParamMap(
+        //    t => loopRadius * Math.Sin(t*freqRatio),
+        //    t => loopRadius * Math.Cos(t*(1-freqRatio)) + 30*Math.Sin(t*Time/100),
+        //    t => t * 20)
+        //.Plot(0, 0, 0, 0, 25 * Math.PI, 0.15, new RGBA(0x00ffff));
+        //Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.NormIdx * 2 * Math.PI + Time/4, 1, 1, 255)));
     }
 
     public override void PreLoop()
@@ -110,14 +110,16 @@ public class Proto3D : Spell
 
         Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
 
-        //Origin["spring"] = new ParamMap(
-        //    t => 120 * Math.Sin(t * 2),  // x
-        //    t => 120 * Math.Cos(t * 6),  // y
-        //    t => t * 35)                 // z
-        //    .Plot(0, 0, 0, 0, 30 * Math.PI, 0.05, new RGBA(0x00ffff));
-        //Origin["spring"].Sub((m, i) => m.Colored(new HSLA(m.Normal * 2 * Math.PI, 1, 1, 255)));
-
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.FILLED);
+
+        Oper lhs = Let("y");
+        Oper rhs = new Fraction(N(100), Let("x"), Let("z"));
+        Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
+        Origin["plotEq"] = e.Plot(2.1,
+            (Let("y"), Equation.AxisSpecifier.Y, -300d, 600d),
+            (Let("x"), Equation.AxisSpecifier.X, -800d, 800d),
+            (Let("z"), Equation.AxisSpecifier.Z, 0, 500)
+        );
 
     }
 }

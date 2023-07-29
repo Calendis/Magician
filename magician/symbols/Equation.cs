@@ -215,9 +215,10 @@ public class Equation
 
         // Find the side we're evaluating
         Oper solvedSide = SolvedSide(v);
-        double result = solvedSide.Eval().Val;
+        Variable result = solvedSide.Solution();
         Array.ForEach(unknowns, v => v.Reset());
-        return result;
+        Array.ForEach<Variable>(knowns.ToArray(), v => v.Reset());
+        return result.Val;//.ToList().Select<Variable, double>((v, i) => v.Val).ToArray();
     }
 
     Oper SolvedSide(Variable v)
@@ -261,7 +262,7 @@ public class Equation
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
         
         // TODO: I think I pass the outVar into the counter as well. This isn't necessary
-        NDCounter solveSpace = new NDCounter(res, axes.Select(ax => new Tuple<double, double>(ax.MIN, ax.MAX)).ToArray());
+        NDCounter solveSpace = new NDCounter(res, axes.Skip(1).Select(ax => new Tuple<double, double>(ax.MIN, ax.MAX)).ToArray());
         Multi plot = new Multi().Flagged(DrawMode.PLOT);
         while (!solveSpace.done)
         {
@@ -272,7 +273,7 @@ public class Equation
             }
 
             // Get output
-            outVar.Val = solvedExpr.Eval().Val;
+            outVar.Val = solvedExpr.Solution().Val;
 
             double[] argsByAxis = new double[Math.Max(3, inVars.Length + 1)];
             if (argsByAxis.Length > 3)

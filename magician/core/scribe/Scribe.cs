@@ -41,6 +41,7 @@ public static class Scribe
         if (l == null)
         {
             Scribe.Warn($"Could not list null");
+            l = new List<T>();
         }
         int c = 0;
         foreach (T o in l)

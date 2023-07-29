@@ -431,7 +431,7 @@ public class Multi : Vec3, ICollection<Multi>
     public Multi Scaled(double mag)
     {
         throw Scribe.Issue("TODO: re-implement scaling");
-        return this;
+        //return this;
     }
 
     public static void _Texture(Multi m, Renderer._SDLTexture t)

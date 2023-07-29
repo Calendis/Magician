@@ -33,14 +33,25 @@ public class Plots : Spell
         //Equation sz = e.Solved(Let("z"));
         //Scribe.Info(sz);
 
-        Oper lhs = new SumDiff(Let("y"), N(200));
-        Oper rhs = new Fraction(N(100), Let("x"));
+        Oper lhs = Let("y");
+        Oper rhs = new Fraction(N(100), Let("x"), Let("z"));
         Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
-
-        Origin["plotEq"] = e.Plot(3,
-            (Let("y"), Equation.AxisSpecifier.Y, -60d, 60d),
-            (Let("x"), Equation.AxisSpecifier.X, -60d, 60d)
+        Origin["plotEq"] = e.Plot(1.1,
+            (Let("y"), Equation.AxisSpecifier.Y, -1000d, 1000d),
+            (Let("x"), Equation.AxisSpecifier.X, -1000d, 1000d),
+            (Let("z"), Equation.AxisSpecifier.Z, 0, 100)
         );
+
+        //Equation threePlane = new(
+        //    Let("z"),
+        //    Equation.Fulcrum.EQUALS,
+        //    new SumDiff(new Fraction(N(3), N(0), Let("x")), N(0), new Fraction(N(2), N(0), Let("y")))
+        //);
+        //Origin["threeplane"] = threePlane.Plot(1.1,
+        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600),
+        //    (Let("y"), Equation.AxisSpecifier.Y, -600, 600),
+        //    (Let("z"), Equation.AxisSpecifier.Z, -600, 600)
+        //);
 
     }
 

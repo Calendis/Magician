@@ -113,7 +113,7 @@ public class Vec3 : Vec
     {
         return new(v1.vecArgs.Select(va => va.Get() * x).ToArray());
     }
-    public new Vec3 Normalized()
+    public Vec3 Normalized()
     {
         double m = Magnitude;
         List<double> news = new();
