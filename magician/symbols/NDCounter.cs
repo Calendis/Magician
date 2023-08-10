@@ -1,56 +1,73 @@
 namespace Magician.Symbols;
 
-internal class NDCounter
+public class NDCounter
 {
 
     double[] mins;
     double[] maxs;
     double counterMax = 1;
-    double current = 0;
-    double[] vals;
+    int[] vals;
+    public int Val {get; private set;}
     public double Get(int n) => vals[n];
-    double res;
-    public bool done = false;
+    double[] ress;
+    bool done = false;
     public bool Done => done;
-    public NDCounter(double res, params Tuple<double, double>[] ranges)
+    public int Dims {get; set;}
+    public NDCounter(params (double, double, double)[] ranges)
     {
-        this.res = res;
-        int l = ranges.Length;
-        mins = new double[l]; maxs = new double[l]; vals = new double[l];
+        Dims = ranges.Length;
+        ress = new double[Dims];
+        mins = new double[Dims]; maxs = new double[Dims]; vals = new int[Dims];
 
         int i = 0;
-        foreach (Tuple<double, double> t in ranges)
+        foreach ((double, double, double) t in ranges)
         {
             mins[i] = t.Item1;
-            vals[i] = mins[i];
+            vals[i] = 0;
             maxs[i] = t.Item2;
-            counterMax *= (maxs[i] - mins[i]) / res;
+            ress[i] = t.Item3;
+            counterMax *= (maxs[i] - mins[i]+1) / ress[i];
             i++;
         }
+        counterMax = (int)counterMax;
     }
 
-    public void Increment()
+    public bool Increment()
     {
-        int pos = 0;
-        bool incremented = false;
-        while (!incremented)
+        bool foundAvailableSlot = false;
+        int slot = 0;
+        int carry = 0;
+        while (!foundAvailableSlot)
         {
-            vals[pos] += res;
-            if (vals[pos] >= maxs[pos])
+            if (vals[slot] < maxs[slot]/ress[slot] - 1)
             {
-                vals[pos] = mins[pos];
-                pos++;
+                foundAvailableSlot = true;
+                vals[slot]++;
+                for (int i = 0; i < carry; i++)
+                {
+                    vals[slot-carry] = 0;
+                }
             }
             else
             {
-                incremented = true;
+                vals[slot] = 0;
+                carry++;
+            }
+            
+            slot++;
+            if (slot == vals.Length)
+            {
+                foundAvailableSlot = true;
             }
         }
+        //Scribe.List(vals);
         
-        current += res;
-        if (current >= counterMax)
+        Val ++;
+        if (Val >= counterMax)
         {
             done = true;
+            return true;
         }
+        return false;
     }
 }

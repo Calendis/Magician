@@ -88,10 +88,22 @@ public static class Create
     public static Multi Rect(double x, double y, double width, double height)
     {
         return new Multi(
-            Point(width, -height).Textured(new Renderer.Text("1", new RGBA(0xff0000e0), 20).Render()),
-            Point(width, 0).Textured(new Renderer.Text("2", new RGBA(0xff0000e0), 20).Render()),
-            Point(0, 0).Textured(new Renderer.Text("3", new RGBA(0xff0000e0), 20).Render()),
-            Point(0, -height).Textured(new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render())
+            Point(width, -height),
+            //.Textured(
+            //    new Renderer.Text("1", new RGBA(0xff0000e0), 20).Render()
+            //),
+            Point(width, 0),
+            //.Textured(
+            //    new Renderer.Text("2", new RGBA(0xff0000e0), 20).Render()
+            //),
+            Point(0, 0),
+            //.Textured(
+            //    new Renderer.Text("3", new RGBA(0xff0000e0), 20).Render()
+            //),
+            Point(0, -height)
+            //.Textured(
+             //   new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render()
+            //)
         ).Positioned(x, y);
     }
 

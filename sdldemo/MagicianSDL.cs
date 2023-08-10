@@ -42,6 +42,7 @@ class MagicianSDL
 
         // Load a spell
         Spellcaster.Prepare(new Demos.DefaultSpell());
+        Spellcaster.Cast();
 
         // Run
         magicianSDL.MainLoop();
@@ -60,7 +61,7 @@ class MagicianSDL
 
         while (!done)
         {
-            Spellcaster.SetTime(frames * timeResolution);
+            Spellcaster.Animate(frames * timeResolution);
 
             // Event handling
             while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)

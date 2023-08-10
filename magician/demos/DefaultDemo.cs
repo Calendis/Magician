@@ -35,8 +35,9 @@ public class DefaultSpell : Spell
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,
         () =>
         {
-            Spellcaster.Prepare(new Demos.Tests.Proto3D());
             Scribe.Info("Switching Spells...");
+            Spellcaster.Prepare(new Demos.Tests.Proto3D());
+            Spellcaster.Cast();
         }
 
         );
@@ -46,7 +47,7 @@ public class DefaultSpell : Spell
         Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
 
     }
-    Brush b = new Brush(
+    Brush b = new(
         new DirectMap(x => Events.MouseX),
         new DirectMap(x => Events.MouseY)
     );

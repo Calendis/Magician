@@ -9,6 +9,7 @@ namespace Magician.Library
         static public List<Spell> Spells { get; set; } = new();
         // Index of the cached Spell
         static int toSwitchTo = 0;  // 0 for no switch
+        static bool delta = false;
         public static Spell CurrentSpell
         {
             get
@@ -20,16 +21,12 @@ namespace Magician.Library
                 return Spells[idx];
             }
         }
-        static public int idx = 0;
+        static int idx = 0;
 
-        // Clears a spell and readies it for casting by setting its initial conditions through the
-        // static Spell.PreLoop method.
-        public static void Cast(int i)
+        public static void Cast()
         {
-            CurrentSpell.Time = 0;
-            // Sets the static Origin reference to point to our prepared Spell
-            Geo.Ref.Origin = Spells[i].Origin;
-            Spells[i].PreLoop();
+            delta = false;
+            idx = toSwitchTo;
         }
 
         public static void Clean()
@@ -37,24 +34,29 @@ namespace Magician.Library
             Geo.Ref.Origin.DisposeAllTextures();
         }
 
-        // Caches a spell so it can be loaded
+        // Clears a spell and readies it for casting by setting its initial conditions through the
+        // static Spell.PreLoop method.
         public static void Prepare(Spell s)
         {
             Spells.Add(s);
             toSwitchTo = Spells.Count - 1;
-            DoSwitch();
+            delta = true;
+            CurrentSpell.Time = 0;
+            // Sets the static Origin reference to point to our prepared Spell
+            Geo.Ref.Origin = Spells[toSwitchTo].Origin;
+            Spells[toSwitchTo].PreLoop();
+            Scribe.Info($"Readied {s}");
         }
 
-        public static void SetTime(double t)
+        public static void Animate(double time)
         {
-            CurrentSpell.Time = t;
+            if (delta)
+            {
+                // Spell is prepared and locked, now it can be cast
+                return;
+            }
+            CurrentSpell.Time = time;
             CurrentSpell.Loop();
-        }
-
-        public static void DoSwitch()
-        {
-            idx = toSwitchTo;
-            Cast(toSwitchTo);
         }
     }
 }

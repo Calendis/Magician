@@ -115,10 +115,10 @@ public class Proto3D : Spell
         Oper lhs = Let("y");
         Oper rhs = new Fraction(N(100), Let("x"), Let("z"));
         Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
-        Origin["plotEq"] = e.Plot(2.1,
-            (Let("y"), Equation.AxisSpecifier.Y, -300d, 600d),
-            (Let("x"), Equation.AxisSpecifier.X, -800d, 800d),
-            (Let("z"), Equation.AxisSpecifier.Z, 0, 500)
+        Origin["plotEq"] = e.Plot(
+            (Let("y"), Equation.AxisSpecifier.Y, -1000d, 1000d, 80d),
+            (Let("x"), Equation.AxisSpecifier.X, -1000d, 1000d, 80d),
+            (Let("z"), Equation.AxisSpecifier.Z, 0, 100, 60d)
         );
 
     }

@@ -245,8 +245,7 @@ public class Equation
         throw Scribe.Issue("not implemented");
     }
 
-    //public Multi Plot(params AxisSpecifier[] outs)
-    public Multi Plot(double res, params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX)[] axes)
+    public Multi Plot(params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX, double res)[] axes)
     {
         if (axes.Length != noUnknowns)
         {
@@ -262,9 +261,10 @@ public class Equation
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
         
         // TODO: I think I pass the outVar into the counter as well. This isn't necessary
-        NDCounter solveSpace = new NDCounter(res, axes.Skip(1).Select(ax => new Tuple<double, double>(ax.MIN, ax.MAX)).ToArray());
+        NDCounter solveSpace = new(axes.Skip(1).Select(ax => (ax.MIN, ax.MAX, 1d)).ToArray());
+        bool threeD = solveSpace.Dims >= 3;
         Multi plot = new Multi().Flagged(DrawMode.PLOT);
-        while (!solveSpace.done)
+        while (!solveSpace.Done)
         {
             // Inject arguments
             for (int i = 0; i < inVars.Length; i++)
