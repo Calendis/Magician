@@ -6,13 +6,24 @@ public class NDCounter
     double[] mins;
     double[] maxs;
     double counterMax = 1;
+    public double Max => counterMax;
     int[] vals;
     public int Val {get; private set;}
-    public double Get(int n) => vals[n];
+    public double Get(int n) => vals[n] * ress[n];// + mins[n];
+    public int[] Positional => vals;
     double[] ress;
     bool done = false;
     public bool Done => done;
     public int Dims {get; set;}
+    public double AxisLen(int axis)
+    {
+            if (axis >= maxs.Length)
+            {
+                return 0;
+            }
+        return maxs[axis] / ress[axis];
+    }
+
     public NDCounter(params (double, double, double)[] ranges)
     {
         Dims = ranges.Length;
@@ -26,10 +37,11 @@ public class NDCounter
             vals[i] = 0;
             maxs[i] = t.Item2;
             ress[i] = t.Item3;
-            counterMax *= (maxs[i] - mins[i]+1) / ress[i];
+            counterMax *= (maxs[i] - mins[i]) / ress[i] + 1;
             i++;
         }
         counterMax = (int)counterMax;
+        Scribe.Warn(counterMax);
     }
 
     public bool Increment()
@@ -68,6 +80,7 @@ public class NDCounter
             done = true;
             return true;
         }
+
         return false;
     }
 }

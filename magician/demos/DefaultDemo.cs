@@ -26,7 +26,7 @@ public class DefaultSpell : Spell
         );
 
         // Non-square mouseover
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.FILLED)
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER)
         .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.SUB)  // spins the star
         ;
         mo = Interactive.Sensor.MouseOver(Origin["my star"]);
@@ -36,13 +36,13 @@ public class DefaultSpell : Spell
         () =>
         {
             Scribe.Info("Switching Spells...");
-            Spellcaster.Prepare(new Demos.Tests.Proto3D());
+            Spellcaster.Prepare(new Demos.Tests.Plots());
             Spellcaster.Cast();
         }
 
         );
 
-        Origin["myMulti"] = new Multi().Flagged(DrawMode.FILLED);
+        Origin["myMulti"] = new Multi().Flagged(DrawMode.INNER);
         Origin["savMyMulti"] = new Multi().Flagged(DrawMode.INVISIBLE);
         Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
 

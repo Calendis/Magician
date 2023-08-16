@@ -14,10 +14,10 @@ public class NDCounterTest : Spell
     {
         int C = 0;
         // create a 2x2x5 counter, with finer resolution on the last axis
-        NDCounter ndc = new((0,1,1), (0,1,1), (0,4,1));
+        NDCounter ndc = new((-2,3,5), (-5,0,5), (0,2,0.5));
         do
         {
-            Scribe.Info($"{C++}: {ndc.Done}");
+            Scribe.Info($"{C++}, {ndc.Val}: {ndc.Done}");
         } while (!ndc.Increment());
     }
 }

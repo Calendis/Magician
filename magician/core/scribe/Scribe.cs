@@ -16,6 +16,20 @@ public static class Scribe
         Info(o.ToString());
         return;
     }
+    public static void Info<T>(T[] os)
+    {
+        Scribe.Info(Expand(os));
+    }
+    public static string Expand<T>(T[] os)
+    {
+        string s = "";
+        foreach (object o in os)
+        {
+            s += o.ToString();
+            s += ", ";
+        }
+        return s[..^2];
+    }
 
     public static void Warn(string s)
     {
@@ -36,7 +50,7 @@ public static class Scribe
         if (condition)
             Warn(s);
     }
-    public static void List<T>(List<T> l)
+    public static void Dump<T>(ICollection<T> l)
     {
         if (l == null)
         {
@@ -46,14 +60,10 @@ public static class Scribe
         int c = 0;
         foreach (T o in l)
         {
-            Console.WriteLine($"..{c++}: {o}");
+            Console.WriteLine($"DUMP {c++}: {o}");
         }
     }
 
-    public static void List<T>(params T[] l)
-    {
-        List(l.ToList());
-    }
 
     /// <summary><exception>
     /// bruhException

@@ -106,20 +106,30 @@ public class Proto3D : Spell
         //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         Origin["cube"] = Create.Cube(200, 100, -200, 10);
         Origin["cube"].Colored(new RGBA(0x6020ffff));
-        Origin["2"] = Create.Cube(0, 0, 340, 100);
+        Origin["2"] = Create.Cube(0, -270, 340, 100);
 
         Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
 
-        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.FILLED);
+        Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER);
 
-        Oper lhs = Let("y");
-        Oper rhs = new Fraction(N(100), Let("x"), Let("z"));
-        Equation e = new(lhs, Equation.Fulcrum.EQUALS, rhs);
-        Origin["plotEq"] = e.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, -1000d, 1000d, 80d),
-            (Let("x"), Equation.AxisSpecifier.X, -1000d, 1000d, 80d),
-            (Let("z"), Equation.AxisSpecifier.Z, 0, 100, 60d)
+        Equation hyperbolic = new(
+            Let("y"),
+            Equation.Fulcrum.EQUALS,
+            new SumDiff(
+                new Fraction(N(1000), 
+                    new SumDiff(Let("x"),N(-10))),
+                new Fraction(N(100), 
+                    new SumDiff(Let("z"), N(3))),
+                new Fraction(Let("x"), N(800), Let("z"))
+                )
         );
+        Origin["hyper"] = hyperbolic.Plot(
+            (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 50d),
+            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50d),
+            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 25d)
+        );
+        
+        Origin["hyper"].Colored(HSLA.RandomVisible());
 
     }
 }

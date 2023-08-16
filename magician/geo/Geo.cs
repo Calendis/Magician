@@ -121,7 +121,7 @@ public static class Create
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.FILLED);
+        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
 
     }
     public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -148,7 +148,7 @@ public static class Create
             ps.Add(Point(outerX, outerY, col));
         }
 
-        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.FILLED);
+        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
     public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)

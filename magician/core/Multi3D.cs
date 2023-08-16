@@ -9,7 +9,8 @@ namespace Magician;
 // defined.
 public class Multi3D : Multi
 {
-    List<List<int>>? faces;
+    List<int[]>? faces;
+    public List<int[]>? Faces => faces;
     // Full constructor
     public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) { }
     public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
@@ -21,24 +22,8 @@ public class Multi3D : Multi
             throw Scribe.Error($"Must define faces of Multi3D {this}");
             
         int cc = 0;
-        foreach (List<int> face in faces)
+        foreach (int[] face in faces)
         {
-            // Do not draw faces behind the camera
-            // TODO: this should be general behaviour for a Multi
-            //bool occluded = false;
-            //for (int j = 0; j < face.Count; j++)
-            //{
-            //    if (csts[face[j]].Z <= Geo.Ref.Perspective.Z)
-            //    {
-            //        occluded = true;
-            //        break;
-            //    }
-            //}
-            //if (occluded)
-            //{
-            //    continue;
-            //}
-
             Multi f = new Multi().Positioned(x.Get(), y.Get(), z.Get())
             .Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
@@ -46,7 +31,7 @@ public class Multi3D : Multi
                 f.Add(constituents[idx]);
                 f.Colored(constituents[idx].Col);
                 // TODO: remove this faux-lighting
-                f.Col.L = 1-(((float)idx)/10);
+                f.Col.L = 1-(((float)idx)/1000);
             }
             f.Render(xOffset, yOffset, zOffset);
         }
@@ -89,20 +74,30 @@ public class Multi3D : Multi
 
     public Multi3D FacesGrouped(int faceSize, params int[] fs)
     {
-        faces = new List<List<int>>();
-        // Tbh, I have no idea how to check to see if 3d points can fit in a certain number of faces...
-        /* if (Count % faceSize != 0)
-        {
-            throw Scribe.Error($"Could not group\n{this}\n into faces of size {faceSize}");
-        } */
-        List<int> currentFace = new List<int>();
+        faces = new();
+        List<int> currentFace = new();
         for (int i = 0; i < fs.Length; i++)
         {
             currentFace.Add(fs[i]);
             if (i % faceSize == faceSize - 1)
             {
-                faces.Add(currentFace);
+                faces.Add(currentFace.ToArray());
                 currentFace = new List<int>();
+            }
+        }
+        return this;
+    }
+
+    public Multi3D SetFaces(List<int[]> newFaces)
+    {
+        faces = new();
+        for (int i = 0; i < newFaces.Count; i++)
+        {
+            int[] face = newFaces[i];
+            faces.Add(new int[face.Length]);
+            for (int j = 0; j < face.Length; j++)
+            {
+                faces[i][j] = face[j];
             }
         }
         return this;

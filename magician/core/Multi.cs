@@ -13,7 +13,7 @@ public enum DrawMode : short
     INVISIBLE = 0b0000,
     PLOT = 0b1000,
     CONNECTINGLINE = 0b0100,
-    FILLED = 0b0010,
+    INNER = 0b0010,
     POINTS = 0b0001,
     OUTER = 0b1100,
     FULL = 0b1110,
@@ -898,7 +898,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
-        if (((drawMode & DrawMode.FILLED) > 0) && Count >= 3)
+        if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
         {
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
             List<int[]> projectedTriangleVertices;

@@ -69,7 +69,7 @@ public class Equation
                         //Scribe.Info("solved!");
                         if (solved == null)
                         {
-                            solved = new Equation(layers.sides[chosenSide][0][0], TheFulcrum, layers.sides[1-chosenSide][0][0]);
+                            solved = new Equation(layers.sides[chosenSide][0][0], TheFulcrum, layers.sides[1 - chosenSide][0][0]);
                         }
                         break;
                     }
@@ -251,51 +251,70 @@ public class Equation
         {
             throw Scribe.Error("Axis specifiers must match number of unknowns");
         }
-        Dictionary<Variable, AxisSpecifier> varAxisMap = new();
+        Dictionary<Variable, AxisSpecifier> axesByVar = new();
         for (int i = 0; i < noUnknowns; i++)
         {
-            varAxisMap.Add(axes[i].VAR, axes[i].AXIS);
+            axesByVar.Add(axes[i].VAR, axes[i].AXIS);
         }
+        
         Variable outVar = axes[0].VAR;
         Variable[] inVars = axes.Skip(1).Select(t => t.VAR).ToArray();
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
+        NDCounter solveSpace = new(axes.Skip(1).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
         
-        // TODO: I think I pass the outVar into the counter as well. This isn't necessary
-        NDCounter solveSpace = new(axes.Skip(1).Select(ax => (ax.MIN, ax.MAX, 1d)).ToArray());
-        bool threeD = solveSpace.Dims >= 3;
+        bool threeD = solveSpace.Dims >= 2;
+        List<int[]> faces = new();
         Multi plot = new Multi().Flagged(DrawMode.PLOT);
-        while (!solveSpace.Done)
+ 
+        do
         {
-            // Inject arguments
+            // Get arguments from the counter
             for (int i = 0; i < inVars.Length; i++)
             {
                 inVars[i].Val = solveSpace.Get(i);
             }
-
-            // Get output
+            Scribe.Info($"axis: {solveSpace.Get(0)}");
+            Scribe.Info(solveSpace.Positional);
             outVar.Val = solvedExpr.Solution().Val;
 
             double[] argsByAxis = new double[Math.Max(3, inVars.Length + 1)];
-            if (argsByAxis.Length > 3)
-            {
-                throw Scribe.Issue("Extra variables unsupported so far");
-            }
-            argsByAxis[(int)varAxisMap[outVar]] = outVar.Val;
+            argsByAxis[(int)axesByVar[outVar]] = outVar.Val;
             foreach (Variable v in inVars)
             {
-                argsByAxis[(int)varAxisMap[v]] = v.Val;
+                argsByAxis[(int)axesByVar[v]] = v.Val;
             }
             while (argsByAxis.Length < 3)
             {
                 argsByAxis = argsByAxis.Append(0).ToArray();
             }
             //Scribe.List(argsByAxis);
-            Multi point = new Multi(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
+
+            // Determine faces
+            if (threeD)
+            {
+                // h+1, h+n, n, n+1
+                int h = (int)solveSpace.AxisLen(1);
+                int n = solveSpace.Val;
+                if (n % h < h - 1 && n / solveSpace.Max < (double)(h - 1) / h)
+                {
+                    faces.Add(new int[] { h + n + 1, h + n, n, n + 1 });
+                }
+            }
+
+            Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
             plot.Add(point);
-            solveSpace.Increment();
-        }
+            
+        } while (!solveSpace.Increment());
         Array.ForEach(inVars, v => v.Reset());
         outVar.Reset();
+        // 3D plot format
+        if (threeD)
+        {
+            Multi3D plot3d = new(plot);
+            plot3d.SetFaces(faces);
+            return plot3d.Flagged(DrawMode.INNER);
+        }
+        // 2D plot
         return plot;
 
         //throw Scribe.Issue("Not supported");
@@ -338,7 +357,7 @@ public class Equation
     }
     public enum AxisSpecifier
     {
-        X=0, Y=1, Z=2, HUE=3
+        X = 0, Y = 1, Z = 2, HUE = 3
     }
 
     public enum SolveState
