@@ -293,6 +293,7 @@ public class Equation
             if (threeD)
             {
                 // h+1, h+n, n, n+1
+                // TODO: fix this faces formula
                 int h = (int)solveSpace.AxisLen(1);
                 int n = solveSpace.Val;
                 if (n % h < h - 1 && n / solveSpace.Max < (double)(h - 1) / h)
@@ -312,7 +313,7 @@ public class Equation
         {
             Multi3D plot3d = new(plot);
             plot3d.SetFaces(faces);
-            return plot3d.Flagged(DrawMode.INNER);
+            return plot3d.Flagged(DrawMode.PLOT);
         }
         // 2D plot
         return plot;

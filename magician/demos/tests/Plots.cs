@@ -59,27 +59,27 @@ public class Plots : Spell
         //);
 
         // 2D equation
-        Equation eq2d = new(
-            Let("x"),
-            Equation.Fulcrum.EQUALS,
-            new Fraction(N(1000), Let("y"))
-        );
-        Origin["eq2d"] = eq2d.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 5d),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 5d)
-        );
+        //Equation eq2d = new(
+        //    Let("x"),
+        //    Equation.Fulcrum.EQUALS,
+        //    new Fraction(N(1000), Let("y"))
+        //);
+        //Origin["eq2d"] = eq2d.Plot(
+        //    (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 5d),
+        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 5d)
+        //);
 
         // Works
-        //Equation threePlane = new(
-        //    Let("y"),
-        //    Equation.Fulcrum.EQUALS,
-        //    new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
-        //);
-        //Origin["threeplane"] = threePlane.Plot(
-        //    (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 50d),
-        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50d),
-        //    (Let("z"), Equation.AxisSpecifier.Z, -600, 600, 50d)
-        //);
+        Equation threePlane = new(
+            Let("y"),
+            Equation.Fulcrum.EQUALS,
+            new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
+        );
+        Origin["threeplane"] = threePlane.Plot(
+            (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 50d),
+            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50d),
+            (Let("z"), Equation.AxisSpecifier.Z, -600, 600, 50d)
+        );
 
     }
 

@@ -28,6 +28,12 @@ public class Multi3D : Multi
             .Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {
+                // Hack to stop crashes for plot debugging
+                if (idx >= Count)
+                {
+                    //Scribe.Warn($"{idx} / {Count}");
+                    //continue;
+                }
                 f.Add(constituents[idx]);
                 f.Colored(constituents[idx].Col);
                 // TODO: remove this faux-lighting

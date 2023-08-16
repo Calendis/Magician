@@ -9,7 +9,7 @@ public class NDCounter
     public double Max => counterMax;
     int[] vals;
     public int Val {get; private set;}
-    public double Get(int n) => vals[n] * ress[n];// + mins[n];
+    public double Get(int n) => vals[n] * ress[n] + mins[n];
     public int[] Positional => vals;
     double[] ress;
     bool done = false;
@@ -37,7 +37,7 @@ public class NDCounter
             vals[i] = 0;
             maxs[i] = t.Item2;
             ress[i] = t.Item3;
-            counterMax *= (maxs[i] - mins[i]) / ress[i] + 1;
+            counterMax *= (maxs[i] - mins[i]) / ress[i] + 0;
             i++;
         }
         counterMax = (int)counterMax;
@@ -51,7 +51,7 @@ public class NDCounter
         int carry = 0;
         while (!foundAvailableSlot)
         {
-            if (vals[slot] < maxs[slot]/ress[slot] - 1)
+            if (vals[slot] < (maxs[slot]-mins[slot])/ress[slot] - 1)
             {
                 foundAvailableSlot = true;
                 vals[slot]++;
@@ -59,12 +59,17 @@ public class NDCounter
                 {
                     vals[slot-carry] = 0;
                 }
+
             }
             else
             {
                 vals[slot] = 0;
                 carry++;
             }
+            //if (carry >= vals.Length)
+            //{
+            //    return true;
+            //}
             
             slot++;
             if (slot == vals.Length)

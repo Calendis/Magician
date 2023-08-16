@@ -940,13 +940,13 @@ public class Multi : Vec3, ICollection<Multi>
 
                 // If the render fails for some reason, try with reverse order
                 // This is a hack, but oh well. Maybe I should specify ccw or cw?
-                double[][] reverseProjectedVerts = new double[Count][];
-                for (int revI = 0; revI < Count; revI++)
-                {
-                    reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
-                }
                 try
                 {
+                    double[][] reverseProjectedVerts = new double[Count][];
+                    for (int revI = 0; revI < Count; revI++)
+                    {
+                        reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
+                    }
                     projectedTriangleVertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
                 }
                 catch (System.Exception)
@@ -1060,7 +1060,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
         return this;
     }
-    public void AddFiltered(Multi m, string filter="empty paint")
+    public void AddFiltered(Multi m, string filter = "empty paint")
     {
         if (m.Tag == filter)
         {
