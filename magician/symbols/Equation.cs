@@ -260,12 +260,7 @@ public class Equation
             rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
         }
 
-        // TODO: this is really wrong
-        Variable outVar = axes[0].VAR;
-        outVar = isolates[0];
-        // This also nonsense
-        //Variable[] inVars = axes.Skip(1).Select(t => t.VAR).ToArray();
-        //inVars = unknowns.Except(isolates).ToArray();
+        Variable outVar = isolates[0];
         List<Variable> inVars = new();
         foreach (var a in axes)
         {
@@ -275,19 +270,8 @@ public class Equation
             }
         }
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
-        // This is not quite right
-        NDCounter solveSpace = new(axes.Skip(1).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
-        solveSpace = new(axes.Where(ax => ax.VAR != isolates[0]).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
+        NDCounter solveSpace = new(axes.Where(ax => ax.VAR != isolates[0]).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
         List<(Variable, AxisSpecifier, double, double, double)> orderedAxes = new();
-        //foreach (Variable v in inVars)
-        //{
-        //    orderedAxes.Add((v, axesByVar[v], rangesByVar[v].Item1, rangesByVar[v].Item2, rangesByVar[v].Item3));
-        //}
-        //solveSpace = new(orderedAxes.Select(ax => (ax.Item3, ax.Item4, ax.Item5)).ToArray());
-        Scribe.Info("inVars vs axes vs orderedAxes");
-        Scribe.Dump(inVars);
-        Scribe.Info(axes);
-        Scribe.Dump(orderedAxes);
 
         bool threeD = solveSpace.Dims >= 2;
         List<int[]> faces = new();
@@ -295,16 +279,11 @@ public class Equation
 
         do
         {
-            //Scribe.Info(solveSpace.Positional);
             // Get arguments from the counter
-            // TODO: this isn't right. You can't rely on inVars order
             for (int i = 0; i < inVars.Count; i++)
             {
                 inVars[i].Val = solveSpace.Get(i);
-                //orderedAxes[i].Item1.Val = solveSpace.Get(i);
             }
-            //Scribe.Info($"axis: {solveSpace.Get(0)}");
-            //Scribe.Info(solveSpace.Positional);
             outVar.Val = solvedExpr.Solution().Val;
 
             double[] argsByAxis = new double[Math.Max(3, inVars.Count + 1)];
@@ -318,20 +297,15 @@ public class Equation
             {
                 argsByAxis = argsByAxis.Append(0).ToArray();
             }
-            //Scribe.List(argsByAxis);
 
             // Determine faces
             bool edgeRow = false;
             bool edgeCol = false;
             if (threeD)
             {
-                // h+1, h+n, n, n+1
-                // TODO: fix this faces formula
-                // Ok, this is actually correct, but it only works when the chosen spacing fits exactly into the total...
                 double w = solveSpace.AxisLen(0);
                 double h = solveSpace.AxisLen(1);
                 int n = solveSpace.Val;
-                Scribe.Info($"{w}, {h}");
                 if (solveSpace.Positional[0] == Math.Ceiling(solveSpace.AxisLen(0)-1))
                 {
                     edgeCol = true;
@@ -347,18 +321,18 @@ public class Equation
             }
 
             Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            if (edgeRow)
-            {
-                point.Colored(new RGBA(255, 255, 0, 255));
-            }
-            else
-            {
-                //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
-            }
-            if (edgeCol)
-            {
-                point.Colored(new RGBA(255, 0, 255, 255));
-            }
+            //if (edgeRow)
+            //{
+            //    point.Colored(new RGBA(255, 255, 0, 255));
+            //}
+            //else
+            //{
+            //    point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
+            //}
+            //if (edgeCol)
+            //{
+            //    point.Colored(new RGBA(255, 0, 255, 255));
+            //}
             plot.Add(point);
 
         } while (!solveSpace.Increment());
