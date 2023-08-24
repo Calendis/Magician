@@ -305,7 +305,6 @@ public class Equation
             {
                 double w = solveSpace.AxisLen(0);
                 double h = solveSpace.AxisLen(1);
-                Scribe.Info($"{w}/{h} = {w/h}");
                 int n = solveSpace.Val;
                 if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0)-1))
                 {
@@ -315,26 +314,26 @@ public class Equation
                 {
                     edgeRow = true;
                 }
-                if (!edgeCol && !edgeRow && n + w + 1 < solveSpace.Max)
+                if (!edgeCol && !edgeRow && n + Math.Ceiling(w) + 1 < solveSpace.Max)
                 {
-                    faces.Add(new int[] { (int)w + n + 1, (int)w + n, n, n + 1 });
+                    faces.Add(new int[] { (int)Math.Ceiling(w) + n + 1, (int)Math.Ceiling(w) + n, n, n + 1 });
                 }
             }
 
             Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            if (edgeRow)
-            {
-                point.Colored(new RGBA(255, 255, 0, 255));
-            }
-            else
-            {
-                //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
-            }
-            if (edgeCol)
-            {
-                point.Colored(new RGBA(255, 0, 255, 255));
-            }
-            point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
+            //if (edgeRow)
+            //{
+            //    point.Colored(new RGBA(255, 255, 0, 255));
+            //}
+            //else
+            //{
+            //    //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
+            //}
+            //if (edgeCol)
+            //{
+            //    point.Colored(new RGBA(255, 0, 255, 255));
+            //}
+            //point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
             plot.Add(point);
 
         } while (!solveSpace.Increment());

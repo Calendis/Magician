@@ -58,24 +58,23 @@ public class PlotView : Spell
             new Fraction(new Fraction(N(60), N(1), Let("z")), new Fraction(Let("x"), N(1)))
         );
         Origin["pt3d"] = plotTest3d.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, 0,0,0),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 30),
-            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 25d)
+            (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50),
+            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 20d)
         );
-        
+
         //Origin["pt3d"].Colored(HSLA.RandomVisible());
 
-        //Equation plotTest2d = new(
+        //Equation threePlane = new(
         //    Let("y"),
         //    Equation.Fulcrum.EQUALS,
-        //    new Fraction(N(1000), Let("x"))
+        //    new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
         //);
-        //Origin["pt2d"] = plotTest2d.Plot(
-        //    (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 10d),
-        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 10d)
+        //Origin["threeplane"] = threePlane.Plot(
+        //    (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0d),
+        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50.1d),
+        //    (Let("z"), Equation.AxisSpecifier.Z, -500, 100, 19d)
         //);
-        
-        //Origin["pt2d"].Colored(HSLA.RandomVisible());
 
     }
 }

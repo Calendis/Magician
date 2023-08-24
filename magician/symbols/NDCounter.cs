@@ -17,10 +17,6 @@ public class NDCounter
     public int Dims {get; set;}
     public double AxisLen(int axis)
     {
-            if (axis >= maxs.Length)
-            {
-                return 0;
-            }
         return (maxs[axis]-mins[axis]) / ress[axis];
     }
 

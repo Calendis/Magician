@@ -69,18 +69,6 @@ public class Plots : Spell
         //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 5d)
         //);
 
-        // Works
-        Equation threePlane = new(
-            Let("y"),
-            Equation.Fulcrum.EQUALS,
-            new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
-        );
-        Origin["threeplane"] = threePlane.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 50d),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50d),
-            (Let("z"), Equation.AxisSpecifier.Z, -600, 600, 50d)
-        );
-
     }
 
     public override void Loop()
