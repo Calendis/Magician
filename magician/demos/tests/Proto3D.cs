@@ -112,24 +112,6 @@ public class Proto3D : Spell
 
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER);
 
-        Equation hyperbolic = new(
-            Let("y"),
-            Equation.Fulcrum.EQUALS,
-            new SumDiff(
-                new Fraction(N(1000), 
-                    new SumDiff(Let("x"),N(-10))),
-                new Fraction(N(100), 
-                    new SumDiff(Let("z"), N(3))),
-                new Fraction(Let("x"), N(800), Let("z"))
-                )
-        );
-        Origin["hyper"] = hyperbolic.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, -600, 600, 50d),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50d),
-            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 25d)
-        );
-        
-        Origin["hyper"].Colored(HSLA.RandomVisible());
 
     }
 }

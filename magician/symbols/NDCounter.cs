@@ -37,11 +37,10 @@ public class NDCounter
             vals[i] = 0;
             maxs[i] = t.Item2;
             ress[i] = t.Item3;
-            counterMax *= (maxs[i] - mins[i]) / ress[i] + 0;
+            counterMax *= (maxs[i] - mins[i]) / ress[i];
             i++;
         }
         counterMax = (int)counterMax;
-        Scribe.Warn(counterMax);
     }
 
     public bool Increment()

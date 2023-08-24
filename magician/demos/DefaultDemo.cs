@@ -36,7 +36,7 @@ public class DefaultSpell : Spell
         () =>
         {
             Scribe.Info("Switching Spells...");
-            Spellcaster.Prepare(new Demos.Tests.Proto3D());
+            Spellcaster.Prepare(new Demos.Tests.PlotView());
             Spellcaster.Cast();
         }
 

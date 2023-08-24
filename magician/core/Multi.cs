@@ -291,7 +291,7 @@ public class Multi : Vec3, ICollection<Multi>
         col = c;
         foreach (Multi cst in Constituents)
         {
-            cst.col = c;
+            //cst.col = c;
         }
         return this;
     }

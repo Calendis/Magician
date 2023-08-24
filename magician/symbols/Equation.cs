@@ -6,6 +6,7 @@ public class Equation
     public Variable[] unknowns;
     EquationLayers layers;
     EquationLayers layersBackup;
+    List<Variable> isolates;
     public Fulcrum TheFulcrum { get; private set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
@@ -15,7 +16,7 @@ public class Equation
 
         layers = new(opt0, opt1);
         layersBackup = new(opt0.Copy(), opt1.Copy());
-        List<Variable> isolates = new();
+        isolates = new();
         if (opt0 is Variable v && !v.Found)
         {
             isolates.Add(v);
@@ -252,15 +253,41 @@ public class Equation
             throw Scribe.Error("Axis specifiers must match number of unknowns");
         }
         Dictionary<Variable, AxisSpecifier> axesByVar = new();
+        Dictionary<Variable, (double, double, double)> rangesByVar = new();
         for (int i = 0; i < noUnknowns; i++)
         {
             axesByVar.Add(axes[i].VAR, axes[i].AXIS);
+            rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
         }
         
+        // TODO: this is really wrong
         Variable outVar = axes[0].VAR;
-        Variable[] inVars = axes.Skip(1).Select(t => t.VAR).ToArray();
+        outVar = isolates[0];
+        // This also nonsense
+        //Variable[] inVars = axes.Skip(1).Select(t => t.VAR).ToArray();
+        //inVars = unknowns.Except(isolates).ToArray();
+        List<Variable> inVars = new();
+        foreach (var a in axes)
+        {
+            if (a.VAR != isolates[0])
+            {
+                inVars.Add(a.VAR);
+            }
+        }
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
+        // This is not quite right
         NDCounter solveSpace = new(axes.Skip(1).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
+        solveSpace = new(axes.Where(ax => ax.VAR != isolates[0]).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
+        List<(Variable, AxisSpecifier, double, double, double)> orderedAxes = new();
+        //foreach (Variable v in inVars)
+        //{
+        //    orderedAxes.Add((v, axesByVar[v], rangesByVar[v].Item1, rangesByVar[v].Item2, rangesByVar[v].Item3));
+        //}
+        //solveSpace = new(orderedAxes.Select(ax => (ax.Item3, ax.Item4, ax.Item5)).ToArray());
+        Scribe.Info("inVars vs axes vs orderedAxes");
+        Scribe.Dump(inVars);
+        Scribe.Info(axes);
+        Scribe.Dump(orderedAxes);
         
         bool threeD = solveSpace.Dims >= 2;
         List<int[]> faces = new();
@@ -268,21 +295,25 @@ public class Equation
  
         do
         {
+            //Scribe.Info(solveSpace.Positional);
             // Get arguments from the counter
-            for (int i = 0; i < inVars.Length; i++)
+            // TODO: this isn't right. You can't rely on inVars order
+            for (int i = 0; i < inVars.Count; i++)
             {
                 inVars[i].Val = solveSpace.Get(i);
+                //orderedAxes[i].Item1.Val = solveSpace.Get(i);
             }
-            Scribe.Info($"axis: {solveSpace.Get(0)}");
-            Scribe.Info(solveSpace.Positional);
+            //Scribe.Info($"axis: {solveSpace.Get(0)}");
+            //Scribe.Info(solveSpace.Positional);
             outVar.Val = solvedExpr.Solution().Val;
 
-            double[] argsByAxis = new double[Math.Max(3, inVars.Length + 1)];
+            double[] argsByAxis = new double[Math.Max(3, inVars.Count + 1)];
             argsByAxis[(int)axesByVar[outVar]] = outVar.Val;
             foreach (Variable v in inVars)
             {
                 argsByAxis[(int)axesByVar[v]] = v.Val;
             }
+            // Pad to three dimensions
             while (argsByAxis.Length < 3)
             {
                 argsByAxis = argsByAxis.Append(0).ToArray();
@@ -290,30 +321,42 @@ public class Equation
             //Scribe.List(argsByAxis);
 
             // Determine faces
+            bool valid = true;
             if (threeD)
             {
                 // h+1, h+n, n, n+1
                 // TODO: fix this faces formula
-                int h = (int)solveSpace.AxisLen(1);
+                // Ok, this is actually correct, but it only works when the chosen spacing fits exactly into the total...
+                double w = solveSpace.AxisLen((int)axesByVar[outVar]);
                 int n = solveSpace.Val;
-                if (n % h < h - 1 && n / solveSpace.Max < (double)(h - 1) / h)
+                if (n % w < w-1 && n / solveSpace.Max < (double)(w - 1) / w && n + w + 1 < solveSpace.Max)
                 {
-                    faces.Add(new int[] { h + n + 1, h + n, n, n + 1 });
+                    faces.Add(new int[] { (int)w + n + 1, (int)w + n, n, n + 1 });
+                }
+                else
+                {
+                    valid = false;
                 }
             }
 
             Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
+            if (!valid)
+            {
+                point.Colored(new RGBA(255, 255, 0, 255));
+            }
             plot.Add(point);
             
         } while (!solveSpace.Increment());
-        Array.ForEach(inVars, v => v.Reset());
+
+        //Array.ForEach(inVars, v => v.Reset());
+        inVars.ForEach(v => v.Reset());
         outVar.Reset();
         // 3D plot format
         if (threeD)
         {
             Multi3D plot3d = new(plot);
             plot3d.SetFaces(faces);
-            return plot3d.Flagged(DrawMode.PLOT);
+            return plot3d.Flagged(DrawMode.POINTS);
         }
         // 2D plot
         return plot;
