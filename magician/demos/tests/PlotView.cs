@@ -55,15 +55,15 @@ public class PlotView : Spell
         Equation plotTest3d = new(
             Let("y"),
             Equation.Fulcrum.EQUALS,
-            new Fraction(new Fraction(N(100), N(1), Let("z")), Let("x"))
+            new Fraction(new Fraction(N(60), N(1), Let("z")), new Fraction(Let("x"), N(1)))
         );
         Origin["pt3d"] = plotTest3d.Plot(
             (Let("y"), Equation.AxisSpecifier.Y, 0,0,0),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50),
-            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 33d)
+            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 30),
+            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 25d)
         );
         
-        Origin["pt3d"].Colored(HSLA.RandomVisible());
+        //Origin["pt3d"].Colored(HSLA.RandomVisible());
 
         //Equation plotTest2d = new(
         //    Let("y"),

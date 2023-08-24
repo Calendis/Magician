@@ -307,11 +307,11 @@ public class Equation
                 double h = solveSpace.AxisLen(1);
                 Scribe.Info($"{w}/{h} = {w/h}");
                 int n = solveSpace.Val;
-                if (solveSpace.Positional[0] == Math.Ceiling(solveSpace.AxisLen(0)-1))
+                if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0)-1))
                 {
                     edgeCol = true;
                 }
-                if (n >= solveSpace.Max-w+w*w/h)
+                if (n >= solveSpace.Max-w)
                 {
                     edgeRow = true;
                 }
@@ -322,18 +322,19 @@ public class Equation
             }
 
             Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            //if (edgeRow)
-            //{
-            //    point.Colored(new RGBA(255, 255, 0, 255));
-            //}
-            //else
-            //{
-            //    point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
-            //}
-            //if (edgeCol)
-            //{
-            //    point.Colored(new RGBA(255, 0, 255, 255));
-            //}
+            if (edgeRow)
+            {
+                point.Colored(new RGBA(255, 255, 0, 255));
+            }
+            else
+            {
+                //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
+            }
+            if (edgeCol)
+            {
+                point.Colored(new RGBA(255, 0, 255, 255));
+            }
+            point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
             plot.Add(point);
 
         } while (!solveSpace.Increment());
