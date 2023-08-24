@@ -328,14 +328,15 @@ public class Equation
                 // h+1, h+n, n, n+1
                 // TODO: fix this faces formula
                 // Ok, this is actually correct, but it only works when the chosen spacing fits exactly into the total...
-                double w = solveSpace.AxisLen((int)axesByVar[outVar]);
-                double h = solveSpace.AxisLen(solveSpace.Positional.Length - (int)axesByVar[outVar]);
+                double w = solveSpace.AxisLen(0);
+                double h = solveSpace.AxisLen(1);
                 int n = solveSpace.Val;
+                Scribe.Info($"{w}, {h}");
                 if (solveSpace.Positional[0] == Math.Ceiling(solveSpace.AxisLen(0)-1))
                 {
                     edgeCol = true;
                 }
-                if (n >= solveSpace.Max-w)
+                if (n >= solveSpace.Max-w + (w)/(h/w))
                 {
                     edgeRow = true;
                 }
