@@ -60,10 +60,10 @@ public class PlotView : Spell
         Origin["pt3d"] = plotTest3d.Plot(
             (Let("y"), Equation.AxisSpecifier.Y, 0,0,0),
             (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50),
-            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 35d)
+            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 33d)
         );
         
-        //Origin["pt3d"].Colored(HSLA.RandomVisible());
+        Origin["pt3d"].Colored(HSLA.RandomVisible());
 
         //Equation plotTest2d = new(
         //    Let("y"),

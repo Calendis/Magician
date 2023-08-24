@@ -305,12 +305,13 @@ public class Equation
             {
                 double w = solveSpace.AxisLen(0);
                 double h = solveSpace.AxisLen(1);
+                Scribe.Info($"{w}/{h} = {w/h}");
                 int n = solveSpace.Val;
                 if (solveSpace.Positional[0] == Math.Ceiling(solveSpace.AxisLen(0)-1))
                 {
                     edgeCol = true;
                 }
-                if (n >= solveSpace.Max-w + (w)/(h/w))
+                if (n >= solveSpace.Max-w+w*w/h)
                 {
                     edgeRow = true;
                 }
