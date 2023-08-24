@@ -259,7 +259,7 @@ public class Equation
             axesByVar.Add(axes[i].VAR, axes[i].AXIS);
             rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
         }
-        
+
         // TODO: this is really wrong
         Variable outVar = axes[0].VAR;
         outVar = isolates[0];
@@ -288,11 +288,11 @@ public class Equation
         Scribe.Dump(inVars);
         Scribe.Info(axes);
         Scribe.Dump(orderedAxes);
-        
+
         bool threeD = solveSpace.Dims >= 2;
         List<int[]> faces = new();
         Multi plot = new Multi().Flagged(DrawMode.PLOT);
- 
+
         do
         {
             //Scribe.Info(solveSpace.Positional);
@@ -321,31 +321,45 @@ public class Equation
             //Scribe.List(argsByAxis);
 
             // Determine faces
-            bool valid = true;
+            bool edgeRow = false;
+            bool edgeCol = false;
             if (threeD)
             {
                 // h+1, h+n, n, n+1
                 // TODO: fix this faces formula
                 // Ok, this is actually correct, but it only works when the chosen spacing fits exactly into the total...
                 double w = solveSpace.AxisLen((int)axesByVar[outVar]);
+                double h = solveSpace.AxisLen(solveSpace.Positional.Length - (int)axesByVar[outVar]);
                 int n = solveSpace.Val;
-                if (n % w < w-1 && n / solveSpace.Max < (double)(w - 1) / w && n + w + 1 < solveSpace.Max)
+                if (solveSpace.Positional[0] == Math.Ceiling(solveSpace.AxisLen(0)-1))
+                {
+                    edgeCol = true;
+                }
+                if (n >= solveSpace.Max-w)
+                {
+                    edgeRow = true;
+                }
+                if (!edgeCol && !edgeRow && n + w + 1 < solveSpace.Max)
                 {
                     faces.Add(new int[] { (int)w + n + 1, (int)w + n, n, n + 1 });
-                }
-                else
-                {
-                    valid = false;
                 }
             }
 
             Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            if (!valid)
+            if (edgeRow)
             {
                 point.Colored(new RGBA(255, 255, 0, 255));
             }
+            else
+            {
+                //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
+            }
+            if (edgeCol)
+            {
+                point.Colored(new RGBA(255, 0, 255, 255));
+            }
             plot.Add(point);
-            
+
         } while (!solveSpace.Increment());
 
         //Array.ForEach(inVars, v => v.Reset());
@@ -356,7 +370,7 @@ public class Equation
         {
             Multi3D plot3d = new(plot);
             plot3d.SetFaces(faces);
-            return plot3d.Flagged(DrawMode.POINTS);
+            return plot3d.Flagged(DrawMode.PLOT);
         }
         // 2D plot
         return plot;

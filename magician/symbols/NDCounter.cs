@@ -21,7 +21,7 @@ public class NDCounter
             {
                 return 0;
             }
-        return maxs[axis] / ress[axis];
+        return (maxs[axis]-mins[axis]) / ress[axis];
     }
 
     public NDCounter(params (double, double, double)[] ranges)
