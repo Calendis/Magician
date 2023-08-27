@@ -60,7 +60,23 @@ public static class Scribe
         int c = 0;
         foreach (T o in l)
         {
-            Console.WriteLine($"DUMP {c++}: {o}");
+            Console.Write($"{c++}: ");
+            Scribe.Info(o);
+        }
+    }
+
+    public static void Dump<T, U>(ICollection<T> l) where T : ICollection<U>
+    {
+        if (l == null)
+        {
+            Scribe.Warn($"Could not list null");
+            l = new List<T>();
+        }
+        int c = 0;
+        foreach (ICollection<U> o in l)
+        {
+            Console.Write($"{c++} ");
+            Scribe.Info<U>(o.ToArray());
         }
     }
 

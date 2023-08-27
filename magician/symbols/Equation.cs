@@ -333,7 +333,8 @@ public class Equation
             //{
             //    point.Colored(new RGBA(255, 0, 255, 255));
             //}
-            //point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
+            // Color test
+            point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
             plot.Add(point);
 
         } while (!solveSpace.Increment());
@@ -346,7 +347,7 @@ public class Equation
         {
             Multi3D plot3d = new(plot);
             plot3d.SetFaces(faces);
-            return plot3d.Flagged(DrawMode.PLOT);
+            return plot3d.Flagged(DrawMode.INNER);
         }
         // 2D plot
         return plot;

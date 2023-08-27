@@ -21,6 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\magician\Magician.csproj" />
+    <ProjectReference Include="../magician/Magician.csproj" />
   </ItemGroup>
 </Project>

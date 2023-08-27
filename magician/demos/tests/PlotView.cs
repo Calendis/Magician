@@ -32,11 +32,11 @@ public class PlotView : Spell
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
-            Ref.Perspective.RotatedY(-0.05);
+            Ref.Perspective.RotatedY(0.05);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
-            Ref.Perspective.RotatedY(0.05);
+            Ref.Perspective.RotatedY(-0.05);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -55,12 +55,12 @@ public class PlotView : Spell
         Equation plotTest3d = new(
             Let("y"),
             Equation.Fulcrum.EQUALS,
-            new Fraction(new Fraction(N(60), N(1), Let("z")), new Fraction(Let("x"), N(1)))
+            new Fraction(Let("x"), N(6), Let("x"), Let("z"))
         );
         Origin["pt3d"] = plotTest3d.Plot(
             (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50),
-            (Let("z"), Equation.AxisSpecifier.Z, -610, 600, 20d)
+            (Let("x"), Equation.AxisSpecifier.X, -800, 800, 65),
+            (Let("z"), Equation.AxisSpecifier.Z, -100, 1000, 20d)
         );
 
         //Origin["pt3d"].Colored(HSLA.RandomVisible());
@@ -70,11 +70,10 @@ public class PlotView : Spell
         //    Equation.Fulcrum.EQUALS,
         //    new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
         //);
-        //Origin["threeplane"] = threePlane.Plot(
+        //Origin["planePlot"] = threePlane.Plot(
         //    (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0d),
         //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50.1d),
         //    (Let("z"), Equation.AxisSpecifier.Z, -500, 100, 19d)
         //);
-
     }
 }

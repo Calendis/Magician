@@ -13,10 +13,10 @@ public class Proto3D : Spell
     public override void Loop()
     {
         Renderer.RControl.Clear();
-        Origin["2"].RotatedZ(-0.009);
-        Origin["tetra"].RotatedX(-0.0025);
-        Origin["tetra"].RotatedY(-0.003);
-        Origin["tetra"].RotatedZ(-0.004);
+        //Origin["2"].RotatedZ(-0.009);
+        //Origin["tetra"].RotatedX(-0.0025);
+        //Origin["tetra"].RotatedY(-0.003);
+        //Origin["tetra"].RotatedZ(-0.004);
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
@@ -39,13 +39,14 @@ public class Proto3D : Spell
             //Ref.Perspective.x.Delta(walkSpeed);
             Ref.Perspective.Strafe(walkSpeed);
         }
+        // CCW is positive
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
         {
-            Ref.Perspective.RotatedY(-0.05);
+            Ref.Perspective.RotatedY(0.05);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
         {
-            Ref.Perspective.RotatedY(0.05);
+            Ref.Perspective.RotatedY(-0.05);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
@@ -104,13 +105,13 @@ public class Proto3D : Spell
     {
         b = new Brush(new DirectMap(x => Events.MouseX), new DirectMap(y => Events.MouseY));
         //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-        Origin["cube"] = Create.Cube(200, 100, -200, 10);
-        Origin["cube"].Colored(new RGBA(0x6020ffff));
-        Origin["2"] = Create.Cube(0, -270, 340, 100);
-
-        Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
+        //Origin["cube"] = Create.Cube(200, 100, -200, 10);
+        //Origin["cube"].Colored(new RGBA(0x6020ffff));
+        //Origin["2"] = Create.Cube(0, -270, 340, 100);
+        //Origin["tetra"] = Create.TriPyramid(-100, 0, 200, 16);
 
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER);
+        
 
 
     }

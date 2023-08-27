@@ -8,7 +8,7 @@ using System;
 
 namespace Seidel;
 
-public static class Alg
+static class Alg
 {
     // Iterated logarithm
     public static int Logstar(double n)
@@ -226,19 +226,24 @@ public static class Triangulator
     // Initialize arrays and read segments from Multi
     public static List<int[]> Triangulate(double[][] vss)
     {
+        //vss = vss.Distinct().ToArray();
+        //Magician.Scribe.Dump<double[], double>(vss);
         // Construct an appropriate Multi from the given vertices
-        Magician.Multi m = new Magician.Multi();
+        Magician.Multi m = new();
+        //double[][] vssCcw = vss.OrderBy(vs => new Magician.Geo.Vec3(vs[0], vs[1], 0).PhaseXY).ToArray();
         foreach (double[]vs in vss)
         {
-            Magician.Multi mvs = new Magician.Multi(vs[0], vs[1], vs[2]);
+            Magician.Multi mvs = new(vs[0], vs[1], vs[2]);
             m.Add(mvs);
         }
+        //Magician.Scribe.Info(m);
         return Triangulate(m);
     }
     public static List<int[]> Triangulate(Magician.Multi m)
     {
         //Magician.Multi m = new Magician.Multi();
         //m = m.Unique();
+        //m = new(m.OrderBy(c => (c-m).PhaseXY).ToArray());
         Initialize(m.Count);
         MAX_SEGMENTS = m.Count;
         MAX_NODES = 8 * MAX_SEGMENTS;
@@ -281,7 +286,7 @@ public static class Triangulator
 
         int n = i - 1;
         //int[][] op = new int[MAX_SEGMENTS][] {};
-        List<int[]> op = new List<int[]>();
+        List<int[]> op = new();
         for (int k = 0; k < MAX_TRAPEZOIDS; k++)
         {
             op.Add(new int[3]);
@@ -627,6 +632,8 @@ public static class Triangulator
             if ((t.u0 > 0) && (t.u1 > 0)) /* upward opening triangle */
             {
                 //Console.WriteLine("  upward opening triangle");
+                // TODO: keep debugging triangulator
+                //Magician.Scribe.Info($"rseg: {t.rSeg}");
                 v0 = t.rSeg;
                 v1 = trapezoids[t.u0].rSeg;
                 if (from == t.u1)
@@ -1203,7 +1210,12 @@ public static class Triangulator
         bool isSwapped = false;
         int tmpTriSeg;
 
-        //Console.WriteLine($"  AddSegment, segnum: {segnum}");
+        /////Console.WriteLine($"  AddSegment, segnum: {segnum}");
+        /////Console.WriteLine($"  AddSegment, sp1xy sp0xy: {s.p1.x} {s.p1.y}, {s.p0.x} {s.p0.y}");
+        if (segnum == 3)
+        {
+            //throw Magician.Scribe.Error("debug");
+        }
         if (Alg.GreaterThan(s.p1, s.p0))
         {
             //Console.WriteLine("   s.p1 greater THAN s.p0");
@@ -1727,7 +1739,7 @@ public static class Triangulator
                     else /* fresh segment */
                     {
                         //Console.WriteLine("     fresh seg");
-                        //Console.WriteLine($"     i_d0, i_d1: {i_d0}, {i_d1}");
+                        ////Console.WriteLine($"     i_d0, i_d1: {i_d0}, {i_d1}");
                         trapezoids[trapezoids[t].u0].d0 = t;
                         trapezoids[trapezoids[t].u0].d1 = tn;
                     }

@@ -4,6 +4,7 @@
 using System.Collections;
 using Magician.Geo;
 using Magician.Renderer;
+using Magician.Symbols;
 using Silk.NET.Maths;
 
 namespace Magician;
@@ -64,7 +65,7 @@ public class Multi : Vec3, ICollection<Multi>
     }
     public Vec3 Heading
     {
-        get => Geo.Ref.DefaultHeading.YawPitchRotated(yaw, pitch);
+        get => Geo.Ref.DefaultHeading.YawPitchRotated(-yaw, pitch);
         set
         {
             pitch = -Math.Asin(-value.y.Get());
@@ -413,6 +414,7 @@ public class Multi : Vec3, ICollection<Multi>
     public Multi RotatedY(double theta)
     {
         yaw = (yaw + theta) % (2 * Math.PI);
+        yaw += yaw > 0 ? 0 : 2 * Math.PI;
         return Sub(
             m =>
             m.PhaseXZ += theta
@@ -773,6 +775,7 @@ public class Multi : Vec3, ICollection<Multi>
 
         // Get a projection of each constituent point
         double[][] unclippedVerts = new double[Count][];
+        Vector4D<double> selfProj = new();
         for (int i = 0; i < Count; i++)
         {
             // we don't need these for anything
@@ -819,6 +822,12 @@ public class Multi : Vec3, ICollection<Multi>
 
         List<double[]> clippedVerts = new();
         int counter = 0;
+        double minX = double.MaxValue;
+        double maxX = double.MinValue;
+        double avgX = 0;
+        double minY = double.MaxValue;
+        double maxY = double.MinValue;
+        double avgY = 0;
         foreach (double[] v in unclippedVerts)
         {
             // Check to see if the constituent's z-coordinate is out-of-bounds
@@ -827,19 +836,27 @@ public class Multi : Vec3, ICollection<Multi>
             Vec3 absPos = this[counter++].Abs;
             Vec3 camPos = Ref.Perspective;
             // Rotate so that we can compare straight along the axis using a >=
-            absPos = absPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            camPos = camPos.YawPitchRotated(-Ref.Perspective.yaw, -Ref.Perspective.pitch);
+            absPos = absPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
+            camPos = camPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
             zInBounds = (absPos.z.Get() - camPos.z.Get() >= 0);
 
             if (zInBounds)
             {
                 clippedVerts.Add(v);
+                minX = v[0] < minX ? v[0] : minX;
+                minY = v[1] < minY ? v[1] : minY;
+                maxX = v[0] > maxX ? v[0] : maxX;
+                maxY = v[1] > maxY ? v[1] : maxY;
+                avgX += v[0];
+                avgY += v[1];
             }
             else
             {
                 // Seems to work fine without calculating clipping intersections, so do nothing
             }
         }
+        avgX /= Count;
+        avgY /= Count;
 
         // The vertices are GLSL-ready
         double[][] projectedVerts = clippedVerts.ToArray();
@@ -890,7 +907,7 @@ public class Multi : Vec3, ICollection<Multi>
                 double subb = this[Count - 1].Col.B;
                 double suba = this[Count - 1].Col.A;
 
-                rLineArray[rLineArray.Length - 1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
+                rLineArray[^1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
             }
             rLines = new(rLineArray);
             drawables.Add(rLines);
@@ -902,11 +919,77 @@ public class Multi : Vec3, ICollection<Multi>
         {
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
             List<int[]> projectedTriangleVertices;
+
+            // Render assuming triangulation is safe
+            /*
+            if (Ref.Perspective.yaw > Math.PI / 2 && Ref.Perspective.yaw < 3 * Math.PI / 2)
+            {
+                double[][] alternProjectedVerts = projectedVerts.OrderBy(v => new Vec3(v[0], v[1], 0).PhaseXY).ToArray();
+                //alternProjectedVerts = projectedVerts.Reverse().ToArray();
+                projectedTriangleVertices = Seidel.Triangulator.Triangulate(alternProjectedVerts);
+            }
+            else
+            {
+                Scribe.Warn("vertices slightly changed by projection");
+                Scribe.Dump<double[], double>(projectedVerts);
+                projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
+            }
+
+            int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
+            RTriangle[] rTriArray = new RTriangle[numTriangles];
+            RTriangles rTris;
+
+            for (int i = 0; i < numTriangles; i++)
+            {
+                int[] vertexIndices = projectedTriangleVertices[i];
+                int tri0 = vertexIndices[0];
+                int tri1 = vertexIndices[1];
+                int tri2 = vertexIndices[2];
+
+                // If all vertex indices are 0, we're done
+                if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
+                    break;
+
+                RTriangle rTri = new(
+                    projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
+                    projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
+                    projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
+                    Col.R, Col.G, Col.B, Col.A
+                );
+                rTriArray[i] = rTri;
+            }
+
+            rTris = new RTriangles(rTriArray);
+            drawables.Add(rTris);
+            RDrawable.drawables.Add(rTris);
+            */
+
+            /* Old try-catch render */
+
             try
             {
+                // TODO: make rendering safe by properly ordering counterclockwise
+                // Simply ordering by PhaseXY is not good enough, because these are only clockwise about the origin
+                // We need to calculate a middle point, subtract that from the projected vertices, and use those
+                // for phase-ordering
+                double[] phases = new double[Count];
+                double midX = (maxX + minX) / 2;
+                double midY = (maxY + minY) / 2;
+                for (int i = 0; i < Count; i++)
+                {
+                    phases[i] = new Vec3(projectedVerts[i][0] - avgX, projectedVerts[i][1] - avgY, 0).PhaseXY;
+                    //Scribe.Info($"{phases[i]}, {midX}, {midY}");
+                }
+                //Scribe.Info(phases);
+                Array.Sort(phases, projectedVerts);
                 projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-
-
+                //if (DrawFlags == DrawMode.INNER)
+                //{
+                //    for (int iTri = 0; iTri < projectedTriangleVertices.Count; iTri++)
+                //    {
+                //        projectedTriangleVertices[iTri] = projectedTriangleVertices[iTri].OrderBy(m => this[m].PhaseXY).ToArray();
+                //    }
+                //}
                 int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
                 RTriangle[] rTriArray = new RTriangle[numTriangles];
                 RTriangles rTris;
@@ -934,20 +1017,52 @@ public class Multi : Vec3, ICollection<Multi>
                 rTris = new RTriangles(rTriArray);
                 drawables.Add(rTris);
                 RDrawable.drawables.Add(rTris);
+
             }
             catch (System.Exception)
             {
 
+                //throw Magician.Scribe.Error("Strict render");
                 // If the render fails for some reason, try with reverse order
                 // This is a hack, but oh well. Maybe I should specify ccw or cw?
                 try
                 {
-                    double[][] reverseProjectedVerts = new double[Count][];
-                    for (int revI = 0; revI < Count; revI++)
+                    double[][] alternProjectedVerts = new double[Count][];
+                    //for (int revI = 0; revI < Count; revI++)
+                    //{
+                    //    alternProjectedVerts[Count - revI - 1] = projectedVerts[revI];
+                    //}
+                    alternProjectedVerts = projectedVerts.OrderBy(v => new Vec3(v[0], v[1], 0).PhaseXY).ToArray();
+                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
+
+                    // TODO: refactor duplicate code block
+                    int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
+                    RTriangle[] rTriArray = new RTriangle[numTriangles];
+                    RTriangles rTris;
+
+                    for (int i = 0; i < numTriangles; i++)
                     {
-                        reverseProjectedVerts[Count - revI - 1] = projectedVerts[revI];
+                        int[] vertexIndices = projectedTriangleVertices[i];
+                        int tri0 = vertexIndices[0];
+                        int tri1 = vertexIndices[1];
+                        int tri2 = vertexIndices[2];
+
+                        // If all vertex indices are 0, we're done
+                        if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
+                            break;
+
+                        RTriangle rTri = new(
+                            projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
+                            projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
+                            projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
+                            Col.R, Col.G, Col.B, Col.A
+                        );
+                        rTriArray[i] = rTri;
                     }
-                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(reverseProjectedVerts);
+
+                    rTris = new RTriangles(rTriArray);
+                    drawables.Add(rTris);
+                    RDrawable.drawables.Add(rTris);
                 }
                 catch (System.Exception)
                 {
