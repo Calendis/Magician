@@ -139,3 +139,8 @@ public class DirectMap : ParamMap
         return base.Evaluate(x)[0];
     }
 }
+
+public static class Maps
+{
+    public static Random rng = new();
+}

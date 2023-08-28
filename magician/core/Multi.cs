@@ -822,11 +822,7 @@ public class Multi : Vec3, ICollection<Multi>
 
         List<double[]> clippedVerts = new();
         int counter = 0;
-        double minX = double.MaxValue;
-        double maxX = double.MinValue;
         double avgX = 0;
-        double minY = double.MaxValue;
-        double maxY = double.MinValue;
         double avgY = 0;
         foreach (double[] v in unclippedVerts)
         {
@@ -838,15 +834,11 @@ public class Multi : Vec3, ICollection<Multi>
             // Rotate so that we can compare straight along the axis using a >=
             absPos = absPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
             camPos = camPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            zInBounds = (absPos.z.Get() - camPos.z.Get() >= 0);
+            zInBounds = absPos.z.Get() - camPos.z.Get() >= 0;
 
             if (zInBounds)
             {
                 clippedVerts.Add(v);
-                minX = v[0] < minX ? v[0] : minX;
-                minY = v[1] < minY ? v[1] : minY;
-                maxX = v[0] > maxX ? v[0] : maxX;
-                maxY = v[1] > maxY ? v[1] : maxY;
                 avgX += v[0];
                 avgY += v[1];
             }
@@ -920,76 +912,47 @@ public class Multi : Vec3, ICollection<Multi>
             /* Entering the wild and wacky world of the Renderer! Prepare to crash */
             List<int[]> projectedTriangleVertices;
 
-            // Render assuming triangulation is safe
-            /*
-            if (Ref.Perspective.yaw > Math.PI / 2 && Ref.Perspective.yaw < 3 * Math.PI / 2)
-            {
-                double[][] alternProjectedVerts = projectedVerts.OrderBy(v => new Vec3(v[0], v[1], 0).PhaseXY).ToArray();
-                //alternProjectedVerts = projectedVerts.Reverse().ToArray();
-                projectedTriangleVertices = Seidel.Triangulator.Triangulate(alternProjectedVerts);
-            }
-            else
-            {
-                Scribe.Warn("vertices slightly changed by projection");
-                Scribe.Dump<double[], double>(projectedVerts);
-                projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-            }
-
-            int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
-            RTriangle[] rTriArray = new RTriangle[numTriangles];
-            RTriangles rTris;
-
-            for (int i = 0; i < numTriangles; i++)
-            {
-                int[] vertexIndices = projectedTriangleVertices[i];
-                int tri0 = vertexIndices[0];
-                int tri1 = vertexIndices[1];
-                int tri2 = vertexIndices[2];
-
-                // If all vertex indices are 0, we're done
-                if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
-                    break;
-
-                RTriangle rTri = new(
-                    projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
-                    projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
-                    projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
-                    Col.R, Col.G, Col.B, Col.A
-                );
-                rTriArray[i] = rTri;
-            }
-
-            rTris = new RTriangles(rTriArray);
-            drawables.Add(rTris);
-            RDrawable.drawables.Add(rTris);
-            */
-
-            /* Old try-catch render */
-
             try
             {
-                // TODO: make rendering safe by properly ordering counterclockwise
-                // Simply ordering by PhaseXY is not good enough, because these are only clockwise about the origin
-                // We need to calculate a middle point, subtract that from the projected vertices, and use those
-                // for phase-ordering
+                /* Evil rendering logic */
                 double[] phases = new double[Count];
-                double midX = (maxX + minX) / 2;
-                double midY = (maxY + minY) / 2;
+                int delta = 0;
+                int lastDelta = 0;
+                int swaps = 0;
+                bool swapBuffer = false;
                 for (int i = 0; i < Count; i++)
                 {
                     phases[i] = new Vec3(projectedVerts[i][0] - avgX, projectedVerts[i][1] - avgY, 0).PhaseXY;
-                    //Scribe.Info($"{phases[i]}, {midX}, {midY}");
+                    if (i > 0)
+                    {
+                        delta = Math.Sign(phases[i] - phases[i-1]);
+                        if (delta * lastDelta < 0)
+                        {
+                            if (!swapBuffer)
+                            {
+                                swaps ++;
+                                swapBuffer = true;
+                            }
+                            else
+                            {
+                                swapBuffer = false;
+                            }
+                        }
+                        lastDelta = delta;
+                    }
                 }
-                //Scribe.Info(phases);
-                Array.Sort(phases, projectedVerts);
+                if (swaps >= 2 && ((phases[1] < phases[0] && phases[0] - phases[1] < Math.PI) || (phases[0] < phases[1] && phases[1] - phases[0] > Math.PI)))
+                {
+                    projectedVerts = projectedVerts.Reverse().ToArray();
+                }
+                if (swaps < 2)
+                {
+                    Array.Sort(phases, projectedVerts);
+                }
+                /* End of evil logic */
+
                 projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-                //if (DrawFlags == DrawMode.INNER)
-                //{
-                //    for (int iTri = 0; iTri < projectedTriangleVertices.Count; iTri++)
-                //    {
-                //        projectedTriangleVertices[iTri] = projectedTriangleVertices[iTri].OrderBy(m => this[m].PhaseXY).ToArray();
-                //    }
-                //}
+
                 int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
                 RTriangle[] rTriArray = new RTriangle[numTriangles];
                 RTriangles rTris;
