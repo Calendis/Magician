@@ -915,6 +915,7 @@ public class Multi : Vec3, ICollection<Multi>
             try
             {
                 /* Evil rendering logic */
+                // TODO: do something that actually makes sense
                 double[] phases = new double[Count];
                 int delta = 0;
                 int lastDelta = 0;
@@ -984,54 +985,7 @@ public class Multi : Vec3, ICollection<Multi>
             }
             catch (System.Exception)
             {
-
                 //throw Magician.Scribe.Error("Strict render");
-                // If the render fails for some reason, try with reverse order
-                // This is a hack, but oh well. Maybe I should specify ccw or cw?
-                try
-                {
-                    double[][] alternProjectedVerts = new double[Count][];
-                    //for (int revI = 0; revI < Count; revI++)
-                    //{
-                    //    alternProjectedVerts[Count - revI - 1] = projectedVerts[revI];
-                    //}
-                    alternProjectedVerts = projectedVerts.OrderBy(v => new Vec3(v[0], v[1], 0).PhaseXY).ToArray();
-                    projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-
-                    // TODO: refactor duplicate code block
-                    int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
-                    RTriangle[] rTriArray = new RTriangle[numTriangles];
-                    RTriangles rTris;
-
-                    for (int i = 0; i < numTriangles; i++)
-                    {
-                        int[] vertexIndices = projectedTriangleVertices[i];
-                        int tri0 = vertexIndices[0];
-                        int tri1 = vertexIndices[1];
-                        int tri2 = vertexIndices[2];
-
-                        // If all vertex indices are 0, we're done
-                        if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
-                            break;
-
-                        RTriangle rTri = new(
-                            projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
-                            projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
-                            projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
-                            Col.R, Col.G, Col.B, Col.A
-                        );
-                        rTriArray[i] = rTri;
-                    }
-
-                    rTris = new RTriangles(rTriArray);
-                    drawables.Add(rTris);
-                    RDrawable.drawables.Add(rTris);
-                }
-                catch (System.Exception)
-                {
-                    //throw Scribe.Issue($"The triangulator encountered a fatal error in rendering {this}");
-                    // TODO: possibly write some routine to correct/interpret invalid Multis?
-                }
             }
         }
 
