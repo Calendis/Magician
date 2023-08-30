@@ -847,8 +847,6 @@ public class Multi : Vec3, ICollection<Multi>
                 // Seems to work fine without calculating clipping intersections, so do nothing
             }
         }
-        avgX /= Count;
-        avgY /= Count;
 
         // The vertices are GLSL-ready
         double[][] projectedVerts = clippedVerts.ToArray();
@@ -908,85 +906,41 @@ public class Multi : Vec3, ICollection<Multi>
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
         if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
-        {
-            /* Entering the wild and wacky world of the Renderer! Prepare to crash */
-            List<int[]> projectedTriangleVertices;
-
-            try
+        {            
+            List<int> ect = EarCut.Triangulate(projectedVerts);
+            if (ect.Count % 3 != 0)
             {
-                /* Evil rendering logic */
-                // TODO: do something that actually makes sense
-                double[] phases = new double[Count];
-                int delta = 0;
-                int lastDelta = 0;
-                int swaps = 0;
-                bool swapBuffer = false;
-                for (int i = 0; i < Count; i++)
-                {
-                    phases[i] = new Vec3(projectedVerts[i][0] - avgX, projectedVerts[i][1] - avgY, 0).PhaseXY;
-                    if (i > 0)
-                    {
-                        delta = Math.Sign(phases[i] - phases[i-1]);
-                        if (delta * lastDelta < 0)
-                        {
-                            if (!swapBuffer)
-                            {
-                                swaps ++;
-                                swapBuffer = true;
-                            }
-                            else
-                            {
-                                swapBuffer = false;
-                            }
-                        }
-                        lastDelta = delta;
-                    }
-                }
-                if (swaps >= 2 && ((phases[1] < phases[0] && phases[0] - phases[1] < Math.PI) || (phases[0] < phases[1] && phases[1] - phases[0] > Math.PI)))
-                {
-                    projectedVerts = projectedVerts.Reverse().ToArray();
-                }
-                if (swaps < 2)
-                {
-                    Array.Sort(phases, projectedVerts);
-                }
-                /* End of evil logic */
-
-                projectedTriangleVertices = Seidel.Triangulator.Triangulate(projectedVerts);
-
-                int numTriangles = Count - 2;  // This is guaranteed by Seidel's algorithm
-                RTriangle[] rTriArray = new RTriangle[numTriangles];
-                RTriangles rTris;
-
-                for (int i = 0; i < numTriangles; i++)
-                {
-                    int[] vertexIndices = projectedTriangleVertices[i];
-                    int tri0 = vertexIndices[0];
-                    int tri1 = vertexIndices[1];
-                    int tri2 = vertexIndices[2];
-
-                    // If all vertex indices are 0, we're done
-                    if ((vertexIndices[0] + vertexIndices[1] + vertexIndices[2] == 0))
-                        break;
-
-                    RTriangle rTri = new(
-                        projectedVerts[tri0 - 1][0], projectedVerts[tri0 - 1][1], projectedVerts[tri0 - 1][2],
-                        projectedVerts[tri1 - 1][0], projectedVerts[tri1 - 1][1], projectedVerts[tri1 - 1][2],
-                        projectedVerts[tri2 - 1][0], projectedVerts[tri2 - 1][1], projectedVerts[tri2 - 1][2],
-                        Col.R, Col.G, Col.B, Col.A
-                    );
-                    rTriArray[i] = rTri;
-                }
-
-                rTris = new RTriangles(rTriArray);
-                drawables.Add(rTris);
-                RDrawable.drawables.Add(rTris);
-
+                throw Scribe.Issue("Triangulator broke");
             }
-            catch (System.Exception)
+            List<int[]> triVertexIndices = new();
+            for (int i = 0; i < ect.Count; i += 3)
             {
-                //throw Magician.Scribe.Error("Strict render");
+                triVertexIndices.Add(new int[] { ect[i], ect[i + 1], ect[i + 2] });
             }
+
+            int numTriangles = triVertexIndices.Count;
+            RTriangle[] rTriArray = new RTriangle[numTriangles];
+            RTriangles rTris;
+
+            for (int i = 0; i < numTriangles; i++)
+            {
+                int[] vertexIndices = triVertexIndices[i];
+                int tri0 = vertexIndices[0];
+                int tri1 = vertexIndices[1];
+                int tri2 = vertexIndices[2];
+
+                RTriangle rTri = new(
+                    projectedVerts[tri0][0], projectedVerts[tri0][1], projectedVerts[tri0][2],
+                    projectedVerts[tri1][0], projectedVerts[tri1][1], projectedVerts[tri1][2],
+                    projectedVerts[tri2][0], projectedVerts[tri2][1], projectedVerts[tri2][2],
+                    Col.R, Col.G, Col.B, Col.A
+                );
+                rTriArray[i] = rTri;
+            }
+
+            rTris = new RTriangles(rTriArray);
+            drawables.Add(rTris);
+            RDrawable.drawables.Add(rTris);
         }
 
         // If not null, draw the texture

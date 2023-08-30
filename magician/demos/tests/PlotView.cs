@@ -59,8 +59,8 @@ public class PlotView : Spell
         );
         Origin["pt3d"] = plotTest3d.Plot(
             (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-            (Let("x"), Equation.AxisSpecifier.X, -600, 600, 65),
-            (Let("z"), Equation.AxisSpecifier.Z, -350*2, 500*2, 60d)
+            (Let("x"), Equation.AxisSpecifier.X, -800, 800, 40),
+            (Let("z"), Equation.AxisSpecifier.Z, -350*3, 500*3, 30d)
         );
 
         //Origin["pt3d"].Colored(HSLA.RandomVisible());
