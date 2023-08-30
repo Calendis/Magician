@@ -24,4 +24,8 @@ public static class Algebra
 static class MathCache
 {
     public static Dictionary<string, Variable> freeVars = new();
+    public static void Clear()
+    {
+        freeVars.Clear();
+    }
 }

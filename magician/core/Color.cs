@@ -108,6 +108,10 @@ public abstract class Color
 
     public static double RedFromHSL(double h, double s, double l)
     {
+        if (double.IsNaN(h))
+        {
+            Console.Write(0);
+        }
         double hh = h % (2 * Math.PI);
         double r;
         double c = l * s;

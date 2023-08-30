@@ -320,21 +320,27 @@ public class Equation
                 }
             }
 
-            Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            //if (edgeRow)
-            //{
-            //    point.Colored(new RGBA(255, 255, 0, 255));
-            //}
-            //else
-            //{
-            //    //point.Colored(new HSLA(solveSpace.Positional[1]/solveSpace.AxisLen(1), 1, 1, 255));
-            //}
-            //if (edgeCol)
-            //{
-            //    point.Colored(new RGBA(255, 0, 255, 255));
-            //}
-            // Color test
-            point.Colored(new HSLA(4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0), 1, 1, 255));
+            // Plot colouring code can go here
+            // TODO: provide an API for this
+            double x = argsByAxis[0];
+            double y = argsByAxis[1];
+            double z = argsByAxis[2];
+            //y += 80*Math.Sin(x/60 - z/60);
+            double hue;
+            double sat = 1;
+            double ligh = 1;
+
+            hue = 4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0);
+            hue = Math.Abs(y) / 100;
+            if (double.IsNaN(y) || double.IsInfinity(y))
+            {
+                hue = 0;
+                y = 0;
+            }
+
+            //Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
+            Multi point = new(x, y, z);
+            point.Colored(new HSLA(hue, sat, ligh, 255));
             plot.Add(point);
 
         } while (!solveSpace.Increment());

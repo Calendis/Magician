@@ -52,17 +52,6 @@ public class PlotView : Spell
     public override void PreLoop()
     {
 
-        Equation plotTest3d = new(
-            Let("y"),
-            Equation.Fulcrum.EQUALS,
-            new Fraction(Let("x"), N(6), Let("x"), Let("z"))
-        );
-        Origin["pt3d"] = plotTest3d.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-            (Let("x"), Equation.AxisSpecifier.X, -800, 800, 40),
-            (Let("z"), Equation.AxisSpecifier.Z, -350*3, 500*3, 30d)
-        );
-
         //Origin["pt3d"].Colored(HSLA.RandomVisible());
 
         //Equation threePlane = new(
@@ -75,5 +64,21 @@ public class PlotView : Spell
         //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50.1d),
         //    (Let("z"), Equation.AxisSpecifier.Z, -500, 100, 19d)
         //);
+
+        Equation plotTest3d = new(
+            Let("y"),
+            Equation.Fulcrum.EQUALS,
+            new Fraction(
+                Let("x"),
+                new SumDiff(Let("z"), N(800), Let("y")),
+                N(800)
+            )
+            );
+
+        Origin["pt3d"] = plotTest3d.Plot(
+            (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+            (Let("x"), Equation.AxisSpecifier.X, -400, 400, 20),
+            (Let("z"), Equation.AxisSpecifier.Z, -400, 400, 20d)
+        );
     }
 }

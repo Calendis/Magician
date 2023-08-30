@@ -37,7 +37,7 @@ public class Multi3D : Multi
                 f.Add(constituents[idx]);
                 f.Colored(constituents[idx].Col);
                 // TODO: remove this faux-lighting
-                f.Col.L = 1-(((float)idx)/8000);
+                f.Col.L = 1-(((float)idx)/4000);
             }
             f.Render(xOffset, yOffset, zOffset);
         }
