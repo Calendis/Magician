@@ -114,27 +114,70 @@ public class Equation
             // Gather information about the Oper tree
             int DIRECTMATCHES = 0;
             int INDIRECTMATCHES = 0;
+            int LASTDIRECTMS = 0;
+            int LASTINDRECTMS = 0;
+            int MATCHIDX = -1;
+            int COUNTER = 0;
             foreach (Oper o in CHOSENROOT[0].args)
             {
                 Scribe.Info(o);
                 if (o is Variable v_ && v_ == v)
                 {
                     DIRECTMATCHES++;
+                    MATCHIDX = COUNTER;
                 }
                 else if (o.Contains(v))
                 {
                     INDIRECTMATCHES++;
                 }
+                COUNTER++;
+            }
+
+            if (DIRECTMATCHES == LASTDIRECTMS && INDIRECTMATCHES == LASTINDRECTMS)
+            {
+                throw Scribe.Issue($"Could not solve {this}. Approximate instead");
+            }
+            if (INDIRECTMATCHES + DIRECTMATCHES > 1)
+            {
+                LASTDIRECTMS = DIRECTMATCHES;
+                LASTDIRECTMS = INDIRECTMATCHES;
+                continue;
             }
 
             // Operate on the Oper tree
+            Oper MANIP;
+            Oper? NEWCHOSENROOT = null;
+            Oper? NEWOPPOSITEROOT = null;
             switch (MODE)
             {
                 case ManipMode.ISOLATE:
-                break;
+                    MANIP = CHOSENROOT[0].Inverse(MATCHIDX);
+                    if (MANIP.NumArgs % 2 != 0)
+                    {
+                        MANIP.AppendIdentity();
+                    }
+                    NEWCHOSENROOT = layers.Hands[IDX][1][MATCHIDX];
+                    NEWOPPOSITEROOT = MANIP.New(MANIP.args.Append(OPPOSITEROOT[0]).ToArray());
+
+                    if (MATCHIDX % 2 != 0)
+                    {
+                        NEWOPPOSITEROOT.PrependIdentity();
+                    }
+                    break;
 
                 case ManipMode.EXTRACT:
-                break;
+                    break;
+            }
+            LASTDIRECTMS = DIRECTMATCHES;
+            LASTDIRECTMS = INDIRECTMATCHES;
+            if (NEWCHOSENROOT == null || NEWOPPOSITEROOT == null)
+            {
+                throw Scribe.Issue("Null roots");
+            }
+
+            if (IDX == 0)
+            {
+                layers = new(NEWCHOSENROOT, NEWOPPOSITEROOT);
             }
         }
 
