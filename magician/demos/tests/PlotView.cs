@@ -49,9 +49,12 @@ public class PlotView : Spell
         }
 
         Equation plotTest3d = new(
-            new Fraction(
+            new SumDiff(
+                new Fraction(
                 Var("y"),
                 Val(0.33*Math.Sin(Time/6))
+            ),
+                Var("z")
             ),
             Equation.Fulcrum.EQUALS,
             new SumDiff(

@@ -129,6 +129,7 @@ public class Equation
                 else if (o.Contains(v))
                 {
                     INDIRECTMATCHES++;
+                    MATCHIDX = COUNTER;
                 }
                 COUNTER++;
             }
@@ -151,6 +152,7 @@ public class Equation
             switch (MODE)
             {
                 case ManipMode.ISOLATE:
+                    // TODO: handle case where MATCHIDX = -1
                     MANIP = CHOSENROOT[0].Inverse(MATCHIDX);
                     if (MANIP.NumArgs % 2 != 0)
                     {
