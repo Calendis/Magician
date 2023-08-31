@@ -169,7 +169,7 @@ public class Equation
                     break;
             }
             LASTDIRECTMS = DIRECTMATCHES;
-            LASTDIRECTMS = INDIRECTMATCHES;
+            LASTINDRECTMS = INDIRECTMATCHES;
             if (NEWCHOSENROOT == null || NEWOPPOSITEROOT == null)
             {
                 throw Scribe.Issue("Null roots");
