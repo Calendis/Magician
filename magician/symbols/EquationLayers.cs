@@ -4,9 +4,9 @@ namespace Magician.Symbols;
 internal class EquationLayers
 {
     // All constants, variables, and operators for each side
-    public Dictionary<int, List<Oper>> leftHand => sides[0];
-    public Dictionary<int, List<Oper>> rightHand => sides[1];
-    public Dictionary<int, List<Oper>>[] sides;
+    public Dictionary<int, List<Oper>> LeftHand => Hands[0];
+    public Dictionary<int, List<Oper>> RightHand => Hands[1];
+    public Dictionary<int, List<Oper>>[] Hands;
     // Number of variables with a set value, or "constants"
     public int knowns;
     // Number of unique variables with no set value
@@ -15,10 +15,10 @@ internal class EquationLayers
     public int symbolsLeft;
     public int symbolsRight;
     public List<Variable> vars = new();
-    public EquationLayers(Oper o0, Oper o1, Variable[]? unknownVars=null)
+    public EquationLayers(Oper o0, Oper o1)
     {
-        sides = new Dictionary<int, List<Oper>>[2];
-        sides[0] = new(); sides[1] = new();
+        Hands = new Dictionary<int, List<Oper>>[2];
+        Hands[0] = new(); Hands[1] = new();
         List<Oper> opers = new();
         List<int> layers = new();
         knowns = 0;
@@ -40,25 +40,25 @@ internal class EquationLayers
             }
         }
 
-        // Arrange the tree into a layered format
+        // Arrange the tree into layers
         for (int i = 0; i < symbolsLeft; i++)
         {
-            leftHand.TryAdd(layers[i], new());
-            leftHand[layers[i]].Add(opers[i]);
+            LeftHand.TryAdd(layers[i], new());
+            LeftHand[layers[i]].Add(opers[i]);
         }
         for (int i = symbolsLeft; i < symbolsLeft + symbolsRight; i++)
         {
-            rightHand.TryAdd(layers[i], new());
-            rightHand[layers[i]].Add(opers[i]);
+            RightHand.TryAdd(layers[i], new());
+            RightHand[layers[i]].Add(opers[i]);
         }
-        sides = new[] { leftHand, rightHand };
+        Hands = new[] { LeftHand, RightHand };
     }
 
     public bool HoldsLeft(Variable v)
     {
-        foreach (int k in leftHand.Keys)
+        foreach (int k in LeftHand.Keys)
         {
-            foreach (Oper o in leftHand[k])
+            foreach (Oper o in LeftHand[k])
             {
                 if (o is Variable v_)
                 {
@@ -72,9 +72,9 @@ internal class EquationLayers
 
     public bool HoldsRight(Variable v)
     {
-        foreach (int k in rightHand.Keys)
+        foreach (int k in RightHand.Keys)
         {
-            foreach (Oper o in rightHand[k])
+            foreach (Oper o in RightHand[k])
             {
                 if (o is Variable v_)
                 {
@@ -90,18 +90,18 @@ internal class EquationLayers
     {
         string leftHandStr = "\n";
         string rightHandStr = "\n";
-        foreach (int k in leftHand.Keys)
+        foreach (int k in LeftHand.Keys)
         {
             leftHandStr += $"Layer {k}\n";
-            foreach (Oper o in leftHand[k])
+            foreach (Oper o in LeftHand[k])
             {
                 leftHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
             }
         }
-        foreach (int k in rightHand.Keys)
+        foreach (int k in RightHand.Keys)
         {
             rightHandStr += $"Layer {k}\n";
-            foreach (Oper o in rightHand[k])
+            foreach (Oper o in RightHand[k])
             {
                 rightHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
             }

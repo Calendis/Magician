@@ -4,9 +4,9 @@ namespace Magician.Symbols;
 
 public abstract class Oper
 {
-    protected string name;
+    public Oper[] args;
+    public abstract double Degree(Variable v);
     public string Name => name;
-    protected int numArgs;
     public int NumArgs
     {
         get => numArgs;
@@ -14,12 +14,14 @@ public abstract class Oper
     }
     public List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
+
+    protected string name;
+    protected int numArgs;
     protected int identity = -999;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
 
-    public Oper[] args;
     protected Oper(string name, params Oper[] cstArgs)
     {
         this.name = name;
@@ -53,6 +55,7 @@ public abstract class Oper
         }
         return this;
     }
+
 
     public void PrependIdentity()
     {
@@ -106,7 +109,12 @@ public abstract class Oper
     /*                            */
 
     // Recursively gather all variables, constants, and operators in an Oper
-    public void CollectOpers(ref List<Oper> varBasket, ref List<int> layerBasket, ref int knowns, ref int unknowns, int counter = 0)
+    public void CollectOpers(
+        ref List<Oper> varBasket,
+        ref List<int> layerBasket,
+        ref int knowns,
+        ref int unknowns,
+        int counter = 0)
     {
         // This will occur because each time "x" appears in the equation, it refers to a sole instance...
         // ... of Variable with the name "x"
@@ -210,9 +218,15 @@ public class Variable : Oper
         throw Scribe.Issue("This should never occur");
     }
 
+    public override double Degree(Variable v)
+    {
+        if (!found && this == v)
+            return 1;
+        return 0;
+    }
 }
 
-// Minus produces an alternating sum
+// Alternating sum to reprsent addition and subtraction
 public class SumDiff : Oper
 {
     public SumDiff(params Oper[] ops) : base("sumdiff", ops)
@@ -251,6 +265,11 @@ public class SumDiff : Oper
         return inverse;
     }
 
+    public override double Degree(Variable v)
+    {
+        return args.Select<Oper, double>(o => o.Degree(v)).Max();
+    }
+
     public override SumDiff Optimized()
     {
         // A sumdiff can always be expressed with a maximum of 2+n arguments, where n is the number of unknowns
@@ -267,7 +286,7 @@ public class SumDiff : Oper
                 }
                 else
                 {
-                    if (unknownsAndOpers.Keys.Contains(v))
+                    if (unknownsAndOpers.ContainsKey(v))
                     {
                         unknownsAndOpers[v] += counter % 2 == 0 ? 1 : -1;
                     }
@@ -337,14 +356,14 @@ public class SumDiff : Oper
             throw Scribe.Issue("we broke it");
         }
         List<Oper> newArgs = new();
-        foreach((Oper pos, Oper neg) in Enumerable.Zip(positiveTerms, negativeTerms))
+        foreach ((Oper pos, Oper neg) in Enumerable.Zip(positiveTerms, negativeTerms))
         {
             newArgs.Add(pos);
             newArgs.Add(neg);
         }
         while (newArgs.Last() is Variable v_ && v_.Found && v_.Val == identity)
         {
-            newArgs.RemoveAt(newArgs.Count-1);
+            newArgs.RemoveAt(newArgs.Count - 1);
         }
 
         return New(newArgs.ToArray());
@@ -355,7 +374,6 @@ public class SumDiff : Oper
         string argsSigns = $"{string.Join("", args.Select((a, i) => i % 2 == 0 ? $"+{a.ToString()}" : $"-{a.ToString()}"))}";
         return "(" + string.Join("", argsSigns.Skip(1)) + ")";
     }
-
 }
 
 // Alternating reciprocal
@@ -378,7 +396,7 @@ public class Fraction : Oper
             }
             else
             {
-                quo = count % 2 == 0 ? quo*o.Solution().Val : quo / o.Solution().Val;
+                quo = count % 2 == 0 ? quo * o.Solution().Val : quo / o.Solution().Val;
             }
             count++;
         }
@@ -396,6 +414,17 @@ public class Fraction : Oper
         inverse.args[argIndex] = new Variable(identity);
         inverse.PrependIdentity();
         return inverse;
+    }
+
+    public override double Degree(Variable v)
+    {
+        return args.Select<Oper, double>((o, i) => 
+        {
+            if (i % 2 == 0)
+                return o.Degree(v);
+            else
+                return -o.Degree(v);
+        }).Sum();
     }
 
     public override string ToString()

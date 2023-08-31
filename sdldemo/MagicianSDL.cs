@@ -113,34 +113,17 @@ class MagicianSDL
             Renderer.RDrawable.drawables.Clear();
 
             // SAVE FRAME TO IMAGE
-            if (Renderer.RControl.saveFrame && frames != stopFrame)
+            //if (Renderer.RControl.saveFrame && frames != stopFrame)
+            if (frames == 20)
             {
-                throw Scribe.Issue("Save frame not implemented.");
-                /* IntPtr texture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_ARGB8888, 0, Data.Globals.winWidth, Data.Globals.winHeight);
-                IntPtr target = SDL_GetRenderTarget(SDLGlobals.renderer);
-
-                int width, height;
-                SDL_SetRenderTarget(SDLGlobals.renderer, texture);
-                SDL_QueryTexture(texture, out _, out _, out width, out height);
-                IntPtr surface = SDL_CreateRGBSurfaceWithFormat(SDL_RLEACCEL, width, height, 0, SDL_PIXELFORMAT_ARGB8888);
-                SDL_Rect r = new SDL_Rect();
-                r.x = 0;
-                r.y = 0;
-                r.w = Data.Globals.winWidth;
-                r.h = Data.Globals.winHeight;
+                float[] pixels = new float[(int)(Data.Globals.winWidth * Data.Globals.winHeight)];
                 unsafe
                 {
-                    SDL_SetRenderTarget(SDLGlobals.renderer, IntPtr.Zero);
-
-                    SDL_Surface* surf = (SDL_Surface*)surface;
-                    SDL_RenderReadPixels(SDLGlobals.renderer, ref r, SDL_PIXELFORMAT_ARGB8888, surf->pixels, surf->pitch);
-                    SDL_SaveBMP(surface, $"saved/frame_{Renderer.Control.saveCount.ToString("D4")}.bmp");
-                    Renderer.Control.saveCount++;
-                    SDL_FreeSurface(surface);
-
-                    SDL_SetRenderTarget(SDLGlobals.renderer, SDLGlobals.renderedTexture);
+                    Scribe.Info(Data.Globals.winWidth * Data.Globals.winHeight);
+                    
+                    //RGlobals.gl.ReadPixels(0, 0, (uint)Data.Globals.winWidth, (uint)Data.Globals.winHeight, GLEnum.Rgb, GLEnum.Float, &pixels);
+                    //Scribe.Info<float>(pixels);
                 }
-                SDL_DestroyTexture(texture); */
             }
 
             if (Renderer.RControl.display)

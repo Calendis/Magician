@@ -2,7 +2,7 @@ using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
 using Magician.Symbols;
-using static Magician.Symbols.Algebra;
+using static Magician.Symbols.Notate;
 
 namespace Magician.Demos.Tests;
 
@@ -47,6 +47,36 @@ public class PlotView : Spell
         {
             Ref.Perspective.y.Delta(-walkSpeed);
         }
+
+        Equation plotTest3d = new(
+            new Fraction(
+                Var("y"),
+                Val(0.33*Math.Sin(Time/6))
+            ),
+            Equation.Fulcrum.EQUALS,
+            new SumDiff(
+                new Fraction(Var("x"), Val(230), Var("x")),
+                new Fraction(Var("z"), Val(230), Var("z"))
+            )
+        );
+
+        //Equation plotTest3d = new(
+        //    new SumDiff(
+        //        new Fraction(Val(100),Var("x")),
+        //        new Fraction(Val(100),Var("y"))
+        //    ),
+        //    Equation.Fulcrum.EQUALS,
+        //    new Fraction(
+        //        Val(5),
+        //        Var("z")
+        //    )
+        //);
+
+        Origin["pt3d"] = plotTest3d.Plot(
+            (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+            (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
+            (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
+        );
     }
 
     public override void PreLoop()
@@ -64,21 +94,5 @@ public class PlotView : Spell
         //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50.1d),
         //    (Let("z"), Equation.AxisSpecifier.Z, -500, 100, 19d)
         //);
-
-        Equation plotTest3d = new(
-            Let("y"),
-            Equation.Fulcrum.EQUALS,
-            new Fraction(
-                Let("x"),
-                new SumDiff(Let("z"), N(800), Let("y")),
-                N(800)
-            )
-            );
-
-        Origin["pt3d"] = plotTest3d.Plot(
-            (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-            (Let("x"), Equation.AxisSpecifier.X, -400, 400, 20),
-            (Let("z"), Equation.AxisSpecifier.Z, -400, 400, 20d)
-        );
     }
 }

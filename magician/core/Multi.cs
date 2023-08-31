@@ -775,7 +775,6 @@ public class Multi : Vec3, ICollection<Multi>
 
         // Get a projection of each constituent point
         double[][] unclippedVerts = new double[Count][];
-        Vector4D<double> selfProj = new();
         for (int i = 0; i < Count; i++)
         {
             // we don't need these for anything

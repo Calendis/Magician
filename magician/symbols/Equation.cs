@@ -3,18 +3,26 @@ namespace Magician.Symbols;
 public class Equation
 {
     int noUnknowns;
-    public Variable[] unknowns;
+    Variable[] unknowns;
     EquationLayers layers;
     EquationLayers layersBackup;
     List<Variable> isolates;
+    Oper leftHandSide;
+    Oper rightHandSide;
     public Fulcrum TheFulcrum { get; private set; }
+    public double Degree(Variable v)
+    {
+        return Math.Abs(leftHandSide.Degree(v) - rightHandSide.Degree(v));
+    }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
         Oper opt0 = o0.Optimized();
-        TheFulcrum = f;
         Oper opt1 = o1.Optimized();
+        TheFulcrum = f;
+        leftHandSide = opt0;
+        rightHandSide = opt1;
 
-        layers = new(opt0, opt1);
+        layers = new(leftHandSide, rightHandSide);
         layersBackup = new(opt0.Copy(), opt1.Copy());
         isolates = new();
         if (opt0 is Variable v && !v.Found)
@@ -30,171 +38,113 @@ public class Equation
         noUnknowns = unknowns.Length;
     }
 
-    // Re-arrange and reconstruct the equation in terms of a certain variable
-    public Equation Solved(Variable v)
+    enum ManipMode
     {
-        // Make sure variable v exists
-        if (!layers.vars.Contains(v))
-            throw Scribe.Error("TODO: write this error message");
+        ISOLATE,
+        EXTRACT
+    }
+    enum Side
+    {
+        CHOSEN,
+        OPPOSITE
+    }
 
-        // Determine which side we will try to isolate on
-        int chosenSide;  // 0 for left, 1 for right
-        bool varOnLeft = layers.HoldsLeft(v);
-        bool varOnRight = layers.HoldsRight(v);
-        // Variable exists on both sides, pick the shorter side
-        // TODO: find a better metric. Maybe pick the side with the higher degree of the variable
-        if (varOnLeft && varOnRight)
+    // Re-arrange and reconstruct the equation in terms of a certain variable
+    public Equation Solved(Variable? v = null)
+    {
+        // By default, solve for the variable with the highest degree
+        // TODO: move code from Solve to here
+        if (v == null)
         {
-            chosenSide = layers.symbolsLeft <= layers.symbolsRight ? 0 : 1;
+            throw Scribe.Issue("move code from Plot to here");
         }
-        else
-            chosenSide = varOnRight ? 1 : 0;
 
-        Equation? solved = null;
+        //throw Scribe.Issue("");
+        Equation? solved;
+
+        /* The algebra state machine */
+        // Determine side to solve for
+        List<Oper> CHOSENROOT;
+        List<Oper> OPPOSITEROOT;
+        double CHOSENDEG, OPPOSITEDEG;
+        ManipMode MODE = ManipMode.ISOLATE;
+        int IDX = Math.Abs(leftHandSide.Degree(v)) > Math.Abs(rightHandSide.Degree(v)) ? 1 : 0;
+        Variable VAR = v;
+        List<(ManipMode, Side, Variable)> CODE = new();
         while (true)
         {
-            // Check to see if the equation is solved
-            // An equation is considered solved WHEN
-            // 1. the "solve-for" variable, v, exists on one side only
-            // 2. the solve-for variable is the sole member of that side
-            varOnLeft = layers.HoldsLeft(v);
-            varOnRight = layers.HoldsRight(v);
-            List<Oper> currentExpressionLayer = layers.sides[chosenSide][0];//layers.OuterLayer(chosenSide);
-            Oper outerExpression = currentExpressionLayer[0];
-            if (varOnLeft ^ varOnRight)
+            // By default, choose the side with the lower degree
+            IDX = Math.Abs(layers.Hands[0][0][0].Degree(v)) < Math.Abs(layers.Hands[1][0][0].Degree(v)) ? 1 : 0;
+
+            // Set controls
+            if (CODE.Count > 0)
             {
-                if (currentExpressionLayer.Count == 1)
+                MODE = CODE[^1].Item1;
+                IDX = (int)CODE[^1].Item2;
+                VAR = CODE[^1].Item3;
+                CODE = CODE.SkipLast(1).ToList();
+            }
+
+            // Simplify the outer oper
+            layers.Hands[IDX][0][0] = layers.Hands[IDX][0][0].Optimized();
+            layers.Hands[1 - IDX][0][0] = layers.Hands[1 - IDX][0][0].Optimized();
+
+            CHOSENROOT = layers.Hands[IDX][0];
+            OPPOSITEROOT = layers.Hands[1 - IDX][0];
+            CHOSENDEG = CHOSENROOT[0].Degree(VAR);
+            OPPOSITEDEG = OPPOSITEROOT[0].Degree(VAR);
+
+            Scribe.Info($"ALGEBRA STATE");
+            Console.WriteLine("____________________________________________________________________________");
+            Scribe.Info($"Chosen: {CHOSENROOT[0]}");
+            Scribe.Info($"Opposite: {OPPOSITEROOT[0]}");
+            Scribe.Info($"{MODE} {VAR} (degree {CHOSENDEG}) from {IDX}: {CHOSENROOT[0]}\n");
+
+            // Variable exists on one side only
+            if (OPPOSITEDEG == 0 && CHOSENDEG >= 1)
+            {
+                // Solved
+                if (CHOSENROOT[0] is Variable v_ && v_ == v)
                 {
-                    if (outerExpression is Variable v_ && v_ == v)
-                    {
-                        //Scribe.Info("solved!");
-                        if (solved == null)
-                        {
-                            solved = new Equation(layers.sides[chosenSide][0][0], TheFulcrum, layers.sides[1 - chosenSide][0][0]);
-                        }
-                        break;
-                    }
+                    solved = new Equation(CHOSENROOT[0], TheFulcrum, OPPOSITEROOT[0]);
+                    break;
                 }
             }
 
-            // Iterate through each Oper in the current layer
-            // The outer layer should always contain only one Oper
-            if (currentExpressionLayer.Count != 1)
+            // Gather information about the Oper tree
+            int DIRECTMATCHES = 0;
+            int INDIRECTMATCHES = 0;
+            foreach (Oper o in CHOSENROOT[0].args)
             {
-                Scribe.Warn(currentExpressionLayer[1]);
-                throw Scribe.Issue($"Outer expression {outerExpression} not strictly above other members");
-            }
-            if (outerExpression.args.Length < 1)
-            {
-                throw Scribe.Issue($"Erroneously isolated {outerExpression}");
-            }
-            // Iterate through args and invert based on args
-            int directMatches = 0;
-            int indirectMatches = 0;
-            int liveBranchIndex = -1;
-            int directMatchIndex = -1;
-            for (int i = 0; i < outerExpression.NumArgs; i++)
-            {
-                Oper o = outerExpression.args[i];
-                // Count how many times the expression contains our variable
+                Scribe.Info(o);
                 if (o is Variable v_ && v_ == v)
                 {
-                    directMatches++;
-                    directMatchIndex = i;
+                    DIRECTMATCHES++;
                 }
                 else if (o.Contains(v))
                 {
-                    indirectMatches++;
-                    liveBranchIndex = i;
+                    INDIRECTMATCHES++;
                 }
             }
-            if (directMatches + indirectMatches == 0)
-            {
-                throw Scribe.Issue("No matches found, likely solved on the wrong side");
-            }
-            // One total match
-            else if (directMatches + indirectMatches == 1)
-            {
-                // invert around the chosen variable
-                // shed the outer layer, leaving the current layer as the new layer 0 for the current side
-                // that variable will be the only member of the current layer
-                // another layer will be added (new layer 0) to the other side
-                // the new layer 1 (old layer 0) will have the removed Opers appended
 
-                Oper inverse;
-                Oper newChosenSideRoot;
-                if (directMatches == 1)
-                {
-                    inverse = outerExpression.Inverse(directMatchIndex);
-                    newChosenSideRoot = layers.sides[chosenSide][1][directMatchIndex];
-                }
-                else
-                {
-                    inverse = outerExpression.Inverse(liveBranchIndex);
-                    newChosenSideRoot = layers.sides[chosenSide][1][liveBranchIndex];
-                }
-                bool needsExtraInvert = false;
-                if (Math.Max(directMatchIndex, liveBranchIndex) % 2 != 0)
-                {
-                    needsExtraInvert = true;
-                }
-                if (inverse.NumArgs % 2 != 0)
-                {
-                    inverse.AppendIdentity();
-                }
-
-                Oper newOffHandRoot;
-                newOffHandRoot = inverse.New(inverse.args.Concat(new Oper[] { layers.sides[1 - chosenSide][0][0] }).ToArray());
-                if (needsExtraInvert)
-                {
-                    newOffHandRoot.PrependIdentity();
-                }
-
-                if (chosenSide == 0)
-                {
-                    layers = new(newChosenSideRoot, newOffHandRoot);
-                }
-                else
-                {
-                    layers = new(newOffHandRoot, newChosenSideRoot);
-                }
-                //Scribe.Info($"Solve step: {newChosenSideRoot} = {newOffHandRoot}");
-                solved = new Equation(newChosenSideRoot, TheFulcrum, newOffHandRoot);
-
-            }
-            // Multiple direct matches
-            else if (indirectMatches == 0)
+            // Operate on the Oper tree
+            switch (MODE)
             {
-                //layers.sides[chosenSide][0][0] = layers.sides[chosenSide][0][0].Optimized();
-                //if (chosenSide == 0)
-                //{
-                //   layers = new(layers.sides[chosenSide][0][0].Optimized(), layers.sides[1-chosenSide][0][0]);
-                //}
-                //else
-                //{
-                //   layers = new(layers.sides[1-chosenSide][0][0], layers.sides[chosenSide][0][0].Optimized());
-                //}
-                //continue;
-                throw Scribe.Issue("Multiple matches not implemented");
-            }
-            // Multiple indirect matches
-            else if (directMatches == 0)
-            {
-                throw Scribe.Issue("Multiple matches not implemented");
-            }
-            // Multiple direct and indirect matches
-            else
-            {
-                throw Scribe.Issue("Multiple matches not implemented");
+                case ManipMode.ISOLATE:
+                break;
+
+                case ManipMode.EXTRACT:
+                break;
             }
         }
 
         // Revert
         layers = layersBackup;
-        layersBackup = new(layersBackup.leftHand[0][0].Copy(), layersBackup.rightHand[0][0].Copy());
+        layersBackup = new(layersBackup.LeftHand[0][0].Copy(), layersBackup.RightHand[0][0].Copy());
+
         if (solved == null)
         {
-            throw Scribe.Error($"Could not even begin to solve {this}");
+            throw Scribe.Issue("Error in solve loop");
         }
         return solved;
     }
@@ -225,13 +175,13 @@ public class Equation
     Oper SolvedSide(Variable v)
     {
         Oper solvedSide;
-        if (v == layers.leftHand[0][0])
+        if (v == layers.LeftHand[0][0])
         {
-            solvedSide = layers.rightHand[0][0];
+            solvedSide = layers.RightHand[0][0];
         }
-        else if (v == layers.rightHand[0][0])
+        else if (v == layers.RightHand[0][0])
         {
-            solvedSide = layers.leftHand[0][0];
+            solvedSide = layers.LeftHand[0][0];
         }
         else
         {
@@ -260,17 +210,45 @@ public class Equation
             rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
         }
 
-        Variable outVar = isolates[0];
+        Variable outVar;
+        // If we have isolated variables in the equation, we can treat it as solved
+        if (isolates.Count > 0)
+        {
+            outVar = isolates[0];
+        }
+        // Otherwise, determine which variable to solve for
+        // TODO: move this code to Solve
+        else
+        {
+            Variable? chosenSolveVar = null;
+            double minDegree = double.MaxValue;
+            foreach (Variable v in unknowns)
+            {
+                double deg = Degree(v);
+                if (deg < minDegree)
+                {
+                    minDegree = deg;
+                    chosenSolveVar = v;
+                }
+            }
+            if (chosenSolveVar is null)
+            {
+                throw Scribe.Issue("Could not determine minimum-degree unknown!");
+            }
+            outVar = chosenSolveVar;
+            //Scribe.Info($"Solving for {outVar} with degree {Degree(outVar)}");
+        }
+
         List<Variable> inVars = new();
         foreach (var a in axes)
         {
-            if (a.VAR != isolates[0])
+            if (a.VAR != outVar)
             {
                 inVars.Add(a.VAR);
             }
         }
         Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
-        NDCounter solveSpace = new(axes.Where(ax => ax.VAR != isolates[0]).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
+        NDCounter solveSpace = new(axes.Where(ax => ax.VAR != outVar).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
         List<(Variable, AxisSpecifier, double, double, double)> orderedAxes = new();
 
         bool threeD = solveSpace.Dims >= 2;
@@ -306,11 +284,11 @@ public class Equation
                 double w = solveSpace.AxisLen(0);
                 double h = solveSpace.AxisLen(1);
                 int n = solveSpace.Val;
-                if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0)-1))
+                if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0) - 1))
                 {
                     edgeCol = true;
                 }
-                if (n >= solveSpace.Max-w)
+                if (n >= solveSpace.Max - w)
                 {
                     edgeRow = true;
                 }
@@ -330,7 +308,7 @@ public class Equation
             double sat = 1;
             double ligh = 1;
 
-            hue = 4*solveSpace.Positional[1]/solveSpace.AxisLen(1) - solveSpace.Positional[0]/solveSpace.AxisLen(0);
+            hue = 4 * solveSpace.Positional[1] / solveSpace.AxisLen(1) - solveSpace.Positional[0] / solveSpace.AxisLen(0);
             hue = Math.Abs(y) / 100;
             if (double.IsNaN(y) || double.IsInfinity(y))
             {
@@ -382,7 +360,7 @@ public class Equation
                 fulcrumString = ">=";
                 break;
         }
-        return $"{layers.leftHand[0][0]} {fulcrumString} {layers.rightHand[0][0]}";
+        return $"{layers.LeftHand[0][0]} {fulcrumString} {layers.RightHand[0][0]}";
     }
 
     /* public string Say()

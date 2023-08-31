@@ -5,10 +5,10 @@ using Magician.Symbols;
 using static Magician.Geo.Create;
 
 // General equation with multiple branches
-public class RelationalMap : Oper
+public class RelationalMap
 {
     public Func<double[], double[]> Map;
-    public RelationalMap(Func<double[], double[]> m, string s = "unnamed relation") : base(s)
+    public RelationalMap(Func<double[], double[]> m)
     {
         Map = m;
     }
@@ -19,31 +19,6 @@ public class RelationalMap : Oper
     public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
         throw Scribe.Error("Not implemented");
-    }
-
-    public override Oper New(params Oper[] cstArgs)
-    {
-        return new RelationalMap(Map, name);
-    }
-
-    public override Oper Inverse(int argIndex)
-    {
-        throw Scribe.Error($"An inverse is not defined on {name} : {(Oper)this}");
-    }
-
-    public override Variable Solution()
-    {
-        List<Variable> ins = args.Select((o, i) => (o.Solution())).ToList();
-        //List<Variable> outs = new();
-        //foreach (Variable[] inParams in ins)
-        //{
-        //    double[] results = Map.Invoke(inParams.Select((v, i) => v.Val).ToArray());
-        //    outs.AddRange(results.Select<double, Variable>((x, i) => new Variable(x)));
-        //}
-        
-        
-        throw Scribe.Issue("not implemented");
-        //return Map.Invoke(ins.Select((v, i) => v.Val).ToArray());
     }
 }
 

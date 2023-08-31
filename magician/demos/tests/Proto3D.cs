@@ -2,7 +2,7 @@ using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
 using Magician.Symbols;
-using static Magician.Symbols.Algebra;
+using static Magician.Symbols.Notate;
 
 namespace Magician.Demos.Tests;
 
