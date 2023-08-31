@@ -179,6 +179,10 @@ public class Equation
             {
                 layers = new(NEWCHOSENROOT, NEWOPPOSITEROOT);
             }
+            else
+            {
+                layers = new(NEWOPPOSITEROOT, NEWCHOSENROOT);
+            }
         }
 
         // Revert
