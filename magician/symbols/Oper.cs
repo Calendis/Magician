@@ -21,6 +21,7 @@ public abstract class Oper
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
+    protected bool cancelled = false;
 
     protected Oper(string name, params Oper[] cstArgs)
     {
@@ -44,15 +45,19 @@ public abstract class Oper
     public abstract Oper New(params Oper[] cstArgs);
     public abstract Oper Inverse(int argIndex);
     public abstract Variable Solution();
-    public virtual Oper Optimized()
+    public Oper Optimized()
     {
         int counter = 0;
         List<Oper> newArgs = new();
         foreach (Oper o in args)
         {
-            args[counter] = o.Optimized();
+            args[counter] = o.Simplified();
             counter++;
         }
+        return this;
+    }
+    public virtual Oper Simplified()
+    {
         return this;
     }
 
@@ -74,39 +79,60 @@ public abstract class Oper
         if (!commutative)
             throw Scribe.Error("Operator is not commutative");
 
-        Oper temp = args[arg0];
-        args[arg0] = args[arg1];
-        args[arg1] = temp;
+        (args[arg1], args[arg0]) = (args[arg0], args[arg1]);
     }
 
-    public virtual void Associate(int[] path0)
+    // Format arguments into the required alternating form
+    static Oper[] AssembleArgs(List<(Oper, bool)> flaggedArgs, int id)
     {
-        if (!associative)
-            throw Scribe.Error("Operator is not associative");
-        //Variable[] assocVars = AssociativeBlockMgr.
-        Oper arg0 = this;
-        Oper temp = arg0;
-        int idx0 = -1;
-        foreach (int i in path0)
+        List<Oper> positiveArgs = new();
+        List<Oper> negativeArgs = new();
+        foreach ((Oper, bool) ob in flaggedArgs)
         {
-            arg0 = arg0.args[i];
-            if (arg0.args.Length == 0)
-            {
-                idx0 = i;
-                arg0 = temp;
-                List<Oper> newSubArgs = temp.args.ToList();
-                newSubArgs.RemoveAt(idx0);
-                temp.args = newSubArgs.ToArray();
-                break;
-            }
-            if (name != arg0.name)
-                throw Scribe.Error("Path 1 breaches associative bounds");
+            if (ob.Item2)
+                negativeArgs.Add(ob.Item1);
+            else
+                positiveArgs.Add(ob.Item1);
         }
-        List<Oper> newArgs = args.ToList();
-        newArgs.Add(temp.args[idx0]);
-        args = newArgs.ToArray();
+        int numAssociated = Math.Max(positiveArgs.Count, negativeArgs.Count) * 2;
+        List<Oper> finalArgs = new();
+        for (int i = 0; i < numAssociated; i ++)
+        {
+            (Oper, Oper) invPair = (Notate.Val(id), Notate.Val(id));
+            if (i < positiveArgs.Count)
+                invPair.Item1 = positiveArgs[i];
+            if (i < negativeArgs.Count)
+                invPair.Item2 = negativeArgs[i];
+
+            finalArgs.Add(invPair.Item1);
+            finalArgs.Add(invPair.Item2);
+
+        }
+
+        return finalArgs.ToArray();
     }
-    /*                            */
+
+    // Find all associated arguments and add return them as an array
+    // true means inverted
+    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null) where T : Oper
+    {
+        associatedArguments ??= new();
+        bool switcher = false;
+        foreach (Oper o in args)
+        {
+            if (o is T associativeOperation)
+            {
+                associativeOperation.Associate<T>(associatedArguments);
+            }
+            else
+            {
+                associatedArguments.Add((o, switcher));
+            }
+            switcher = !switcher;
+        }
+        return AssembleArgs(associatedArguments, identity);
+    }
+
 
     // Recursively gather all variables, constants, and operators in an Oper
     public void CollectOpers(
@@ -259,7 +285,7 @@ public class SumDiff : Oper
 
     public override SumDiff Inverse(int argIndex)
     {
-        SumDiff inverse = new SumDiff(args);
+        SumDiff inverse = new(args);
         inverse.args[argIndex] = new Variable(identity);
         inverse.PrependIdentity();
         return inverse;
@@ -270,7 +296,19 @@ public class SumDiff : Oper
         return args.Select<Oper, double>(o => o.Degree(v)).Max();
     }
 
-    public override SumDiff Optimized()
+    // TODO: rewrite this Optimization
+    public override SumDiff Simplified()
+    {
+        //args = Associate<SumDiff>();
+
+        // Combine constants
+        //
+
+        // Combine like variables
+        //
+        return this;
+    }
+    public SumDiff OldOptimized()
     {
         // A sumdiff can always be expressed with a maximum of 2+n arguments, where n is the number of unknowns
         double total = 0;
@@ -418,7 +456,7 @@ public class Fraction : Oper
 
     public override double Degree(Variable v)
     {
-        return args.Select<Oper, double>((o, i) => 
+        return args.Select<Oper, double>((o, i) =>
         {
             if (i % 2 == 0)
                 return o.Degree(v);
