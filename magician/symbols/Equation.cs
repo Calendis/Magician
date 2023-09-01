@@ -120,7 +120,6 @@ public class Equation
             int COUNTER = 0;
             foreach (Oper o in CHOSENROOT[0].args)
             {
-                Scribe.Info(o);
                 if (o is Variable v_ && v_ == v)
                 {
                     DIRECTMATCHES++;
@@ -152,7 +151,6 @@ public class Equation
             switch (MODE)
             {
                 case ManipMode.ISOLATE:
-                    // TODO: handle case where MATCHIDX = -1
                     MANIP = CHOSENROOT[0].Inverse(MATCHIDX);
                     if (MANIP.NumArgs % 2 != 0)
                     {
