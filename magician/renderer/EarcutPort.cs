@@ -1,3 +1,4 @@
+#pragma warning disable
 namespace Magician.Renderer;
 public static class EarCut
 {
