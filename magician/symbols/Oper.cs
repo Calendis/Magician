@@ -1,7 +1,6 @@
-using System.Diagnostics;
-
 namespace Magician.Symbols;
 
+// TODO: store args and invArgs as separate List<double>s
 public abstract class Oper
 {
     public Oper[] args;
@@ -45,22 +44,21 @@ public abstract class Oper
     public abstract Oper New(params Oper[] cstArgs);
     public abstract Oper Inverse(int argIndex);
     public abstract Variable Solution();
-    public Oper Optimized()
-    {
-        int counter = 0;
-        List<Oper> newArgs = new();
-        foreach (Oper o in args)
-        {
-            args[counter] = o.Simplified();
-            counter++;
-        }
-        return this;
-    }
-    public virtual Oper Simplified()
-    {
-        return this;
+    public virtual void Simplify()
+    {   
     }
 
+    public int Size(int? basket = null)
+    {
+        basket ??= 0;
+
+        foreach (Oper o in args)
+        {
+            basket += o.Size(basket);
+        }
+
+        return (int)basket;
+    }
 
     public void PrependIdentity()
     {
@@ -74,6 +72,22 @@ public abstract class Oper
         numArgs = args.Length;
     }
 
+    public void Concat(int id, params Oper[] os)
+    {
+        if (args.Length % 2 == 0)
+        {
+            args = args.ToList().Concat(os).ToArray();
+            return;
+        }
+        
+        if (os[0] is Variable v && v.Found && v.Val == id)
+        {
+            os = os.Skip(1).ToArray();
+            args = args.ToList().Concat(os).ToArray();
+            return;
+        }
+    }
+
     public virtual void Commute(int arg0, int arg1)
     {
         if (!commutative)
@@ -83,7 +97,7 @@ public abstract class Oper
     }
 
     // Format arguments into the required alternating form
-    static Oper[] AssembleArgs(List<(Oper, bool)> flaggedArgs, int id)
+    protected static Oper[] AssembleArgs(List<(Oper, bool)> flaggedArgs, int id)
     {
         List<Oper> positiveArgs = new();
         List<Oper> negativeArgs = new();
@@ -94,9 +108,8 @@ public abstract class Oper
             else
                 positiveArgs.Add(ob.Item1);
         }
-        int numAssociated = Math.Max(positiveArgs.Count, negativeArgs.Count) * 2;
         List<Oper> finalArgs = new();
-        for (int i = 0; i < numAssociated; i ++)
+        for (int i = 0; i < Math.Max(positiveArgs.Count, negativeArgs.Count); i++)
         {
             (Oper, Oper) invPair = (Notate.Val(id), Notate.Val(id));
             if (i < positiveArgs.Count)
@@ -106,7 +119,6 @@ public abstract class Oper
 
             finalArgs.Add(invPair.Item1);
             finalArgs.Add(invPair.Item2);
-
         }
 
         return finalArgs.ToArray();
@@ -114,10 +126,10 @@ public abstract class Oper
 
     // Find all associated arguments and add return them as an array
     // true means inverted
-    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null) where T : Oper
+    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null, bool? switcher=null) where T : Oper
     {
         associatedArguments ??= new();
-        bool switcher = false;
+        switcher ??= false;
         foreach (Oper o in args)
         {
             if (o is T associativeOperation)
@@ -126,10 +138,12 @@ public abstract class Oper
             }
             else
             {
-                associatedArguments.Add((o, switcher));
+                associatedArguments.Add((o, (bool)!switcher));
             }
             switcher = !switcher;
         }
+        //Scribe.Info($"Associated args:");
+        //Scribe.Info(AssembleArgs(associatedArguments, identity));
         return AssembleArgs(associatedArguments, identity);
     }
 
@@ -233,7 +247,7 @@ public class Variable : Oper
     /* This is good design */
     public override Oper New(params Oper[] cstArgs)
     {
-        throw Scribe.Issue("This should never occur");
+        throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
     }
     public override Oper Inverse(int argIndex)
     {
@@ -293,22 +307,49 @@ public class SumDiff : Oper
 
     public override double Degree(Variable v)
     {
-        return args.Select<Oper, double>(o => o.Degree(v)).Max();
+        double minD = double.MaxValue;
+        double maxD = double.MinValue;
+        foreach (Oper o in args)
+        {
+            double d = o.Degree(v);
+            minD = d < minD ? d : minD;
+            maxD = d > maxD ? d : maxD;
+        }
+        return Math.Abs(minD) + maxD;
     }
 
-    // TODO: rewrite this Optimization
-    public override SumDiff Simplified()
+    public override void Simplify()
     {
-        //args = Associate<SumDiff>();
+        args = Associate<SumDiff>();
 
         // Combine constants
+        List<(Oper, bool)> flaggedArgs = new();
+        double total = 0;
+        int switcher = 0;
+        foreach (Oper o in args)
+        {
+            if (o is Variable v && v.Found)
+            {
+                total += v.Val * switcher == 0 ? 1 : -1;
+            }
+            else
+            {
+                flaggedArgs.Add((o, switcher == 1));
+            }
+
+            switcher = 1 - switcher;
+        }
+        //args = AssembleArgs(flaggedArgs, identity);
+        //numArgs = args.Length;
+
+        // TODO: Combine like variables
         //
 
-        // Combine like variables
-        //
-        return this;
+        // Modify
+        args = AssembleArgs(flaggedArgs, identity);
+        numArgs = args.Length;
     }
-    public SumDiff OldOptimized()
+    protected SumDiff SimplifiedOld()
     {
         // A sumdiff can always be expressed with a maximum of 2+n arguments, where n is the number of unknowns
         double total = 0;

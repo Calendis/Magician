@@ -16,25 +16,25 @@ public class Equation
     }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
-        Oper opt0 = o0.Optimized();
-        Oper opt1 = o1.Optimized();
+        o0.Simplify();
+        o1.Simplify();
         TheFulcrum = f;
-        leftHandSide = opt0;
-        rightHandSide = opt1;
+        leftHandSide = o0;
+        rightHandSide = o1;
 
         layers = new(leftHandSide, rightHandSide);
-        layersBackup = new(opt0.Copy(), opt1.Copy());
+        layersBackup = new(o0.Copy(), o1.Copy());
         isolates = new();
-        if (opt0 is Variable v && !v.Found)
+        if (o0 is Variable v && !v.Found)
         {
             isolates.Add(v);
         }
-        if (opt1 is Variable v2 && !v2.Found)
+        if (o1 is Variable v2 && !v2.Found)
         {
             isolates.Add(v2);
         }
 
-        unknowns = opt0.eventuallyContains.Concat(opt1.eventuallyContains).Union(isolates).ToArray();
+        unknowns = o0.eventuallyContains.Concat(o1.eventuallyContains).Union(isolates).ToArray();
         noUnknowns = unknowns.Length;
     }
 
@@ -68,13 +68,17 @@ public class Equation
         List<Oper> OPPOSITEROOT;
         double CHOSENDEG, OPPOSITEDEG;
         ManipMode MODE = ManipMode.ISOLATE;
-        int IDX = Math.Abs(leftHandSide.Degree(v)) > Math.Abs(rightHandSide.Degree(v)) ? 1 : 0;
+        int IDX;
         Variable VAR = v;
         List<(ManipMode, Side, Variable)> CODE = new();
         while (true)
         {
             // By default, choose the side with the lower degree
-            IDX = Math.Abs(layers.Hands[0][0][0].Degree(v)) < Math.Abs(layers.Hands[1][0][0].Degree(v)) ? 1 : 0;
+            double degLeft = Math.Abs(layers.Hands[0][0][0].Degree(v));
+            double degRight = Math.Abs(layers.Hands[1][0][0].Degree(v));
+            //IDX = degLeft < degRight ? 1 : degLeft == degRight ? (layers.Hands[0][0][0].Size() < layers.Hands[1][0][0].Size() ? 0 : 1) : 0;
+            IDX = degLeft < degRight ? 1 : 0;
+            MODE = ManipMode.ISOLATE;
 
             // Set controls
             if (CODE.Count > 0)
@@ -86,8 +90,12 @@ public class Equation
             }
 
             // Simplify the outer oper
-            layers.Hands[IDX][0][0] = layers.Hands[IDX][0][0].Optimized();
-            layers.Hands[1 - IDX][0][0] = layers.Hands[1 - IDX][0][0].Optimized();
+            //Scribe.Info("pre opt");
+            //Scribe.Info(layers.Hands[IDX][0][0]);
+            layers.Hands[IDX][0][0].Simplify();
+            //Scribe.Info("post opt");
+            //Scribe.Info(layers.Hands[IDX][0][0]);
+            layers.Hands[1 - IDX][0][0].Simplify();
 
             CHOSENROOT = layers.Hands[IDX][0];
             OPPOSITEROOT = layers.Hands[1 - IDX][0];
@@ -98,7 +106,7 @@ public class Equation
             Console.WriteLine("____________________________________________________________________________");
             Scribe.Info($"Chosen: {CHOSENROOT[0]}");
             Scribe.Info($"Opposite: {OPPOSITEROOT[0]}");
-            Scribe.Info($"{MODE} {VAR} (degree {CHOSENDEG}) from {IDX}: {CHOSENROOT[0]}\n");
+            Scribe.Info($"{MODE} {VAR} (degree {CHOSENDEG}) from {IDX}: {CHOSENROOT[0]} = {OPPOSITEROOT[0]}\n");
 
             // Variable exists on one side only
             if (OPPOSITEDEG == 0 && CHOSENDEG >= 1)
@@ -132,16 +140,19 @@ public class Equation
                 }
                 COUNTER++;
             }
-
+            
+            // No change in matches from previous step, determine correct action
             if (DIRECTMATCHES == LASTDIRECTMS && INDIRECTMATCHES == LASTINDRECTMS)
-            {
-                throw Scribe.Issue($"Could not solve {this}. Approximate instead");
-            }
-            if (INDIRECTMATCHES + DIRECTMATCHES > 1)
-            {
-                LASTDIRECTMS = DIRECTMATCHES;
-                LASTDIRECTMS = INDIRECTMATCHES;
+            {   
+                if (OPPOSITEDEG == 0 || CHOSENDEG == 0)
+                {
+                    throw Scribe.Issue("This should never occur");
+                }
+
+                // Variable exists on both sides, so extract it from the biggest side
+                CODE.Add((ManipMode.EXTRACT, CHOSENROOT[0].Size() > OPPOSITEROOT[0].Size() ? Side.CHOSEN : Side.OPPOSITE, v));
                 continue;
+                //throw Scribe.Issue($"Could not solve {this}. Approximate instead");
             }
 
             // Operate on the Oper tree
@@ -166,6 +177,15 @@ public class Equation
                     break;
 
                 case ManipMode.EXTRACT:
+                    MANIP = CHOSENROOT[0].New(layers.Hands[IDX][1][MATCHIDX]);
+                    // Note: this is reversed because we're extracting rather than isolating
+                    if (MATCHIDX % 2 == 0)
+                        MANIP.PrependIdentity();
+                    Oper[] extractedArgs = MANIP.args;
+                    //OPPOSITEROOT[0].args = OPPOSITEROOT[0].args.Concat(new Oper[]{MANIP}).ToArray();
+                    NEWCHOSENROOT = CHOSENROOT[0].Inverse(MATCHIDX);
+                    NEWOPPOSITEROOT = CHOSENROOT[0].New(OPPOSITEROOT[0].args.Concat(extractedArgs).ToArray());
+                    //CODE.Add((ManipMode.EXTRACT, CHOSENROOT[0].Size() > OPPOSITEROOT[0].Size() ? Side.CHOSEN : Side.OPPOSITE, v));
                     break;
             }
             LASTDIRECTMS = DIRECTMATCHES;
@@ -174,6 +194,8 @@ public class Equation
             {
                 throw Scribe.Issue("Null roots");
             }
+            NEWCHOSENROOT.Simplify();
+            NEWOPPOSITEROOT.Simplify();
 
             if (IDX == 0)
             {
@@ -183,6 +205,9 @@ public class Equation
             {
                 layers = new(NEWOPPOSITEROOT, NEWCHOSENROOT);
             }
+            // Simplify the outer oper
+            //layers.Hands[IDX][0][0] = layers.Hands[IDX][0][0].Optimized();
+            //layers.Hands[1 - IDX][0][0] = layers.Hands[1 - IDX][0][0].Optimized();
         }
 
         // Revert

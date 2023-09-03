@@ -48,20 +48,19 @@ public class PlotView : Spell
             Ref.Perspective.y.Delta(-walkSpeed);
         }
 
-        //Equation plotTest3d = new(
-        //    new Fraction(
-        //        Var("y"),
-        //        Val(0.33*Math.Sin(Time/6)),
-        //        Var("y")
-        //    ),
-        //    Equation.Fulcrum.EQUALS,
-        //    new Fraction(
-        //        new SumDiff(
-        //            new Fraction(Var("x"), Val(230), Var("x")),
-        //            new Fraction(Var("z"), Val(230), Var("z"))
-        //        )
-        //    )
-        //);
+        Equation plotTest3d = new(
+            new Fraction(
+                Var("y"),
+                Val(0.33*Math.Sin(Time/6))
+            ),
+            Equation.Fulcrum.EQUALS,
+            new Fraction(
+                new SumDiff(
+                    new Fraction(Var("x"), Val(230), Var("x")),
+                    new Fraction(Var("z"), Val(230), Var("z"))
+                )
+            )
+        );
 
         //Equation plotTest3d = new(
         //    new SumDiff(
@@ -75,22 +74,32 @@ public class PlotView : Spell
         //    )
         //);
 
+        Origin["pt3d"] = plotTest3d.Plot(
+            (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+            (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
+            (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
+        );
+
     }
 
     public override void PreLoop()
     {
 
+        //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         //Origin["pt3d"].Colored(HSLA.RandomVisible());
 
-                Equation plotTest3d = new(
+        Equation plotTest3d = new(
+        new SumDiff(
+            Var("x"),
+            Var("y"),
             new SumDiff(
-                Var("x"),
-                Val(0),
+                Var("y"),
                 new SumDiff(
-                    Var("x"),
+                    Val(10),
+                    Var("z")),
                     new SumDiff(
-                        Var("y"),
-                        Var("z")
+                        Val(3),
+                        Var("y")
                     )
                 )
             ),
@@ -100,12 +109,12 @@ public class PlotView : Spell
                 Var("x")
             )
         );        
-
-        Origin["pt3d"] = plotTest3d.Plot(
+        
+        /* Origin["pt3d"] = plotTest3d.Plot(
             (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
             (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
             (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
-        );
+        ); */
 
         //Equation threePlane = new(
         //    Let("y"),
