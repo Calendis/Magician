@@ -7,8 +7,8 @@ public class Equation
     EquationLayers layers;
     EquationLayers layersBackup;
     List<Variable> isolates;
-    Oper leftHandSide;
-    Oper rightHandSide;
+    public Oper leftHandSide;
+    public Oper rightHandSide;
     public Fulcrum TheFulcrum { get; private set; }
     public double Degree(Variable v)
     {
@@ -16,8 +16,8 @@ public class Equation
     }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
-        o0.Simplify();
-        o1.Simplify();
+        //o0.Simplify();
+        //o1.Simplify();
         TheFulcrum = f;
         leftHandSide = o0;
         rightHandSide = o1;
@@ -41,12 +41,13 @@ public class Equation
     enum ManipMode
     {
         ISOLATE,
-        EXTRACT
+        EXTRACT,
+        PICK
     }
     enum Side
     {
-        CHOSEN,
-        OPPOSITE
+        LEFT,
+        RIGHT
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
@@ -60,155 +61,237 @@ public class Equation
         }
 
         //throw Scribe.Issue("");
-        Equation? solved;
+        Equation? solved = null;
 
-        /* The algebra state machine */
-        // Determine side to solve for
+        // Algebra machine variables
+        int IDX;
+        double CHOSENDEG, OPPOSITEDEG;
         List<Oper> CHOSENROOT;
         List<Oper> OPPOSITEROOT;
-        double CHOSENDEG, OPPOSITEDEG;
-        ManipMode MODE = ManipMode.ISOLATE;
-        int IDX;
-        Variable VAR = v;
-        List<(ManipMode, Side, Variable)> CODE = new();
+        ManipMode MODE;
+        Side SIDE;
+        Variable VAR;
+        List<(ManipMode, Side, Variable)> CODE = new()
+            {(ManipMode.PICK, Side.LEFT, v)};
+
+        // The algebra solver state machine
+        // You should NOT access the state of Equation within this loop, instead referring to layers
         while (true)
         {
-            // By default, choose the side with the lower degree
-            double degLeft = Math.Abs(layers.Hands[0][0][0].Degree(v));
-            double degRight = Math.Abs(layers.Hands[1][0][0].Degree(v));
-            //IDX = degLeft < degRight ? 1 : degLeft == degRight ? (layers.Hands[0][0][0].Size() < layers.Hands[1][0][0].Size() ? 0 : 1) : 0;
-            IDX = degLeft < degRight ? 1 : 0;
-            MODE = ManipMode.ISOLATE;
+            // First, find matches on both sides
+            List<Oper> MATCHES_TERMS_LEFT = new();
+            List<Oper> MATCHES_OTHER_LEFT = new();
+            List<Oper> MATCHES_TERMS_RIGHT = new();
+            List<Oper> MATCHES_OTHER_RIGHT = new();
+            List<Oper>[] MATCHES_TERMS_ALL = { MATCHES_TERMS_LEFT, MATCHES_TERMS_RIGHT };
+            List<Oper>[] MATCHES_OTHER_ALL = { MATCHES_OTHER_LEFT, MATCHES_OTHER_RIGHT };
 
-            // Set controls
-            if (CODE.Count > 0)
-            {
-                MODE = CODE[^1].Item1;
-                IDX = (int)CODE[^1].Item2;
-                VAR = CODE[^1].Item3;
-                CODE = CODE.SkipLast(1).ToList();
-            }
-
-            // Simplify the outer oper
-            //Scribe.Info("pre opt");
-            //Scribe.Info(layers.Hands[IDX][0][0]);
-            layers.Hands[IDX][0][0].Simplify();
-            //Scribe.Info("post opt");
-            //Scribe.Info(layers.Hands[IDX][0][0]);
-            layers.Hands[1 - IDX][0][0].Simplify();
-
-            CHOSENROOT = layers.Hands[IDX][0];
-            OPPOSITEROOT = layers.Hands[1 - IDX][0];
-            CHOSENDEG = CHOSENROOT[0].Degree(VAR);
-            OPPOSITEDEG = OPPOSITEROOT[0].Degree(VAR);
-
-            Scribe.Info($"ALGEBRA STATE");
-            Console.WriteLine("____________________________________________________________________________");
-            Scribe.Info($"Chosen: {CHOSENROOT[0]}");
-            Scribe.Info($"Opposite: {OPPOSITEROOT[0]}");
-            Scribe.Info($"{MODE} {VAR} (degree {CHOSENDEG}) from {IDX}: {CHOSENROOT[0]} = {OPPOSITEROOT[0]}\n");
-
-            // Variable exists on one side only
-            if (OPPOSITEDEG == 0 && CHOSENDEG >= 1)
-            {
-                // Solved
-                if (CHOSENROOT[0] is Variable v_ && v_ == v)
-                {
-                    solved = new Equation(CHOSENROOT[0], TheFulcrum, OPPOSITEROOT[0]);
-                    break;
-                }
-            }
-
-            // Gather information about the Oper tree
-            int DIRECTMATCHES = 0;
-            int INDIRECTMATCHES = 0;
-            int LASTDIRECTMS = 0;
-            int LASTINDRECTMS = 0;
-            int MATCHIDX = -1;
+            // Determine matches on either side
             int COUNTER = 0;
-            foreach (Oper o in CHOSENROOT[0].args)
+            foreach (Dictionary<int, List<Oper>> h in layers.Hands)
             {
-                if (o is Variable v_ && v_ == v)
+                if (h[0][0] is Variable v_ && v_ == v)
                 {
-                    DIRECTMATCHES++;
-                    MATCHIDX = COUNTER;
+                    MATCHES_TERMS_ALL[COUNTER].Add(h[0][0]);
                 }
-                else if (o.Contains(v))
+                foreach (Oper o in h[0][0]._oldArgs)
                 {
-                    INDIRECTMATCHES++;
-                    MATCHIDX = COUNTER;
+                    // If we see the variable in question, that counts as a term automatically
+                    if (o is Variable v__ && v__ == v)
+                    {
+                        MATCHES_TERMS_ALL[COUNTER].Add(o);
+                    }
+                    // otherwise, test to see if o is a term
+                    else if (o.Contains(v))
+                    {
+                        if (o.IsTerm)
+                        {
+                            MATCHES_TERMS_ALL[COUNTER].Add(o);
+                        }
+                        else
+                        {
+                            MATCHES_OTHER_ALL[COUNTER].Add(o);
+                        }
+                    }
                 }
                 COUNTER++;
             }
-            
-            // No change in matches from previous step, determine correct action
-            if (DIRECTMATCHES == LASTDIRECTMS && INDIRECTMATCHES == LASTINDRECTMS)
-            {   
-                if (OPPOSITEDEG == 0 || CHOSENDEG == 0)
+
+            int NUMTERMLEFT = MATCHES_TERMS_LEFT.Count;
+            int NUMTERMRIGHT = MATCHES_TERMS_RIGHT.Count;
+            int NUMOTHERLEFT = MATCHES_OTHER_LEFT.Count;
+            int NUMOTHERRIGHT = MATCHES_TERMS_RIGHT.Count;
+            //bool ANYDIRECT = NUMTERMLEFT + NUMTERMRIGHT > 0;
+            //bool ANYINDIRECT = NUMOTHERLEFT + NUMOTHERRIGHT > 0;
+
+            if (CODE.Count < 1)
+                throw Scribe.Issue("No instructions provided");
+
+            (ManipMode, Side, Variable) INSTRUCTION = CODE[0];
+            CODE.RemoveAt(0);
+
+            MODE = INSTRUCTION.Item1;
+            SIDE = INSTRUCTION.Item2;
+            VAR = INSTRUCTION.Item3;
+
+            CHOSENROOT = layers.Hands[(int)SIDE][0];
+            OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+            CHOSENDEG = CHOSENROOT[0].Degree(VAR);
+
+            bool alone = !layers.Hands[(int)SIDE].ContainsKey(1);
+
+            // Are we done yet?
+            if (NUMTERMLEFT + NUMTERMRIGHT == 1 && NUMOTHERLEFT + NUMOTHERRIGHT == 0 && alone)
+            {
+                Scribe.Info("Solved!");
+                solved = new(CHOSENROOT[0].Copy(), Fulcrum.EQUALS, OPPOSITEROOT[0].Copy());
+                Scribe.Info(solved);
+                break;
+            }
+
+            Scribe.Info($"{layers.LeftHand[0][0]}, {layers.RightHand[0][0]}");
+            Scribe.Info($"{MODE}, {SIDE}, {VAR}");
+            if (MODE == ManipMode.PICK)
+            {
+                /* 4x4 truth table for determining next instruction */
+
+                // No direct matches on either side
+                if (NUMTERMLEFT + NUMTERMRIGHT == 0)
                 {
-                    throw Scribe.Issue("This should never occur");
+                    // No indirect matches on either side
+                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
+                    {
+                        throw Scribe.Issue($"Given variable {VAR} was not found");
+                    }
+                    // One indirect match
+                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
+                    {
+                        CODE.Add((ManipMode.ISOLATE, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
+                    }
+                    // Multiple indirect matches on one side
+                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    // At least one indirect match on both sides
+                    else
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
                 }
-
-                // Variable exists on both sides, so extract it from the biggest side
-                CODE.Add((ManipMode.EXTRACT, CHOSENROOT[0].Size() > OPPOSITEROOT[0].Size() ? Side.CHOSEN : Side.OPPOSITE, v));
-                continue;
-                //throw Scribe.Issue($"Could not solve {this}. Approximate instead");
-            }
-
-            // Operate on the Oper tree
-            Oper MANIP;
-            Oper? NEWCHOSENROOT = null;
-            Oper? NEWOPPOSITEROOT = null;
-            switch (MODE)
-            {
-                case ManipMode.ISOLATE:
-                    MANIP = CHOSENROOT[0].Inverse(MATCHIDX);
-                    if (MANIP.NumArgs % 2 != 0)
+                // One direct match
+                else if (NUMTERMLEFT + NUMTERMRIGHT == 1)
+                {
+                    // No indirect matches on either side
+                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
-                        MANIP.AppendIdentity();
-                    }
-                    NEWCHOSENROOT = layers.Hands[IDX][1][MATCHIDX];
-                    NEWOPPOSITEROOT = MANIP.New(MANIP.args.Append(OPPOSITEROOT[0]).ToArray());
+                        if (CHOSENROOT[0]._oldArgs.Count == 0)
+                        {
+                            Scribe.Warn("Solved!");
+                            break;
+                        }
 
-                    if (MATCHIDX % 2 != 0)
+                        CODE.Add((ManipMode.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
+                    }
+                    // One indirect match
+                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
-                        NEWOPPOSITEROOT.PrependIdentity();
+                        CODE.Add((ManipMode.EXTRACT, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
                     }
-                    break;
+                    // Multiple indirect matches on one side
+                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    // At least one indirect match on both sides
+                    else
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                }
+                // Multiple direct matches on one side
+                else if (NUMTERMLEFT * NUMTERMRIGHT == 0)
+                {
+                    // No indirect matches
+                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    else
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                }
+                // At least one direct match one both sides
+                else
+                {
+                    // No indirect matches
+                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
+                    {
+                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0]._oldArgs.Count <= layers.RightHand[0][0]._oldArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                    }
+                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                    else
+                    {
+                        // Possibly unsolveable, expand/simplify
+                    }
+                }
+            }
 
-                case ManipMode.EXTRACT:
-                    MANIP = CHOSENROOT[0].New(layers.Hands[IDX][1][MATCHIDX]);
-                    // Note: this is reversed because we're extracting rather than isolating
-                    if (MATCHIDX % 2 == 0)
-                        MANIP.PrependIdentity();
-                    Oper[] extractedArgs = MANIP.args;
-                    //OPPOSITEROOT[0].args = OPPOSITEROOT[0].args.Concat(new Oper[]{MANIP}).ToArray();
-                    NEWCHOSENROOT = CHOSENROOT[0].Inverse(MATCHIDX);
-                    NEWOPPOSITEROOT = CHOSENROOT[0].New(OPPOSITEROOT[0].args.Concat(extractedArgs).ToArray());
-                    //CODE.Add((ManipMode.EXTRACT, CHOSENROOT[0].Size() > OPPOSITEROOT[0].Size() ? Side.CHOSEN : Side.OPPOSITE, v));
-                    break;
-            }
-            LASTDIRECTMS = DIRECTMATCHES;
-            LASTINDRECTMS = INDIRECTMATCHES;
-            if (NEWCHOSENROOT == null || NEWOPPOSITEROOT == null)
+            // Manipulate the tree in favour of being solved
+            Oper NEWCHOSEN = CHOSENROOT[0];
+            Oper NEWOPPOSITE = OPPOSITEROOT[0];
+            if (MODE == ManipMode.ISOLATE)
             {
-                throw Scribe.Issue("Null roots");
+                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], VAR);
             }
-            NEWCHOSENROOT.Simplify();
-            NEWOPPOSITEROOT.Simplify();
+            else if (MODE == ManipMode.EXTRACT)
+            {
+                //
+            }
 
-            if (IDX == 0)
+            if (CODE.Count == 0)
             {
-                layers = new(NEWCHOSENROOT, NEWOPPOSITEROOT);
+                // If no progress was made, enter PICK mode
+                if (NEWCHOSEN == CHOSENROOT[0] && NEWOPPOSITE == OPPOSITEROOT[0])
+                {
+                    Scribe.Info("SWITCHING BACK DUE TO NO PROGRESS");
+                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                }
+                // Otherwise, just keep doing whatever we were doing
+                else
+                {
+                    CODE.Add(INSTRUCTION);
+                }
             }
+
+
+            //CHOSENDEG = CHOSENROOT[0].Degree(VAR);
+            //OPPOSITEDEG = OPPOSITEROOT[0].Degree(VAR);
+            //CHOSENROOT = layers.Hands[IDX][0];
+            //OPPOSITEROOT = layers.Hands[1 - IDX][0];
+            if (SIDE == Side.LEFT)
+                layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
-            {
-                layers = new(NEWOPPOSITEROOT, NEWCHOSENROOT);
-            }
-            // Simplify the outer oper
-            //layers.Hands[IDX][0][0] = layers.Hands[IDX][0][0].Optimized();
-            //layers.Hands[1 - IDX][0][0] = layers.Hands[1 - IDX][0][0].Optimized();
+                layers = new(NEWOPPOSITE, NEWCHOSEN);
+
         }
+
 
         // Revert
         layers = layersBackup;
@@ -270,10 +353,10 @@ public class Equation
 
     public Multi Plot(params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX, double res)[] axes)
     {
+        // TODO: refine AxisSpecifier
         if (axes.Length != noUnknowns)
-        {
             throw Scribe.Error("Axis specifiers must match number of unknowns");
-        }
+
         Dictionary<Variable, AxisSpecifier> axesByVar = new();
         Dictionary<Variable, (double, double, double)> rangesByVar = new();
         for (int i = 0; i < noUnknowns; i++)
@@ -297,7 +380,7 @@ public class Equation
             foreach (Variable v in unknowns)
             {
                 double deg = Degree(v);
-                if (deg < minDegree)
+                if (deg < minDegree && deg != 0)
                 {
                     minDegree = deg;
                     chosenSolveVar = v;

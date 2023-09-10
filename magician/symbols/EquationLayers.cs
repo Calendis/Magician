@@ -95,7 +95,7 @@ internal class EquationLayers
             leftHandStr += $"Layer {k}\n";
             foreach (Oper o in LeftHand[k])
             {
-                leftHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
+                leftHandStr += $"    {o} (numArgs: {o._oldArgs.Count}, args.Length: {o._oldArgs.Count})\n";
             }
         }
         foreach (int k in RightHand.Keys)
@@ -103,7 +103,7 @@ internal class EquationLayers
             rightHandStr += $"Layer {k}\n";
             foreach (Oper o in RightHand[k])
             {
-                rightHandStr += $"    {o} (numArgs: {o.NumArgs}, args.Length: {o.args.Length})\n";
+                rightHandStr += $"    {o} (numArgs: {o._oldArgs.Count}, args.Length: {o._oldArgs.Count})\n";
             }
         }
         leftHandStr += "---";

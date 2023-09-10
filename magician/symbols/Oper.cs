@@ -1,36 +1,39 @@
 namespace Magician.Symbols;
-
-// TODO: store args and invArgs as separate List<double>s
 public abstract class Oper
 {
-    public Oper[] args;
+    public Oper[] trueArgsOLD;
+    public List<Oper> _oldArgs { get => posArgs.Concat(negArgs).ToList();}
+    public List<Oper> posArgs = new();
+    public List<Oper> negArgs = new();
     public abstract double Degree(Variable v);
     public string Name => name;
-    public int NumArgs
-    {
-        get => numArgs;
-        set => numArgs = value;
-    }
     public List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
 
     protected string name;
-    protected int numArgs;
+    // TODO: fix bad design. Identity should be a double<T>
     protected int identity = -999;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
     protected bool cancelled = false;
+    internal Oper? parent = null;
 
-    protected Oper(string name, params Oper[] cstArgs)
+    // Alternating form
+    protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
     {
         this.name = name;
-        numArgs = cstArgs.Length;
-        args = cstArgs;
+        //ArgsOLD = cstArgs;
+    }
 
-        foreach (Oper o in cstArgs)
+    protected Oper(string name, List<Oper> posa, List<Oper> nega)
+    {
+        posArgs = posa;
+        negArgs = nega;
+        foreach (Oper o in _oldArgs)
         {
-            if (o is Variable v)
+           o.parent = this;
+           if (o is Variable v)
             {
                 if (!v.Found)
                 {
@@ -41,18 +44,88 @@ public abstract class Oper
         }
     }
 
-    public abstract Oper New(params Oper[] cstArgs);
-    public abstract Oper Inverse(int argIndex);
+    public abstract Oper New(List<Oper> pa, List<Oper> na);
+
+    public static (Oper, Oper) InvertEquationAround(Oper chosenSide, Oper oppositeSide, Oper axis)
+    {
+        bool capitalize = false;
+        if (chosenSide.negArgs.Contains(axis) && !chosenSide.posArgs.Contains(axis))
+        {
+            capitalize = true;
+            chosenSide.negArgs.Remove(axis);
+        }
+        else
+        {
+            chosenSide.posArgs.Remove(axis);
+        }
+        //(chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
+        Oper newChosen = axis;
+        Oper newOpposite;
+        if (capitalize)
+            newOpposite = chosenSide.New(chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList(), oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList());
+        else
+            newOpposite = chosenSide.New(oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList(), chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList());
+        return (newChosen, newOpposite);
+
+    }
     public abstract Variable Solution();
     public virtual void Simplify()
-    {   
+    {
+    }
+
+    // An Oper is considered a term when it:
+    // 1.  Has no SumDiffs anywhere in the tree
+    // and either
+    // 2a. Is the root node
+    // or
+    // 2b. Has the root node as a parent, which must be a SumDiff
+    public bool IsTerm
+    {
+        get
+        {   
+            bool noSumDiffs = false;
+            bool rootOrSumDiffParentRoot = false;
+            
+            // Condition 2
+            if (parent == null)
+                rootOrSumDiffParentRoot = true;
+            else if (parent.parent == null && parent is SumDiff)
+                rootOrSumDiffParentRoot = true;
+
+            // Condition 1
+            foreach (Oper o in _oldArgs)
+            {
+                 if (o.Find<SumDiff>())
+                 {
+                    noSumDiffs = false;
+                    break;
+                 }
+                 noSumDiffs = true;
+            }
+
+            return noSumDiffs && rootOrSumDiffParentRoot;
+        }
+    }
+
+    public bool Find<T>() where T : Oper
+    {
+        if (this is T)
+        {
+            return true;
+        }
+        foreach (Oper o in _oldArgs)
+        {
+            if (o.Find<T>())
+                return true;
+        }
+        return false;
     }
 
     public int Size(int? basket = null)
     {
         basket ??= 0;
 
-        foreach (Oper o in args)
+        foreach (Oper o in _oldArgs)
         {
             basket += o.Size(basket);
         }
@@ -60,40 +133,12 @@ public abstract class Oper
         return (int)basket;
     }
 
-    public void PrependIdentity()
-    {
-        args = new Oper[] { new Variable(identity) }.Concat(args).ToArray();
-        numArgs = args.Length;
-    }
-
-    public void AppendIdentity()
-    {
-        args = args.Concat(new Oper[] { new Variable(identity) }).ToArray();
-        numArgs = args.Length;
-    }
-
-    public void Concat(int id, params Oper[] os)
-    {
-        if (args.Length % 2 == 0)
-        {
-            args = args.ToList().Concat(os).ToArray();
-            return;
-        }
-        
-        if (os[0] is Variable v && v.Found && v.Val == id)
-        {
-            os = os.Skip(1).ToArray();
-            args = args.ToList().Concat(os).ToArray();
-            return;
-        }
-    }
-
     public virtual void Commute(int arg0, int arg1)
     {
         if (!commutative)
             throw Scribe.Error("Operator is not commutative");
 
-        (args[arg1], args[arg0]) = (args[arg0], args[arg1]);
+        (_oldArgs[arg1], _oldArgs[arg0]) = (_oldArgs[arg0], _oldArgs[arg1]);
     }
 
     // Format arguments into the required alternating form
@@ -126,11 +171,11 @@ public abstract class Oper
 
     // Find all associated arguments and add return them as an array
     // true means inverted
-    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null, bool? switcher=null) where T : Oper
+    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null, bool? switcher = null) where T : Oper
     {
         associatedArguments ??= new();
         switcher ??= false;
-        foreach (Oper o in args)
+        foreach (Oper o in _oldArgs)
         {
             if (o is T associativeOperation)
             {
@@ -179,356 +224,15 @@ public abstract class Oper
         varBasket.Add(this);
         layerBasket.Add(counter);
         // Collect opers recursively
-        foreach (Oper o in args)
+        foreach (Oper o in _oldArgs)
         {
             o.CollectOpers(ref varBasket, ref layerBasket, ref knowns, ref unknowns, counter + 1);
         }
     }
 
+    // TODO: get rid of this method if possible
     public virtual Oper Copy()
     {
-        return New(args.Select((o, i) => o.Copy()).ToArray());
-    }
-}
-
-public class Variable : Oper
-{
-    public bool found = false;
-    Quantity q = new Quantity(0);
-    public double Val
-    {
-        get
-        {
-            if (!found)
-                throw Scribe.Error($"Variable {name} is unknown");
-            return q.Get();
-        }
-        set
-        {
-            q.Set(value);
-            found = true;
-        }
-    }
-
-    public bool Found
-    {
-        get => found;
-    }
-    public void Reset()
-    {
-        found = false;
-    }
-
-    public Variable(string n) : base(n, new Oper[0])
-    {
-        // IMPORTANT: A variable has numArgs=1, but args.Length = 0
-        //            This is the only case where these two values will not match
-        numArgs = 1;
-    }
-    public Variable(string n, double v) : this(n)
-    {
-        Val = v;
-    }
-    public Variable(double v) : this($"constant({v})", v) { }
-
-    public override Oper Copy()
-    {
-        if (!found)
-        {
-            return this;
-        }
-        return new Variable(Val);
-    }
-    public override string ToString()
-    {
-        return found ? Val.ToString() : name;
-    }
-
-    /* This is good design */
-    public override Oper New(params Oper[] cstArgs)
-    {
-        throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
-    }
-    public override Oper Inverse(int argIndex)
-    {
-        throw Scribe.Issue("This should never occur");
-    }
-    public override Variable Solution()
-    {
-        throw Scribe.Issue("This should never occur");
-    }
-
-    public override double Degree(Variable v)
-    {
-        if (!found && this == v)
-            return 1;
-        return 0;
-    }
-}
-
-// Alternating sum to reprsent addition and subtraction
-public class SumDiff : Oper
-{
-    public SumDiff(params Oper[] ops) : base("sumdiff", ops)
-    {
-        identity = 0;
-    }
-    public override Variable Solution()
-    {
-        double alternSum = 0;
-        int count = 0;
-        foreach (Oper o in args)
-        {
-            if (o is Variable v)
-            {
-                alternSum += v.Val * ((count % 2 == 0) ? 1 : -1);
-            }
-            else
-            {
-                alternSum += o.Solution().Val * ((count % 2 == 0) ? 1 : -1);
-            }
-            count++;
-        }
-        return new Variable(alternSum);
-    }
-
-    public override SumDiff New(params Oper[] cstArgs)
-    {
-        return new SumDiff(cstArgs.Select(a => a.Copy()).ToArray());
-    }
-
-    public override SumDiff Inverse(int argIndex)
-    {
-        SumDiff inverse = new(args);
-        inverse.args[argIndex] = new Variable(identity);
-        inverse.PrependIdentity();
-        return inverse;
-    }
-
-    public override double Degree(Variable v)
-    {
-        double minD = double.MaxValue;
-        double maxD = double.MinValue;
-        foreach (Oper o in args)
-        {
-            double d = o.Degree(v);
-            minD = d < minD ? d : minD;
-            maxD = d > maxD ? d : maxD;
-        }
-        return Math.Abs(minD) + maxD;
-    }
-
-    public override void Simplify()
-    {
-        args = Associate<SumDiff>();
-
-        // Combine constants
-        List<(Oper, bool)> flaggedArgs = new();
-        double total = 0;
-        int switcher = 0;
-        foreach (Oper o in args)
-        {
-            if (o is Variable v && v.Found)
-            {
-                total += v.Val * switcher == 0 ? 1 : -1;
-            }
-            else
-            {
-                flaggedArgs.Add((o, switcher == 1));
-            }
-
-            switcher = 1 - switcher;
-        }
-        //args = AssembleArgs(flaggedArgs, identity);
-        //numArgs = args.Length;
-
-        // TODO: Combine like variables
-        //
-
-        // Modify
-        args = AssembleArgs(flaggedArgs, identity);
-        numArgs = args.Length;
-    }
-    protected SumDiff SimplifiedOld()
-    {
-        // A sumdiff can always be expressed with a maximum of 2+n arguments, where n is the number of unknowns
-        double total = 0;
-        int counter = 0;
-        Dictionary<Oper, int> unknownsAndOpers = new();
-        foreach (Oper o in args)
-        {
-            if (o is Variable v)
-            {
-                if (v.Found)
-                {
-                    total += v.Val * ((counter % 2 == 0) ? 1 : -1);
-                }
-                else
-                {
-                    if (unknownsAndOpers.ContainsKey(v))
-                    {
-                        unknownsAndOpers[v] += counter % 2 == 0 ? 1 : -1;
-                    }
-                    else
-                    {
-                        unknownsAndOpers.Add(v, counter % 2 == 0 ? 1 : -1);
-                    }
-                }
-            }
-            else
-            {
-                unknownsAndOpers.Add(o, counter % 2 == 0 ? 1 : -1);
-            }
-            counter++;
-        }
-        List<Oper> positiveTerms = new();
-        List<Oper> negativeTerms = new();
-        if (total < 0)
-        {
-            negativeTerms.Add(new Variable(-total));
-        }
-        else if (total > 0)
-        {
-            positiveTerms.Add(new Variable(total));
-        }
-
-        foreach ((Oper o, int i) in unknownsAndOpers)
-        {
-            Oper newOper;
-            int absI = Math.Abs(i);
-            if (absI == 0)
-            {
-                continue;
-            }
-            if (absI != 1)
-            {
-                newOper = new Fraction(new Variable(absI), new Variable(1), o);
-            }
-            else
-            {
-                newOper = o;
-            }
-            if (i < 0)
-            {
-                negativeTerms.Add(newOper);
-            }
-            else if (i > 0)
-            {
-                positiveTerms.Add(newOper);
-            }
-        }
-
-        int imbalance = positiveTerms.Count - negativeTerms.Count;
-        for (int i = 0; i < Math.Abs(imbalance); i++)
-        {
-            if (imbalance < 0)
-            {
-                positiveTerms.Add(new Variable(identity));
-            }
-            else
-            {
-                negativeTerms.Add(new Variable(identity));
-            }
-        }
-        if (positiveTerms.Count != negativeTerms.Count)
-        {
-            throw Scribe.Issue("we broke it");
-        }
-        List<Oper> newArgs = new();
-        foreach ((Oper pos, Oper neg) in Enumerable.Zip(positiveTerms, negativeTerms))
-        {
-            newArgs.Add(pos);
-            newArgs.Add(neg);
-        }
-        while (newArgs.Last() is Variable v_ && v_.Found && v_.Val == identity)
-        {
-            newArgs.RemoveAt(newArgs.Count - 1);
-        }
-
-        return New(newArgs.ToArray());
-    }
-
-    public override string ToString()
-    {
-        string argsSigns = $"{string.Join("", args.Select((a, i) => i % 2 == 0 ? $"+{a.ToString()}" : $"-{a.ToString()}"))}";
-        return "(" + string.Join("", argsSigns.Skip(1)) + ")";
-    }
-}
-
-// Alternating reciprocal
-public class Fraction : Oper
-{
-    public Fraction(params Oper[] ops) : base("fraction", ops)
-    {
-        identity = 1;
-    }
-
-    public override Variable Solution()
-    {
-        double quo = 1;
-        int count = 0;
-        foreach (Oper o in args)
-        {
-            if (o is Variable v)
-            {
-                quo = count % 2 == 0 ? quo * v.Val : quo / v.Val;
-            }
-            else
-            {
-                quo = count % 2 == 0 ? quo * o.Solution().Val : quo / o.Solution().Val;
-            }
-            count++;
-        }
-        return new Variable(quo);
-    }
-
-    public override Oper New(params Oper[] cstArgs)
-    {
-        return new Fraction(cstArgs.Select(a => a.Copy()).ToArray());
-    }
-
-    public override Fraction Inverse(int argIndex)
-    {
-        Fraction inverse = new Fraction(args);
-        inverse.args[argIndex] = new Variable(identity);
-        inverse.PrependIdentity();
-        return inverse;
-    }
-
-    public override double Degree(Variable v)
-    {
-        return args.Select<Oper, double>((o, i) =>
-        {
-            if (i % 2 == 0)
-                return o.Degree(v);
-            else
-                return -o.Degree(v);
-        }).Sum();
-    }
-
-    public override string ToString()
-    {
-        string numerator = "";
-        string denominator = "";
-        string[] frs = new[] { numerator, denominator };
-
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (args[i] is Variable v)
-            {
-                if (v.Found)
-                {
-                    frs[i % 2] += "*";
-                }
-            }
-            else
-            {
-                frs[i % 2] += "*";
-            }
-            frs[i % 2] += args[i].ToString();
-        }
-
-        return $"({frs[0].TrimStart('*')} / {frs[1].TrimStart('*')})";
-        //return $"Fraction({string.Join(", ", args.Select(x => x.ToString()))})";
+        return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList());
     }
 }
