@@ -48,6 +48,7 @@ public abstract class Oper
 
     public static (Oper, Oper) InvertEquationAround(Oper chosenSide, Oper oppositeSide, Oper axis)
     {
+        Scribe.Warn($"Inverting {chosenSide} = {oppositeSide} around {axis}");
         bool capitalize = false;
         if (chosenSide.negArgs.Contains(axis) && !chosenSide.posArgs.Contains(axis))
         {
@@ -61,11 +62,21 @@ public abstract class Oper
         //(chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
         Oper newChosen = axis;
         Oper newOpposite;
+        Scribe.Warn($"New chosen side is {newChosen}");
+        Scribe.Warn($"Chosen is {chosenSide}");
+        // Invert chosen
+        (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
+        chosenSide.posArgs.Add(oppositeSide);
+        // Invert it again
         if (capitalize)
-            newOpposite = chosenSide.New(chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList(), oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList());
-        else
-            newOpposite = chosenSide.New(oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList(), chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList());
-        return (newChosen, newOpposite);
+            (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
+        //chosenSide.negArgs.AddRange(oppositeSide.negArgs);
+        //if (capitalize)
+        //    newOpposite = chosenSide.New(chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList(), oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList());
+        //else
+        //    newOpposite = chosenSide.New(oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList(), chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList());
+        Scribe.Warn($"New opposite side is {chosenSide}");
+        return (newChosen, chosenSide.Copy());
 
     }
     public abstract Variable Solution();

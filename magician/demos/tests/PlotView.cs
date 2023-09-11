@@ -48,34 +48,52 @@ public class PlotView : Spell
             Ref.Perspective.y.Delta(-walkSpeed);
         }
 
-        Equation plotTest3d = new(
-            new Fraction(
-                Var("y"),
-                Val(0.33*Math.Sin(Time/6))
-            ),
-            Equation.Fulcrum.EQUALS,
-            new Fraction(
-                new SumDiff(
-                    new Fraction(Var("x"), Val(230), Var("x")),
-                    new Fraction(Var("z"), Val(230), Var("z"))
-                )
-            )
-        );
-
         //Equation plotTest3d = new(
-        //    new SumDiff(
-        //        new Fraction(Val(100),Var("x")),
-        //        new Fraction(Val(100),Var("y"))
+        //    new Fraction(
+        //        Var("y"),
+        //        Val(0.33*Math.Sin(Time/6))
         //    ),
         //    Equation.Fulcrum.EQUALS,
         //    new Fraction(
-        //        Val(5),
-        //        Var("z")
+        //        new SumDiff(
+        //            new Fraction(Var("x"), Val(230), Var("x")),
+        //            new Fraction(Var("z"), Val(230), Var("z"))
+        //        )
         //    )
         //);
 
+        Equation plotTest3d = new(
+            new SumDiff(
+                Var("y")
+                ,Var("x")
+                ,Var("y")
+            ),
+            Equation.Fulcrum.EQUALS,
+            new SumDiff(
+                new Fraction(
+                    Var("x"),
+                    Val(69900000),
+                    Var("x"),
+                    Val(1),
+                    Var("z"),
+                    Val(1),
+                    Var("z")
+                ),
+                new Fraction(
+                    new SumDiff
+                    (
+                        new Fraction(Var("x"), Val(1000+500*Math.Sin(Time/1.5)), Var("x")),
+                        Val(Time),
+                        new Fraction(Var("z"), Val(1000+500*Math.Cos(Time/3)), Var("z"))
+                    ),
+                    Val(1)
+                )
+                
+            )
+        );
+
         Origin["pt3d"] = plotTest3d.Plot(
-            (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+            (Var("y"), Equation.AxisSpecifier.Y, -500, 500, 20),
             (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
             (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
         );
@@ -123,7 +141,7 @@ public class PlotView : Spell
         //        )
         //    )
         //);
-        
+
         //Origin["pt3d"] = plotTest3d.Plot(
         //    (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
         //    (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),

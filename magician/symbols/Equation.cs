@@ -149,8 +149,8 @@ public class Equation
                 break;
             }
 
-            Scribe.Info($"{layers.LeftHand[0][0]}, {layers.RightHand[0][0]}");
-            Scribe.Info($"{MODE}, {SIDE}, {VAR}");
+            //Scribe.Info($"{layers.LeftHand[0][0]}, {layers.RightHand[0][0]}");
+            //Scribe.Info($"{MODE}, {SIDE}, {VAR}");
             if (MODE == ManipMode.PICK)
             {
                 /* 4x4 truth table for determining next instruction */
@@ -258,7 +258,7 @@ public class Equation
             Oper NEWOPPOSITE = OPPOSITEROOT[0];
             if (MODE == ManipMode.ISOLATE)
             {
-                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], VAR);
+                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], MATCHES_TERMS_ALL[(int)SIDE][0]);
             }
             else if (MODE == ManipMode.EXTRACT)
             {
@@ -270,7 +270,13 @@ public class Equation
                 // If no progress was made, enter PICK mode
                 if (NEWCHOSEN == CHOSENROOT[0] && NEWOPPOSITE == OPPOSITEROOT[0])
                 {
-                    Scribe.Info("SWITCHING BACK DUE TO NO PROGRESS");
+                    // TODO: Expand Oper here
+                    Scribe.Warn($"No progress: LR: terms: {MATCHES_TERMS_LEFT.Count}, {MATCHES_TERMS_RIGHT.Count}, non: {MATCHES_OTHER_LEFT.Count}, {MATCHES_OTHER_RIGHT.Count}");
+                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                }
+                // also PICK if we just isolated something
+                else if (MODE == ManipMode.ISOLATE)
+                {
                     CODE.Add((ManipMode.PICK, SIDE, VAR));
                 }
                 // Otherwise, just keep doing whatever we were doing
