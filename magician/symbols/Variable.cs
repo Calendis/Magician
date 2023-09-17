@@ -28,11 +28,9 @@ public class Variable : Oper
         found = false;
     }
 
-    public Variable(string n) : base(n, new Oper[0])
-    {
-
-    }
-    public Variable(string n, double v) : this(n)
+    // Creating an unsolved variable
+    public Variable(string n) : base(n){}
+    public Variable(string n, double v) : base(n)
     {
         Val = v;
     }
