@@ -35,16 +35,18 @@ public class Equation
         noUnknowns = unknowns.Length;
     }
 
-    enum ManipMode
+    enum Mode
     {
+        PICK,
         ISOLATE,
         EXTRACT,
-        PICK
+        EXPAND,
     }
     enum Side
     {
         LEFT,
-        RIGHT
+        RIGHT,
+        BOTH
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
@@ -66,14 +68,15 @@ public class Equation
         double CHOSENDEG, OPPOSITEDEG;
         List<Oper> CHOSENROOT;
         List<Oper> OPPOSITEROOT;
-        ManipMode MODE;
+        Mode MODE;
         Side SIDE;
         Variable VAR;
-        List<(ManipMode, Side, Variable)> CODE = new()
-            {(ManipMode.PICK, Side.LEFT, v)};
+        List<(Mode, Side, Variable)> CODE = new()
+            {(Mode.PICK, Side.LEFT, v)};
         // These default values don't mean anything. They just need to be invalid and not equal
         (int, int) LAST_PICK = (-1, 0);
         (int, int) CURRENT_PICK = (0, -1);
+        Oper? OLDCHOSEN = null, OLDOPPOSITE = null;
         Oper? LIVE_BRANCH_LEFT = null;
         Oper? LIVE_BRANCH_RIGHT = null;
         Oper?[] TWIG = new[] { LIVE_BRANCH_LEFT, LIVE_BRANCH_RIGHT };
@@ -83,12 +86,10 @@ public class Equation
         // The layers variable is reassigned each loop
         while (true)
         {
-            Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
-
             if (CODE.Count < 1)
                 throw Scribe.Issue("No instructions provided");
 
-            (ManipMode, Side, Variable) INSTRUCTION = CODE[0];
+            (Mode, Side, Variable) INSTRUCTION = CODE[0];
             CODE.RemoveAt(0);
 
             MODE = INSTRUCTION.Item1;
@@ -99,10 +100,17 @@ public class Equation
             OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
-            Scribe.Info($"{MODE}, {SIDE}, {VAR}");
-            bool NEEDS_SIMPLIFY = false;
+            string STATUS = $"{MODE} {VAR}";
+            if (MODE != Mode.PICK)
+            {
+                STATUS += $" on the {SIDE} side";
+            }
+            Scribe.Info(STATUS);
+            if (MODE != Mode.PICK)
+                Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+            //bool NEEDS_SIMPLIFY = false;
 
-            if (MODE == ManipMode.PICK)
+            if (MODE == Mode.PICK)
             {
                 TWIG[0] = null;
                 TWIG[1] = null;
@@ -180,22 +188,24 @@ public class Equation
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 0);
-                        CODE.Add((ManipMode.ISOLATE, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.ISOLATE, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 0);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 0);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((Mode.EXPAND, Side.BOTH, v));
                     }
                 }
-                // One direct match
+                // One direct match on either side
                 else if (NUMTERMLEFT + NUMTERMRIGHT == 1)
                 {
                     // No indirect matches on either side
@@ -208,31 +218,21 @@ public class Equation
                             break;
                         }
 
-                        CODE.Add((ManipMode.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
+                        CODE.Add((Mode.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
                     }
-                    // One indirect match
+                    // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 1);
                         // Same side?
-                        if (NUMTERMLEFT * NUMOTHERLEFT == 1)
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            NEEDS_SIMPLIFY = true;
+                            //NEEDS_SIMPLIFY = true;
+                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                         }
                         else
                         {
-                            // Extract towards the side with the lowest total degree of other variables
-                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
-                            (double, double) totalDegrees = (0, 0);
-                            foreach (Variable otr in chaffVars)
-                            {
-                                double degL, degR;
-                                degL = layers.LeftHand[0][0].Degree(VAR);
-                                degR = layers.RightHand[0][0].Degree(VAR);
-                                totalDegrees.Item1 += degL;
-                                totalDegrees.Item2 += degR;
-                            }
-                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
+                            CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // Multiple indirect matches on one side
@@ -240,42 +240,21 @@ public class Equation
                     {
                         CURRENT_PICK = (2, 1);
                         // Same side?
-                        if (NUMTERMLEFT * NUMOTHERLEFT > 0)
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            NEEDS_SIMPLIFY = true;
+                            //NEEDS_SIMPLIFY = true;
+                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                         }
                         else
                         {
-                            // Extract towards the side with the lowest total degree of other variables
-                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
-                            (double, double) totalDegrees = (0, 0);
-                            foreach (Variable otr in chaffVars)
-                            {
-                                double degL, degR;
-                                degL = layers.LeftHand[0][0].Degree(VAR);
-                                degR = layers.RightHand[0][0].Degree(VAR);
-                                totalDegrees.Item1 += degL;
-                                totalDegrees.Item2 += degR;
-                            }
-                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
+                            CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 1);
-                        // Extract towards the side with the lowest total degree of other variables
-                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
-                            (double, double) totalDegrees = (0, 0);
-                            foreach (Variable otr in chaffVars)
-                            {
-                                double degL, degR;
-                                degL = layers.LeftHand[0][0].Degree(VAR);
-                                degR = layers.RightHand[0][0].Degree(VAR);
-                                totalDegrees.Item1 += degL;
-                                totalDegrees.Item2 += degR;
-                            }
-                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                     }
                 }
                 // Multiple direct matches on one side
@@ -285,103 +264,130 @@ public class Equation
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 2);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((Mode.EXPAND, NUMTERMLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                     }
+                    // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 2);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        // Same side?
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
+                        {
+                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                        }
+                        else
+                        {
+                            CODE.Add((Mode.EXPAND, Side.BOTH, VAR));
+                        }
                     }
+                    // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 2);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        // Same side?
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
+                        {
+                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                        }
+                        else
+                        {
+                            CODE.Add((Mode.EXPAND, Side.BOTH, VAR));
+                        }
                     }
+                    // At least one indirect match on either side
                     else
                     {
                         CURRENT_PICK = (3, 2);
-                        NEEDS_SIMPLIFY = true;
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((Mode.EXPAND, Side.BOTH, v));
                     }
                 }
-                // At least one direct match one both sides
+                // At least one direct match on both sides
                 else
                 {
                     // No indirect matches
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 3);
-                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 3);
                         //NEEDS_SIMPLIFY = true;
-                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 3);
                         //NEEDS_SIMPLIFY = true;
-                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 3);
                         //NEEDS_SIMPLIFY = true;
-                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                 }
-            }
-
-            if (NEEDS_SIMPLIFY)
-            {
-                //CHOSENROOT[0].Associate();
-                //OPPOSITEROOT[0].Associate();
-                //CHOSENROOT[0].Simplify(v);
-                //OPPOSITEROOT[0].Simplify(v);
-                Scribe.Warn("Trying to simplify...");
             }
 
             // Manipulate the tree in favour of being solved
             Oper NEWCHOSEN = CHOSENROOT[0];
             Oper NEWOPPOSITE = OPPOSITEROOT[0];
-            if (MODE == ManipMode.ISOLATE)
+            if (MODE == Mode.ISOLATE)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("Isolated with no live branch");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
-            else if (MODE == ManipMode.EXTRACT)
+            else if (MODE == Mode.EXTRACT)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("Isolated with no live branch");
-                Scribe.Info($"Extracting {TWIG[(int)SIDE]} from {CHOSENROOT[0]}");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
+            }
+            else if (MODE == Mode.EXPAND)
+            {
+                if (SIDE == Side.BOTH)
+                {
+                    CHOSENROOT[0].Associate();
+                    OPPOSITEROOT[0].Associate();
+                }
+                else
+                {
+                    layers.Hands[(int)SIDE][0][0].Associate();
+                }
+                //CHOSENROOT[0].Simplify(v);
+                //OPPOSITEROOT[0].Simplify(v);
             }
 
             if (CODE.Count == 0)
             {
                 // If no progress was made, enter PICK mode
-                if (NEWCHOSEN == CHOSENROOT[0] && NEWOPPOSITE == OPPOSITEROOT[0])
+                if (NEWCHOSEN.Like(OLDCHOSEN) && NEWOPPOSITE.Like(OLDOPPOSITE))
                 {
                     if (LAST_PICK == CURRENT_PICK)
                     {
                         throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
                     }
-                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                    CODE.Add((Mode.PICK, SIDE, VAR));
                 }
                 // also PICK if we just isolated something
-                else if (MODE == ManipMode.ISOLATE)
+                else if (MODE == Mode.ISOLATE)
                 {
-                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                    CODE.Add((Mode.PICK, SIDE, VAR));
                 }
                 // also pick if our live branch isn't present in our chosen side
                 else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
                 {
-                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                    CODE.Add((Mode.PICK, SIDE, VAR));
                 }
                 // Otherwise, just keep doing whatever we were doing
                 else
@@ -390,14 +396,31 @@ public class Equation
                 }
             }
 
-            Scribe.Info($"{LAST_PICK} => {CURRENT_PICK}");
+            //Scribe.Warn($"{LAST_PICK} => {CURRENT_PICK}");
             LAST_PICK = CURRENT_PICK;
+            OLDCHOSEN = NEWCHOSEN.Copy();
+            OLDOPPOSITE = NEWOPPOSITE.Copy();
             if (SIDE == Side.LEFT)
                 layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
                 layers = new(NEWOPPOSITE, NEWCHOSEN);
 
 
+        }
+
+        Side SMALLESTCHAFFDEGREE()
+        {
+            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
+            (double, double) totalDegrees = (0, 0);
+            foreach (Variable otr in chaffVars)
+            {
+                double degL, degR;
+                degL = layers.LeftHand[0][0].Degree(VAR);
+                degR = layers.RightHand[0][0].Degree(VAR);
+                totalDegrees.Item1 += degL;
+                totalDegrees.Item2 += degR;
+            }
+            return totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT;
         }
 
 
