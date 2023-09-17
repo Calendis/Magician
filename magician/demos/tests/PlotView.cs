@@ -59,7 +59,7 @@ public class PlotView : Spell
                     new Fraction(Var("x"), Val(230), Var("x")),
                     new Fraction(Var("y"), Val(230), Var("y"))
                 )
-                ,Val(1)
+                ,new SumDiff(Val(1), new SumDiff(Val(1), Val(1)), Val(2), new SumDiff(Val(3), Val(1)))
                 ,Val(0.33*Math.Sin(Time/6))
             ),Var("z"))
         );
