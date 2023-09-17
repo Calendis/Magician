@@ -150,9 +150,6 @@ public class Equation
                     throw Scribe.Issue("Tree died");
                 }
 
-                OperMatchLookup LEFTMATCHES = new(layers.LeftHand[0][0], v);
-                OperMatchLookup RIGHTMATCHES = new(layers.RightHand[0][0], v);
-
                 int NUMTERMLEFT = MATCHES_TERMS_LEFT.Count;
                 int NUMTERMRIGHT = MATCHES_TERMS_RIGHT.Count;
                 int NUMOTHERLEFT = MATCHES_OTHER_LEFT.Count;
