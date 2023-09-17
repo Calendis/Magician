@@ -54,38 +54,6 @@ internal class EquationLayers
         Hands = new[] { LeftHand, RightHand };
     }
 
-    public bool HoldsLeft(Variable v)
-    {
-        foreach (int k in LeftHand.Keys)
-        {
-            foreach (Oper o in LeftHand[k])
-            {
-                if (o is Variable v_)
-                {
-                    if (v_ == v)
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public bool HoldsRight(Variable v)
-    {
-        foreach (int k in RightHand.Keys)
-        {
-            foreach (Oper o in RightHand[k])
-            {
-                if (o is Variable v_)
-                {
-                    if (v_ == v)
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public override string ToString()
     {
         string leftHandStr = "\n";
@@ -95,7 +63,7 @@ internal class EquationLayers
             leftHandStr += $"Layer {k}\n";
             foreach (Oper o in LeftHand[k])
             {
-                leftHandStr += $"    {o} (numArgs: {o._oldArgs.Count}, args.Length: {o._oldArgs.Count})\n";
+                leftHandStr += $"    {o} (numArgs: {o.AllArgs.Count}, args.Length: {o.AllArgs.Count})\n";
             }
         }
         foreach (int k in RightHand.Keys)
@@ -103,7 +71,7 @@ internal class EquationLayers
             rightHandStr += $"Layer {k}\n";
             foreach (Oper o in RightHand[k])
             {
-                rightHandStr += $"    {o} (numArgs: {o._oldArgs.Count}, args.Length: {o._oldArgs.Count})\n";
+                rightHandStr += $"    {o} (numArgs: {o.AllArgs.Count}, args.Length: {o.AllArgs.Count})\n";
             }
         }
         leftHandStr += "---";
