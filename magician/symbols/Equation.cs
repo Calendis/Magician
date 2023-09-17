@@ -338,11 +338,11 @@ public class Equation
 
             if (NEEDS_SIMPLIFY)
             {
+                //CHOSENROOT[0].Associate();
+                //OPPOSITEROOT[0].Associate();
                 //CHOSENROOT[0].Simplify(v);
                 //OPPOSITEROOT[0].Simplify(v);
-                //CODE.Add((ManipMode.PICK, SIDE, VAR));
                 Scribe.Warn("Trying to simplify...");
-                continue;
             }
 
             // Manipulate the tree in favour of being solved

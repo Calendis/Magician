@@ -50,8 +50,7 @@ public class PlotView : Spell
 
         Equation plotTest3d = new(
             new Fraction(
-                new SumDiff(Var("z"), Val(3)),
-                Val(0.33*Math.Sin(Time/6))
+                new SumDiff(Var("z"), Val(3))
             ),
             Equation.Fulcrum.EQUALS,
             new SumDiff(  // This SumDiff should trigger an extract
@@ -60,6 +59,8 @@ public class PlotView : Spell
                     new Fraction(Var("x"), Val(230), Var("x")),
                     new Fraction(Var("y"), Val(230), Var("y"))
                 )
+                ,Val(1)
+                ,Val(0.33*Math.Sin(Time/6))
             ),Var("z"))
         );
         //plotTest3d
