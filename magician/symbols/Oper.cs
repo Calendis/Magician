@@ -99,13 +99,13 @@ public abstract class Oper
         if (chosenSide.posArgs.Contains(axis))
         {
             chosenSide.posArgs.Remove(axis);
-            newOpposite = chosenSide.New(new(){oppositeSide}, new(){axis});
+            newOpposite = chosenSide.New(new() { oppositeSide }, new() { axis });
         }
         else if (chosenSide.negArgs.Contains(axis))
         {
             chosenSide.negArgs.Remove(axis);
-            newOpposite = chosenSide.New(new(){oppositeSide, axis}, new(){});
-            
+            newOpposite = chosenSide.New(new() { oppositeSide, axis }, new() { });
+
         }
         else
         {
@@ -371,29 +371,40 @@ public abstract class Oper
         return finalArgs.ToArray();
     }
 
-    // Find all associated arguments and add return them as an array
-    // true means inverted
-    public Oper[] Associate<T>(List<(Oper, bool)>? associatedArguments = null, bool? switcher = null) where T : Oper
+    public void Associate(Oper? parent = null)
     {
-        associatedArguments ??= new();
-        switcher ??= false;
         foreach (Oper o in AllArgs)
-        {
-            if (o is T associativeOperation)
-            {
-                associativeOperation.Associate<T>(associatedArguments);
-            }
-            else
-            {
-                associatedArguments.Add((o, (bool)!switcher));
-            }
-            switcher = !switcher;
-        }
-        //Scribe.Info($"Associated args:");
-        //Scribe.Info(AssembleArgs(associatedArguments, identity));
-        return AssembleArgs(associatedArguments, identity);
-    }
+            o.Associate(this);
 
+        if (!associative)
+            return;
+
+        if (parent is not null)
+        {
+            if (parent.GetType() == GetType())
+            {
+                if (parent.posArgs.Contains(this))
+                    parent.posArgs.Remove(this);
+                else if (parent.negArgs.Contains(this))
+                    parent.negArgs.Remove(this);
+
+                parent.posArgs.AddRange(posArgs);
+                parent.negArgs.AddRange(negArgs);
+            }
+            else if (parent.associative && posArgs.Count == 1 && negArgs.Count == 0)
+            {
+                if (parent.posArgs.Contains(this))
+                {
+                    parent.posArgs.Remove(this);
+                    parent.posArgs.AddRange(posArgs);
+                    posArgs.Clear();
+                }
+                else
+                    return;
+
+            }
+        }
+    }
 
     // Recursively gather all variables, constants, and operators in an Oper
     public void CollectOpers(
