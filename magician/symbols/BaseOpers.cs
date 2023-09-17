@@ -47,6 +47,77 @@ public class SumDiff : Oper
         return maxD - minD;
     }
 
+    public override void Reduce(Variable axis)
+    {
+        /* Combine constant integer terms */
+        for (int i = 0; i < posArgs.Count; i++)
+        {
+            Oper o = posArgs[i];
+            if (o is Fraction f && f.posArgs.Count == 1 && f.negArgs.Count == 0)
+            {
+                posArgs.Remove(o);
+                posArgs.AddRange(f.posArgs);
+                Reduce(axis);
+            }
+        }
+        IEnumerable<Oper> plus = posArgs.Where(o => o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity);
+        IEnumerable<Oper> minus = negArgs.Where(o => o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity);
+        List<Oper> posChaff = posArgs.Where(o => !(o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity)).ToList();
+        List<Oper> negChaff = negArgs.Where(o => !(o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity)).ToList();
+        int newPlus = plus.Aggregate(0, (total, o) => total + (int)((Variable)o).Val);
+        int newMinus = minus.Aggregate(0, (total, o) => total + (int)((Variable)o).Val);
+        int reducedConstant = newPlus - newMinus;
+        if (reducedConstant < 0)
+            negChaff.Add(new Variable(-reducedConstant));
+        else if (reducedConstant > 0)
+            posChaff.Add(new Variable(reducedConstant));
+        posArgs.Clear(); posArgs.AddRange(posChaff);
+        negArgs.Clear(); negArgs.AddRange(negChaff);
+
+        /* Combine like terms */
+        Scribe.Warn("Combining like terms...");
+        List<Fraction> matchingTerms = new();
+        List<Fraction> chaffTerms = new();
+        foreach (Oper o in AllArgs)
+        {
+            if (o.Contains(axis))
+                matchingTerms.Add(o.ByCoefficient());
+            else
+                chaffTerms.Add(o.ByCoefficient());
+        }
+
+        // AB AC AD BC BD CD
+        Dictionary<(int, int), Oper> matchingIntersections = new();
+        Dictionary<(int, int), Oper> matchingSummedSetDifferences = new();
+        for (int i = 0; i < matchingTerms.Count - 1; i++)
+        {
+            for (int j = 0; j < matchingTerms.Count - i; j++)
+            {
+                // j + i + 1
+                Fraction termA = matchingTerms[i];
+                Fraction termB = matchingTerms[i + j + 1];
+                Fraction intersectFrac = new(
+                    termA.posArgs.Intersect(termB.posArgs, new OperCompare()).ToList(),
+                    termA.negArgs.Intersect(termB.negArgs, new OperCompare()).ToList()
+                );
+                matchingIntersections.Add((i, j + i + 1), intersectFrac);
+            }
+        }
+        //
+        Dictionary<(int, int), Oper> immatchingIntersections = new();
+        for (int i = 0; i < chaffTerms.Count - 1; i++)
+        {
+            for (int j = 0; j < chaffTerms.Count - 1 - i; j++)
+            {
+                // j + i + 1
+                Fraction termA = chaffTerms[i];
+                Fraction termB = chaffTerms[i + j + 1];
+                Fraction intersectFrac = new();
+                matchingIntersections.Add((i, j + i + 1), intersectFrac);
+            }
+        }
+    }
+
     public override string ToString()
     {
         string sumdiff = "";

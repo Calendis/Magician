@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Magician.Symbols;
 public abstract class Oper
 {
@@ -156,64 +158,12 @@ public abstract class Oper
         foreach (Oper o in AllArgs)
             o.Simplify(v);
 
-        Reduce();
-
-        // Powers and exponents
-        // TODO
-
-        // Multiply out any factors
-        // TODO
-
-        // Combine like terms
-        // First, format terms by coefficient
-        List<Fraction> matchingTerms = new();
-        List<Fraction> immatchingTerms = new();
-        foreach (Oper o in AllArgs)
-        {
-            if (o.Contains(v))
-            {
-                matchingTerms.Add(o.ByCoefficient());
-            }
-            else
-            {
-                immatchingTerms.Add(o.ByCoefficient());
-            }
-        }
-
-        // AB AC AD BC BD CD
-        Dictionary<(int, int), Oper> matchingIntersections = new();
-        Dictionary<(int, int), Oper> matchingSummedSetDifferences = new();
-        for (int i = 0; i < matchingTerms.Count - 1; i++)
-        {
-            for (int j = 0; j < matchingTerms.Count - i; j++)
-            {
-                // j + i + 1
-                Fraction termA = matchingTerms[i];
-                Fraction termB = matchingTerms[i + j + 1];
-                Fraction intersectFrac = new(
-                    termA.posArgs.Intersect(termB.posArgs).ToList(),
-                    termA.negArgs.Intersect(termB.negArgs).ToList()
-                );
-                matchingIntersections.Add((i, j + i + 1), intersectFrac);
-            }
-        }
-        //
-        Dictionary<(int, int), Oper> immatchingIntersections = new();
-        for (int i = 0; i < immatchingTerms.Count - 1; i++)
-        {
-            for (int j = 0; j < immatchingTerms.Count - 1 - i; j++)
-            {
-                // j + i + 1
-                Fraction termA = immatchingTerms[i];
-                Fraction termB = immatchingTerms[i + j + 1];
-                Fraction intersectFrac = new();
-                matchingIntersections.Add((i, j + i + 1), intersectFrac);
-            }
-        }
+        Reduce(v);
     }
 
     // Trivial reduction. Drops identities from the positive arguments
-    public virtual void Reduce()
+    // Reduce does not necessarily need to use the axis variable, but it may
+    public virtual void Reduce(Variable axis)
     {
         posArgs = posArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
     }
@@ -361,5 +311,22 @@ public abstract class Oper
     public virtual Oper Copy()
     {
         return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList());
+    }
+}
+
+internal class OperCompare : IEqualityComparer<Oper>
+{
+    public bool Equals(Oper? x, Oper? y)
+    {
+        if (x is null || y is null)
+            throw Scribe.Error("Null Oper comparison");
+        if (x.Like(y))
+            return true;
+        return false;
+    }
+
+    public int GetHashCode([DisallowNull] Oper obj)
+    {
+        throw new NotImplementedException();
     }
 }
