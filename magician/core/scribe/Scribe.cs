@@ -2,6 +2,7 @@ namespace Magician;
 /* Scribe is the logger */
 public static class Scribe
 {
+    //static List<string> Log = new();
     public static void Info(string? s)
     {
         Console.Write($"INFO: {s}\n");
@@ -16,18 +17,20 @@ public static class Scribe
         Info(o.ToString());
         return;
     }
-    public static void Info<T>(T[] os)
+    public static void Info<T, U>(T os) where T : IEnumerable<U>
     {
-        Scribe.Info(Expand(os));
+        Scribe.Info(Expand<T, U>(os));
     }
-    public static string Expand<T>(T[] os)
+    public static string Expand<T, U>(T os) where T : IEnumerable<U>
     {
         string s = "";
-        foreach (object o in os)
+        foreach (U o in os)
         {
-            s += o.ToString();
+            s += o is null ? "" : o.ToString();
             s += ", ";
         }
+        if (s.Length < 2)
+            s = "--";
         return s[..^2];
     }
 
@@ -76,7 +79,7 @@ public static class Scribe
         foreach (ICollection<U> o in l)
         {
             Console.Write($"{c++} ");
-            Scribe.Info<U>(o.ToArray());
+            Scribe.Info(o);
         }
     }
 
