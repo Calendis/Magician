@@ -6,10 +6,12 @@ public class SumDiff : Oper
     public SumDiff(params Oper[] ops) : base("sumdiff", ops)
     {
         identity = 0;
+        associative = true;
     }
     public SumDiff(List<Oper> a, List<Oper> b) : base("sumdiff", a, b)
     {
         identity = 0;
+        associative = true;
     }
     public override Variable Solution()
     {
@@ -70,10 +72,12 @@ public class Fraction : Oper
     public Fraction(List<Oper> a, List<Oper> b) : base("fraction", a, b)
     {
         identity = 1;
+        associative = true;
     }
     public Fraction(params Oper[] ops) : base("fraction", ops)
     {
         identity = 1;
+        associative = true;
     }
 
     public override Variable Solution()
