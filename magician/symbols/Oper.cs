@@ -72,10 +72,10 @@ public abstract class Oper
 
     public static (Oper, Oper) InvertEquationAround(Oper chosenSide, Oper oppositeSide, Oper axis)
     {
-        bool capitalize = false;
+        bool invertedAxis = false;
         if (chosenSide.negArgs.Contains(axis) && !chosenSide.posArgs.Contains(axis))
         {
-            capitalize = true;
+            invertedAxis = true;
             chosenSide.negArgs.Remove(axis);
         }
         else
@@ -84,11 +84,9 @@ public abstract class Oper
         }
         Oper newChosen = axis;
 
-        // Invert chosen
-        (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
-        chosenSide.posArgs.Add(oppositeSide);
-        // Invert it again
-        if (capitalize)
+        chosenSide.negArgs.Add(oppositeSide);
+        // Invert if the axis wasn't already inverted
+        if (!invertedAxis)
             (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
 
         return (newChosen, chosenSide.Copy());
