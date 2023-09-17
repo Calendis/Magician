@@ -13,8 +13,6 @@ public class Equation
     public bool IsSolved { get; private set; } = false;
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
-        //o0.Simplify();
-        //o1.Simplify();
         TheFulcrum = f;
         LHS = o0;
         RHS = o1;
@@ -73,7 +71,7 @@ public class Equation
         Variable VAR;
         List<(Mode, Side, Variable)> CODE = new()
             {(Mode.PICK, Side.LEFT, v)};
-        // These default values don't mean anything. They just need to be invalid and not equal
+        // These default values don't mean anything. They just need to be invalid
         (int, int) LAST_PICK = (-1, 0);
         (int, int) CURRENT_PICK = (0, -1);
         Oper? OLDCHOSEN = null, OLDOPPOSITE = null;
@@ -108,7 +106,6 @@ public class Equation
             Scribe.Info(STATUS);
             if (MODE != Mode.PICK)
                 Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
-            //bool NEEDS_SIMPLIFY = false;
 
             if (MODE == Mode.PICK)
             {
@@ -194,14 +191,12 @@ public class Equation
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 0);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 0);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXPAND, Side.BOTH, v));
                     }
                 }
@@ -227,7 +222,6 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            //NEEDS_SIMPLIFY = true;
                             CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                         }
                         else
@@ -242,7 +236,6 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            //NEEDS_SIMPLIFY = true;
                             CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                         }
                         else
@@ -264,14 +257,12 @@ public class Equation
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 2);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXPAND, NUMTERMLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 2);
-                        //NEEDS_SIMPLIFY = true;
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
@@ -286,7 +277,6 @@ public class Equation
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 2);
-                        //NEEDS_SIMPLIFY = true;
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
@@ -301,7 +291,6 @@ public class Equation
                     else
                     {
                         CURRENT_PICK = (3, 2);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXPAND, Side.BOTH, v));
                     }
                 }
@@ -318,21 +307,18 @@ public class Equation
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 3);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 3);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 3);
-                        //NEEDS_SIMPLIFY = true;
                         CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                 }
