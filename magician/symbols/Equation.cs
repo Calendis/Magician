@@ -104,6 +104,8 @@ public class Equation
 
             if (MODE == ManipMode.PICK)
             {
+                TWIG[0] = null;
+                TWIG[1] = null;
                 // First, find matches on both sides
                 List<Oper> MATCHES_TERMS_LEFT = new();
                 List<Oper> MATCHES_OTHER_LEFT = new();
@@ -212,28 +214,68 @@ public class Equation
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 1);
-                        CODE.Add((ManipMode.EXTRACT, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
+                        // Same side?
+                        if (NUMTERMLEFT * NUMOTHERLEFT == 1)
+                        {
+                            NEEDS_SIMPLIFY = true;
+                        }
+                        else
+                        {
+                            // Extract towards the side with the lowest total degree of other variables
+                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
+                            (double, double) totalDegrees = (0, 0);
+                            foreach (Variable otr in chaffVars)
+                            {
+                                double degL, degR;
+                                degL = layers.LeftHand[0][0].Degree(VAR);
+                                degR = layers.RightHand[0][0].Degree(VAR);
+                                totalDegrees.Item1 += degL;
+                                totalDegrees.Item2 += degR;
+                            }
+                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
+                        }
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 1);
-                        // Move the indirect matches to the side with the direct match, if any
-                        if (NUMTERMLEFT * NUMOTHERLEFT == 0)
-                        {
-                            CODE.Add((ManipMode.EXTRACT, NUMTERMLEFT == 0 ? Side.LEFT : Side.RIGHT, VAR));
-                        }
-                        // In the case where a mixture of direct and indirect matches lie one one side, we must simplify
-                        else
+                        // Same side?
+                        if (NUMTERMLEFT * NUMOTHERLEFT > 0)
                         {
                             NEEDS_SIMPLIFY = true;
+                        }
+                        else
+                        {
+                            // Extract towards the side with the lowest total degree of other variables
+                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
+                            (double, double) totalDegrees = (0, 0);
+                            foreach (Variable otr in chaffVars)
+                            {
+                                double degL, degR;
+                                degL = layers.LeftHand[0][0].Degree(VAR);
+                                degR = layers.RightHand[0][0].Degree(VAR);
+                                totalDegrees.Item1 += degL;
+                                totalDegrees.Item2 += degR;
+                            }
+                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
                         }
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 1);
-                        CODE.Add((ManipMode.EXTRACT, NUMTERMLEFT == 0 ? Side.LEFT : Side.RIGHT, VAR));
+                        // Extract towards the side with the lowest total degree of other variables
+                            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
+                            (double, double) totalDegrees = (0, 0);
+                            foreach (Variable otr in chaffVars)
+                            {
+                                double degL, degR;
+                                degL = layers.LeftHand[0][0].Degree(VAR);
+                                degR = layers.RightHand[0][0].Degree(VAR);
+                                totalDegrees.Item1 += degL;
+                                totalDegrees.Item2 += degR;
+                            }
+                            CODE.Add((ManipMode.EXTRACT, totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT, VAR));
                     }
                 }
                 // Multiple direct matches on one side
@@ -299,7 +341,8 @@ public class Equation
                 //CHOSENROOT[0].Simplify(v);
                 //OPPOSITEROOT[0].Simplify(v);
                 //CODE.Add((ManipMode.PICK, SIDE, VAR));
-                //continue;
+                Scribe.Warn("Trying to simplify...");
+                continue;
             }
 
             // Manipulate the tree in favour of being solved
@@ -308,14 +351,15 @@ public class Equation
             if (MODE == ManipMode.ISOLATE)
             {
                 if (TWIG[(int)SIDE] is null)
-                {
                     throw Scribe.Issue("Isolated with no live branch");
-                }
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
             else if (MODE == ManipMode.EXTRACT)
             {
-                throw Scribe.Issue("Extract not implemented");
+                if (TWIG[(int)SIDE] is null)
+                    throw Scribe.Issue("Isolated with no live branch");
+                Scribe.Info($"Extracting {TWIG[(int)SIDE]} from {CHOSENROOT[0]}");
+                (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
 
             if (CODE.Count == 0)
@@ -331,6 +375,11 @@ public class Equation
                 }
                 // also PICK if we just isolated something
                 else if (MODE == ManipMode.ISOLATE)
+                {
+                    CODE.Add((ManipMode.PICK, SIDE, VAR));
+                }
+                // also pick if our live branch isn't present in our chosen side
+                else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
                 {
                     CODE.Add((ManipMode.PICK, SIDE, VAR));
                 }

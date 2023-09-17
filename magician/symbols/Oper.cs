@@ -93,6 +93,27 @@ public abstract class Oper
 
     }
 
+    public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
+    {
+        Oper newOpposite;
+        if (chosenSide.posArgs.Contains(axis))
+        {
+            chosenSide.posArgs.Remove(axis);
+            newOpposite = chosenSide.New(new(){oppositeSide}, new(){axis});
+        }
+        else if (chosenSide.negArgs.Contains(axis))
+        {
+            chosenSide.negArgs.Remove(axis);
+            newOpposite = chosenSide.New(new(){oppositeSide, axis}, new(){});
+            
+        }
+        else
+        {
+            throw Scribe.Issue($"Could not extract {axis} from {chosenSide}");
+        }
+        return (chosenSide, newOpposite);
+    }
+
     public bool Like(Oper o)
     {
         if (o.GetType() != GetType())
@@ -210,7 +231,7 @@ public abstract class Oper
                     termA.posArgs.Intersect(termB.posArgs).ToList(),
                     termA.negArgs.Intersect(termB.negArgs).ToList()
                 );
-                matchingIntersections.Add((i, j+i+1), intersectFrac);                
+                matchingIntersections.Add((i, j + i + 1), intersectFrac);
             }
         }
         //
@@ -223,7 +244,7 @@ public abstract class Oper
                 Fraction termA = immatchingTerms[i];
                 Fraction termB = immatchingTerms[i + j + 1];
                 Fraction intersectFrac = new();
-                matchingIntersections.Add((i, j+i+1), intersectFrac);                
+                matchingIntersections.Add((i, j + i + 1), intersectFrac);
             }
         }
     }

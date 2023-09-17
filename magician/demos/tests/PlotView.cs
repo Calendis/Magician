@@ -60,7 +60,7 @@ public class PlotView : Spell
                     new Fraction(Var("x"), Val(230), Var("x")),
                     new Fraction(Var("y"), Val(230), Var("y"))
                 )
-            ),Val(3))
+            ),Var("z"))
         );
         //plotTest3d
 
