@@ -50,7 +50,7 @@ public class Equation
     // Re-arrange and reconstruct the equation in terms of a certain variable
     public Equation Solved(Variable? v = null)
     {
-        Scribe.Info("Begin solve...");
+        Scribe.Info($"We have {this}");
         // By default, solve for the variable with the highest degree
         // TODO: move code from Solve to here
         if (v == null)
@@ -98,14 +98,14 @@ public class Equation
             OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
-            string STATUS = $"{MODE} {VAR}";
+            if (NOCHANGE(CHOSENROOT[0], OPPOSITEROOT[0]))
+                Scribe.Info($"We have {layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+            string STATUS = $"Next, {MODE} {VAR}";
             if (MODE != Mode.PICK)
             {
                 STATUS += $" on the {SIDE} side";
             }
-            Scribe.Info(STATUS);
-            if (MODE != Mode.PICK)
-                Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+            Scribe.Info(STATUS);                
 
             if (MODE == Mode.PICK)
             {
@@ -345,19 +345,20 @@ public class Equation
                 {
                     CHOSENROOT[0].Associate();
                     OPPOSITEROOT[0].Associate();
+                    CHOSENROOT[0].Simplify(v);
+                    OPPOSITEROOT[0].Simplify(v);
                 }
                 else
                 {
                     layers.Hands[(int)SIDE][0][0].Associate();
+                    layers.Hands[(int)SIDE][0][0].Simplify(v);
                 }
-                //CHOSENROOT[0].Simplify(v);
-                //OPPOSITEROOT[0].Simplify(v);
             }
 
             if (CODE.Count == 0)
             {
                 // If no progress was made, enter PICK mode
-                if (NEWCHOSEN.Like(OLDCHOSEN) && NEWOPPOSITE.Like(OLDOPPOSITE))
+                if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
                     if (LAST_PICK == CURRENT_PICK)
                     {
@@ -407,6 +408,13 @@ public class Equation
                 totalDegrees.Item2 += degR;
             }
             return totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT;
+        }
+
+        bool NOCHANGE(Oper a, Oper b)
+        {
+            if (OLDCHOSEN is null || OLDOPPOSITE is null)
+                return false;
+            return a.Like(OLDCHOSEN) && b.Like(OLDOPPOSITE);
         }
 
 
