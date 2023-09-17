@@ -139,45 +139,6 @@ public abstract class Oper
         return true;
     }
 
-    //public (Fraction, Oper, Oper) ByCoefficient(Variable axis)
-    //{
-    //    if (this is Fraction)
-    //    {
-    //        List<Oper> restPosArgs = new();
-    //        List<Oper> restNegArgs = new();
-    //        List<Oper> coeffPosArgs = new();
-    //        List<Oper> coeffNegArgs = new();
-    //        List<Oper> axisPosArgs = new();
-    //        List<Oper> axisNegArgs = new();
-    //        foreach (Oper o in posArgs)
-    //        {
-    //            if (o is Variable v)
-    //                if (v.Found)
-    //                    coeffPosArgs.Add(v);
-    //                else if (v == axis)
-    //                    axisPosArgs.Add(v);
-    //                else
-    //                    restPosArgs.Add(o);
-    //        }
-    //        foreach (Oper o in negArgs)
-    //        {
-    //            if (o is Variable v)
-    //                if (v.Found)
-    //                    coeffNegArgs.Add(v);
-    //                else if (v == axis)
-    //                    axisNegArgs.Add(v);
-    //                else
-    //                    restNegArgs.Add(o);
-    //        }
-    //        return (
-    //            new Fraction(coeffPosArgs, coeffNegArgs),
-    //            new Fraction(restPosArgs, restNegArgs),
-    //            new Fraction(axisPosArgs, axisNegArgs)
-    //        );
-    //    }
-    //    else
-    //        return (new Fraction(), new Fraction(), this);
-    //}
     public Fraction ByCoefficient()
     {
         if (this is Fraction f)
@@ -185,7 +146,7 @@ public abstract class Oper
             return f;
         }
         else
-            return new Fraction(this, Notate.Val(1));
+            return new Fraction(this, new Variable(1));
     }
     public abstract Variable Solution();
     // Simplify in BEDMAS order, in terms of v
@@ -194,6 +155,8 @@ public abstract class Oper
         // Brackets first, recursively
         foreach (Oper o in AllArgs)
             o.Simplify(v);
+
+        Reduce();
 
         // Powers and exponents
         // TODO
@@ -247,6 +210,12 @@ public abstract class Oper
                 matchingIntersections.Add((i, j + i + 1), intersectFrac);
             }
         }
+    }
+
+    // Trivial reduction. Drops identities from the positive arguments
+    public virtual void Reduce()
+    {
+        posArgs = posArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
     }
 
     // An Oper is considered a term when it:
@@ -323,54 +292,6 @@ public abstract class Oper
     // Write this if necessary
     //public List<(int, int)> LocateAll
 
-    public int Size(int? basket = null)
-    {
-        basket ??= 0;
-
-        foreach (Oper o in AllArgs)
-        {
-            basket += o.Size(basket);
-        }
-
-        return (int)basket;
-    }
-
-    public virtual void Commute(int arg0, int arg1)
-    {
-        if (!commutative)
-            throw Scribe.Error("Operator is not commutative");
-
-        (AllArgs[arg1], AllArgs[arg0]) = (AllArgs[arg0], AllArgs[arg1]);
-    }
-
-    // Format arguments into the required alternating form
-    protected static Oper[] AssembleArgs(List<(Oper, bool)> flaggedArgs, int id)
-    {
-        List<Oper> positiveArgs = new();
-        List<Oper> negativeArgs = new();
-        foreach ((Oper, bool) ob in flaggedArgs)
-        {
-            if (ob.Item2)
-                negativeArgs.Add(ob.Item1);
-            else
-                positiveArgs.Add(ob.Item1);
-        }
-        List<Oper> finalArgs = new();
-        for (int i = 0; i < Math.Max(positiveArgs.Count, negativeArgs.Count); i++)
-        {
-            (Oper, Oper) invPair = (Notate.Val(id), Notate.Val(id));
-            if (i < positiveArgs.Count)
-                invPair.Item1 = positiveArgs[i];
-            if (i < negativeArgs.Count)
-                invPair.Item2 = negativeArgs[i];
-
-            finalArgs.Add(invPair.Item1);
-            finalArgs.Add(invPair.Item2);
-        }
-
-        return finalArgs.ToArray();
-    }
-
     public void Associate(Oper? parent = null)
     {
         foreach (Oper o in AllArgs)
@@ -384,24 +305,17 @@ public abstract class Oper
             if (parent.GetType() == GetType())
             {
                 if (parent.posArgs.Contains(this))
-                    parent.posArgs.Remove(this);
-                else if (parent.negArgs.Contains(this))
-                    parent.negArgs.Remove(this);
-
-                parent.posArgs.AddRange(posArgs);
-                parent.negArgs.AddRange(negArgs);
-            }
-            else if (parent.associative && posArgs.Count == 1 && negArgs.Count == 0)
-            {
-                if (parent.posArgs.Contains(this))
                 {
                     parent.posArgs.Remove(this);
                     parent.posArgs.AddRange(posArgs);
-                    posArgs.Clear();
+                    parent.negArgs.AddRange(negArgs);
                 }
-                else
-                    return;
-
+                else if (parent.negArgs.Contains(this))
+                {
+                    parent.negArgs.Remove(this);
+                    parent.posArgs.AddRange(negArgs);
+                    parent.negArgs.AddRange(posArgs);
+                }
             }
         }
     }

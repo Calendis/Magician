@@ -66,4 +66,9 @@ public class Variable : Oper
             return 1;
         return 0;
     }
+
+    //public override void Simplify(Variable v)
+    //{
+    //    base.Simplify(v);
+    //}
 }
