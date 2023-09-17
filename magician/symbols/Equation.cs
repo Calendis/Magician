@@ -105,7 +105,7 @@ public class Equation
             {
                 STATUS += $" on the {SIDE} side";
             }
-            Scribe.Info(STATUS);                
+            Scribe.Info(STATUS);
 
             if (MODE == Mode.PICK)
             {
