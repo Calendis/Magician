@@ -48,49 +48,51 @@ public class PlotView : Spell
             Ref.Perspective.y.Delta(-walkSpeed);
         }
 
-        //Equation plotTest3d = new(
-        //    new Fraction(
-        //        Var("y"),
-        //        Val(0.33*Math.Sin(Time/6))
-        //    ),
-        //    Equation.Fulcrum.EQUALS,
-        //    new Fraction(
-        //        new SumDiff(
-        //            new Fraction(Var("x"), Val(230), Var("x")),
-        //            new Fraction(Var("z"), Val(230), Var("z"))
-        //        )
-        //    )
-        //);
-
         Equation plotTest3d = new(
-            new SumDiff(
-                Var("y")
-                ,Var("x")
-                ,Var("y")
+            new Fraction(
+                new SumDiff(Var("z"), Val(3)),
+                Val(0.33*Math.Sin(Time/6))
             ),
             Equation.Fulcrum.EQUALS,
-            new SumDiff(
-                new Fraction(
-                    Var("x"),
-                    Val(69900000),
-                    Var("x"),
-                    Val(1),
-                    Var("z"),
-                    Val(1),
-                    Var("z")
-                ),
-                new Fraction(
-                    new SumDiff
-                    (
-                        new Fraction(Var("x"), Val(1000+500*Math.Sin(Time/1.5)), Var("x")),
-                        Val(Time),
-                        new Fraction(Var("z"), Val(1000+500*Math.Cos(Time/3)), Var("z"))
-                    ),
-                    Val(1)
+            new SumDiff(  // This SumDiff should trigger an extract
+            new Fraction(
+                new SumDiff(
+                    new Fraction(Var("x"), Val(230), Var("x")),
+                    new Fraction(Var("y"), Val(230), Var("y"))
                 )
-                
-            )
+            ),Var("z"))
         );
+        //plotTest3d
+
+        //Equation plotTest3d = new(
+        //    new SumDiff(
+        //        Var("y")
+        //        ,Var("x")
+        //        ,Var("y")
+        //    ),
+        //    Equation.Fulcrum.EQUALS,
+        //    new SumDiff(
+        //        new Fraction(
+        //            Var("x"),
+        //            Val(69900000),
+        //            Var("x"),
+        //            Val(1),
+        //            Var("z"),
+        //            Val(1),
+        //            Var("z")
+        //        ),
+        //        new Fraction(
+        //            new SumDiff
+        //            (
+        //                new Fraction(Var("x"), Val(1000+500*Math.Sin(Time/1.5)), Var("x")),
+        //                Val(Time),
+        //                new Fraction(Var("z"), Val(1000+500*Math.Cos(Time/3)), Var("z"))
+        //            ),
+        //            Val(1)
+        //        )
+        //        
+        //    )
+        //);
 
         Origin["pt3d"] = plotTest3d.Plot(
             (Var("y"), Equation.AxisSpecifier.Y, -500, 500, 20),
