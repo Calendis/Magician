@@ -1,8 +1,7 @@
 namespace Magician.Symbols;
 public abstract class Oper
 {
-    public Oper[] trueArgsOLD;
-    public List<Oper> _oldArgs { get => posArgs.Concat(negArgs).ToList();}
+    public List<Oper> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();
     public abstract double Degree(Variable v);
@@ -10,30 +9,55 @@ public abstract class Oper
     public List<Variable> eventuallyContains = new();
     public bool Contains(Variable v) => eventuallyContains.Contains(v);
 
+    public bool IsEmpty => AllArgs.Count == 0;
     protected string name;
     // TODO: fix bad design. Identity should be a double<T>
     protected int identity = -999;
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
-    protected bool cancelled = false;
+    /* protected bool Rational
+    {
+        get
+        {
+            if (this is Variable v)
+            {
+                if (!v.Found)
+                    return true;
+                // Floats are NOT rational
+                else
+                    return (int)v.Val == v.Val;
+            }
+            foreach (Oper o in AllArgs)
+            {
+                if (!o.Rational)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    } */
     internal Oper? parent = null;
 
     // Alternating form
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
     {
-        this.name = name;
-        //ArgsOLD = cstArgs;
+        if (this is not Variable && cstArgs.Length == 0)
+        {
+            posArgs.Add(new Variable(identity));
+        }
     }
 
     protected Oper(string name, List<Oper> posa, List<Oper> nega)
     {
+        this.name = name;
         posArgs = posa;
         negArgs = nega;
-        foreach (Oper o in _oldArgs)
+        foreach (Oper o in AllArgs)
         {
-           o.parent = this;
-           if (o is Variable v)
+            o.parent = this;
+            if (o is Variable v)
             {
                 if (!v.Found)
                 {
@@ -48,7 +72,6 @@ public abstract class Oper
 
     public static (Oper, Oper) InvertEquationAround(Oper chosenSide, Oper oppositeSide, Oper axis)
     {
-        Scribe.Warn($"Inverting {chosenSide} = {oppositeSide} around {axis}");
         bool capitalize = false;
         if (chosenSide.negArgs.Contains(axis) && !chosenSide.posArgs.Contains(axis))
         {
@@ -59,29 +82,152 @@ public abstract class Oper
         {
             chosenSide.posArgs.Remove(axis);
         }
-        //(chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
         Oper newChosen = axis;
-        Oper newOpposite;
-        Scribe.Warn($"New chosen side is {newChosen}");
-        Scribe.Warn($"Chosen is {chosenSide}");
+
         // Invert chosen
         (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
         chosenSide.posArgs.Add(oppositeSide);
         // Invert it again
         if (capitalize)
             (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
-        //chosenSide.negArgs.AddRange(oppositeSide.negArgs);
-        //if (capitalize)
-        //    newOpposite = chosenSide.New(chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList(), oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList());
-        //else
-        //    newOpposite = chosenSide.New(oppositeSide.posArgs.Concat(chosenSide.negArgs).ToList(), chosenSide.posArgs.Concat(oppositeSide.negArgs).ToList());
-        Scribe.Warn($"New opposite side is {chosenSide}");
+
         return (newChosen, chosenSide.Copy());
 
     }
-    public abstract Variable Solution();
-    public virtual void Simplify()
+
+    public bool Like(Oper o)
     {
+        if (o.GetType() != GetType())
+            return false;
+
+        if (AllArgs.Count != o.AllArgs.Count)
+            return false;
+
+        if (this is Variable v && o is Variable u)
+        {
+            if (v.Found && u.Found)
+                return v.Val == u.Val;
+            else
+                return v == u;
+        }
+
+        for (int i = 0; i < AllArgs.Count; i++)
+        {
+            if (!o.AllArgs[i].Like(AllArgs[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    //public (Fraction, Oper, Oper) ByCoefficient(Variable axis)
+    //{
+    //    if (this is Fraction)
+    //    {
+    //        List<Oper> restPosArgs = new();
+    //        List<Oper> restNegArgs = new();
+    //        List<Oper> coeffPosArgs = new();
+    //        List<Oper> coeffNegArgs = new();
+    //        List<Oper> axisPosArgs = new();
+    //        List<Oper> axisNegArgs = new();
+    //        foreach (Oper o in posArgs)
+    //        {
+    //            if (o is Variable v)
+    //                if (v.Found)
+    //                    coeffPosArgs.Add(v);
+    //                else if (v == axis)
+    //                    axisPosArgs.Add(v);
+    //                else
+    //                    restPosArgs.Add(o);
+    //        }
+    //        foreach (Oper o in negArgs)
+    //        {
+    //            if (o is Variable v)
+    //                if (v.Found)
+    //                    coeffNegArgs.Add(v);
+    //                else if (v == axis)
+    //                    axisNegArgs.Add(v);
+    //                else
+    //                    restNegArgs.Add(o);
+    //        }
+    //        return (
+    //            new Fraction(coeffPosArgs, coeffNegArgs),
+    //            new Fraction(restPosArgs, restNegArgs),
+    //            new Fraction(axisPosArgs, axisNegArgs)
+    //        );
+    //    }
+    //    else
+    //        return (new Fraction(), new Fraction(), this);
+    //}
+    public Fraction ByCoefficient()
+    {
+        if (this is Fraction f)
+        {
+            return f;
+        }
+        else
+            return new Fraction(this, Notate.Val(1));
+    }
+    public abstract Variable Solution();
+    // Simplify in BEDMAS order, in terms of v
+    public void Simplify(Variable v)
+    {
+        // Brackets first, recursively
+        foreach (Oper o in AllArgs)
+            o.Simplify(v);
+
+        // Powers and exponents
+        // TODO
+
+        // Multiply out any factors
+        // TODO
+
+        // Combine like terms
+        // First, format terms by coefficient
+        List<Fraction> matchingTerms = new();
+        List<Fraction> immatchingTerms = new();
+        foreach (Oper o in AllArgs)
+        {
+            if (o.Contains(v))
+            {
+                matchingTerms.Add(o.ByCoefficient());
+            }
+            else
+            {
+                immatchingTerms.Add(o.ByCoefficient());
+            }
+        }
+
+        // AB AC AD BC BD CD
+        Dictionary<(int, int), Oper> matchingIntersections = new();
+        Dictionary<(int, int), Oper> matchingSummedSetDifferences = new();
+        for (int i = 0; i < matchingTerms.Count - 1; i++)
+        {
+            for (int j = 0; j < matchingTerms.Count - i; j++)
+            {
+                // j + i + 1
+                Fraction termA = matchingTerms[i];
+                Fraction termB = matchingTerms[i + j + 1];
+                Fraction intersectFrac = new(
+                    termA.posArgs.Intersect(termB.posArgs).ToList(),
+                    termA.negArgs.Intersect(termB.negArgs).ToList()
+                );
+                matchingIntersections.Add((i, j+i+1), intersectFrac);                
+            }
+        }
+        //
+        Dictionary<(int, int), Oper> immatchingIntersections = new();
+        for (int i = 0; i < immatchingTerms.Count - 1; i++)
+        {
+            for (int j = 0; j < immatchingTerms.Count - 1 - i; j++)
+            {
+                // j + i + 1
+                Fraction termA = immatchingTerms[i];
+                Fraction termB = immatchingTerms[i + j + 1];
+                Fraction intersectFrac = new();
+                matchingIntersections.Add((i, j+i+1), intersectFrac);                
+            }
+        }
     }
 
     // An Oper is considered a term when it:
@@ -93,10 +239,10 @@ public abstract class Oper
     public bool IsTerm
     {
         get
-        {   
+        {
             bool noSumDiffs = false;
             bool rootOrSumDiffParentRoot = false;
-            
+
             // Condition 2
             if (parent == null)
                 rootOrSumDiffParentRoot = true;
@@ -104,39 +250,65 @@ public abstract class Oper
                 rootOrSumDiffParentRoot = true;
 
             // Condition 1
-            foreach (Oper o in _oldArgs)
+            foreach (Oper o in AllArgs)
             {
-                 if (o.Find<SumDiff>())
-                 {
+                if (o.CheckFor<SumDiff>())
+                {
                     noSumDiffs = false;
                     break;
-                 }
-                 noSumDiffs = true;
+                }
+                noSumDiffs = true;
             }
 
             return noSumDiffs && rootOrSumDiffParentRoot;
         }
     }
 
-    public bool Find<T>() where T : Oper
+    public bool CheckFor<T>() where T : Oper
     {
         if (this is T)
         {
             return true;
         }
-        foreach (Oper o in _oldArgs)
+        foreach (Oper o in AllArgs)
         {
-            if (o.Find<T>())
+            if (o.CheckFor<T>())
                 return true;
         }
         return false;
     }
 
+    // Return the coordinates of the shallowest match of a given Oper in the tree, (-1, -1) if not found
+    public (int, int) Locate(Oper target, int depth = 0)
+    {
+        int x = 0;
+        foreach (Oper o in AllArgs)
+        {
+            if (o == target)
+            {
+                return (x, depth);
+            }
+            else
+            {
+                (int, int) location = o.Locate(target, depth + 1);
+                if (location.Item1 == -1 && location.Item2 == -1)
+                {
+                    return location;
+                }
+            }
+            x++;
+        }
+        return (-1, -1);
+    }
+
+    // Write this if necessary
+    //public List<(int, int)> LocateAll
+
     public int Size(int? basket = null)
     {
         basket ??= 0;
 
-        foreach (Oper o in _oldArgs)
+        foreach (Oper o in AllArgs)
         {
             basket += o.Size(basket);
         }
@@ -149,7 +321,7 @@ public abstract class Oper
         if (!commutative)
             throw Scribe.Error("Operator is not commutative");
 
-        (_oldArgs[arg1], _oldArgs[arg0]) = (_oldArgs[arg0], _oldArgs[arg1]);
+        (AllArgs[arg1], AllArgs[arg0]) = (AllArgs[arg0], AllArgs[arg1]);
     }
 
     // Format arguments into the required alternating form
@@ -186,7 +358,7 @@ public abstract class Oper
     {
         associatedArguments ??= new();
         switcher ??= false;
-        foreach (Oper o in _oldArgs)
+        foreach (Oper o in AllArgs)
         {
             if (o is T associativeOperation)
             {
@@ -235,7 +407,7 @@ public abstract class Oper
         varBasket.Add(this);
         layerBasket.Add(counter);
         // Collect opers recursively
-        foreach (Oper o in _oldArgs)
+        foreach (Oper o in AllArgs)
         {
             o.CollectOpers(ref varBasket, ref layerBasket, ref knowns, ref unknowns, counter + 1);
         }

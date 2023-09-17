@@ -7,22 +7,19 @@ public class Equation
     EquationLayers layers;
     EquationLayers layersBackup;
     List<Variable> isolates;
-    public Oper leftHandSide;
-    public Oper rightHandSide;
-    public Fulcrum TheFulcrum { get; private set; }
-    public double Degree(Variable v)
-    {
-        return Math.Abs(leftHandSide.Degree(v) - rightHandSide.Degree(v));
-    }
+    public Oper LHS;
+    public Oper RHS;
+    Fulcrum TheFulcrum { get; set; }
+    public bool IsSolved { get; private set; } = false;
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
         //o0.Simplify();
         //o1.Simplify();
         TheFulcrum = f;
-        leftHandSide = o0;
-        rightHandSide = o1;
+        LHS = o0;
+        RHS = o1;
 
-        layers = new(leftHandSide, rightHandSide);
+        layers = new(LHS, RHS);
         layersBackup = new(o0.Copy(), o1.Copy());
         isolates = new();
         if (o0 is Variable v && !v.Found)
@@ -53,6 +50,7 @@ public class Equation
     // Re-arrange and reconstruct the equation in terms of a certain variable
     public Equation Solved(Variable? v = null)
     {
+        Scribe.Info("Begin solve...");
         // By default, solve for the variable with the highest degree
         // TODO: move code from Solve to here
         if (v == null)
@@ -61,7 +59,7 @@ public class Equation
         }
 
         //throw Scribe.Issue("");
-        Equation? solved = null;
+        Equation? solvedEq = null;
 
         // Algebra machine variables
         int IDX;
@@ -73,56 +71,19 @@ public class Equation
         Variable VAR;
         List<(ManipMode, Side, Variable)> CODE = new()
             {(ManipMode.PICK, Side.LEFT, v)};
+        // These default values don't mean anything. They just need to be invalid and not equal
+        (int, int) LAST_PICK = (-1, 0);
+        (int, int) CURRENT_PICK = (0, -1);
+        Oper? LIVE_BRANCH_LEFT = null;
+        Oper? LIVE_BRANCH_RIGHT = null;
+        Oper?[] TWIG = new[] { LIVE_BRANCH_LEFT, LIVE_BRANCH_RIGHT };
 
         // The algebra solver state machine
         // You should NOT access the state of Equation within this loop, instead referring to layers
+        // The layers variable is reassigned each loop
         while (true)
         {
-            // First, find matches on both sides
-            List<Oper> MATCHES_TERMS_LEFT = new();
-            List<Oper> MATCHES_OTHER_LEFT = new();
-            List<Oper> MATCHES_TERMS_RIGHT = new();
-            List<Oper> MATCHES_OTHER_RIGHT = new();
-            List<Oper>[] MATCHES_TERMS_ALL = { MATCHES_TERMS_LEFT, MATCHES_TERMS_RIGHT };
-            List<Oper>[] MATCHES_OTHER_ALL = { MATCHES_OTHER_LEFT, MATCHES_OTHER_RIGHT };
-
-            // Determine matches on either side
-            int COUNTER = 0;
-            foreach (Dictionary<int, List<Oper>> h in layers.Hands)
-            {
-                if (h[0][0] is Variable v_ && v_ == v)
-                {
-                    MATCHES_TERMS_ALL[COUNTER].Add(h[0][0]);
-                }
-                foreach (Oper o in h[0][0]._oldArgs)
-                {
-                    // If we see the variable in question, that counts as a term automatically
-                    if (o is Variable v__ && v__ == v)
-                    {
-                        MATCHES_TERMS_ALL[COUNTER].Add(o);
-                    }
-                    // otherwise, test to see if o is a term
-                    else if (o.Contains(v))
-                    {
-                        if (o.IsTerm)
-                        {
-                            MATCHES_TERMS_ALL[COUNTER].Add(o);
-                        }
-                        else
-                        {
-                            MATCHES_OTHER_ALL[COUNTER].Add(o);
-                        }
-                    }
-                }
-                COUNTER++;
-            }
-
-            int NUMTERMLEFT = MATCHES_TERMS_LEFT.Count;
-            int NUMTERMRIGHT = MATCHES_TERMS_RIGHT.Count;
-            int NUMOTHERLEFT = MATCHES_OTHER_LEFT.Count;
-            int NUMOTHERRIGHT = MATCHES_TERMS_RIGHT.Count;
-            //bool ANYDIRECT = NUMTERMLEFT + NUMTERMRIGHT > 0;
-            //bool ANYINDIRECT = NUMOTHERLEFT + NUMOTHERRIGHT > 0;
+            Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
 
             if (CODE.Count < 1)
                 throw Scribe.Issue("No instructions provided");
@@ -138,45 +99,101 @@ public class Equation
             OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
-            bool alone = !layers.Hands[(int)SIDE].ContainsKey(1);
+            Scribe.Info($"{MODE}, {SIDE}, {VAR}");
+            bool NEEDS_SIMPLIFY = false;
 
-            // Are we done yet?
-            if (NUMTERMLEFT + NUMTERMRIGHT == 1 && NUMOTHERLEFT + NUMOTHERRIGHT == 0 && alone)
-            {
-                Scribe.Info("Solved!");
-                solved = new(CHOSENROOT[0].Copy(), Fulcrum.EQUALS, OPPOSITEROOT[0].Copy());
-                Scribe.Info(solved);
-                break;
-            }
-
-            //Scribe.Info($"{layers.LeftHand[0][0]}, {layers.RightHand[0][0]}");
-            //Scribe.Info($"{MODE}, {SIDE}, {VAR}");
             if (MODE == ManipMode.PICK)
             {
-                /* 4x4 truth table for determining next instruction */
+                // First, find matches on both sides
+                List<Oper> MATCHES_TERMS_LEFT = new();
+                List<Oper> MATCHES_OTHER_LEFT = new();
+                List<Oper> MATCHES_TERMS_RIGHT = new();
+                List<Oper> MATCHES_OTHER_RIGHT = new();
+                List<Oper>[] MATCHES_TERMS_ALL = { MATCHES_TERMS_LEFT, MATCHES_TERMS_RIGHT };
+                List<Oper>[] MATCHES_OTHER_ALL = { MATCHES_OTHER_LEFT, MATCHES_OTHER_RIGHT };
 
+                // Determine matches on either side
+                int LR_SWITCH = 0;
+                foreach (Dictionary<int, List<Oper>> h in layers.Hands)
+                {
+                    if (h[0][0] is Variable v_ && v_ == v)
+                    {
+                        MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
+                        TWIG[LR_SWITCH] = v;
+                    }
+                    foreach (Oper o in h[0][0].AllArgs)
+                    {
+                        // If we see the variable in question, that counts as a term automatically
+                        if (o is Variable v__ && v__ == v)
+                        {
+                            MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
+                            TWIG[LR_SWITCH] = o;
+                        }
+                        // otherwise, test to see if o is a term
+                        else if (o.Contains(v))
+                        {
+                            if (o.IsTerm)
+                            {
+                                MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
+                            }
+                            else
+                            {
+                                MATCHES_OTHER_ALL[LR_SWITCH].Add(o);
+                            }
+                            TWIG[LR_SWITCH] = o;
+                        }
+                    }
+                    LR_SWITCH++;
+                }
+                if (TWIG[0] is null && TWIG[1] is null)
+                {
+                    throw Scribe.Issue("Tree died");
+                }
+
+                OperMatchLookup LEFTMATCHES = new(layers.LeftHand[0][0], v);
+                OperMatchLookup RIGHTMATCHES = new(layers.RightHand[0][0], v);
+
+                int NUMTERMLEFT = MATCHES_TERMS_LEFT.Count;
+                int NUMTERMRIGHT = MATCHES_TERMS_RIGHT.Count;
+                int NUMOTHERLEFT = MATCHES_OTHER_LEFT.Count;
+                int NUMOTHERRIGHT = MATCHES_OTHER_RIGHT.Count;
+
+                // Are we done yet?
+                bool alone = !layers.Hands[(int)SIDE].ContainsKey(1);
+                if (NUMTERMLEFT + NUMTERMRIGHT == 1 && NUMOTHERLEFT + NUMOTHERRIGHT == 0 && alone)
+                {
+                    solvedEq = new(CHOSENROOT[0].Copy(), Fulcrum.EQUALS, OPPOSITEROOT[0].Copy());
+                    Scribe.Info($"Solved: {solvedEq}");
+                    break;
+                }
+
+                /* 4x4 truth table for determining next instruction */
                 // No direct matches on either side
                 if (NUMTERMLEFT + NUMTERMRIGHT == 0)
                 {
                     // No indirect matches on either side
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
+                        //CURRENT_PICK = (0, 0);
                         throw Scribe.Issue($"Given variable {VAR} was not found");
                     }
                     // One indirect match
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
+                        CURRENT_PICK = (1, 0);
                         CODE.Add((ManipMode.ISOLATE, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (2, 0);
+                        NEEDS_SIMPLIFY = true;
                     }
                     // At least one indirect match on both sides
                     else
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (3, 0);
+                        NEEDS_SIMPLIFY = true;
                     }
                 }
                 // One direct match
@@ -185,9 +202,10 @@ public class Equation
                     // No indirect matches on either side
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
-                        if (CHOSENROOT[0]._oldArgs.Count == 0)
+                        CURRENT_PICK = (0, 1);
+                        if (CHOSENROOT[0].AllArgs.Count == 0)
                         {
-                            Scribe.Warn("Solved!");
+                            Scribe.Info("Solved!");
                             break;
                         }
 
@@ -196,17 +214,29 @@ public class Equation
                     // One indirect match
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
+                        CURRENT_PICK = (1, 1);
                         CODE.Add((ManipMode.EXTRACT, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (2, 1);
+                        // Move the indirect matches to the side with the direct match, if any
+                        if (NUMTERMLEFT * NUMOTHERLEFT == 0)
+                        {
+                            CODE.Add((ManipMode.EXTRACT, NUMTERMLEFT == 0 ? Side.LEFT : Side.RIGHT, VAR));
+                        }
+                        // In the case where a mixture of direct and indirect matches lie one one side, we must simplify
+                        else
+                        {
+                            NEEDS_SIMPLIFY = true;
+                        }
                     }
                     // At least one indirect match on both sides
                     else
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (3, 1);
+                        CODE.Add((ManipMode.EXTRACT, NUMTERMLEFT == 0 ? Side.LEFT : Side.RIGHT, VAR));
                     }
                 }
                 // Multiple direct matches on one side
@@ -215,19 +245,23 @@ public class Equation
                     // No indirect matches
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (0, 2);
+                        NEEDS_SIMPLIFY = true;
                     }
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (1, 2);
+                        NEEDS_SIMPLIFY = true;
                     }
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (2, 2);
+                        NEEDS_SIMPLIFY = true;
                     }
                     else
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (3, 2);
+                        NEEDS_SIMPLIFY = true;
                     }
                 }
                 // At least one direct match one both sides
@@ -236,21 +270,39 @@ public class Equation
                     // No indirect matches
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
-                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0]._oldArgs.Count <= layers.RightHand[0][0]._oldArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CURRENT_PICK = (0, 3);
+                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
+                    // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (1, 3);
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
+                    // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (2, 3);
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
+                    // At least one indirect match on both sides
                     else
                     {
-                        // Possibly unsolveable, expand/simplify
+                        CURRENT_PICK = (3, 3);
+                        //NEEDS_SIMPLIFY = true;
+                        CODE.Add((ManipMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
                     }
                 }
+            }
+
+            if (NEEDS_SIMPLIFY)
+            {
+                //CHOSENROOT[0].Simplify(v);
+                //OPPOSITEROOT[0].Simplify(v);
+                //CODE.Add((ManipMode.PICK, SIDE, VAR));
+                //continue;
             }
 
             // Manipulate the tree in favour of being solved
@@ -258,11 +310,15 @@ public class Equation
             Oper NEWOPPOSITE = OPPOSITEROOT[0];
             if (MODE == ManipMode.ISOLATE)
             {
-                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], MATCHES_TERMS_ALL[(int)SIDE][0]);
+                if (TWIG[(int)SIDE] is null)
+                {
+                    throw Scribe.Issue("Isolated with no live branch");
+                }
+                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
             else if (MODE == ManipMode.EXTRACT)
             {
-                //
+                throw Scribe.Issue("Extract not implemented");
             }
 
             if (CODE.Count == 0)
@@ -270,8 +326,10 @@ public class Equation
                 // If no progress was made, enter PICK mode
                 if (NEWCHOSEN == CHOSENROOT[0] && NEWOPPOSITE == OPPOSITEROOT[0])
                 {
-                    // TODO: Expand Oper here
-                    Scribe.Warn($"No progress: LR: terms: {MATCHES_TERMS_LEFT.Count}, {MATCHES_TERMS_RIGHT.Count}, non: {MATCHES_OTHER_LEFT.Count}, {MATCHES_OTHER_RIGHT.Count}");
+                    if (LAST_PICK == CURRENT_PICK)
+                    {
+                        throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
+                    }
                     CODE.Add((ManipMode.PICK, SIDE, VAR));
                 }
                 // also PICK if we just isolated something
@@ -286,15 +344,13 @@ public class Equation
                 }
             }
 
-
-            //CHOSENDEG = CHOSENROOT[0].Degree(VAR);
-            //OPPOSITEDEG = OPPOSITEROOT[0].Degree(VAR);
-            //CHOSENROOT = layers.Hands[IDX][0];
-            //OPPOSITEROOT = layers.Hands[1 - IDX][0];
+            Scribe.Info($"{LAST_PICK} => {CURRENT_PICK}");
+            LAST_PICK = CURRENT_PICK;
             if (SIDE == Side.LEFT)
                 layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
                 layers = new(NEWOPPOSITE, NEWCHOSEN);
+
 
         }
 
@@ -303,11 +359,10 @@ public class Equation
         layers = layersBackup;
         layersBackup = new(layersBackup.LeftHand[0][0].Copy(), layersBackup.RightHand[0][0].Copy());
 
-        if (solved == null)
-        {
+        if (solvedEq is null)
             throw Scribe.Issue("Error in solve loop");
-        }
-        return solved;
+        solvedEq.IsSolved = true;
+        return solvedEq;
     }
 
     // Evaluate a solved equation with an isolated variable
@@ -385,7 +440,7 @@ public class Equation
             double minDegree = double.MaxValue;
             foreach (Variable v in unknowns)
             {
-                double deg = Degree(v);
+                double deg = Math.Max(Math.Abs(LHS.Degree(v)), Math.Abs(RHS.Degree(v)));
                 if (deg < minDegree && deg != 0)
                 {
                     minDegree = deg;
