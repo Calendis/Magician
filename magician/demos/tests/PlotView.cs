@@ -50,7 +50,7 @@ public class PlotView : Spell
 
         Equation plotTest3d = new(
             new Fraction(
-                new SumDiff(Var("z"), Val(3))
+                new SumDiff(Var("z"), Val(4), Val(1), Val(0), Val(1), Val(0.33), new SumDiff(Val(3)))
             ),
             Equation.Fulcrum.EQUALS,
             new SumDiff(  // This SumDiff should trigger an extract
