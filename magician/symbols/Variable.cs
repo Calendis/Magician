@@ -2,6 +2,7 @@ namespace Magician.Symbols;
 
 public class Variable : Oper
 {
+    protected override int identity { get => throw Scribe.Error("Don't do this pl0x");}
     public bool found = false;
     Quantity q = new Quantity(0);
     public double Val
@@ -36,7 +37,7 @@ public class Variable : Oper
     }
     public Variable(double v) : this($"constant({v})", v) { }
 
-    public override Oper Copy()
+    public override Variable Copy()
     {
         if (!found)
         {
@@ -50,7 +51,8 @@ public class Variable : Oper
     }
 
     /* This is good design */
-    public override Oper New(List<Oper> a, List<Oper> b)
+    // TODO: fix it
+    public override Oper New(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
         throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
     }
@@ -67,8 +69,17 @@ public class Variable : Oper
         return 0;
     }
 
-    //public override void Simplify(Variable v)
-    //{
-    //    base.Simplify(v);
-    //}
+    // TODO: this is wrong, fix it
+    public override Fraction Divide(params Oper[] osa)
+    {
+        OperCompare oc = new();
+        List<Oper> os = osa.ToList();
+        if (os.Contains(this, oc))
+        {
+            os.Remove(this);
+        }
+        if (os.Count > 1)
+            return base.Divide(osa);
+        return new Fraction(new Variable(1));
+    }
 }

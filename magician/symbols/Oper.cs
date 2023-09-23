@@ -1,45 +1,22 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Magician.Symbols;
-public abstract class Oper
+public abstract partial class Oper : IArithmetic
 {
     public List<Oper> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();
     public abstract double Degree(Variable v);
     public string Name => name;
+    public bool cancelled = false;
     public List<Variable> eventuallyContains = new();
-    public bool Contains(Variable v) => eventuallyContains.Contains(v);
+    public bool Contains(Variable v) => (this is Variable v_ && v_ == v) || eventuallyContains.Contains(v);
 
-    public bool IsEmpty => AllArgs.Count == 0;
+    public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     protected string name;
-    // TODO: fix bad design. Identity should be a double<T>
-    protected int identity = -999;
+    protected abstract int identity {get;}
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
-    /* protected bool Rational
-    {
-        get
-        {
-            if (this is Variable v)
-            {
-                if (!v.Found)
-                    return true;
-                // Floats are NOT rational
-                else
-                    return (int)v.Val == v.Val;
-            }
-            foreach (Oper o in AllArgs)
-            {
-                if (!o.Rational)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-    } */
+    protected bool unaryAssociative = false;
     internal Oper? parent = null;
 
     // Alternating form
@@ -51,73 +28,25 @@ public abstract class Oper
         }
     }
 
-    protected Oper(string name, List<Oper> posa, List<Oper> nega)
+    protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
         this.name = name;
-        posArgs = posa;
-        negArgs = nega;
+        posArgs = posa.ToList();
+        negArgs = nega.ToList();
         foreach (Oper o in AllArgs)
         {
             o.parent = this;
-            if (o is Variable v)
-            {
-                if (!v.Found)
-                {
-                    eventuallyContains.Add(v);
-                }
-            }
+            if (o is Variable v && !v.Found)
+                eventuallyContains.Add(v);
             eventuallyContains = eventuallyContains.Union(o.eventuallyContains).ToList();
         }
     }
 
-    public abstract Oper New(List<Oper> pa, List<Oper> na);
-
-    public static (Oper, Oper) InvertEquationAround(Oper chosenSide, Oper oppositeSide, Oper axis)
-    {
-        bool invertedAxis = false;
-        if (chosenSide.negArgs.Contains(axis) && !chosenSide.posArgs.Contains(axis))
-        {
-            invertedAxis = true;
-            chosenSide.negArgs.Remove(axis);
-        }
-        else
-        {
-            chosenSide.posArgs.Remove(axis);
-        }
-        Oper newChosen = axis;
-
-        chosenSide.negArgs.Add(oppositeSide);
-        // Invert if the axis wasn't already inverted
-        if (!invertedAxis)
-            (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
-
-        return (newChosen, chosenSide.Copy());
-
-    }
-
-    public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
-    {
-        Oper newOpposite;
-        if (chosenSide.posArgs.Contains(axis))
-        {
-            chosenSide.posArgs.Remove(axis);
-            newOpposite = chosenSide.New(new() { oppositeSide }, new() { axis });
-        }
-        else if (chosenSide.negArgs.Contains(axis))
-        {
-            chosenSide.negArgs.Remove(axis);
-            newOpposite = chosenSide.New(new() { oppositeSide, axis }, new() { });
-
-        }
-        else
-        {
-            throw Scribe.Issue($"Could not extract {axis} from {chosenSide}");
-        }
-        return (chosenSide, newOpposite);
-    }
-
     public bool Like(Oper o)
     {
+        if (o.unaryAssociative && o.posArgs.Count == 1 && o.negArgs.Count == 0)
+            return Like(o.posArgs[0]);
+
         if (o.GetType() != GetType())
             return false;
 
@@ -141,32 +70,54 @@ public abstract class Oper
         return true;
     }
 
-    public Fraction ByCoefficient()
-    {
-        if (this is Fraction f)
-        {
-            return f;
-        }
-        else
-            return new Fraction(this, new Variable(1));
-    }
     public abstract Variable Solution();
-    // Simplify in BEDMAS order, in terms of v
-    public void Simplify(Variable v)
+    public void Simplify(Variable v, Oper? parent = null)
     {
         // Brackets first, recursively
         foreach (Oper o in AllArgs)
-            o.Simplify(v);
-
+            o.Simplify(v, this);
         Reduce(v);
+
+        // Drop identities
+        posArgs = posArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
+        if (commutative)
+            negArgs = negArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
+
+        // Absorb trivial Opers
+        if (parent is not null)
+        {
+            if (unaryAssociative && posArgs.Count == 1 && negArgs.Count == 0)
+            {
+                if (parent!.negArgs.Contains(this))
+                {
+                    parent.negArgs.Remove(this);
+                    parent.negArgs.AddRange(posArgs);
+                }
+                else if (parent.posArgs.Contains(this))
+                {
+                    parent.posArgs.Remove(this);
+                    parent.posArgs.AddRange(posArgs);
+                }
+            }
+            if (IsEmpty)
+            {
+                if (parent!.negArgs.Contains(this))
+                {
+                    parent.negArgs.Remove(this);
+                    parent.negArgs.Add(new Variable(identity));
+                }
+                else if (parent.posArgs.Contains(this))
+                {
+                    parent.posArgs.Remove(this);
+                    parent.posArgs.Add(new Variable(identity));
+                }
+            }
+        }
     }
 
     // Trivial reduction. Drops identities from the positive arguments
     // Reduce does not necessarily need to use the axis variable, but it may
-    public virtual void Reduce(Variable axis)
-    {
-        posArgs = posArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
-    }
+    public virtual void Reduce(Variable axis) { }
 
     // An Oper is considered a term when it:
     // 1.  Has no SumDiffs anywhere in the tree
@@ -201,6 +152,7 @@ public abstract class Oper
             return noSumDiffs && rootOrSumDiffParentRoot;
         }
     }
+    public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
 
     public bool CheckFor<T>() where T : Oper
     {
@@ -307,10 +259,27 @@ public abstract class Oper
         }
     }
 
-    // TODO: get rid of this method if possible
     public virtual Oper Copy()
     {
         return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList());
+    }
+
+    public virtual SumDiff Add(params Oper[] os)
+    {
+        return new SumDiff(os.Where(o => o is not Variable v || !v.Found || v.Val != 0).Append(this), new List<Oper>() { });
+    }
+    public virtual SumDiff Subtract(params Oper[] os)
+    {
+        return new SumDiff(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 0));
+    }
+    public virtual Fraction Mult(params Oper[] os)
+    {
+        return new Fraction(os.Where(o => o is not Variable v || !v.Found || v.Val != 1).Append(this), new List<Oper>() { });
+    }
+    public virtual Fraction Divide(params Oper[] os)
+    {
+        Scribe.Info($"\tBase dividing {this} by {Scribe.Expand<IEnumerable<Oper>, Oper>(os)}");
+        return new Fraction(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 1));
     }
 }
 
@@ -320,13 +289,15 @@ internal class OperCompare : IEqualityComparer<Oper>
     {
         if (x is null || y is null)
             throw Scribe.Error("Null Oper comparison");
+        if (x == y)
+            return true;
         if (x.Like(y))
             return true;
         return false;
     }
 
-    public int GetHashCode([DisallowNull] Oper obj)
+    int IEqualityComparer<Oper>.GetHashCode(Oper obj)
     {
-        throw new NotImplementedException();
+        return obj.GetHashCode();
     }
 }

@@ -1,17 +1,21 @@
 namespace Magician.Symbols;
 
 // Alternating sum to reprsent addition and subtraction
-public class SumDiff : Oper
+public class SumDiff : Oper, ISum
 {
+    protected override int identity { get => 0; }
+
     public SumDiff(params Oper[] ops) : base("sumdiff", ops)
     {
-        identity = 0;
+        commutative = true;
         associative = true;
+        unaryAssociative = true;
     }
-    public SumDiff(List<Oper> a, List<Oper> b) : base("sumdiff", a, b)
+    public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b)
     {
-        identity = 0;
+        commutative = true;
         associative = true;
+        unaryAssociative = true;
     }
     public override Variable Solution()
     {
@@ -29,7 +33,7 @@ public class SumDiff : Oper
         return new Variable(total);
     }
 
-    public override SumDiff New(List<Oper> a, List<Oper> b)
+    public override SumDiff New(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
         return new SumDiff(a, b);
     }
@@ -49,73 +53,17 @@ public class SumDiff : Oper
 
     public override void Reduce(Variable axis)
     {
-        /* Combine constant integer terms */
-        for (int i = 0; i < posArgs.Count; i++)
-        {
-            Oper o = posArgs[i];
-            if (o is Fraction f && f.posArgs.Count == 1 && f.negArgs.Count == 0)
-            {
-                posArgs.Remove(o);
-                posArgs.AddRange(f.posArgs);
-                Reduce(axis);
-            }
-        }
-        IEnumerable<Oper> plus = posArgs.Where(o => o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity);
-        IEnumerable<Oper> minus = negArgs.Where(o => o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity);
-        List<Oper> posChaff = posArgs.Where(o => !(o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity)).ToList();
-        List<Oper> negChaff = negArgs.Where(o => !(o is Variable v && v.Found && (int)v.Val == v.Val && (int)v.Val != identity)).ToList();
-        int newPlus = plus.Aggregate(0, (total, o) => total + (int)((Variable)o).Val);
-        int newMinus = minus.Aggregate(0, (total, o) => total + (int)((Variable)o).Val);
-        int reducedConstant = newPlus - newMinus;
-        if (reducedConstant < 0)
-            negChaff.Add(new Variable(-reducedConstant));
-        else if (reducedConstant > 0)
-            posChaff.Add(new Variable(reducedConstant));
-        posArgs.Clear(); posArgs.AddRange(posChaff);
-        negArgs.Clear(); negArgs.AddRange(negChaff);
+        CombineConstantTerms(this);
+        CombineLikeTerms(this, axis);
+    }
 
-        /* Combine like terms */
-        Scribe.Warn("Combining like terms...");
-        List<Fraction> matchingTerms = new();
-        List<Fraction> chaffTerms = new();
-        foreach (Oper o in AllArgs)
-        {
-            if (o.Contains(axis))
-                matchingTerms.Add(o.ByCoefficient());
-            else
-                chaffTerms.Add(o.ByCoefficient());
-        }
-
-        // AB AC AD BC BD CD
-        Dictionary<(int, int), Oper> matchingIntersections = new();
-        Dictionary<(int, int), Oper> matchingSummedSetDifferences = new();
-        for (int i = 0; i < matchingTerms.Count - 1; i++)
-        {
-            for (int j = 0; j < matchingTerms.Count - i; j++)
-            {
-                // j + i + 1
-                Fraction termA = matchingTerms[i];
-                Fraction termB = matchingTerms[i + j + 1];
-                Fraction intersectFrac = new(
-                    termA.posArgs.Intersect(termB.posArgs, new OperCompare()).ToList(),
-                    termA.negArgs.Intersect(termB.negArgs, new OperCompare()).ToList()
-                );
-                matchingIntersections.Add((i, j + i + 1), intersectFrac);
-            }
-        }
-        //
-        Dictionary<(int, int), Oper> immatchingIntersections = new();
-        for (int i = 0; i < chaffTerms.Count - 1; i++)
-        {
-            for (int j = 0; j < chaffTerms.Count - 1 - i; j++)
-            {
-                // j + i + 1
-                Fraction termA = chaffTerms[i];
-                Fraction termB = chaffTerms[i + j + 1];
-                Fraction intersectFrac = new();
-                matchingIntersections.Add((i, j + i + 1), intersectFrac);
-            }
-        }
+    public override SumDiff Add(params Oper[] os)
+    {
+        return New(posArgs.Concat(os), negArgs);
+    }
+    public override SumDiff Subtract(params Oper[] os)
+    {
+        return New(posArgs, negArgs.Concat(os));
     }
 
     public override string ToString()
@@ -138,17 +86,20 @@ public class SumDiff : Oper
 }
 
 // Alternating reciprocal
-public class Fraction : Oper
+public class Fraction : Oper, IFrac
 {
-    public Fraction(List<Oper> a, List<Oper> b) : base("fraction", a, b)
+    protected override int identity { get => 1; }
+    public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b)
     {
-        identity = 1;
+        commutative = true;
         associative = true;
+        unaryAssociative = true;
     }
     public Fraction(params Oper[] ops) : base("fraction", ops)
     {
-        identity = 1;
+        commutative = true;
         associative = true;
+        unaryAssociative = true;
     }
 
     public override Variable Solution()
@@ -167,7 +118,7 @@ public class Fraction : Oper
         return new Variable(quo);
     }
 
-    public override Oper New(List<Oper> a, List<Oper> b)
+    public override Fraction New(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
         return new Fraction(a, b);
     }
@@ -176,6 +127,58 @@ public class Fraction : Oper
     public override double Degree(Variable v)
     {
         return posArgs.Select(o => o.Degree(v)).Sum() - negArgs.Select(o => o.Degree(v)).Sum();
+    }
+
+    public override Fraction Mult(params Oper[] osa)
+    {
+        if (osa.Length == 1 && osa[0] is Fraction)
+            if (osa[0].negArgs.Count == 0)
+                return Mult(osa[0].posArgs.ToArray());
+            else if (osa[0].posArgs.Count == 0)
+                return Divide(osa[0].posArgs.ToArray());
+
+        OperCompare oc = new();
+        List<Oper> os = osa.ToList();
+        List<Oper> final = new(negArgs);
+        for (int i = 0; i < os.Count; i++)
+        {
+            Oper o = os[i];
+            if (posArgs.Contains(o, oc))
+            {
+                if (o is Variable)
+                    final.Remove(o);
+                else
+                    final.Remove(o.posArgs[0]);
+                os.Remove(o);
+            }
+        }
+        return New(posArgs.Concat(os), final);
+    }
+    public override Fraction Divide(params Oper[] osa)
+    {
+        Scribe.Info($"\tDividing {this} by {Scribe.Expand<IEnumerable<Oper>, Oper>(osa)}");
+        if (osa.Length == 1 && osa[0] is Fraction)
+            if (osa[0].negArgs.Count == 0)
+                return Divide(osa[0].posArgs.ToArray());
+            else if (osa[0].posArgs.Count == 0)
+                return Mult(osa[0].posArgs.ToArray());
+
+        OperCompare oc = new();
+        List<Oper> os = osa.ToList();
+        List<Oper> pos = new(posArgs);
+        for (int i = 0; i < os.Count; i++)
+        {
+            Oper o = os[i];
+            if (posArgs.Contains(o, oc))
+            {
+                if (o is Variable)
+                    pos.Remove(o);
+                else
+                    pos.Remove(o.posArgs[0]);
+                os[i].cancelled = true;
+            }
+        }
+        return New(pos, negArgs.Concat(os.Where(o => !o.cancelled)));
     }
 
     public override string ToString()
