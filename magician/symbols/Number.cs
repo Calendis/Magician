@@ -9,3 +9,24 @@ public enum Numberkind : short
     Imaginary = 0b00001000,
     Complex = 0b00010001,
 }
+
+public interface IAdd
+{
+    public SumDiff Add(params Oper[] os);
+}
+public interface ISubtract
+{
+    public SumDiff Subtract(params Oper[] os);
+}
+public interface IMult
+{
+    public Fraction Mult(params Oper[] os);
+}
+public interface IDivide
+{
+    public Fraction Divide(params Oper[] os);
+}
+
+public interface ISum : IAdd, ISubtract {}
+public interface IFrac : IMult, IDivide {}
+public interface IArithmetic : ISum, IFrac {}
