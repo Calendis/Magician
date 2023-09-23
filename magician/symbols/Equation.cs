@@ -50,7 +50,7 @@ public class Equation
     // Re-arrange and reconstruct the equation in terms of a certain variable
     public Equation Solved(Variable? v = null)
     {
-        Scribe.Info($"We have {this}");
+        Scribe.Info($"Solving {this} for {v}");
         // By default, solve for the variable with the highest degree
         // TODO: move code from Solve to here
         if (v == null)
@@ -82,6 +82,7 @@ public class Equation
         // The algebra solver state machine
         // You should NOT access the state of Equation within this loop, instead referring to layers
         // The layers variable is reassigned each loop
+        int totalInstructions = 0;
         while (true)
         {
             if (CODE.Count < 1)
@@ -89,6 +90,7 @@ public class Equation
 
             (Mode, Side, Variable) INSTRUCTION = CODE[0];
             CODE.RemoveAt(0);
+            totalInstructions ++;
 
             MODE = INSTRUCTION.Item1;
             SIDE = INSTRUCTION.Item2;
@@ -98,14 +100,13 @@ public class Equation
             OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
-            if (NOCHANGE(CHOSENROOT[0], OPPOSITEROOT[0]))
-                Scribe.Info($"We have {layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
-            string STATUS = $"Next, {MODE} {VAR}";
+            string STATUS = $"{MODE} {VAR}";
             if (MODE != Mode.PICK)
             {
                 STATUS += $" on the {SIDE} side";
             }
             Scribe.Info(STATUS);
+            Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
 
             if (MODE == Mode.PICK)
             {
@@ -167,7 +168,7 @@ public class Equation
                 if (NUMTERMLEFT + NUMTERMRIGHT == 1 && NUMOTHERLEFT + NUMOTHERRIGHT == 0 && alone)
                 {
                     solvedEq = new(CHOSENROOT[0].Copy(), Fulcrum.EQUALS, OPPOSITEROOT[0].Copy());
-                    Scribe.Info($"Solved: {solvedEq}");
+                    Scribe.Info($"Solved in {totalInstructions} instructions: {solvedEq}");
                     break;
                 }
 
@@ -331,7 +332,7 @@ public class Equation
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("Isolated with no live branch");
-                (NEWCHOSEN, NEWOPPOSITE) = Oper.InvertEquationAround(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
+                (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
             }
             else if (MODE == Mode.EXTRACT)
             {
@@ -341,7 +342,7 @@ public class Equation
             }
             else if (MODE == Mode.EXPAND)
             {
-                if (SIDE == Side.BOTH)
+                if (true || SIDE == Side.BOTH)
                 {
                     CHOSENROOT[0].Associate();
                     OPPOSITEROOT[0].Associate();
@@ -383,7 +384,6 @@ public class Equation
                 }
             }
 
-            //Scribe.Warn($"{LAST_PICK} => {CURRENT_PICK}");
             LAST_PICK = CURRENT_PICK;
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
@@ -391,8 +391,6 @@ public class Equation
                 layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
                 layers = new(NEWOPPOSITE, NEWCHOSEN);
-
-
         }
 
         Side SMALLESTCHAFFDEGREE()
@@ -504,8 +502,10 @@ public class Equation
             foreach (Variable v in unknowns)
             {
                 double deg = Math.Max(Math.Abs(LHS.Degree(v)), Math.Abs(RHS.Degree(v)));
-                if (deg < minDegree && deg != 0)
+                if (deg < minDegree)
                 {
+                    if (deg == 0)
+                        Scribe.Warn($"deg was 0");
                     minDegree = deg;
                     chosenSolveVar = v;
                 }
