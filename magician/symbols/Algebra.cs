@@ -22,6 +22,7 @@ public abstract partial class Oper
         // Invert if the axis wasn't already inverted
         if (!invertedAxis)
             (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
+        chosenSide.Simplify(v);
 
         return (newChosen, chosenSide.Copy());
 
@@ -102,7 +103,7 @@ public abstract partial class Oper
             {
                 if (separatedTerms[0].Item2)
                 {
-                    finalPosArgs.Add(separatedTerms[1].Item1);
+                    finalPosArgs.Add(separatedTerms[0].Item1);
                     continue;
                 }
                 else
@@ -173,7 +174,14 @@ public abstract partial class Oper
                     else
                         ABbar = A.Divide(AB).Add(B.Divide(AB));
 
-                    Oper combined = AB.Mult(ABbar);
+                    Oper combined;
+                    if (A is Variable av && av.Found && av.Val == 0)
+                        combined = B;
+                    else if (B is Variable bv && bv.Found && bv.Val == 0)
+                        combined = A;
+                    else
+                        combined = AB.Mult(ABbar);
+                    
                     Scribe.Warn($" A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
                     
                     // TODO: you must account for both polarities, not just one
@@ -250,13 +258,13 @@ public abstract partial class Oper
                 else
                     return new Variable(1);
             if (v.Found)
-                return new Variable(1);
+                return new Variable(v.Val == 0 ? 0 : 1);
             o = p.New(new List<Oper>{o}, new List<Oper>{});
         }
         if (p is Variable uu)
         {
             if (uu.Found)
-                return new Variable(1);
+                return new Variable(uu.Val == 0 ? 0 : 1);
             p = o.New(new List<Oper>{p}, new List<Oper>{});
         }
         IEnumerable<Oper> pos = IntersectPos(o, p);
