@@ -70,7 +70,7 @@ public abstract partial class Oper
     public static void CombineLikeTerms(SumDiff sd, Variable axis)
     {
 
-        Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
+        //Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
         List<(Oper, bool)> termsContainingAxis = new();
@@ -146,7 +146,7 @@ public abstract partial class Oper
             while (termsNeedingHandshake.Count > 0)
             {
                 int termIdx = 0;//termsNeedingHandshake[0];
-                Scribe.Warn($"Term {termsNeedingHandshake[termIdx]} needs a handshake, remaining: {termsNeedingHandshake.Count} ({Scribe.Expand<List<int>, int>(termsNeedingHandshake)})");
+                //Scribe.Warn($"Term {termsNeedingHandshake[termIdx]} needs a handshake, remaining: {termsNeedingHandshake.Count} ({Scribe.Expand<List<int>, int>(termsNeedingHandshake)})");
                 // Pick one of the possible handshakes for this term
                 foreach ((int, int, bool, bool) flaggedHandshake in termsToHandshakes[termsNeedingHandshake[0]])
                 {
@@ -182,7 +182,7 @@ public abstract partial class Oper
                     else
                         combined = AB.Mult(ABbar);
                     
-                    Scribe.Warn($" A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
+                    //Scribe.Warn($" A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
                     
                     // TODO: you must account for both polarities, not just one
                     if (aPositive || bPositive)
@@ -200,52 +200,11 @@ public abstract partial class Oper
             }
         }
         // Apply the changes
-        Scribe.Info($"Got {new SumDiff(finalPosArgs, finalNegArgs)}");
+        //Scribe.Info($"Got {new SumDiff(finalPosArgs, finalNegArgs)}");
         sd.posArgs.Clear();
         sd.posArgs.AddRange(finalPosArgs);
         sd.negArgs.Clear();
         sd.negArgs.AddRange(finalNegArgs);
-    }
-
-    public static Oper Exclude(Oper o, Oper p)
-    {
-        Scribe.Warn($"\t{o} exclude {p}");
-        if (o is Variable)
-            if (o == p)
-                return new Variable(1);
-            else
-                return o;
-        if (o.Like(p))
-            return new Variable(1);
-        OperCompare oc = new();
-        Scribe.Warn($"\t{Scribe.Expand<List<Oper>, Oper>(o.posArgs)} except {Scribe.Expand<List<Oper>, Oper>(p.posArgs)}");
-        List<Oper> finalPosArgs = new();
-        List<Oper> finalNegArgs = new();
-        List<Oper>[] finalArgs = new[] {finalPosArgs, finalNegArgs};
-        List<Oper>[] keepArgs = new[] {o.posArgs, o.negArgs};
-        List<Oper>[] exclArgs = new[] {p.posArgs, p.negArgs};
-        for (int i = 0; i < 2; i++)
-        {
-            List<Oper> currentKeepArgs = keepArgs[i];
-            List<Oper> currentExclArgs = exclArgs[i];
-            foreach (Oper exclArg in currentExclArgs)
-            {
-                List<int> toRemove = new();
-                for (int j = 0; j < currentKeepArgs.Count; j++)
-                {
-                    Oper a = currentKeepArgs[j];
-                    if (a.Like(exclArg))
-                    {
-                        toRemove.Add(j);
-                        break;  // Each exclude works for one Oper only. This is why we can't use .Except()
-                    }
-                }
-                toRemove.ForEach(i => currentKeepArgs.RemoveAt(i));
-            }
-            finalArgs[i].AddRange(currentKeepArgs);
-        }
-        return o.New(finalPosArgs, finalNegArgs);
-        //return o.New(o.posArgs.Except(p.posArgs, oc), o.negArgs.Except(p.negArgs, oc)).Copy();
     }
 
     public static Oper Intersect(Oper o, Oper p)
