@@ -9,13 +9,13 @@ public class SumDiff : Oper, ISum
     {
         commutative = true;
         associative = true;
-        unaryAssociative = true;
+        unaryNoOp = true;
     }
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b)
     {
         commutative = true;
         associative = true;
-        unaryAssociative = true;
+        unaryNoOp = true;
     }
     public override Variable Solution()
     {
@@ -93,13 +93,13 @@ public class Fraction : Oper, IFrac
     {
         commutative = true;
         associative = true;
-        unaryAssociative = true;
+        unaryNoOp = true;
     }
     public Fraction(params Oper[] ops) : base("fraction", ops)
     {
         commutative = true;
         associative = true;
-        unaryAssociative = true;
+        unaryNoOp = true;
     }
 
     public override Variable Solution()
@@ -156,7 +156,6 @@ public class Fraction : Oper, IFrac
     }
     public override Fraction Divide(params Oper[] osa)
     {
-        Scribe.Info($"\tDividing {this} by {Scribe.Expand<IEnumerable<Oper>, Oper>(osa)}");
         if (osa.Length == 1 && osa[0] is Fraction)
             if (osa[0].negArgs.Count == 0)
                 return Divide(osa[0].posArgs.ToArray());
