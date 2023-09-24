@@ -331,23 +331,24 @@ public class Equation
             if (MODE == Mode.ISOLATE)
             {
                 if (TWIG[(int)SIDE] is null)
-                    throw Scribe.Issue("Isolated with no live branch");
+                    throw Scribe.Issue("No live branch to isolate axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
             }
             else if (MODE == Mode.EXTRACT)
             {
                 if (TWIG[(int)SIDE] is null)
-                    throw Scribe.Issue("Isolated with no live branch");
+                    throw Scribe.Issue("No live branch to extract axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
             else if (MODE == Mode.EXPAND)
             {
-                if (true || SIDE == Side.BOTH)
+                if (SIDE == Side.BOTH)
                 {
                     CHOSENROOT[0].Associate();
                     OPPOSITEROOT[0].Associate();
                     CHOSENROOT[0].Simplify(v);
                     OPPOSITEROOT[0].Simplify(v);
+                    
                 }
                 else
                 {
