@@ -16,7 +16,7 @@ public abstract partial class Oper : IArithmetic
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
-    protected bool unaryAssociative = false;
+    protected bool unaryNoOp = false;
     internal Oper? parent = null;
 
     // Alternating form
@@ -44,7 +44,7 @@ public abstract partial class Oper : IArithmetic
 
     public bool Like(Oper o)
     {
-        if (o.unaryAssociative && o.posArgs.Count == 1 && o.negArgs.Count == 0)
+        if (o.unaryNoOp && o.posArgs.Count == 1 && o.negArgs.Count == 0)
             return Like(o.posArgs[0]);
 
         if (o.GetType() != GetType())
@@ -86,7 +86,7 @@ public abstract partial class Oper : IArithmetic
         // Absorb trivial Opers
         if (parent is not null)
         {
-            if (unaryAssociative && posArgs.Count == 1 && negArgs.Count == 0)
+            if (unaryNoOp && posArgs.Count == 1 && negArgs.Count == 0)
             {
                 if (parent!.negArgs.Contains(this))
                 {
@@ -115,8 +115,6 @@ public abstract partial class Oper : IArithmetic
         }
     }
 
-    // Trivial reduction. Drops identities from the positive arguments
-    // Reduce does not necessarily need to use the axis variable, but it may
     public virtual void Reduce(Variable axis) { }
 
     // An Oper is considered a term when it:
@@ -278,7 +276,6 @@ public abstract partial class Oper : IArithmetic
     }
     public virtual Fraction Divide(params Oper[] os)
     {
-        Scribe.Info($"\tBase dividing {this} by {Scribe.Expand<IEnumerable<Oper>, Oper>(os)}");
         return new Fraction(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 1));
     }
 }
