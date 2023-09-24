@@ -127,7 +127,7 @@ public class PlotView : Spell
             new SumDiff(new Fraction(
                 Var("y"),
                 Val(0.33)
-            ), Val(0), Var("y")),
+            ), Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
             Equation.Fulcrum.EQUALS,
             new Fraction(
                 new SumDiff(
