@@ -23,7 +23,7 @@ A ParamMap allows for any number of outs, but only one in. This is a parametric 
 A DirectMap allowed for zero or one ins, and exactly one out. This is a function of a single variable y = f(x)
 
 ### Interactivity
-Magician currently offers limited user interactivity, defineable through IMaps.
+Magician currently offers limited user interactivity. Controls and Sensors defineable through Maps
 
 ## Usage/Examples
 Currently, Magician has basic functionality, but is not ready for general use. It is best used by writing a class that inherits Spell, loading it with the Spellcaster, and calling the Spell methods from the SDL loop. A spell consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
