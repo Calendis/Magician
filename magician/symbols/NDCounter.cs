@@ -20,19 +20,19 @@ public class NDCounter
         return (maxs[axis]-mins[axis]) / ress[axis];
     }
 
-    public NDCounter(params (double, double, double)[] ranges)
+    public NDCounter(params Range[] ranges)
     {
         Dims = ranges.Length;
         ress = new double[Dims];
         mins = new double[Dims]; maxs = new double[Dims]; vals = new int[Dims];
 
         int i = 0;
-        foreach ((double, double, double) t in ranges)
+        foreach (Range t in ranges)
         {
-            mins[i] = t.Item1;
+            mins[i] = t.Min;
             vals[i] = 0;
-            maxs[i] = t.Item2;
-            ress[i] = t.Item3;
+            maxs[i] = t.Max;
+            ress[i] = t.Res;
             counterMax *= (maxs[i] - mins[i]) / ress[i];
             i++;
         }
