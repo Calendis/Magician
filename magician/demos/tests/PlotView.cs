@@ -110,8 +110,7 @@ public class EqPlotting : Spell
 );
 
         SolvedEquation spt3d = plotTest3d.Solved();
-        Origin["pt3d"] = spt3d.Plot(
-            new PlotOptions(AxisSpecifier.Y, new(-500, 500, 20)),
+        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
             new(AxisSpecifier.X, new(-500, 500, 20)),
             new(AxisSpecifier.Z, new(-500, 500, 40))
         );
