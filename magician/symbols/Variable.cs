@@ -68,17 +68,4 @@ public class Variable : Oper
             return 1;
         return 0;
     }
-
-    public override Fraction Divide(params Oper[] osa)
-    {
-        OperCompare oc = new();
-        List<Oper> os = osa.ToList();
-        if (os.Count > 1)
-            return base.Divide(osa);
-        if (os.Contains(this, oc))
-        {
-            os.Remove(this);
-        }
-        return new Fraction(new Variable(1));
-    }
 }

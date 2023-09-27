@@ -70,7 +70,7 @@ public abstract partial class Oper
     public static void CombineLikeTerms(SumDiff sd, Variable axis)
     {
 
-        Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
+        //Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
         List<(Oper, bool)> termsContainingAxis = new();
@@ -92,6 +92,8 @@ public abstract partial class Oper
                 termsNotContainingAxis.Add((no, false));
             else if (v.Found)
                 finalNegArgs.Add(v);
+        //Scribe.Warn($"  TCA: {Scribe.Expand<IEnumerable<(Oper, bool)>, (Oper, bool)>(termsContainingAxis)}");
+        //Scribe.Warn($"  NCA: {Scribe.Expand<IEnumerable<(Oper, bool)>, (Oper, bool)>(termsNotContainingAxis)}");
 
         foreach (List<(Oper, bool)> separatedTerms in new List<List<(Oper, bool)>> { termsContainingAxis, termsNotContainingAxis })
         {
@@ -182,7 +184,7 @@ public abstract partial class Oper
                     else
                         combined = AB.Mult(ABbar);
                     
-                    //Scribe.Warn($" A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
+                    //Scribe.Warn($"  A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
                     
                     // TODO: you must account for both polarities, not just one
                     if (aPositive || bPositive)
