@@ -1,4 +1,4 @@
-using System;
+using Magician.Maps;
 
 namespace Magician.Interactive;
 

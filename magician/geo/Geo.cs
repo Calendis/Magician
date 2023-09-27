@@ -1,6 +1,4 @@
-using System;
-using Magician.Library;
-using Magician.UI;
+using Magician.Maps;
 
 namespace Magician.Geo;
 

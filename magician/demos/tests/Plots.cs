@@ -1,6 +1,5 @@
-using Magician.Symbols;
 using Magician.Library;
-using static Magician.Symbols.Notate;
+using Magician.Maps;
 
 namespace Magician.Demos.Tests;
 

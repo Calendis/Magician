@@ -1,4 +1,4 @@
-using System;
+using Magician.Maps;
 
 namespace Magician;
 public class Brush : ParamMap

@@ -1,6 +1,7 @@
 using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
+using Magician.Maps;
 
 namespace Magician.Demos;
 public class DefaultSpell : Spell

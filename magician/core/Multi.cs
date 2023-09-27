@@ -4,7 +4,7 @@
 using System.Collections;
 using Magician.Geo;
 using Magician.Renderer;
-using Magician.Symbols;
+using Magician.Maps;
 using Silk.NET.Maths;
 
 namespace Magician;

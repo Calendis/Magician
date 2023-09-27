@@ -2,12 +2,7 @@
     The Spell provides the environment for the simulation. It does nothing until you pass it to the
     Spellcaster.Cast method
  */
-
-
-using Magician.Renderer;
-using Magician.UI;
 using Magician.Geo;
-using Magician.Interactive;
 using Magician.Data;
 
 namespace Magician.Library

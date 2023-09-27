@@ -95,12 +95,25 @@ public class PlotView : Spell
         //        
         //    )
         //);
+        Equation plotTest3d = new(
+    new SumDiff(new Fraction(
+        Var("y"),
+        Val(Math.Sin(Time / 3) / 6)
+    ), Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
+    Fulcrum.EQUALS,
+    new Fraction(
+        new SumDiff(
+            new Fraction(Var("x"), Val(230), Var("x")),
+            new Fraction(Var("z"), Val(230), Var("z"))
+        )
+    )
+);
 
-        //Origin["pt3d"] = plotTest3d.Plot(
-        //    (Var("y"), Equation.AxisSpecifier.Y, -500, 500, 20),
-        //    (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
-        //    (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
-        //);
+        Origin["pt3d"] = plotTest3d.Plot(
+            (Var("y"), AxisSpecifier.Y, -500, 500, 20),
+            (Var("x"), AxisSpecifier.X, -500, 500, 20),
+            (Var("z"), AxisSpecifier.Z, -500, 500, 40)
+        );
 
     }
 
@@ -123,25 +136,11 @@ public class PlotView : Spell
         //    Val(100000)
         //);
 
-        Equation plotTest3d = new(
-            new SumDiff(new Fraction(
-                Var("y"),
-                Val(0.33)
-            ), Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
-            Equation.Fulcrum.EQUALS,
-            new Fraction(
-                new SumDiff(
-                    new Fraction(Var("x"), Val(230), Var("x")),
-                    new Fraction(Var("z"), Val(230), Var("z"))
-                )
-            )
-        );
-
-        Origin["pt3d"] = plotTest3d.Plot(
-            (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-            (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
-            (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
-        );
+        //Origin["pt3d"] = plotTest3d.Plot(
+        //    (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
+        //    (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
+        //    (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
+        //);
 
         //Equation threePlane = new(
         //    Let("y"),

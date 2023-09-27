@@ -1,4 +1,4 @@
-using System.Collections;
+using Magician.Maps;
 
 namespace Magician.Symbols;
 public class Seq : DirectMap

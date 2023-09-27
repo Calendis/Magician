@@ -1,4 +1,5 @@
 namespace Magician;
+using Magician.Maps;
 
 public class Driver
 {

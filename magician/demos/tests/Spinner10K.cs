@@ -1,5 +1,6 @@
 using Magician.Geo;
 using Magician.Library;
+using Magician.Maps;
 
 namespace Magician.Demos.Tests;
 public class Spinner10K : Spell

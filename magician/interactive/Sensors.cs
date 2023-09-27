@@ -1,4 +1,5 @@
 namespace Magician.Interactive;
+using Magician.Maps;
 public static class Sensor
 {
     public static DirectMap Click = new DirectMap(b => Events.Click ? 1 : 0);

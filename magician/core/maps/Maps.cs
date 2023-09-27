@@ -1,20 +1,19 @@
-namespace Magician;
-
-using System.Reflection;
-using Magician.Symbols;
+namespace Magician.Maps;
 using static Magician.Geo.Create;
 
-// General equation with multiple branches
+// Multiple inputs, multiple outputs
 public class RelationalMap
 {
-    public Func<double[], double[]> Map;
-    public RelationalMap(Func<double[], double[]> m)
+    protected Func<double[], double[]>? map;
+    public RelationalMap(Func<double[], double[]>? m = null)
     {
-        Map = m;
+        map = m;
     }
     public double[] Evaluate(double[] xs)
     {
-        return Map.Invoke(xs);
+        if (map is null)
+            throw Scribe.Issue("Null relational map");
+        return map.Invoke(xs);
     }
     public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
@@ -22,26 +21,27 @@ public class RelationalMap
     }
 }
 
-// General equation
+// Multiple inputs, output
 public class InverseParamMap : RelationalMap
 {
-    int ins;
-    int outs;
-    public InverseParamMap(Func<double[], double> f) : base(xs => new double[] { f.Invoke(xs) }) { }
+    public InverseParamMap(Func<double[], double>? f=null) : base(f is null ? null : xs => new double[] { f.Invoke(xs) }) { }
 
-    public new double Evaluate(double[] xs)
+    public new double Evaluate(params double[] xs)
     {
         return base.Evaluate(xs)[0];
     }
 
     public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     {
-        // TODO: move plotting code here
-        throw Scribe.Error("not implemented. Use an Equation instead");
+        throw Scribe.Issue("Move plotting code to here from Equation");
+    }
+    public static Func<double[], double[]> MapFromFunc(Func<double[], double> f)
+    {
+        return xs => new double[] {f.Invoke(xs)};
     }
 }
 
-// Parametric equation
+// Parametric equation. One input, multiple outputs
 public class ParamMap : RelationalMap
 {
     public int Params { get; set; }
@@ -106,6 +106,7 @@ public class ParamMap : RelationalMap
     }
 }
 
+// One input, one output
 public class DirectMap : ParamMap
 {
     public DirectMap(Func<double, double> f) : base(f) { }
