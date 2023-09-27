@@ -7,18 +7,19 @@ public class SolvedEquation : InverseParamMap
     Variable solvedVar;
     Oper chosen, opposite;
     public Equation Eq => eq;
+    public Variable SolvedVar => solvedVar;
 
     // Constructs a solved equation from sides
-    public SolvedEquation(Oper chosenRoot, Fulcrum fulc, Oper oppositeRoot, Variable v)
+    public SolvedEquation(Oper chosenRoot, Fulcrum fulc, Oper oppositeRoot, Variable v, int ins) : base(null, ins)
     {
         eq = new(chosenRoot, fulc, oppositeRoot);
         chosen = chosenRoot;
         opposite = oppositeRoot;
         solvedVar = v;
-        map = MapFromFunc(SEvaluate);
+        map = MapFromIPFunc(Evaluate);
     }
 
-    internal double SEvaluate(params double[] vals)
+    public override double Evaluate(params double[] vals)
     {
         if (vals.Length != eq.Unknowns.Length - 1)
         {
