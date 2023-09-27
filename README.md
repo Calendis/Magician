@@ -6,21 +6,27 @@ Magician is in extremely early stages and is a general-purpose mathematical engi
 
 ## Features/Design
 
-Magician is built around two core abstractions, Multis and IMaps.
+Magician is built around two core abstractions, Multis and Maps.
 ### Multi
-A Multi is recursively-defined geometry. Anything drawn to the screen is a Multi, or a Texture, which is always a member of a Multi
+A Multi is a tree of 3-vectors that defines geometrical objects
 
-Each Multi stores its position relative to its parent, but not its absolute position. A Multi contains flags that determine how it is drawn, either as a plot, or a filled/outlined geometrical shape.
-### IMap
-An IMap represents a one-dimensional mathematical function f(x). They can be defined in multiple ways, such as with a lambda, or with built-in features like a sequence of polynomial terms. IMaps cam be used to define dynamic behaviour or to render plots in the form of a Multi.
-#### Multimap
-A Multimap is an IMap with an arbitrary number of inputs and outputs. This is useful for defining parametric movement/plots.
+Each Multi stores its position relative to its parent in the tree. A Multi contains flags that determine how it is drawn, either as a plot, or a 2D/3D geometrical shape.
+### Maps
+Maps represent mathematical functions from some number of inputs to some number of outputs
+#### RelationalMap
+The most general case, a relational map allows for any number of ins to any number of outs
+#### InverseParamMap
+An IPM allows for any number of ins, but only one out. This is a solved equation, a function t = f(x,y,z,...)
+#### ParamMap
+A ParamMap allows for any number of outs, but only one in. This is a parametric equation f(t) = (x,y,z,...)
+#### DirectMap
+A DirectMap allowed for zero or one ins, and exactly one out. This is a function of a single variable y = f(x)
 
 ### Interactivity
 Magician currently offers limited user interactivity, defineable through IMaps.
 
 ## Usage/Examples
-Currently, Magician has basic functionality, but is not ready for general use. It is best used by writing a class that inherits Spell, adding that Spell to a Spellcaster, and calling the Spell methods from the SDL loop. A spell consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
+Currently, Magician has basic functionality, but is not ready for general use. It is best used by writing a class that inherits Spell, loading it with the Spellcaster, and calling the Spell methods from the SDL loop. A spell consists of the Preloop, which runs once and the Loop, which runs every frame. The following examples are written in the Preloop.
 #### These examples reflect usage as of Magician Alpha 0.0, and may break at any time
 
 ```c#
