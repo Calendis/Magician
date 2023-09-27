@@ -456,24 +456,6 @@ public class Equation : RelationalMap
         return Approximate(vals, unknowns[0]);
     }
 
-    Oper SolvedSide(Variable v)
-    {
-        Oper solvedSide;
-        if (v == layers.LeftHand[0][0])
-        {
-            solvedSide = layers.RightHand[0][0];
-        }
-        else if (v == layers.RightHand[0][0])
-        {
-            solvedSide = layers.LeftHand[0][0];
-        }
-        else
-        {
-            throw Scribe.Error($"Equation {this} has not been solved for {v}");
-        }
-        return solvedSide;
-    }
-
     public override string ToString()
     {
         string fulcrumString = "";
