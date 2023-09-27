@@ -2,7 +2,7 @@ namespace Magician.Symbols;
 
 public class Variable : Oper
 {
-    protected override int identity { get => throw Scribe.Error("Don't do this pl0x");}
+    protected override int identity { get => throw Scribe.Error("Undefined");}
     public bool found = false;
     Quantity q = new Quantity(0);
     public double Val
@@ -59,7 +59,7 @@ public class Variable : Oper
 
     public override Variable Solution()
     {
-        throw Scribe.Issue("This should never occur");
+        return new Variable(Val);
     }
 
     public override double Degree(Variable v)
@@ -69,17 +69,16 @@ public class Variable : Oper
         return 0;
     }
 
-    // TODO: this is wrong, fix it
     public override Fraction Divide(params Oper[] osa)
     {
         OperCompare oc = new();
         List<Oper> os = osa.ToList();
+        if (os.Count > 1)
+            return base.Divide(osa);
         if (os.Contains(this, oc))
         {
             os.Remove(this);
         }
-        if (os.Count > 1)
-            return base.Divide(osa);
         return new Fraction(new Variable(1));
     }
 }
