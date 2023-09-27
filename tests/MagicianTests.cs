@@ -56,7 +56,8 @@ public class Tests
                     new Fraction(Var("z"), Val(1), Var("z"))
                 )
             ),
-            Var("y")
+            Var("y"),
+            2
         );
         Assert.That(solved.Evaluate(10.5, -3), Is.EqualTo(manuallySolved.Evaluate(10.5, -3)));
     }
