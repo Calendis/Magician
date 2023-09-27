@@ -39,4 +39,9 @@ public class SolvedEquation : InverseParamMap
         Array.ForEach<Variable>(knowns.ToArray(), v => v.Reset());
         return result.Val;
     }
+
+    public override string ToString()
+    {
+        return eq.ToString();
+    }
 }
