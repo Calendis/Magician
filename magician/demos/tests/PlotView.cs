@@ -6,7 +6,7 @@ using static Magician.Symbols.Notate;
 
 namespace Magician.Demos.Tests;
 
-public class PlotView : Spell
+public class EqPlotting : Spell
 {
     Brush? b;
     double walkSpeed = 4.0;
@@ -109,10 +109,11 @@ public class PlotView : Spell
     )
 );
 
-        Origin["pt3d"] = plotTest3d.Plot(
-            (Var("y"), AxisSpecifier.Y, -500, 500, 20),
-            (Var("x"), AxisSpecifier.X, -500, 500, 20),
-            (Var("z"), AxisSpecifier.Z, -500, 500, 40)
+        SolvedEquation spt3d = plotTest3d.Solved();
+        Origin["pt3d"] = spt3d.Plot(
+            new PlotOptions(AxisSpecifier.Y, new(-500, 500, 20)),
+            new(AxisSpecifier.X, new(-500, 500, 20)),
+            new(AxisSpecifier.Z, new(-500, 500, 40))
         );
 
     }
