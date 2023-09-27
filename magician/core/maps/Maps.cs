@@ -26,7 +26,7 @@ public class RelationalMap
             throw Scribe.Error("Unknown number of inputs");
         if (outs == -1)
             throw Scribe.Error("Unknown number of outputs");
-        throw Scribe.Issue("Not implemented");
+        throw Scribe.Issue("RelationalMap plotting not implemented");
     }
 }
 
@@ -45,6 +45,10 @@ public class InverseParamMap : RelationalMap
         return base.Evaluate(xs)[0];
     }
 
+    public override Multi Plot(params Symbols.PlotOptions[] options)
+    {
+        return Plot(null, options);
+    }
     public virtual Multi Plot(Symbols.AxisSpecifier? outAxis=null, params Symbols.PlotOptions[] options)
     {
         if (ins == -1)
@@ -91,21 +95,13 @@ public class InverseParamMap : RelationalMap
 
             // Put the x, y, and z values in an array in that order
             double[] argsByAxis = new double[3];
-            List<int> usedAxes = new();
-            // First, populate with outVal
-            for (int i = 0; i < argsByAxis.Length; i++)
+            // Replace with inVals based on the axis specifiers
+            //foreach (AxisSpecifier a in axes)
+            for (int i = 0; i < inVals.Length; i++)
             {
-                //argsByAxis[i] = outVal;
+                argsByAxis[(int)axes[i]] = inVals[i];
             }
-            // Then, replace with inVals based on the axis specifiers
-            int counter = 0;
-            foreach (AxisSpecifier a in axes)
-            {
-                argsByAxis[(int)a] = inVals[counter++];
-                usedAxes.Add((int)a);
-            }
-            List<int> outArr = axes.Select(a => (int)a).Concat(outAxis is null ? new List<int>{} : new List<int>{(int)outAxis}).Except(usedAxes).ToList();
-            argsByAxis[outArr[0]] = outVal;
+            argsByAxis[outAxis is null ? 0 : (int)outAxis] = outVal;
 
             // Plot colouring code can go here
             // TODO: provide an API for this
