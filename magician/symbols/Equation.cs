@@ -15,9 +15,6 @@ public class Equation : RelationalMap
     SolvedEquation? solvedEq = null;
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
-        // Can't do this through the base constructor, unfortunately
-        map = new Func<double[], double[]>(vals => Approximate(vals));
-        
         TheFulcrum = f;
         LHS = o0;
         RHS = o1;
@@ -34,6 +31,9 @@ public class Equation : RelationalMap
             isolates.Add(v2);
         }
         unknowns = o0.eventuallyContains.Concat(o1.eventuallyContains).Union(isolates).ToArray();
+        // Can't do this through the base constructor, unfortunately
+        map = new Func<double[], double[]>(vals => Approximate(vals));
+        ins = unknowns.Length - 1;
     }
 
     internal enum ModePick
@@ -55,10 +55,26 @@ public class Equation : RelationalMap
     {
         Scribe.Info($"Solving {this} for {v}");
         // By default, solve for the variable with the highest degree
-        // TODO: move code from Plot to here
         if (v == null)
         {
-            throw Scribe.Issue("move code from Plot to here");
+            Variable? chosenSolveVar = null;
+            double minDegree = double.MaxValue;
+            foreach (Variable uk in unknowns)
+            {
+                double deg = Math.Max(Math.Abs(LHS.Degree(uk)), Math.Abs(RHS.Degree(uk)));
+                if (deg < minDegree)
+                {
+                    if (deg == 0)
+                        Scribe.Warn($"deg was 0");
+                    minDegree = deg;
+                    chosenSolveVar = uk;
+                }
+            }
+            if (chosenSolveVar is null)
+            {
+                throw Scribe.Issue("Could not determine minimum-degree unknown!");
+            }
+            v = chosenSolveVar;
         }
 
         // Algebra machine variables
@@ -69,7 +85,7 @@ public class Equation : RelationalMap
         ModePick MODE;
         SidePick SIDE;
         Variable VAR;
-        List<(ModePick, SidePick, Variable)> CODE = new()
+        List<(ModePick, SidePick, Variable?)> CODE = new()
             {(ModePick.PICK, SidePick.LEFT, v)};
         // These default values don't mean anything. They just need to be invalid
         (int, int) LAST_PICK = (-1, 0);
@@ -95,6 +111,7 @@ public class Equation : RelationalMap
             MODE = INSTRUCTION.Item1;
             SIDE = INSTRUCTION.Item2;
             VAR = INSTRUCTION.Item3;
+            //Scribe.Info($"Var: {VAR}");
 
             CHOSENROOT = layers.Hands[(int)SIDE][0];
             OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
@@ -169,7 +186,7 @@ public class Equation : RelationalMap
                 {
                     Oper newChosenRoot = CHOSENROOT[0].Copy();
                     Oper newOppositeRoot = OPPOSITEROOT[0].Copy();
-                    solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v);
+                    solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v, unknowns.Length-1);
                     Scribe.Info($"Solved in {totalInstructions} instructions: {solvedEq}");
                     break;
                 }
@@ -429,24 +446,6 @@ public class Equation : RelationalMap
         return solvedEq;
     }
 
-    //Oper SolvedSide(Variable v)
-    //{
-    //    Oper solvedSide;
-    //    if (v == layers.LeftHand[0][0])
-    //    {
-    //        solvedSide = layers.RightHand[0][0];
-    //    }
-    //    else if (v == layers.RightHand[0][0])
-    //    {
-    //        solvedSide = layers.LeftHand[0][0];
-    //    }
-    //    else
-    //    {
-    //        throw Scribe.Error($"Equation {this} has not been solved for {v}");
-    //    }
-    //    return solvedSide;
-    //}
-
     // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
     public double[] Approximate(double[] vals, Variable v)
     {
@@ -473,156 +472,6 @@ public class Equation : RelationalMap
             throw Scribe.Error($"Equation {this} has not been solved for {v}");
         }
         return solvedSide;
-    }
-
-    public Multi Plot(params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX, double res)[] axes)
-    {
-        //if (solvedEq is not null)
-        //    return solvedEq.Plot();
-        
-        // TODO: Implement a scheme for default AxisSpecifiers
-        if (axes.Length != unknowns.Length)
-            throw Scribe.Error("Axis specifiers must match number of unknowns");
-
-        Dictionary<Variable, AxisSpecifier> axesByVar = new();
-        Dictionary<Variable, (double, double, double)> rangesByVar = new();
-        for (int i = 0; i < unknowns.Length; i++)
-        {
-            axesByVar.Add(axes[i].VAR, axes[i].AXIS);
-            rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
-        }
-
-        Variable outVar;
-        // If we have isolated variables in the equation, we can treat it as solved
-        if (isolates.Count > 0)
-        {
-            outVar = isolates[0];
-        }
-        // Otherwise, determine which variable to solve for
-        // TODO: move this code to Solve
-        else
-        {
-            Variable? chosenSolveVar = null;
-            double minDegree = double.MaxValue;
-            foreach (Variable v in unknowns)
-            {
-                double deg = Math.Max(Math.Abs(LHS.Degree(v)), Math.Abs(RHS.Degree(v)));
-                if (deg < minDegree)
-                {
-                    if (deg == 0)
-                        Scribe.Warn($"deg was 0");
-                    minDegree = deg;
-                    chosenSolveVar = v;
-                }
-            }
-            if (chosenSolveVar is null)
-            {
-                throw Scribe.Issue("Could not determine minimum-degree unknown!");
-            }
-            outVar = chosenSolveVar;
-            //Scribe.Info($"Solving for {outVar} with degree {Degree(outVar)}");
-        }
-
-        // Determine inVars from the axis specifiers
-        List<Variable> inVars = new();
-        foreach (var (VAR, AXIS, MIN, MAX, res) in axes)
-        {
-            if (VAR != outVar)
-            {
-                inVars.Add(VAR);
-            }
-        }
-        Oper solvedExpr = Solved(outVar).Eq.SolvedSide(outVar);
-
-        NDCounter solveSpace = new(axes.Where(ax => ax.VAR != outVar).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
-        List<(Variable, AxisSpecifier, double, double, double)> orderedAxes = new();
-
-        bool threeD = solveSpace.Dims >= 2;
-        List<int[]> faces = new();
-        Multi plot = new Multi().Flagged(DrawMode.PLOT);
-
-        do
-        {
-            // Get arguments from the counter
-            for (int i = 0; i < inVars.Count; i++)
-            {
-                inVars[i].Val = solveSpace.Get(i);
-            }
-            outVar.Val = solvedExpr.Solution().Val;
-
-            double[] argsByAxis = new double[Math.Max(3, inVars.Count + 1)];
-            argsByAxis[(int)axesByVar[outVar]] = outVar.Val;
-            foreach (Variable v in inVars)
-            {
-                argsByAxis[(int)axesByVar[v]] = v.Val;
-            }
-            // Pad to three dimensions
-            while (argsByAxis.Length < 3)
-            {
-                argsByAxis = argsByAxis.Append(0).ToArray();
-            }
-
-            // Determine faces
-            bool edgeRow = false;
-            bool edgeCol = false;
-            if (threeD)
-            {
-                double w = solveSpace.AxisLen(0);
-                double h = solveSpace.AxisLen(1);
-                int n = solveSpace.Val;
-                if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0) - 1))
-                {
-                    edgeCol = true;
-                }
-                if (n >= solveSpace.Max - w)
-                {
-                    edgeRow = true;
-                }
-                if (!edgeCol && !edgeRow && n + Math.Ceiling(w) + 1 < solveSpace.Max)
-                {
-                    faces.Add(new int[] { (int)Math.Ceiling(w) + n + 1, (int)Math.Ceiling(w) + n, n, n + 1 });
-                }
-            }
-
-            // Plot colouring code can go here
-            // TODO: provide an API for this
-            double x = argsByAxis[0];
-            double y = argsByAxis[1];
-            double z = argsByAxis[2];
-            //y += 80*Math.Sin(x/60 - z/60);
-            double hue;
-            double sat = 1;
-            double ligh = 1;
-
-            hue = 4 * solveSpace.Positional[1] / solveSpace.AxisLen(1) - solveSpace.Positional[0] / solveSpace.AxisLen(0);
-            hue = Math.Abs(y) / 100;
-            if (double.IsNaN(y) || double.IsInfinity(y))
-            {
-                hue = 0;
-                y = 0;
-            }
-
-            //Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            Multi point = new(x, y, z);
-            point.Colored(new HSLA(hue, sat, ligh, 255));
-            plot.Add(point);
-
-        } while (!solveSpace.Increment());
-
-        //Array.ForEach(inVars, v => v.Reset());
-        inVars.ForEach(v => v.Reset());
-        outVar.Reset();
-        // 3D plot format
-        if (threeD)
-        {
-            Multi3D plot3d = new(plot);
-            plot3d.SetFaces(faces);
-            return plot3d.Flagged(DrawMode.INNER);
-        }
-        // 2D plot
-        return plot;
-
-        //throw Scribe.Issue("Not supported");
     }
 
     public override string ToString()
