@@ -1,18 +1,23 @@
 namespace Magician.Symbols;
+using Magician.Maps;
 
-public class Equation
+public class Equation : RelationalMap
 {
-    int noUnknowns;
     Variable[] unknowns;
+    public Variable[] Unknowns => unknowns;
     EquationLayers layers;
     EquationLayers layersBackup;
     List<Variable> isolates;
     public Oper LHS;
     public Oper RHS;
+    public Oper Side(bool s) { return s ? LHS : RHS; }
     Fulcrum TheFulcrum { get; set; }
-    public bool IsSolved { get; private set; } = false;
+    SolvedEquation? solvedEq = null;
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
+        // Can't do this through the base constructor, unfortunately
+        map = new Func<double[], double[]>(vals => Approximate(vals));
+        
         TheFulcrum = f;
         LHS = o0;
         RHS = o1;
@@ -28,19 +33,17 @@ public class Equation
         {
             isolates.Add(v2);
         }
-
         unknowns = o0.eventuallyContains.Concat(o1.eventuallyContains).Union(isolates).ToArray();
-        noUnknowns = unknowns.Length;
     }
 
-    enum Mode
+    internal enum ModePick
     {
         PICK,
         ISOLATE,
         EXTRACT,
         EXPAND,
     }
-    enum Side
+    internal enum SidePick
     {
         LEFT,
         RIGHT,
@@ -48,29 +51,26 @@ public class Equation
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
-    public Equation Solved(Variable? v = null)
+    public SolvedEquation Solved(Variable? v = null)
     {
         Scribe.Info($"Solving {this} for {v}");
         // By default, solve for the variable with the highest degree
-        // TODO: move code from Solve to here
+        // TODO: move code from Plot to here
         if (v == null)
         {
             throw Scribe.Issue("move code from Plot to here");
         }
-
-        //throw Scribe.Issue("");
-        Equation? solvedEq = null;
 
         // Algebra machine variables
         int IDX;
         double CHOSENDEG, OPPOSITEDEG;
         List<Oper> CHOSENROOT;
         List<Oper> OPPOSITEROOT;
-        Mode MODE;
-        Side SIDE;
+        ModePick MODE;
+        SidePick SIDE;
         Variable VAR;
-        List<(Mode, Side, Variable)> CODE = new()
-            {(Mode.PICK, Side.LEFT, v)};
+        List<(ModePick, SidePick, Variable)> CODE = new()
+            {(ModePick.PICK, SidePick.LEFT, v)};
         // These default values don't mean anything. They just need to be invalid
         (int, int) LAST_PICK = (-1, 0);
         (int, int) CURRENT_PICK = (0, -1);
@@ -88,9 +88,9 @@ public class Equation
             if (CODE.Count < 1)
                 throw Scribe.Issue("No instructions provided");
 
-            (Mode, Side, Variable) INSTRUCTION = CODE[0];
+            (ModePick, SidePick, Variable) INSTRUCTION = CODE[0];
             CODE.RemoveAt(0);
-            totalInstructions ++;
+            totalInstructions++;
 
             MODE = INSTRUCTION.Item1;
             SIDE = INSTRUCTION.Item2;
@@ -101,14 +101,14 @@ public class Equation
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
             string STATUS = $"{MODE} {VAR}";
-            if (MODE != Mode.PICK)
+            if (MODE != ModePick.PICK)
             {
                 STATUS += $" on the {SIDE} side";
             }
             Scribe.Info(STATUS);
             Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
 
-            if (MODE == Mode.PICK)
+            if (MODE == ModePick.PICK)
             {
                 TWIG[0] = null;
                 TWIG[1] = null;
@@ -167,7 +167,9 @@ public class Equation
                 bool alone = !layers.Hands[(int)SIDE].ContainsKey(1);
                 if (NUMTERMLEFT + NUMTERMRIGHT == 1 && NUMOTHERLEFT + NUMOTHERRIGHT == 0 && alone)
                 {
-                    solvedEq = new(CHOSENROOT[0].Copy(), Fulcrum.EQUALS, OPPOSITEROOT[0].Copy());
+                    Oper newChosenRoot = CHOSENROOT[0].Copy();
+                    Oper newOppositeRoot = OPPOSITEROOT[0].Copy();
+                    solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v);
                     Scribe.Info($"Solved in {totalInstructions} instructions: {solvedEq}");
                     break;
                 }
@@ -186,19 +188,19 @@ public class Equation
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 0);
-                        CODE.Add((Mode.ISOLATE, NUMOTHERLEFT == 1 ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((ModePick.ISOLATE, NUMOTHERLEFT == 1 ? SidePick.LEFT : SidePick.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 0);
-                        CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                        CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 0);
-                        CODE.Add((Mode.EXPAND, Side.BOTH, v));
+                        CODE.Add((ModePick.EXPAND, SidePick.BOTH, v));
                     }
                 }
                 // One direct match on either side
@@ -214,7 +216,7 @@ public class Equation
                             break;
                         }
 
-                        CODE.Add((Mode.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
+                        CODE.Add((ModePick.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
@@ -223,11 +225,11 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                            CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // Multiple indirect matches on one side
@@ -237,18 +239,18 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                            CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 1);
-                        CODE.Add((Mode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                        CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                     }
                 }
                 // Multiple direct matches on one side
@@ -258,7 +260,7 @@ public class Equation
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 2);
-                        CODE.Add((Mode.EXPAND, NUMTERMLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                        CODE.Add((ModePick.EXPAND, NUMTERMLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
@@ -267,11 +269,11 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((Mode.EXPAND, Side.BOTH, VAR));
+                            CODE.Add((ModePick.EXPAND, SidePick.BOTH, VAR));
                         }
                     }
                     // Multiple indirect matches on one side
@@ -281,18 +283,18 @@ public class Equation
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((Mode.EXPAND, NUMOTHERLEFT > 0 ? Side.LEFT : Side.RIGHT, v));
+                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((Mode.EXPAND, Side.BOTH, VAR));
+                            CODE.Add((ModePick.EXPAND, SidePick.BOTH, VAR));
                         }
                     }
                     // At least one indirect match on either side
                     else
                     {
                         CURRENT_PICK = (3, 2);
-                        CODE.Add((Mode.EXPAND, Side.BOTH, v));
+                        CODE.Add((ModePick.EXPAND, SidePick.BOTH, v));
                     }
                 }
                 // At least one direct match on both sides
@@ -302,25 +304,25 @@ public class Equation
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 3);
-                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 3);
-                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 3);
-                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 3);
-                        CODE.Add((Mode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? Side.LEFT : Side.RIGHT, VAR));
+                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
                     }
                 }
             }
@@ -328,27 +330,27 @@ public class Equation
             // Manipulate the tree in favour of being solved
             Oper NEWCHOSEN = CHOSENROOT[0];
             Oper NEWOPPOSITE = OPPOSITEROOT[0];
-            if (MODE == Mode.ISOLATE)
+            if (MODE == ModePick.ISOLATE)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("No live branch to isolate axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
             }
-            else if (MODE == Mode.EXTRACT)
+            else if (MODE == ModePick.EXTRACT)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("No live branch to extract axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
-            else if (MODE == Mode.EXPAND)
+            else if (MODE == ModePick.EXPAND)
             {
-                if (SIDE == Side.BOTH)
+                if (SIDE == SidePick.BOTH)
                 {
                     CHOSENROOT[0].Associate();
                     OPPOSITEROOT[0].Associate();
                     CHOSENROOT[0].Simplify(v);
                     OPPOSITEROOT[0].Simplify(v);
-                    
+
                 }
                 else
                 {
@@ -366,17 +368,17 @@ public class Equation
                     {
                         throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
                     }
-                    CODE.Add((Mode.PICK, SIDE, VAR));
+                    CODE.Add((ModePick.PICK, SIDE, VAR));
                 }
                 // also PICK if we just isolated something
-                else if (MODE == Mode.ISOLATE)
+                else if (MODE == ModePick.ISOLATE)
                 {
-                    CODE.Add((Mode.PICK, SIDE, VAR));
+                    CODE.Add((ModePick.PICK, SIDE, VAR));
                 }
                 // also pick if our live branch isn't present in our chosen side
                 else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
                 {
-                    CODE.Add((Mode.PICK, SIDE, VAR));
+                    CODE.Add((ModePick.PICK, SIDE, VAR));
                 }
                 // Otherwise, just keep doing whatever we were doing
                 else
@@ -388,13 +390,14 @@ public class Equation
             LAST_PICK = CURRENT_PICK;
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
-            if (SIDE == Side.LEFT)
+            if (SIDE == SidePick.LEFT)
                 layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
                 layers = new(NEWOPPOSITE, NEWCHOSEN);
         }
 
-        Side SMALLESTCHAFFDEGREE()
+        /* Algebra machine helper methods */
+        SidePick SMALLESTCHAFFDEGREE()
         {
             List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
             (double, double) totalDegrees = (0, 0);
@@ -406,9 +409,8 @@ public class Equation
                 totalDegrees.Item1 += degL;
                 totalDegrees.Item2 += degR;
             }
-            return totalDegrees.Item1 < totalDegrees.Item2 ? Side.LEFT : Side.RIGHT;
+            return totalDegrees.Item1 < totalDegrees.Item2 ? SidePick.LEFT : SidePick.RIGHT;
         }
-
         bool NOCHANGE(Oper a, Oper b)
         {
             if (OLDCHOSEN is null || OLDOPPOSITE is null)
@@ -423,31 +425,36 @@ public class Equation
 
         if (solvedEq is null)
             throw Scribe.Issue("Error in solve loop");
-        solvedEq.IsSolved = true;
+        //solvedEq.IsSolved = true;
         return solvedEq;
     }
 
-    // Evaluate a solved equation with an isolated variable
-    public double Evaluate(Variable v, params double[] vals)
-    {
-        if (vals.Length != noUnknowns - 1)
-        {
-            throw Scribe.Error($"Equation expected {noUnknowns - 1} arguments, got {vals.Length}");
-        }
-        int counter = 0;
-        List<Variable> knowns = unknowns.ToList();
-        knowns.Remove(v);
-        foreach (Variable x in knowns)
-        {
-            x.Val = vals[counter++];
-        }
+    //Oper SolvedSide(Variable v)
+    //{
+    //    Oper solvedSide;
+    //    if (v == layers.LeftHand[0][0])
+    //    {
+    //        solvedSide = layers.RightHand[0][0];
+    //    }
+    //    else if (v == layers.RightHand[0][0])
+    //    {
+    //        solvedSide = layers.LeftHand[0][0];
+    //    }
+    //    else
+    //    {
+    //        throw Scribe.Error($"Equation {this} has not been solved for {v}");
+    //    }
+    //    return solvedSide;
+    //}
 
-        // Find the side we're evaluating
-        Oper solvedSide = SolvedSide(v);
-        Variable result = solvedSide.Solution();
-        Array.ForEach(unknowns, v => v.Reset());
-        Array.ForEach<Variable>(knowns.ToArray(), v => v.Reset());
-        return result.Val;//.ToList().Select<Variable, double>((v, i) => v.Val).ToArray();
+    // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
+    public double[] Approximate(double[] vals, Variable v)
+    {
+        throw Scribe.Issue("not implemented");
+    }
+    public double[] Approximate(double[] vals)
+    {
+        return Approximate(vals, unknowns[0]);
     }
 
     Oper SolvedSide(Variable v)
@@ -468,21 +475,18 @@ public class Equation
         return solvedSide;
     }
 
-    // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
-    public double Approximate(Variable v)
-    {
-        throw Scribe.Issue("not implemented");
-    }
-
     public Multi Plot(params (Variable VAR, AxisSpecifier AXIS, double MIN, double MAX, double res)[] axes)
     {
-        // TODO: refine AxisSpecifier
-        if (axes.Length != noUnknowns)
+        //if (solvedEq is not null)
+        //    return solvedEq.Plot();
+        
+        // TODO: Implement a scheme for default AxisSpecifiers
+        if (axes.Length != unknowns.Length)
             throw Scribe.Error("Axis specifiers must match number of unknowns");
 
         Dictionary<Variable, AxisSpecifier> axesByVar = new();
         Dictionary<Variable, (double, double, double)> rangesByVar = new();
-        for (int i = 0; i < noUnknowns; i++)
+        for (int i = 0; i < unknowns.Length; i++)
         {
             axesByVar.Add(axes[i].VAR, axes[i].AXIS);
             rangesByVar.Add(axes[i].VAR, (axes[i].MIN, axes[i].MAX, axes[i].res));
@@ -519,15 +523,17 @@ public class Equation
             //Scribe.Info($"Solving for {outVar} with degree {Degree(outVar)}");
         }
 
+        // Determine inVars from the axis specifiers
         List<Variable> inVars = new();
-        foreach (var a in axes)
+        foreach (var (VAR, AXIS, MIN, MAX, res) in axes)
         {
-            if (a.VAR != outVar)
+            if (VAR != outVar)
             {
-                inVars.Add(a.VAR);
+                inVars.Add(VAR);
             }
         }
-        Oper solvedExpr = Solved(outVar).SolvedSide(outVar);
+        Oper solvedExpr = Solved(outVar).Eq.SolvedSide(outVar);
+
         NDCounter solveSpace = new(axes.Where(ax => ax.VAR != outVar).Select(ax => (ax.MIN, ax.MAX, ax.res)).ToArray());
         List<(Variable, AxisSpecifier, double, double, double)> orderedAxes = new();
 
@@ -642,27 +648,13 @@ public class Equation
         }
         return $"{layers.LeftHand[0][0]} {fulcrumString} {layers.RightHand[0][0]}";
     }
-
-    /* public string Say()
-    {
-        string spoken = "";
-        foreach ()
-    } */
-
-    // The fulcrum is the =, >, <, etc.
-    public enum Fulcrum
-    {
-        EQUALS, LESSTHAN, GREATERTHAN, LSTHANOREQTO, GRTHANOREQTO
-    }
-    public enum AxisSpecifier
-    {
-        X = 0, Y = 1, Z = 2, HUE = 3
-    }
-
-    public enum SolveState
-    {
-        SOLVED,         // each variable isolated symbolically
-        APPROXIMATED,   // one or more variables non-isolatable, approximated
-        FAILED          // tbd
-    }
+}
+// The fulcrum is the =, >, <, etc.
+public enum Fulcrum
+{
+    EQUALS, LESSTHAN, GREATERTHAN, LSTHANOREQTO, GRTHANOREQTO
+}
+public enum AxisSpecifier
+{
+    X = 0, Y = 1, Z = 2, HUE = 3
 }
