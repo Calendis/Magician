@@ -36,8 +36,8 @@ public class Tests
         Equation unsolved = new(
             new SumDiff(
                 new Fraction(Var("x"), Val(1), Var("y")),
-                new Fraction(Var("x"), Val(1), Var("y"), Var("x")),
-                new Fraction(Var("y"), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y"), Val(1), Var("x")),
+                new Fraction(Var("y"), Val(1), Var("z")),
                 new Fraction(Var("y"), Val(1), Var("z"), Val(1), Var("z"))
             ),
             Fulcrum.EQUALS,
@@ -59,6 +59,10 @@ public class Tests
             Var("y"),
             2
         );
-        Assert.That(solved.Evaluate(10.5, -3), Is.EqualTo(manuallySolved.Evaluate(10.5, -3)));
+        double one, two;
+        one = solved.Evaluate(10.5, -30);
+        two = manuallySolved.Evaluate(10.5, -30);
+        Scribe.Info($"1,2: {one},{two}");
+        Assert.That(one, Is.EqualTo(two));
     }
 }
