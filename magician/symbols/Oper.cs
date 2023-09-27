@@ -12,6 +12,7 @@ public abstract partial class Oper : IArithmetic
 
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     protected string name;
+    // TODO: make this a generic property
     protected abstract int identity {get;}
     protected bool associative = false;
     protected bool commutative = false;
