@@ -70,7 +70,7 @@ public abstract partial class Oper
     public static void CombineLikeTerms(SumDiff sd, Variable axis)
     {
 
-        //Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
+        Scribe.Warn($"  Combining like terms for {sd} in terms of {axis}");
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
         List<(Oper, bool)> termsContainingAxis = new();
@@ -200,7 +200,7 @@ public abstract partial class Oper
             }
         }
         // Apply the changes
-        //Scribe.Info($"Got {new SumDiff(finalPosArgs, finalNegArgs)}");
+        Scribe.Info($"  Got {new SumDiff(finalPosArgs, finalNegArgs)}");
         sd.posArgs.Clear();
         sd.posArgs.AddRange(finalPosArgs);
         sd.negArgs.Clear();

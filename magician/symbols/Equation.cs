@@ -122,8 +122,8 @@ public class Equation : RelationalMap
             {
                 STATUS += $" on the {SIDE} side";
             }
-            //Scribe.Info(STATUS);
-            //Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+            Scribe.Info(STATUS);
+            Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
 
             if (MODE == ModePick.PICK)
             {
