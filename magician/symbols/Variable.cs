@@ -68,4 +68,11 @@ public class Variable : Oper
             return 1;
         return 0;
     }
+
+    public override Fraction Divide(params Oper[] os)
+    {
+        if (os.Length == 1 && ((os[0] == this)) || (os[0].Contains(this) && os[0].posArgs.Count == 1 && os[0].negArgs.Count == 0))
+            return new();
+        return base.Divide(os);
+    }
 }
