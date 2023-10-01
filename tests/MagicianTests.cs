@@ -141,7 +141,7 @@ public class Tests
             new List<Oper> { }
         );
 
-        Var("x").Val = 0.13535;
+        Var("x").Val = 20.13535;
         Var("y").Val = 0.13585;
         Var("z").Val = 0.87164;
         double sol0 = sd.Solution().Val;
@@ -163,7 +163,7 @@ public class Tests
         sd.Commute();
         Scribe.Info(sd);
 
-        Var("x").Val = 0.13535;
+        Var("x").Val = 20.13535;
         Var("y").Val = 0.13585;
         Var("z").Val = 0.87164;
         double sol1 = sd.Solution().Val;
