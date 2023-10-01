@@ -36,14 +36,14 @@ public class Equation : RelationalMap
         ins = unknowns.Length - 1;
     }
 
-    internal enum ModePick
+    internal enum SolveMode
     {
         PICK,
         ISOLATE,
         EXTRACT,
         EXPAND,
     }
-    internal enum SidePick
+    internal enum SolveSide
     {
         LEFT,
         RIGHT,
@@ -82,11 +82,11 @@ public class Equation : RelationalMap
         double CHOSENDEG, OPPOSITEDEG;
         List<Oper> CHOSENROOT;
         List<Oper> OPPOSITEROOT;
-        ModePick MODE;
-        SidePick SIDE;
+        SolveMode MODE;
+        SolveSide SIDE;
         Variable VAR;
-        List<(ModePick, SidePick, Variable?)> CODE = new()
-            {(ModePick.PICK, SidePick.LEFT, v)};
+        List<(SolveMode, SolveSide, Variable?)> CODE = new()
+            {(SolveMode.PICK, SolveSide.LEFT, v)};
         // These default values don't mean anything. They just need to be invalid
         (int, int) LAST_PICK = (-1, 0);
         (int, int) CURRENT_PICK = (0, -1);
@@ -98,15 +98,17 @@ public class Equation : RelationalMap
         // The algebra solver state machine
         // You should NOT access the state of Equation within this loop, instead referring to layers
         // The layers variable is reassigned each loop
-        int totalInstructions = 0;
+        int TOTAL_INSTRS = 0;
+        int MAX_FUEL = 10;
+        int FUEL = MAX_FUEL;
         while (true)
         {
             if (CODE.Count < 1)
                 throw Scribe.Issue("No instructions provided");
 
-            (ModePick, SidePick, Variable) INSTRUCTION = CODE[0];
+            (SolveMode, SolveSide, Variable) INSTRUCTION = CODE[0];
             CODE.RemoveAt(0);
-            totalInstructions++;
+            TOTAL_INSTRS++;
 
             MODE = INSTRUCTION.Item1;
             SIDE = INSTRUCTION.Item2;
@@ -118,14 +120,14 @@ public class Equation : RelationalMap
             CHOSENDEG = CHOSENROOT[0].Degree(VAR);
 
             string STATUS = $"{MODE} {VAR}";
-            if (MODE != ModePick.PICK)
+            if (MODE != SolveMode.PICK)
             {
                 STATUS += $" on the {SIDE} side";
             }
             Scribe.Info(STATUS);
             Scribe.Info($"{layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
 
-            if (MODE == ModePick.PICK)
+            if (MODE == SolveMode.PICK)
             {
                 TWIG[0] = null;
                 TWIG[1] = null;
@@ -187,7 +189,7 @@ public class Equation : RelationalMap
                     Oper newChosenRoot = CHOSENROOT[0].Copy();
                     Oper newOppositeRoot = OPPOSITEROOT[0].Copy();
                     solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v, unknowns.Length-1);
-                    Scribe.Info($"Solved in {totalInstructions} instructions: {solvedEq}");
+                    Scribe.Info($"Solved in {TOTAL_INSTRS} instructions: {solvedEq}");
                     break;
                 }
 
@@ -205,19 +207,19 @@ public class Equation : RelationalMap
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 0);
-                        CODE.Add((ModePick.ISOLATE, NUMOTHERLEFT == 1 ? SidePick.LEFT : SidePick.RIGHT, VAR));
+                        CODE.Add((SolveMode.ISOLATE, NUMOTHERLEFT == 1 ? SolveSide.LEFT : SolveSide.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 0);
-                        CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                        CODE.Add((SolveMode.EXPAND, NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 0);
-                        CODE.Add((ModePick.EXPAND, SidePick.BOTH, v));
+                        CODE.Add((SolveMode.EXPAND, SolveSide.BOTH, v));
                     }
                 }
                 // One direct match on either side
@@ -233,7 +235,7 @@ public class Equation : RelationalMap
                             break;
                         }
 
-                        CODE.Add((ModePick.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
+                        CODE.Add((SolveMode.ISOLATE, CHOSENDEG == 0 ? 1 - SIDE : SIDE, VAR));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
@@ -242,11 +244,11 @@ public class Equation : RelationalMap
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                            CODE.Add((SolveMode.EXPAND, NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                            CODE.Add((SolveMode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // Multiple indirect matches on one side
@@ -256,18 +258,18 @@ public class Equation : RelationalMap
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                            CODE.Add((SolveMode.EXPAND, NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                            CODE.Add((SolveMode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                         }
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 1);
-                        CODE.Add((ModePick.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
+                        CODE.Add((SolveMode.EXTRACT, SMALLESTCHAFFDEGREE(), VAR));
                     }
                 }
                 // Multiple direct matches on one side
@@ -277,7 +279,7 @@ public class Equation : RelationalMap
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 2);
-                        CODE.Add((ModePick.EXPAND, NUMTERMLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                        CODE.Add((SolveMode.EXPAND, NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
@@ -286,11 +288,11 @@ public class Equation : RelationalMap
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                            CODE.Add((SolveMode.EXPAND, NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((ModePick.EXPAND, SidePick.BOTH, VAR));
+                            CODE.Add((SolveMode.EXPAND, SolveSide.BOTH, VAR));
                         }
                     }
                     // Multiple indirect matches on one side
@@ -300,18 +302,18 @@ public class Equation : RelationalMap
                         // Same side?
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
                         {
-                            CODE.Add((ModePick.EXPAND, NUMOTHERLEFT > 0 ? SidePick.LEFT : SidePick.RIGHT, v));
+                            CODE.Add((SolveMode.EXPAND, NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, v));
                         }
                         else
                         {
-                            CODE.Add((ModePick.EXPAND, SidePick.BOTH, VAR));
+                            CODE.Add((SolveMode.EXPAND, SolveSide.BOTH, VAR));
                         }
                     }
                     // At least one indirect match on either side
                     else
                     {
                         CURRENT_PICK = (3, 2);
-                        CODE.Add((ModePick.EXPAND, SidePick.BOTH, v));
+                        CODE.Add((SolveMode.EXPAND, SolveSide.BOTH, v));
                     }
                 }
                 // At least one direct match on both sides
@@ -321,25 +323,25 @@ public class Equation : RelationalMap
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 3);
-                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
+                        CODE.Add((SolveMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR));
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 3);
-                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
+                        CODE.Add((SolveMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR));
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 3);
-                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
+                        CODE.Add((SolveMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR));
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 3);
-                        CODE.Add((ModePick.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SidePick.LEFT : SidePick.RIGHT, VAR));
+                        CODE.Add((SolveMode.EXTRACT, layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR));
                     }
                 }
             }
@@ -347,32 +349,35 @@ public class Equation : RelationalMap
             // Manipulate the tree in favour of being solved
             Oper NEWCHOSEN = CHOSENROOT[0];
             Oper NEWOPPOSITE = OPPOSITEROOT[0];
-            if (MODE == ModePick.ISOLATE)
+            if (MODE == SolveMode.ISOLATE)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("No live branch to isolate axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
             }
-            else if (MODE == ModePick.EXTRACT)
+            else if (MODE == SolveMode.EXTRACT)
             {
                 if (TWIG[(int)SIDE] is null)
                     throw Scribe.Issue("No live branch to extract axis from");
                 (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
             }
-            else if (MODE == ModePick.EXPAND)
+            else if (MODE == SolveMode.EXPAND)
             {
-                if (SIDE == SidePick.BOTH)
+                if (SIDE == SolveSide.BOTH)
                 {
                     CHOSENROOT[0].Associate();
                     OPPOSITEROOT[0].Associate();
                     CHOSENROOT[0].Simplify(v);
                     OPPOSITEROOT[0].Simplify(v);
+                    CHOSENROOT[0].Commute();
+                    OPPOSITEROOT[0].Commute();
 
                 }
                 else
                 {
                     layers.Hands[(int)SIDE][0][0].Associate();
                     layers.Hands[(int)SIDE][0][0].Simplify(v);
+                    layers.Hands[(int)SIDE][0][0].Commute();
                 }
             }
 
@@ -381,21 +386,22 @@ public class Equation : RelationalMap
                 // If no progress was made, enter PICK mode
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
-                    if (LAST_PICK == CURRENT_PICK)
+                    if (LAST_PICK == CURRENT_PICK || FUEL < 0)
                     {
                         throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
                     }
-                    CODE.Add((ModePick.PICK, SIDE, VAR));
+                    CODE.Add((SolveMode.PICK, SIDE, VAR));
+                    FUEL--;
                 }
-                // also PICK if we just isolated something
-                else if (MODE == ModePick.ISOLATE)
+                // also PICK if we isolated or expanded
+                else if (MODE == SolveMode.ISOLATE)
                 {
-                    CODE.Add((ModePick.PICK, SIDE, VAR));
+                    CODE.Add((SolveMode.PICK, SIDE, VAR));
                 }
                 // also pick if our live branch isn't present in our chosen side
                 else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
                 {
-                    CODE.Add((ModePick.PICK, SIDE, VAR));
+                    CODE.Add((SolveMode.PICK, SIDE, VAR));
                 }
                 // Otherwise, just keep doing whatever we were doing
                 else
@@ -403,18 +409,22 @@ public class Equation : RelationalMap
                     CODE.Add(INSTRUCTION);
                 }
             }
+            else
+            {
+                FUEL = Math.Min(FUEL+1, MAX_FUEL);
+            }
 
             LAST_PICK = CURRENT_PICK;
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
-            if (SIDE == SidePick.LEFT)
+            if (SIDE == SolveSide.LEFT)
                 layers = new(NEWCHOSEN, NEWOPPOSITE);
             else
                 layers = new(NEWOPPOSITE, NEWCHOSEN);
         }
 
         /* Algebra machine helper methods */
-        SidePick SMALLESTCHAFFDEGREE()
+        SolveSide SMALLESTCHAFFDEGREE()
         {
             List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
             (double, double) totalDegrees = (0, 0);
@@ -426,7 +436,7 @@ public class Equation : RelationalMap
                 totalDegrees.Item1 += degL;
                 totalDegrees.Item2 += degR;
             }
-            return totalDegrees.Item1 < totalDegrees.Item2 ? SidePick.LEFT : SidePick.RIGHT;
+            return totalDegrees.Item1 < totalDegrees.Item2 ? SolveSide.LEFT : SolveSide.RIGHT;
         }
         bool NOCHANGE(Oper a, Oper b)
         {
