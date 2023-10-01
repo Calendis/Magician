@@ -13,11 +13,11 @@ public abstract partial class Oper : IArithmetic
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     protected string name;
     // TODO: make this a generic property
-    protected abstract int identity {get;}
+    protected abstract int identity { get; }
     protected bool associative = false;
     protected bool commutative = false;
     protected bool invertable = true;
-    protected bool unaryNoOp = false;
+    protected bool posUnaryIdentity = false;
     internal Oper? parent = null;
 
     // Alternating form
@@ -45,8 +45,8 @@ public abstract partial class Oper : IArithmetic
 
     public bool Like(Oper o)
     {
-        if (o.unaryNoOp && o.posArgs.Count == 1 && o.negArgs.Count == 0)
-            return Like(o.posArgs[0]);
+        if (o.posUnaryIdentity && o.posArgs.Count == 1 && o.negArgs.Count == 0)
+            return o.posArgs[0].Like(this);
 
         if (o.GetType() != GetType())
             return false;
@@ -62,13 +62,109 @@ public abstract partial class Oper : IArithmetic
                 return v == u;
         }
 
+        List<Oper> args = AllArgs;
         for (int i = 0; i < AllArgs.Count; i++)
         {
-            if (!o.AllArgs[i].Like(AllArgs[i]))
+            if (!o.AllArgs[i].Like(args[i]))
                 return false;
         }
 
         return true;
+    }
+
+    public string Ord(string? ord=null)
+    {
+        Dictionary<Type, (char neg, char pos)> typeHeaders = new()
+        {
+            { typeof(Variable), ('v', 'V') },
+            { typeof(SumDiff),  ('-', '+') },
+            { typeof(Fraction), ('/', '*') }
+        };
+        int totalHeaders = 1;
+        int totalLeaves = 0;
+        ord ??= "";
+
+        // Assemble the ord string
+        ord += typeHeaders[GetType()].pos;
+        ord += AllArgs.Count.ToString();
+        foreach (Oper p in posArgs)
+        {
+            ord += typeHeaders[p.GetType()].pos;
+            ord += p.AllArgs.Count.ToString();
+            totalHeaders += p.AllArgs.Count;
+            if (p is Variable v)
+            {
+                string leafOrd;
+                if (v.Found)
+                    leafOrd = $"#{v.Val}#";
+                else
+                    leafOrd = $"${v.Name}$";
+                totalLeaves += leafOrd.Length;
+                ord += leafOrd;
+            }
+            else
+                ord += p.Ord();
+        }
+        foreach (Oper n in negArgs)
+        {
+            ord += typeHeaders[n.GetType()].neg;
+            ord += n.AllArgs.Count.ToString();
+            totalHeaders += n.AllArgs.Count;
+            if (n is Variable v)
+            {
+                string leafOrd;
+                if (v.Found)
+                    leafOrd = $"#{v.Val}#";
+                else
+                    leafOrd = $"${v.Name}$";
+                totalLeaves += leafOrd.Length;
+                ord += leafOrd;
+            }
+            else
+                ord += n.Ord();
+        }
+        //Scribe.Info($"Total ord size of {this} is {ord.Length} bytes");
+        return ord;
+    }
+
+    public void Associate(Oper? parent = null)
+    {
+        foreach (Oper o in AllArgs)
+            o.Associate(this);
+
+        if (!associative)
+            return;
+
+        if (parent is not null)
+        {
+            if (parent.GetType() == GetType())
+            {
+                if (parent.posArgs.Contains(this))
+                {
+                    parent.posArgs.Remove(this);
+                    parent.posArgs.AddRange(posArgs);
+                    parent.negArgs.AddRange(negArgs);
+                }
+                else if (parent.negArgs.Contains(this))
+                {
+                    parent.negArgs.Remove(this);
+                    parent.posArgs.AddRange(negArgs);
+                    parent.negArgs.AddRange(posArgs);
+                }
+            }
+        }
+    }
+
+    public void Commute()
+    {
+        foreach (Oper o in AllArgs)
+            o.Commute();
+        
+        if (!commutative)
+            return;
+
+        posArgs = posArgs.OrderBy(o => o.Ord()).ToList();
+        negArgs = negArgs.OrderBy(o => o.Ord()).ToList();
     }
 
     public abstract Variable Solution();
@@ -80,14 +176,14 @@ public abstract partial class Oper : IArithmetic
         Reduce(v);
 
         // Drop identities
-        posArgs = posArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
+        posArgs = posArgs.Where(o => !o.IsIdentity(identity)).ToList();
         if (commutative)
-            negArgs = negArgs.Where(o => !(o is Variable v && v.Found && v.Val == identity)).ToList();
+            negArgs = negArgs.Where(o => !o.IsIdentity(identity)).ToList();
 
         // Absorb trivial Opers
         if (parent is not null)
         {
-            if (unaryNoOp && posArgs.Count == 1 && negArgs.Count == 0)
+            if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
             {
                 if (parent!.negArgs.Contains(this))
                 {
@@ -117,6 +213,21 @@ public abstract partial class Oper : IArithmetic
     }
 
     public virtual void Reduce(Variable axis) { }
+
+    public bool IsIdentity(int id)
+    {
+        if (this is Variable v)
+            return v.Found && v.Val == id;
+        if (IsEmpty)
+            return true;
+        foreach (Oper o in posArgs)
+            if (!o.IsIdentity(identity))
+                return false;
+        foreach (Oper o in negArgs)
+            if (!o.IsIdentity(identity))
+                return false;
+        return true;
+    }
 
     // An Oper is considered a term when it:
     // 1.  Has no SumDiffs anywhere in the tree
@@ -193,34 +304,6 @@ public abstract partial class Oper : IArithmetic
     // Write this if necessary
     //public List<(int, int)> LocateAll
 
-    public void Associate(Oper? parent = null)
-    {
-        foreach (Oper o in AllArgs)
-            o.Associate(this);
-
-        if (!associative)
-            return;
-
-        if (parent is not null)
-        {
-            if (parent.GetType() == GetType())
-            {
-                if (parent.posArgs.Contains(this))
-                {
-                    parent.posArgs.Remove(this);
-                    parent.posArgs.AddRange(posArgs);
-                    parent.negArgs.AddRange(negArgs);
-                }
-                else if (parent.negArgs.Contains(this))
-                {
-                    parent.negArgs.Remove(this);
-                    parent.posArgs.AddRange(negArgs);
-                    parent.negArgs.AddRange(posArgs);
-                }
-            }
-        }
-    }
-
     // Recursively gather all variables, constants, and operators in an Oper
     public void CollectOpers(
         ref List<Oper> varBasket,
@@ -281,7 +364,7 @@ public abstract partial class Oper : IArithmetic
     }
 }
 
-internal class OperCompare : IEqualityComparer<Oper>
+internal class OperLike : IEqualityComparer<Oper>
 {
     public bool Equals(Oper? x, Oper? y)
     {
