@@ -50,64 +50,44 @@ public class EqPlotting : Spell
         }
 
         //Equation plotTest3d = new(
-        //    new Fraction(
-        //        new SumDiff(Var("z"), Val(4), Val(1), Val(0), Val(1), Val(0.33), new SumDiff(Val(3)))
-        //    ),
-        //    Equation.Fulcrum.EQUALS,
-        //    new SumDiff(
+        //    new SumDiff(new Fraction(
+        //        Var("y"),
+        //        Val(Math.Sin(Time / 3) / 6)
+        //        ),
+        //        Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
+        //    Fulcrum.EQUALS,
         //    new Fraction(
         //        new SumDiff(
         //            new Fraction(Var("x"), Val(230), Var("x")),
-        //            new Fraction(Var("y"), Val(230), Var("y"))
+        //            new Fraction(Var("z"), Val(230), Var("z"))
         //        )
-        //        ,new SumDiff(Val(1), new SumDiff(Val(1), Val(1)), new SumDiff(Val(2), new Fraction(Val(6))), new SumDiff(Val(3), Val(1)))
-        //        ,Val(0.33*Math.Sin(Time/6))
-        //    ),Var("z"))
-        //);
-        //plotTest3d
-
-        //Equation plotTest3d = new(
-        //    new SumDiff(
-        //        Var("y")
-        //        ,Var("x")
-        //        ,Var("y")
-        //    ),
-        //    Equation.Fulcrum.EQUALS,
-        //    new SumDiff(
-        //        new Fraction(
-        //            Var("x"),
-        //            Val(69900000),
-        //            Var("x"),
-        //            Val(1),
-        //            Var("z"),
-        //            Val(1),
-        //            Var("z")
-        //        ),
-        //        new Fraction(
-        //            new SumDiff
-        //            (
-        //                new Fraction(Var("x"), Val(1000+500*Math.Sin(Time/1.5)), Var("x")),
-        //                Val(Time),
-        //                new Fraction(Var("z"), Val(1000+500*Math.Cos(Time/3)), Var("z"))
-        //            ),
-        //            Val(1)
-        //        )
-        //        
         //    )
         //);
+        //
+        //SolvedEquation spt3d = plotTest3d.Solved();
+        //Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
+        //    new(AxisSpecifier.X, new(-500, 500, 20)),
+        //    new(AxisSpecifier.Z, new(-500, 500, 40))
+        //);
+
+    }
+
+    public override void PreLoop()
+    {
         Equation plotTest3d = new(
-    new SumDiff(new Fraction(
-        Var("y"),
-        Val(Math.Sin(Time / 3) / 6)
-    ), Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
-    Fulcrum.EQUALS,
-    new Fraction(
-        new SumDiff(
-            new Fraction(Var("x"), Val(230), Var("x")),
-            new Fraction(Var("z"), Val(230), Var("z"))
-        )
-    )
-);
+            new SumDiff(new Fraction(
+                Var("y"),
+                Val(0.3)
+                ),
+                Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
+            Fulcrum.EQUALS,
+            new Fraction(
+                new SumDiff(
+                    new Fraction(Var("x"), Val(230), Var("x")),
+                    new Fraction(Var("z"), Val(230), Var("z"))
+                )
+            )
+        );
 
         SolvedEquation spt3d = plotTest3d.Solved();
         Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
@@ -115,42 +95,25 @@ public class EqPlotting : Spell
             new(AxisSpecifier.Z, new(-500, 500, 40))
         );
 
-    }
-
-    public override void PreLoop()
-    {
-
-        //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-        //Origin["pt3d"].Colored(HSLA.RandomVisible());
-
-        //plotTest3d = new(
-        //    new SumDiff(
-        //        new Fraction(Var("x"), Val(50), Var("y")),
-        //        Val(0),
-        //        new Fraction(Var("x"), Val(50), Var("x"), Val(1), Var("y")),
-        //        Val(0),
-        //        new Fraction(Var("z"), Val(2), Var("y")),
-        //        Val(0),
-        //        new Fraction(Var("z"), Val(40), Var("z"), Val(1), Var("y"))),
-        //    Equation.Fulcrum.EQUALS,
-        //    Val(100000)
-        //);
-
-        //Origin["pt3d"] = plotTest3d.Plot(
-        //    (Var("y"), Equation.AxisSpecifier.Y, 0, 0, 0),
-        //    (Var("x"), Equation.AxisSpecifier.X, -500, 500, 20),
-        //    (Var("z"), Equation.AxisSpecifier.Z, -500, 500, 40)
-        //);
-
-        //Equation threePlane = new(
-        //    Let("y"),
-        //    Equation.Fulcrum.EQUALS,
-        //    new SumDiff(Let("x"), N(3), new Fraction(Let("z"), N(0.5)))
-        //);
-        //Origin["planePlot"] = threePlane.Plot(
-        //    (Let("y"), Equation.AxisSpecifier.Y, 0, 0, 0d),
-        //    (Let("x"), Equation.AxisSpecifier.X, -600, 600, 50.1d),
-        //    (Let("z"), Equation.AxisSpecifier.Z, -500, 100, 19d)
-        //);
+        /* Extended testing */
+        Equation unsolved = new(
+            new SumDiff(
+                new List<Oper>{
+                    Var("x"),
+                    Var("z"),
+                    new Fraction(Var("z"), Val(1), Var("y")),
+                    Var("x"),
+                    new Fraction(Val(3.3), Val(1), Var("z")),
+                    new Fraction(Var("x"), Val(1), Var("y")),
+                    new Fraction(Var("x"), Val(1), Var("z")),
+                    new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+                },
+                new List<Oper> { }
+            ),
+            Fulcrum.EQUALS,
+            new Fraction(Val(2), Val(1), Var("y"), Val(1), Var("x"), Val(1), Var("z"))
+        );
+        //Scribe.Info(unsolved.RHS.Ord());
+        SolvedEquation s = unsolved.Solved();
     }
 }
