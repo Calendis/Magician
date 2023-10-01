@@ -22,8 +22,8 @@ public class Tests
     public void AssociateSumDiffs()
     {
         SumDiff sd = new(
-            new List<Oper>{new SumDiff(Val(2)), new SumDiff(Val(1), Val(2), new SumDiff(Val(3)), Val(4)), Val(1), new SumDiff(Val(3))},
-            new List<Oper>{Val(5), new SumDiff(Val(1), new SumDiff(Val(5), new SumDiff(Val(3))))}
+            new List<Oper> { new SumDiff(Val(2)), new SumDiff(Val(1), Val(2), new SumDiff(Val(3)), Val(4)), Val(1), new SumDiff(Val(3)) },
+            new List<Oper> { Val(5), new SumDiff(Val(1), new SumDiff(Val(5), new SumDiff(Val(3)))) }
         );
         Assert.That(sd.Solution().Val, Is.EqualTo(0));
         sd.Associate();
@@ -64,5 +64,112 @@ public class Tests
         two = manuallySolved.Evaluate(10.5, -30);
         Scribe.Info($"1,2: {one},{two}");
         Assert.That(one, Is.EqualTo(two));
+    }
+
+    [Test]
+    public void SolveAddLike2()
+    {
+        Equation unsolved = new(
+            new SumDiff(
+                new List<Oper>{
+                    Var("x"),
+                    Var("z"),
+                    new Fraction(Var("z"), Val(1), Var("y")),
+                    Var("x"),
+                    new Fraction(Val(3.3), Val(1), Var("z")),
+                    new Fraction(Var("x"), Val(1), Var("y")),
+                    new Fraction(Var("x"), Val(1), Var("z")),
+                    new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+                },
+                new List<Oper> { }
+            ),
+            Fulcrum.EQUALS,
+            new Fraction(Val(2), Val(1), Var("y"), Val(1), Var("x"), Val(1), Var("z"))
+        );
+        SolvedEquation s = unsolved.Solved();
+        SolvedEquation manual = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            new Fraction(
+                new SumDiff(Val(0), new Fraction(Val(4.3), Val(1), Var("z")), Val(0), new Fraction(Var("z"), Val(1), Var("y"))),
+                new SumDiff(
+                    new List<Oper> { Val(2), Var("y"), Var("z"), new Fraction(Val(0.4), Val(1), Var("y"), Val(1), Var("z")) },
+                    new List<Oper> { new Fraction(Val(-2), Val(1), Var("y"), Val(1), Var("z")) }
+                )
+            )
+            , Var("x"), 2
+        );
+        // Chosen arbitrarily
+        double[] args = new[] { 4.3, -12.3 };
+        Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
+    }
+
+    [Test]
+    public void SolveSaddle()
+    {
+        Equation plotTest3d = new(
+            new SumDiff(new Fraction(
+                Var("y"),
+                Val(0.2 / 6)
+            ),
+            Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
+            Fulcrum.EQUALS,
+            new Fraction(
+                new SumDiff(
+                    new Fraction(Var("x"), Val(230), Var("x")),
+                    new Fraction(Var("z"), Val(230), Var("z"))
+                )
+            )
+        );
+        SolvedEquation s = plotTest3d.Solved();
+    }
+
+    [Test]
+    public void Expand1()
+    {
+        SumDiff sd = new(
+            new List<Oper>{
+                Var("x"),
+                Var("z"),
+                new Fraction(Var("z"), Val(1), Var("y")),
+                Var("x"),
+                new Fraction(Val(3.3), Val(1), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("z")),
+                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+            },
+            new List<Oper> { }
+        );
+
+        Var("x").Val = 0.13535;
+        Var("y").Val = 0.13585;
+        Var("z").Val = 0.87164;
+        double sol0 = sd.Solution().Val;
+        Var("x").Reset();
+        Var("y").Reset();
+        Var("z").Reset();
+        
+        Scribe.Info(sd);
+        sd.Associate();
+        sd.Simplify(Var("x"));
+        sd.Commute();
+        Scribe.Info(sd);
+        sd.Associate();
+        sd.Simplify(Var("x"));
+        sd.Commute();
+        Scribe.Info(sd);
+        sd.Associate();
+        sd.Simplify(Var("x"));
+        sd.Commute();
+        Scribe.Info(sd);
+
+        Var("x").Val = 0.13535;
+        Var("y").Val = 0.13585;
+        Var("z").Val = 0.87164;
+        double sol1 = sd.Solution().Val;
+        Var("x").Reset();
+        Var("y").Reset();
+        Var("z").Reset();
+        Assert.That(sol0, Is.EqualTo(sol1));
     }
 }
