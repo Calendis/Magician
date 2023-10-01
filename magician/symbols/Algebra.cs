@@ -147,7 +147,7 @@ public abstract partial class Oper
             List<int> termsFoundHandshake = new();
             while (termsNeedingHandshake.Count > 0)
             {
-                int termIdx = 0;//termsNeedingHandshake[0];
+                //int termIdx = 0;//termsNeedingHandshake[0];
                 //Scribe.Warn($"Term {termsNeedingHandshake[termIdx]} needs a handshake, remaining: {termsNeedingHandshake.Count} ({Scribe.Expand<List<int>, int>(termsNeedingHandshake)})");
                 // Pick one of the possible handshakes for this term
                 foreach ((int, int, bool, bool) flaggedHandshake in termsToHandshakes[termsNeedingHandshake[0]])
@@ -202,7 +202,7 @@ public abstract partial class Oper
             }
         }
         // Apply the changes
-        Scribe.Info($"  Got {new SumDiff(finalPosArgs, finalNegArgs)}");
+        //Scribe.Info($"  Got {new SumDiff(finalPosArgs, finalNegArgs)}");
         sd.posArgs.Clear();
         sd.posArgs.AddRange(finalPosArgs);
         sd.negArgs.Clear();
@@ -235,7 +235,7 @@ public abstract partial class Oper
 
     public static IEnumerable<Oper> IntersectPos(Oper o, Oper p)
     {
-        OperCompare oc = new();
+        OperLike oc = new();
         Dictionary<Oper, int> d = new(oc);
         foreach (Oper c in p.posArgs)
         {
@@ -255,7 +255,7 @@ public abstract partial class Oper
     }
     public static IEnumerable<Oper> IntersectNeg(Oper o, Oper p)
     {
-        OperCompare oc = new();
+        OperLike oc = new();
         Dictionary<Oper, int> d = new(oc);
         foreach (Oper c in p.negArgs)
         {
