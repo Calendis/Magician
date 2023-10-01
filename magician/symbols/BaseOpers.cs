@@ -9,13 +9,13 @@ public class SumDiff : Oper, ISum
     {
         commutative = true;
         associative = true;
-        unaryNoOp = true;
+        posUnaryIdentity = true;
     }
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b)
     {
         commutative = true;
         associative = true;
-        unaryNoOp = true;
+        posUnaryIdentity = true;
     }
     public override Variable Solution()
     {
@@ -93,13 +93,13 @@ public class Fraction : Oper, IFrac
     {
         commutative = true;
         associative = true;
-        unaryNoOp = true;
+        posUnaryIdentity = true;
     }
     public Fraction(params Oper[] ops) : base("fraction", ops)
     {
         commutative = true;
         associative = true;
-        unaryNoOp = true;
+        posUnaryIdentity = true;
     }
 
     public override Variable Solution()
@@ -137,7 +137,7 @@ public class Fraction : Oper, IFrac
             else if (osa[0].posArgs.Count == 0)
                 return Divide(osa[0].posArgs.ToArray());
 
-        OperCompare oc = new();
+        OperLike oc = new();
         List<Oper> os = osa.ToList();
         List<Oper> final = new(negArgs);
         for (int i = 0; i < os.Count; i++)
@@ -162,7 +162,7 @@ public class Fraction : Oper, IFrac
             else if (osa[0].posArgs.Count == 0)
                 return Mult(osa[0].posArgs.ToArray());
 
-        OperCompare oc = new();
+        OperLike oc = new();
         List<Oper> os = osa.ToList();
         List<Oper> pos = new(posArgs);
         for (int i = 0; i < os.Count; i++)
