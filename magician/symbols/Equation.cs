@@ -369,7 +369,7 @@ public class Equation : RelationalMap
                 {
                     TOTAL_CHANGES++;
                     if (TWIG[(int)SIDE] is null)
-                        throw Scribe.Issue($"No live branch to isolate axis from: {layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+                        throw Scribe.Issue($"No live branch to isolate axis from");
                     (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
                 }
                 else if (MODE == SolveMode.EXTRACT)
@@ -399,38 +399,30 @@ public class Equation : RelationalMap
                         layers.Hands[(int)SIDE][0][0].Commute();
                     }
                 }
-                if (CODE.Count == 0)
+                // If no progress was made, enter PICK mode
+                if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
-                    // If no progress was made, enter PICK mode
-                    if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
+                    if (LAST_PICK == CURRENT_PICK || FUEL < 0)
                     {
-                        if (LAST_PICK == CURRENT_PICK || FUEL < 0)
-                        {
-                            throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
-                        }
-                        PREPAREPICK(VAR);
-                        FUEL--;
+                        throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
                     }
-                    // also PICK if we isolated or expanded
-                    else if (MODE == SolveMode.ISOLATE)
-                    {
-                        PREPAREPICK(VAR);
-                    }
-                    // also pick if our live branch isn't present in our chosen side
-                    else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
-                    {
-                        PREPAREPICK(VAR);
-                    }
-                    // Otherwise, keep extracting
-                    else
-                    {
-                        CODE.Add(INSTRUCTION);
-                    }
+                    PREPAREPICK(VAR);
+                    FUEL--;
                 }
+                // also PICK if we isolated or expanded
+                else if (MODE == SolveMode.ISOLATE)
+                {
+                    PREPAREPICK(VAR);
+                }
+                // also pick if our live branch isn't present in our chosen side
+                else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
+                {
+                    PREPAREPICK(VAR);
+                }
+                // Otherwise, keep extracting
                 else
                 {
-                    FUEL = Math.Min(FUEL + 1, MAX_FUEL);
-                    throw Scribe.Issue($"I don't think this can happen, so fuel never increases");
+                    CODE.Add(INSTRUCTION);
                 }
             }
 
@@ -465,6 +457,7 @@ public class Equation : RelationalMap
             return a.Like(OLDCHOSEN) && b.Like(OLDOPPOSITE);
         }
 
+        // Write the next instruction
         void PREPAREPICK(Variable targ)
         {
             CODE.Add((SolveMode.PICK, SolveSide.EITHER, targ));
@@ -473,6 +466,7 @@ public class Equation : RelationalMap
         {
             CODE.Add((SolveMode.ISOLATE, s, targ));
         }
+        // nice
         void PREPAREEXTRACT(SolveSide s, Variable targ)
         {
             CODE.Add((SolveMode.EXTRACT, s, targ));
