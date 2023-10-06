@@ -143,17 +143,14 @@ public class Tests
 
         Var("x").Val = 20.13535;
         Var("y").Val = 0.13585;
-        Var("z").Val = 0.87164;
+        Var("z").Val = -0.27164;
         double sol0 = sd.Solution().Val;
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
         
         Scribe.Info(sd);
-        sd.Associate();
-        sd.Simplify(Var("x"));
-        sd.Commute();
-        Scribe.Info(sd);
+
         sd.Associate();
         sd.Simplify(Var("x"));
         sd.Commute();
@@ -165,11 +162,12 @@ public class Tests
 
         Var("x").Val = 20.13535;
         Var("y").Val = 0.13585;
-        Var("z").Val = 0.87164;
+        Var("z").Val = -0.27164;
         double sol1 = sd.Solution().Val;
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
+        Scribe.Info($"{sol0} == {sol1}?");
         Assert.That(sol0, Is.EqualTo(sol1));
     }
 }
