@@ -56,6 +56,10 @@ public class Variable : Oper
     {
         throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
     }
+    public static Oper StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
+    {
+        throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
+    }
 
     public override Variable Solution()
     {
