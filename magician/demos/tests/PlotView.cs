@@ -90,30 +90,10 @@ public class EqPlotting : Spell
         );
 
         SolvedEquation spt3d = plotTest3d.Solved();
+        Var("time").Val = Time;
         Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
             new(AxisSpecifier.X, new(-500, 500, 20)),
             new(AxisSpecifier.Z, new(-500, 500, 40))
         );
-
-        /* Extended testing */
-        Equation unsolved = new(
-            new SumDiff(
-                new List<Oper>{
-                    Var("x"),
-                    Var("z"),
-                    new Fraction(Var("z"), Val(1), Var("y")),
-                    Var("x"),
-                    new Fraction(Val(3.3), Val(1), Var("z")),
-                    new Fraction(Var("x"), Val(1), Var("y")),
-                    new Fraction(Var("x"), Val(1), Var("z")),
-                    new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
-                },
-                new List<Oper> { }
-            ),
-            Fulcrum.EQUALS,
-            new Fraction(Val(2), Val(1), Var("y"), Val(1), Var("x"), Val(1), Var("z"))
-        );
-        //Scribe.Info(unsolved.RHS.Ord());
-        SolvedEquation s = unsolved.Solved();
     }
 }
