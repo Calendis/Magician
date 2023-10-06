@@ -69,17 +69,17 @@ public class SumDiff : Oper, ISum
     public override string ToString()
     {
         string sumdiff = "";
-        if (posArgs.Count > 0)
+        foreach (Oper o in posArgs)
         {
-            sumdiff = posArgs[0].ToString();
+            sumdiff += " + " + o.ToString();
         }
-        foreach (Oper o in posArgs.Skip(1))
-        {
-            sumdiff += "+" + o.ToString();
-        }
+        sumdiff = sumdiff.TrimStart(' ');
+        sumdiff = sumdiff.TrimStart('+');
+        sumdiff = sumdiff.TrimStart(' ');
+        
         foreach (Oper o in negArgs)
         {
-            sumdiff += "-" + o.ToString();
+            sumdiff += " - " + o.ToString();
         }
         return "(" + sumdiff + ")";
     }
@@ -187,12 +187,15 @@ public class Fraction : Oper, IFrac
 
         foreach (Oper o in posArgs)
         {
-            numerator += "*" + o.ToString();
+            if (!(o is Variable v && !v.Found))
+                numerator += "*" + o.ToString();
+            else
+                numerator += o.ToString();
         }
         foreach (Oper o in negArgs)
         {
             denominator += "*" + o.ToString();
         }
-        return $"({numerator.TrimStart('*')} / {denominator.TrimStart('*')})";
+        return negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}";
     }
 }
