@@ -47,7 +47,8 @@ public class Equation : RelationalMap
     {
         LEFT,
         RIGHT,
-        BOTH,
+        BOTHL,  // both sides, but reverts to the left side
+        BOTHR,  // both sides, but reverts to the right side
         EITHER
     }
 
@@ -86,7 +87,7 @@ public class Equation : RelationalMap
         SolveMode MODE;
         SolveSide SIDE;
         Variable VAR;
-        List<(SolveMode, SolveSide, Variable?)> CODE = new()
+        List<(SolveMode, SolveSide, Variable)> CODE = new()
             {(SolveMode.PICK, SolveSide.EITHER, v)};
         // These default values don't mean anything. They just need to be invalid
         (int, int) LAST_PICK = (0, -1);
@@ -154,7 +155,14 @@ public class Equation : RelationalMap
                 int LR_SWITCH = 0;
                 foreach (Dictionary<int, List<Oper>> h in layers.Hands)
                 {
+                    // Are we a variable?
                     if (h[0][0] is Variable v_ && v_ == VAR)
+                    {
+                        MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
+                        TWIG[LR_SWITCH] = VAR;
+                    }
+                    // Are we a term containing v?
+                    else if (h[0][0].IsTerm && h[0][0].Contains(VAR))
                     {
                         MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
                         TWIG[LR_SWITCH] = VAR;
@@ -224,7 +232,7 @@ public class Equation : RelationalMap
                     else
                     {
                         CURRENT_PICK = (3, 0);
-                        PREPARESIMPLIFY(SolveSide.BOTH, VAR);
+                        PREPARESIMPLIFY(GENBOTH(), VAR);
                     }
                 }
                 // One direct match on either side
@@ -249,35 +257,36 @@ public class Equation : RelationalMap
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 1);
-                        // Same side?
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
+                        SolveSide newSide = NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
                         {
-                            PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                            PREPAREEXTRACT(newSide, VAR);
                         }
                         else
                         {
-                            PREPAREEXTRACT(SMALLESTCHAFFDEGREE(), VAR);
+                            PREPARESIMPLIFY(newSide, VAR);
                         }
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 1);
-                        // Same side?
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
+                        SolveSide newSide = NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
+                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
                         {
-                            PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                            PREPAREEXTRACT(newSide, VAR);
                         }
                         else
                         {
-                            PREPAREEXTRACT(SMALLESTCHAFFDEGREE(), VAR);
+                            PREPARESIMPLIFY(newSide, VAR);
                         }
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 1);
-                        PREPAREEXTRACT(SMALLESTCHAFFDEGREE(), VAR);
+                        //PREPAREEXTRACT(SMALLESTCHAFFDEGREE(), VAR);
+                        PREPARESIMPLIFY(GENBOTH(), VAR);
                     }
                 }
                 // Multiple direct matches on one side
@@ -300,7 +309,7 @@ public class Equation : RelationalMap
                         }
                         else
                         {
-                            PREPARESIMPLIFY(SolveSide.BOTH, VAR);
+                            PREPARESIMPLIFY(GENBOTH(), VAR);
                         }
                     }
                     // Multiple indirect matches on one side
@@ -314,14 +323,14 @@ public class Equation : RelationalMap
                         }
                         else
                         {
-                            PREPARESIMPLIFY(SolveSide.BOTH, VAR);
+                            PREPARESIMPLIFY(GENBOTH(), VAR);
                         }
                     }
                     // At least one indirect match on either side
                     else
                     {
                         CURRENT_PICK = (3, 2);
-                        PREPARESIMPLIFY(SolveSide.BOTH, VAR);
+                        PREPARESIMPLIFY(GENBOTH(), VAR);
                     }
                 }
                 // At least one direct match on both sides
@@ -352,7 +361,6 @@ public class Equation : RelationalMap
                         PREPAREEXTRACT(layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                 }
-                //WAS_PICK = WAS_PICK == 2 ? 1 : 0;
                 WAS_PICK = true;
                 continue;
             }
@@ -360,11 +368,25 @@ public class Equation : RelationalMap
             else
             {
                 WAS_PICK = false;
-                CHOSENROOT = layers.Hands[(int)SIDE][0];
-                OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+                if (SIDE == SolveSide.BOTHL)
+                {
+                    CHOSENROOT = layers.LeftHand[0];
+                    OPPOSITEROOT = layers.RightHand[0];
+                }
+                else if (SIDE == SolveSide.BOTHR)
+                {
+                    CHOSENROOT = layers.RightHand[0];
+                    OPPOSITEROOT = layers.LeftHand[0];
+                }
+                else
+                {
+                    CHOSENROOT = layers.Hands[(int)SIDE][0];
+                    OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+                }
                 CHOSENDEG = CHOSENROOT[0].Degree(VAR);
                 NEWCHOSEN = CHOSENROOT[0];
                 NEWOPPOSITE = OPPOSITEROOT[0];
+
                 if (MODE == SolveMode.ISOLATE)
                 {
                     TOTAL_CHANGES++;
@@ -382,15 +404,14 @@ public class Equation : RelationalMap
                 else if (MODE == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    if (SIDE == SolveSide.BOTH)
+                    if (SIDE == SolveSide.BOTHL || SIDE == SolveSide.BOTHR)
                     {
-                        CHOSENROOT[0].Associate();
-                        OPPOSITEROOT[0].Associate();
-                        CHOSENROOT[0].Simplify(v);
-                        OPPOSITEROOT[0].Simplify(v);
-                        CHOSENROOT[0].Commute();
-                        OPPOSITEROOT[0].Commute();
-
+                        layers.LeftHand[0][0].Associate();
+                        layers.LeftHand[0][0].Simplify(v);
+                        layers.LeftHand[0][0].Commute();
+                        layers.RightHand[0][0].Associate();
+                        layers.RightHand[0][0].Simplify(v);
+                        layers.RightHand[0][0].Commute();
                     }
                     else
                     {
@@ -399,26 +420,28 @@ public class Equation : RelationalMap
                         layers.Hands[(int)SIDE][0][0].Commute();
                     }
                 }
+
                 // If no progress was made, enter PICK mode
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
                     if (LAST_PICK == CURRENT_PICK || FUEL < 0)
                     {
-                        throw Scribe.Issue($"The equation could not be solved for {v}. Implement approximator");
+                        throw Scribe.Issue($"Failed to solve to equation for {v} with {FUEL} fuel remaining. Implement approximator");
                     }
                     PREPAREPICK(VAR);
                     FUEL--;
                 }
-                // also PICK if we isolated or expanded
-                else if (MODE == SolveMode.ISOLATE)
-                {
-                    PREPAREPICK(VAR);
-                }
                 // also pick if our live branch isn't present in our chosen side
-                else if (!CHOSENROOT[0].AllArgs.Contains(TWIG[(int)SIDE]!))
+                else if (!NEWCHOSEN.AllArgs.Contains(TWIG[(int)SIDE]!))
                 {
                     PREPAREPICK(VAR);
                 }
+                // also PICK if we isolated or simplified
+                else if (MODE == SolveMode.ISOLATE || MODE == SolveMode.SIMPLIFY)
+                {
+                    PREPAREPICK(VAR);
+                }
+                
                 // Otherwise, keep extracting
                 else
                 {
@@ -455,6 +478,10 @@ public class Equation : RelationalMap
             if (OLDCHOSEN is null || OLDOPPOSITE is null)
                 return false;
             return a.Like(OLDCHOSEN) && b.Like(OLDOPPOSITE);
+        }
+        SolveSide GENBOTH()
+        {
+            return SIDE == SolveSide.LEFT ? SolveSide.BOTHL : SolveSide.BOTHR;
         }
 
         // Write the next instruction
