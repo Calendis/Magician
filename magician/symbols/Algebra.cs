@@ -28,6 +28,7 @@ public abstract partial class Oper
 
     }
 
+    // TODO: only extract towards a side with NO non-matches, otherwise expand
     public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
     {
         Oper newOpposite;
@@ -186,7 +187,6 @@ public abstract partial class Oper
                     
                     //Scribe.Warn($"  A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
                     
-                    // TODO: you must account for both polarities, not just one
                     if (aPositive || bPositive)
                         finalPosArgs.Add(combined);
                     else
