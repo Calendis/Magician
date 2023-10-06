@@ -2,52 +2,98 @@ namespace Magician.Symbols;
 
 public abstract partial class Oper
 {
+    public static readonly Dictionary<Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>, int> OpOrders = new()
+    {
+        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(Variable.StaticNew), -1},
+        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(SumDiff.StaticNew), 0},
+        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(Fraction.StaticNew), 1}
+    };
+    static readonly Dictionary<Type, Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>> virtualStaticMap = new()
+    {
+        {typeof(SumDiff), SumDiff.StaticNew},
+        {typeof(Fraction), Fraction.StaticNew}
+    };
+    public readonly static Dictionary<int, Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>> OrderOps = OpOrders.ToDictionary(x => x.Value, x => x.Key);
+    public static Oper Downcast<T, U>(T o0, U o1) where T : Oper where U : Oper
+    {
+        int ord0 = OpOrders[virtualStaticMap[o0.GetType()]];
+        int ord1 = OpOrders[virtualStaticMap[o1.GetType()]];
+        int ord = Math.Min(Math.Abs(ord0), Math.Abs(ord1));
+        return OrderOps[ord].Invoke(new List<Oper>() { o0 }, new List<Oper>() { });
+    }
+
     public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axis, Variable v)
     {
         if (!chosenSide.commutative)
             throw Scribe.Issue("You need to fix this to support non-commutative Opers");
+        //Oper os = oppositeSide.Copy();
         bool invertedAxis = false;
+        Scribe.Info($"  Isolating Oper {axis} on {chosenSide} and moving rest to {oppositeSide}");
         if (chosenSide.negArgs.Contains(axis) && chosenSide.Degree(v) < 0)
         {
             invertedAxis = true;
             chosenSide.negArgs.Remove(axis);
         }
-        else
+        else if (chosenSide.posArgs.Contains(axis))
         {
             chosenSide.posArgs.Remove(axis);
         }
-        Oper newChosen = axis;
+        else
+        {
+            throw Scribe.Issue($"Axis {axis} not in {chosenSide}");
+        }
 
-        chosenSide.negArgs.Add(oppositeSide);
-        // Invert if the axis wasn't already inverted
-        if (!invertedAxis)
-            (chosenSide.posArgs, chosenSide.negArgs) = (chosenSide.negArgs, chosenSide.posArgs);
-        chosenSide.Simplify(v);
+        Oper cs = chosenSide.New(new List<Oper> { }, new List<Oper> { });// chosenSide.Copy();
+        cs.posArgs.AddRange(chosenSide.posArgs);
+        cs.negArgs.AddRange(chosenSide.negArgs);
+        (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
 
-        return (newChosen, chosenSide.Copy());
+        //cs = Upcast(cs, axis);
+        //cs.posArgs.Add(chosenSide);
 
+        cs.posArgs.Add(oppositeSide.Copy());
+        // Perform an additional inversion if necessary
+        if (invertedAxis)
+            (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
+
+        //cs.Simplify(v);
+        Scribe.Info($"  Got {axis} = {cs}");
+        return (axis.Copy(), cs);
     }
 
-    // TODO: only extract towards a side with NO non-matches, otherwise expand
-    public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
+    public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis, bool downcasting = false)
     {
-        Oper newOpposite;
-        if (chosenSide.posArgs.Contains(axis))
-        {
-            chosenSide.posArgs.Remove(axis);
-            newOpposite = chosenSide.New(new List<Oper>() { oppositeSide }, new List<Oper>() { axis });
-        }
-        else if (chosenSide.negArgs.Contains(axis))
-        {
-            chosenSide.negArgs.Remove(axis);
-            newOpposite = chosenSide.New(new List<Oper>() { oppositeSide, axis }, new List<Oper>() { });
+        Scribe.Info($"Extracting {axis} from {chosenSide}, and moving it to {oppositeSide}");
+        Oper cs = chosenSide.Copy();
+        Oper os = oppositeSide.Copy();
 
+        Oper newOpposite;
+        if (cs.posArgs.Contains(axis))
+        {
+            cs.posArgs.Remove(axis);
+            newOpposite = os.New(new List<Oper>() { os }, new List<Oper>() { axis });
+        }
+        else if (cs.negArgs.Contains(axis))
+        {
+            cs.negArgs.Remove(axis);
+            newOpposite = os.New(new List<Oper>() { os, axis }, new List<Oper>() { });
+
+        }
+        else if (downcasting)
+        {
+            newOpposite = os.New(new List<Oper>() { os }, new List<Oper>() { axis }).Copy();
+            cs = new Variable(cs.identity);
         }
         else
         {
-            throw Scribe.Issue($"Could not extract {axis} from {chosenSide}");
+            throw Scribe.Issue($"Could not extract {axis} from {cs}");
         }
-        return (chosenSide, newOpposite);
+        // If the two Opers are not the same type, downcast so that the types match before extraction
+        if (oppositeSide.GetType() != chosenSide.GetType())
+        {
+            return ExtractOperFrom(Downcast(chosenSide, oppositeSide), oppositeSide, chosenSide, true);
+        }
+        return (cs, newOpposite);
     }
 
     public static void CombineConstantTerms(SumDiff sd)
@@ -100,7 +146,7 @@ public abstract partial class Oper
         {
             List<(int, int, bool, bool)> handshakes = new();
             Dictionary<int, List<(int, int, bool, bool)>> termsToHandshakes = new();
-            
+
             // Trivial case
             if (separatedTerms.Count == 1)
             {
@@ -165,7 +211,7 @@ public abstract partial class Oper
                         //Scribe.Warn($"  Skipping missed handshake {i}, {j}...");
                         continue;
                     }
-                    
+
                     Oper AB = Intersect(A, B);
                     SumDiff ABbar;
                     if (positive)
@@ -184,9 +230,9 @@ public abstract partial class Oper
                         combined = A;
                     else
                         combined = AB.Mult(ABbar);
-                    
+
                     //Scribe.Warn($"  A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
-                    
+
                     if (aPositive || bPositive)
                         finalPosArgs.Add(combined);
                     else
@@ -220,13 +266,13 @@ public abstract partial class Oper
                     return new Variable(1);
             if (v.Found)
                 return new Variable(v.Val == 0 ? 0 : 1);
-            o = p.New(new List<Oper>{o}, new List<Oper>{});
+            o = p.New(new List<Oper> { o }, new List<Oper> { });
         }
         if (p is Variable uu)
         {
             if (uu.Found)
                 return new Variable(uu.Val == 0 ? 0 : 1);
-            p = o.New(new List<Oper>{p}, new List<Oper>{});
+            p = o.New(new List<Oper> { p }, new List<Oper> { });
         }
         IEnumerable<Oper> pos = IntersectPos(o, p);
         IEnumerable<Oper> neg = IntersectNeg(o, p);

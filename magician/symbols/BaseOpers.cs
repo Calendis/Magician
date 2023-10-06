@@ -37,6 +37,10 @@ public class SumDiff : Oper, ISum
     {
         return new SumDiff(a, b);
     }
+    public static SumDiff StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
+    {
+        return new SumDiff(a, b);
+    }
 
     public override double Degree(Variable v)
     {
@@ -119,6 +123,10 @@ public class Fraction : Oper, IFrac
     }
 
     public override Fraction New(IEnumerable<Oper> a, IEnumerable<Oper> b)
+    {
+        return new Fraction(a, b);
+    }
+    public static Fraction StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
         return new Fraction(a, b);
     }
