@@ -91,13 +91,20 @@ public class Tests
             Var("x"),
             Fulcrum.EQUALS,
             new Fraction(
-                new SumDiff(Val(0), new Fraction(Val(4.3), Val(1), Var("z")), Val(0), new Fraction(Var("z"), Val(1), Var("y"))),
+                new Fraction(new List<Oper>
+                {
+                    new SumDiff(new List<Oper>{Val(3.3), Val(1), Var("y")}, new List<Oper>{}),
+                    Var("z")
+                }, new List<Oper>{}),
                 new SumDiff(
-                    new List<Oper> { Val(2), Var("y"), Var("z"), new Fraction(Val(0.4), Val(1), Var("y"), Val(1), Var("z")) },
-                    new List<Oper> { new Fraction(Val(-2), Val(1), Var("y"), Val(1), Var("z")) }
-                )
-            )
-            , Var("x"), 2
+                    new List<Oper>
+                    {
+                        new SumDiff(new List<Oper>{Var("y"), Var("z"), Val(2)}, new List<Oper>{}),
+                        new Fraction(new List<Oper>{new SumDiff(Val(0.4), Val(2)), Var("y"), Var("z")}, new List<Oper>{}),
+                    },
+                    new List<Oper>{}
+                ), Val(-1)
+            ), Var("x"), 2
         );
         // Chosen arbitrarily
         double[] args = new[] { 4.3, -12.3 };
