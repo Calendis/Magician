@@ -177,4 +177,40 @@ public class Tests
         Scribe.Info($"{sol0} == {sol1}?");
         Assert.That(sol0, Is.EqualTo(sol1));
     }
+
+    [Test]
+    public void OperAsIFunction()
+    {
+        Oper decr = new SumDiff(Var("x"), Val(1));
+        Oper triangleNumbers = new Fraction(
+            new List<Oper>{Var("x"), new SumDiff(Var("x"), Val(0), Val(1))},
+            new List<Oper>{Val(2)}
+        );
+
+        Oper offsetSquares = new SumDiff
+        (
+            new Fraction(Var("x"), Val(1), Var("x")),
+            Var("y")
+        );
+        List<double> ossNums = Enumerable.Range(0, 5).Select(n => offsetSquares.Evaluate(n+1, n)).ToList();
+        Assert.Multiple(() =>
+        {
+            Assert.That(ossNums[0], Is.EqualTo(1));
+            Assert.That(ossNums[1], Is.EqualTo(3));
+            Assert.That(ossNums[2], Is.EqualTo(7));
+            Assert.That(ossNums[3], Is.EqualTo(13));
+            Assert.That(ossNums[4], Is.EqualTo(21));
+        });
+        
+        List<double> triNums = Enumerable.Range(0, 5).Select(n => triangleNumbers.Evaluate(n)).ToList();
+        Assert.Multiple(() =>
+        {
+            Assert.That(triNums[0], Is.EqualTo(0));
+            Assert.That(triNums[1], Is.EqualTo(1));
+            Assert.That(triNums[2], Is.EqualTo(3));
+            Assert.That(triNums[3], Is.EqualTo(6));
+            Assert.That(triNums[4], Is.EqualTo(10));
+            Assert.That(decr.Evaluate(0), Is.EqualTo(-1));
+        });
+    }
 }

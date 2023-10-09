@@ -41,7 +41,7 @@ public abstract partial class Oper : IFunction, IArithmetic
             posArgs.Add(new Variable(identity));
     }
 
-    public double Evaluate(double[] args)
+    public double Evaluate(params double[] args)
     {
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
         if (associates.Count != args.Length)

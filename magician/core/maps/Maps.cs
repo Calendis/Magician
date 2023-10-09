@@ -48,31 +48,24 @@ public interface IMap : IFunction, IParametric
 // Plottable when the number of inputs and outputs are specified
 public class RelationalMap : IRelation
 {
-    protected Func<double[], double[]>? map;
+    protected Func<double[], double[]> map;
     public int Ins { get; set; }
     public int Outs { get; set; }
-    public RelationalMap(int ins, int outs, Func<double[], double[]>? m = null)
+    public RelationalMap(int ins, int outs, Func<double[], double[]> m)
     {
         map = m;
         Ins = ins;
         Outs = outs;
     }
 
-    public double[] Evaluate(double[] xs)
+    public double[] Evaluate(params double[] args)
     {
-        if (map is null)
-            throw Scribe.Issue("Null relational map");
-        return map.Invoke(xs);
+        return map.Invoke(args);
     }
     //public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public virtual Multi Plot(params Symbols.PlotOptions[] options)
     {
         throw Scribe.Issue("RelationalMap plotting not implemented");
-    }
-
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        throw new NotImplementedException();
     }
 }
 
