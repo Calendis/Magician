@@ -51,7 +51,7 @@ public class EqPlotting : Spell
         }
 
         Var("time").Val = 0.2 * Math.Sin(Time / 3) + 0.1;
-        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
+        Origin["pt3d"] = spt3d.Plot(
             (Var("x"), new(AxisSpecifier.X, new(-500, 500, 20))),
             (Var("z"), new(AxisSpecifier.Z, new(-500, 500, 40)))
         );
