@@ -1,5 +1,7 @@
+using Magician.Maps;
+
 namespace Magician.Symbols;
-public abstract partial class Oper : IArithmetic
+public abstract partial class Oper : IFunction, IArithmetic
 {
     public List<Oper> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
     public List<Oper> posArgs = new();
@@ -9,6 +11,7 @@ public abstract partial class Oper : IArithmetic
 
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     public bool Contains(Oper o) => this == o || AllArgs.Contains(o);
+    public List<Variable> AssociatedVars;
     protected string name;
     // TODO: make this a generic property
     protected abstract int identity { get; }
@@ -16,22 +19,40 @@ public abstract partial class Oper : IArithmetic
     protected bool commutative = false;
     protected bool invertable = true;
     protected bool posUnaryIdentity = false;
-    //internal Oper? parent = null;
-
-    // Alternating form
-    protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
-    {
-        if (this is not Variable && cstArgs.Length == 0)
-        {
-            posArgs.Add(new Variable(identity));
-        }
-    }
+    
+    public int Ins {get; set;}
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
         this.name = name;
         posArgs = posa.ToList();
         negArgs = nega.ToList();
+        OperLayers ol = new(this, Variable.Undefined);
+        AssociatedVars = ol.GetInfo(0, 0).assocArgs;
+        if (this is Variable v && !v.Found)
+            AssociatedVars.Add(v);
+
+        //map = new Func<double[], double>(vals => Evaluate(vals));
+    }
+    // Alternating form
+    protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
+    {
+        if (this is not Variable && cstArgs.Length == 0)
+            posArgs.Add(new Variable(identity));
+    }
+
+    public double Evaluate(double[] args)
+    {
+        HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
+        if (associates.Count != args.Length)
+            throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
+        
+        int counter = 0;
+        foreach (Variable a in associates)
+            a.Val = args[counter++];
+        double s = Solution().Val;
+        associates.ToList().ForEach(a => a.Reset());
+        return s;
     }
 
     public abstract double Degree(Variable v);
@@ -224,41 +245,6 @@ public abstract partial class Oper : IArithmetic
         return false;
     }
 
-    // An Oper is considered a Term when it:
-    // 1.  Has no SumDiffs anywhere in the tree
-    // and either
-    // 2a. Is the root node
-    // or
-    // 2b. Has the root node as a parent, which must be a SumDiff
-    /* public bool IsTerm(Oper? parent = null)
-    {
-        if (this is SumDiff && AllArgs.Count > 1)
-            return false;
-
-        bool noSumDiffs = false;
-            bool rootOrSumDiffParentRoot = false;
-
-            // Condition 2
-            if (parent == null)
-                rootOrSumDiffParentRoot = true;
-            else if (parent.parent == null && parent is SumDiff)
-                rootOrSumDiffParentRoot = true;
-
-            // Condition 1
-            foreach (Oper o in AllArgs)
-            {
-                if (o.CheckFor<SumDiff>())
-                {
-                    noSumDiffs = false;
-                    break;
-                }
-                noSumDiffs = true;
-            }
-            if (this is SumDiff && AllArgs.Count > 1)
-                noSumDiffs = false;
-
-            return noSumDiffs && rootOrSumDiffParentRoot;
-    } */
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
 
     public bool CheckFor<T>() where T : Oper

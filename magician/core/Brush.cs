@@ -7,7 +7,7 @@ public class Brush : ParamMap
 
     public Multi Paint(double t, Multi m)
     {
-        double[] pos = base.Evaluate(new double[] { t });
+        double[] pos = Evaluate(t);
         if (t > 0)
         {
             return m.Copy().Positioned(pos[0], pos[1]).Tagged($"{pos[0]}{pos[1]}paint");

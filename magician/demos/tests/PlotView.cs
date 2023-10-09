@@ -51,15 +51,17 @@ public class EqPlotting : Spell
         }
 
         Var("time").Val = 0.2 * Math.Sin(Time / 3) + 0.1;
-        Origin["pt3d"] = spt3d.Plot(
+        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
             (Var("x"), new(AxisSpecifier.X, new(-500, 500, 20))),
             (Var("z"), new(AxisSpecifier.Z, new(-500, 500, 40)))
         );
+        // Optionally, reset the variable to an unknown state
+        Var("time").Reset();
+        
         //Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
         //    new PlotOptions(AxisSpecifier.X, new(-500, 500, 20)),
         //    new(AxisSpecifier.Z, new(-500, 500, 40))
         //);
-        //Var("time").Reset();
     }
 
     public override void PreLoop()

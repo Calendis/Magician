@@ -29,10 +29,10 @@ public class MapPlotting : Spell
             Var("x")
         );
         Origin["paraZ"] = twoDEqZ.Solved().Plot(AxisSpecifier.Y,
-            new PlotOptions(AxisSpecifier.Z, new(-80, 80, 4))
+            (Var("z"),new (AxisSpecifier.Z, new(-80, 80, 4)))
         );
         Origin["linX"] = twoDEqX.Solved().Plot(AxisSpecifier.Y,
-            new PlotOptions(AxisSpecifier.X, new(-80, 80, 4))
+            (Var("x"), new (AxisSpecifier.X, new(-80, 80, 4)))
         );
 
         InverseParamMap ipm = new(new Func<double[], double>(vars => -600000d / (vars[0] * vars[0] + vars[1] * vars[1])), 2);
@@ -55,8 +55,8 @@ public class MapPlotting : Spell
 
         SolvedEquation s = ipmCompare.Solved();
         Origin["plot4b"] = s.Plot(AxisSpecifier.Y,
-            new PlotOptions(AxisSpecifier.X, new(-250+600, 250+600, 20)),
-            new(AxisSpecifier.Z, new(-250+600, 250+600, 20))
+            (Var("x"), new(AxisSpecifier.X, new(-250+600, 250+600, 20))),
+            (Var("z"), new(AxisSpecifier.Z, new(-250+600, 250+600, 20)))
         );
     }
 

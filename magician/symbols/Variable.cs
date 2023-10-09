@@ -77,4 +77,5 @@ public class Variable : Oper
             return new();
         return base.Divide(os);
     }
+    public static Variable Undefined = new Variable("undefined");
 }

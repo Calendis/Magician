@@ -22,9 +22,9 @@ public class Driver
 
     public Driver(Multi m, ParamMap pm, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT)
     {
-        if (pm.Params != 3)
+        if (pm.Outs != 3)
         {
-            Scribe.Error($"ParamMap has {pm.Params}, must have 3");
+            Scribe.Error($"ParamMap has {pm.Outs}, must have 3");
         }
         CMode = coordMode;
         DMode = driverMode;

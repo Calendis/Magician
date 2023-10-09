@@ -3,16 +3,61 @@ namespace Magician.Maps;
 using Magician.Symbols;
 using static Magician.Geo.Create;
 
+public interface IRelation
+{
+    public double[] Evaluate(params double[] args);
+    public int Ins { get; protected set; }
+    public int Outs { get; protected set; }
+}
+public interface IFunction : IRelation
+{
+    int IRelation.Outs { get { return 1; } set { } }
+    public new double Evaluate(params double[] args);
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        return new[] { Evaluate(args) };
+    }
+}
+public interface IParametric : IRelation
+{
+    int IRelation.Ins { get { return 1; } set { } }
+    public double[] Evaluate(double x);
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        return new[] { Evaluate(args[0]) }[0];
+    }
+}
+public interface IMap : IFunction, IParametric
+{
+    public new double Evaluate(double x);
+    double[] IParametric.Evaluate(double x)
+    {
+        return new[] { Evaluate(x) };
+    }
+    double IFunction.Evaluate(params double[] args)
+    {
+        return Evaluate(args[0]);
+    }
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        return new[] { Evaluate(args[0]) };
+    }
+}
+
 // Multiple inputs, multiple outputs
 // Plottable when the number of inputs and outputs are specified
-public class RelationalMap
+public class RelationalMap : IRelation
 {
     protected Func<double[], double[]>? map;
-    protected int ins = -1, outs = -1;
-    public RelationalMap(Func<double[], double[]>? m = null)
+    public int Ins { get; set; }
+    public int Outs { get; set; }
+    public RelationalMap(int ins, int outs, Func<double[], double[]>? m = null)
     {
         map = m;
+        Ins = ins;
+        Outs = outs;
     }
+
     public double[] Evaluate(double[] xs)
     {
         if (map is null)
@@ -22,38 +67,35 @@ public class RelationalMap
     //public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public virtual Multi Plot(params Symbols.PlotOptions[] options)
     {
-        if (ins == -1)
-            throw Scribe.Error("Unknown number of inputs");
-        if (outs == -1)
-            throw Scribe.Error("Unknown number of outputs");
         throw Scribe.Issue("RelationalMap plotting not implemented");
+    }
+
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        throw new NotImplementedException();
     }
 }
 
 // Multiple inputs, one output
 // Plottable when the number of inputs is specified
-public class InverseParamMap : RelationalMap
+public class InverseParamMap : IFunction
 {
-    public InverseParamMap(Func<double[], double>? f = null, int inputs = -1) : base(f is null ? null : xs => new double[] { f.Invoke(xs) })
+    Func<double[], double> map;
+    public int Ins { get; set; }
+    //public InverseParamMap(Func<double[], double>? f = null, int inputs = -1) : base(f is null ? null : xs => new double[] { f.Invoke(xs) })
+    public InverseParamMap(Func<double[], double> f, int inputs)
     {
-        outs = 1;
-        ins = inputs;
+        Ins = inputs;
+        map = f;
     }
 
-    public virtual new double Evaluate(params double[] xs)
-    {
-        return base.Evaluate(xs)[0];
-    }
-
-    public override Multi Plot(params Symbols.PlotOptions[] options)
+    public Multi Plot(params Symbols.PlotOptions[] options)
     {
         return Plot(null, options);
     }
-    public Multi Plot(Symbols.AxisSpecifier? outAxis=null, params Symbols.PlotOptions[] options)
+    public Multi Plot(Symbols.AxisSpecifier? outAxis = null, params Symbols.PlotOptions[] options)
     {
-        if (ins == -1)
-            throw Scribe.Error("Unknown number of inputs");
-        else if (ins > 2)
+        if (Ins > 2)
         {
             throw Scribe.Error("Too many input variables");
         }
@@ -66,9 +108,9 @@ public class InverseParamMap : RelationalMap
         do
         {
             // Get arguments from the counter
-            double[] inVals = new double[ins];
+            double[] inVals = new double[Ins];
             double outVal;
-            for (int i = 0; i < ins; i++)
+            for (int i = 0; i < Ins; i++)
             {
                 inVals[i] = solveSpace.Get(i);
             }
@@ -105,7 +147,7 @@ public class InverseParamMap : RelationalMap
                 argsByAxis[(int)axes[i]] = inVals[i];
             }
             argsByAxis[outAxis is null ?
-                (int)new List<AxisSpecifier> {AxisSpecifier.X, AxisSpecifier.Y, AxisSpecifier.Z}.Except(options.Select(o => o.Axis)).ToList()[0]
+                (int)new List<AxisSpecifier> { AxisSpecifier.X, AxisSpecifier.Y, AxisSpecifier.Z }.Except(options.Select(o => o.Axis)).ToList()[0]
                 : (int)outAxis] = outVal;
 
             // Plot colouring code can go here
@@ -148,49 +190,50 @@ public class InverseParamMap : RelationalMap
     {
         return xs => new double[] { f.Invoke(xs) };
     }
+
+    public double Evaluate(params double[] args)
+    {
+        return map.Invoke(args);
+    }
+
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        return new double[] { map.Invoke(args) };
+    }
 }
 
 // Parametric equation. One or fewer input, multiple outputs
 // Always plottable, as the number of outputs is always known
-public class ParamMap : RelationalMap
+public class ParamMap : IParametric
 {
-    public int Params { get; set; }
+    //public int Params { get; set; }
+    public int Outs { get; set; }
     public Func<double, double>[] Maps;
-    public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
+    //public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
+    public ParamMap(params Func<double, double>[] fs)
     {
-        Params = fs.Length;
-        Func<double, double>[] fs2 = new Func<double, double>[fs.Length];
-        int c = 0;
-        foreach (Func<double, double> f in fs)
-        {
-            fs2[c++] = f.Invoke;
-        }
-        Maps = fs2;
-        ins = 1;
-        outs = fs.Length;
+        Outs = fs.Length;
+        Maps = fs.ToArray();
+        //Func<double, double>[] fs2 = new Func<double, double>[fs.Length];
+        //int c = 0;
+        //foreach (Func<double, double> f in fs)
+        //{
+        //    fs2[c++] = f.Invoke;
+        //}
+        //Maps = fs2;
     }
-    public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
-    {
-        Params = fs.Length;
-        Func<double, double>[] fs2 = new Func<double, double>[fs.Length];
-        int c = 0;
-        foreach (DirectMap dm in fs)
-        {
-            fs2[c++] = dm.Evaluate;
-        }
-        Maps = fs2;
-        ins = 1;
-        outs = fs.Length;
-    }
+    //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
+    public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, double>>(im => im.Evaluate).ToArray()) { }
     public double[] Evaluate(double x = 0)
     {
-        return base.Evaluate(new double[] { x });
+        return Maps.Select(f => f.Invoke(x)).ToArray();
     }
+
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public Multi Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
     {
-        if (outs > 3)
-            throw Scribe.Error($"Cannot plot ParamMap with {outs} outputs");
+        if (Outs > 3)
+            throw Scribe.Error($"Cannot plot ParamMap with {Outs} outputs");
         Multi plot = new Multi().Flagged(DrawMode.PLOT);
         double start = paramRange.Min;
         double end = paramRange.Max;
@@ -223,19 +266,21 @@ public class ParamMap : RelationalMap
 
         return plot.Positioned(x, y, z);
     }
+
 }
 
 // One or fewer input, one output
 // Always plottable
-public class DirectMap : ParamMap
+public class DirectMap : IMap
 {
-    public DirectMap(Func<double, double> f) : base(f)
+    Func<double, double> map;
+    public DirectMap(Func<double, double> f)
     {
-        ins = 1; outs = 1;
+        map = f;
     }
-    public new double Evaluate(double x = 0)
+    public double Evaluate(double x = 0)
     {
-        return base.Evaluate(x)[0];
+        return map.Invoke(x);
     }
 }
 

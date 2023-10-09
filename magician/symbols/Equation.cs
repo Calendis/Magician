@@ -1,12 +1,14 @@
 namespace Magician.Symbols;
 using Magician.Maps;
 
-public class Equation : RelationalMap
+public class Equation : IRelation
 {
     public List<Variable> Unknowns { get; private set; }  // all unknowns
     public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
     public Oper LHS { get; private set; }
     public Oper RHS { get; private set; }
+    public int Ins {get; set;}
+    public int Outs {get{return Unknowns.Count;} set{}}
     Fulcrum TheFulcrum { get; set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
@@ -23,13 +25,18 @@ public class Equation : RelationalMap
         {
             initialIsolates.Add(v2);
         }
-        OperLayers lhs = new(LHS, new Variable("dummy"));
-        OperLayers rhs = new(RHS, new Variable("dummy"));
+        OperLayers lhs = new(LHS, Variable.Undefined);
+        OperLayers rhs = new(RHS, Variable.Undefined);
         //Unknowns = LHS.eventuallyContains.Concat(RHS.Arguments).Union(initialIsolates).ToList();
         Unknowns = lhs.GetInfo(0, 0).assocArgs.Concat(rhs.GetInfo(0, 0).assocArgs).Union(initialIsolates).ToList();
         // Can't do this through the base constructor, unfortunately
-        map = new Func<double[], double[]>(vals => Approximate(vals));
-        ins = Unknowns.Count - 1;
+        //map = new Func<double[], double[]>(vals => Approximate(vals));
+        Ins = Unknowns.Count - 1;
+    }
+
+    double[] IRelation.Evaluate(params double[] args)
+    {
+        return Approximate(args);
     }
 
     internal enum SolveMode
