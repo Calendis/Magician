@@ -77,18 +77,5 @@ public class EqPlotting : Spell
             )
         );
         spt3d = plotTest3d.Solved();
-
-        /* Extended testing */
-        Equation unsolved = new(
-            new SumDiff(
-                new Fraction(Var("x"), Val(1), Var("y")),
-                new Fraction(Var("x"), Val(1), Var("y"), Val(1), Var("x")),
-                new Fraction(Var("y"), Val(1), Var("z")),
-                new Fraction(Var("y"), Val(1), Var("z"), Val(1), Var("z"))
-            ),
-            Fulcrum.EQUALS,
-            Val(1)
-        );
-        SolvedEquation solved = unsolved.Solved();
     }
 }
