@@ -23,7 +23,10 @@ public class Equation : RelationalMap
         {
             initialIsolates.Add(v2);
         }
-        Unknowns = LHS.eventuallyContains.Concat(RHS.eventuallyContains).Union(initialIsolates).ToList();
+        OperLayers lhs = new(LHS, new Variable("dummy"));
+        OperLayers rhs = new(RHS, new Variable("dummy"));
+        //Unknowns = LHS.eventuallyContains.Concat(RHS.Arguments).Union(initialIsolates).ToList();
+        Unknowns = lhs.GetInfo(0, 0).assocArgs.Concat(rhs.GetInfo(0, 0).assocArgs).Union(initialIsolates).ToList();
         // Can't do this through the base constructor, unfortunately
         map = new Func<double[], double[]>(vals => Approximate(vals));
         ins = Unknowns.Count - 1;
@@ -41,23 +44,28 @@ public class Equation : RelationalMap
         LEFT,
         RIGHT,
         BOTHL,  // both sides, but reverts to the left side
-        BOTHR,  // both sides, but reverts to the right side
-        EITHER
+        BOTHR   // both sides, but reverts to the right side
     }
     internal enum MatchState
     {
-        DIRECT,
-        TERM,
-        INDIRECT,
-        NONE
+        DIRECT = 1,
+        INDIRECT = 2,
+        NONE = 3
+    }
+    internal enum MatchPairs
+    {
+        TAUT = 1,
+        ISOLATED = 2,
+        SOLVED = 3,
+        INDIRECTS = 4,
+        CONFINED = 6,
+        DEAD = 9
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
     public SolvedEquation Solved(Variable? v = null)
     {
         SolvedEquation? solvedEq = null;
-        OperLayers layL = new(LHS);
-        OperLayers layR = new(RHS);
         // By default, solve for the variable with the highest degree
         if (v == null)
         {
@@ -81,9 +89,12 @@ public class Equation : RelationalMap
             v = chosenSolveVar;
         }
         Scribe.Info($"Solving {this} for {v}");
+        //OperLayers lyrLeft = new(LHS, v);
+        //OperLayers lyrRight = new(RHS, v);
+        (OperLayers LEFT, OperLayers RIGHT) LAYERS = (new(LHS, v), new(RHS, v));
+        OperLayers GETLAYER(SolveSide s) { return new List<OperLayers> { LAYERS.LEFT, LAYERS.RIGHT }[(int)s]; }
 
         // Algebra machine variables
-        int IDX;
         double CHOSENDEG, OPPOSITEDEG;
         List<Oper> CHOSENROOT;
         List<Oper> OPPOSITEROOT;
@@ -91,15 +102,14 @@ public class Equation : RelationalMap
         SolveSide SIDE;
         Variable VAR;
         List<(SolveMode, SolveSide, Variable)> CODE = new()
-            {(SolveMode.PICK, SolveSide.EITHER, v)};
+            {(SolveMode.PICK, SolveSide.LEFT, v)};
         // These default values don't mean anything. They just need to be invalid
-        (int, int) LAST_PICK = (0, -1);
-        (int, int) CURRENT_PICK = (0, 0);
+        (int, int) LAST_PICK = (0, -2);
+        (int, int) CURRENT_PICK = (0, -1);
         bool WAS_PICK = false;
         Oper? OLDCHOSEN = null, OLDOPPOSITE = null;
-        Oper? LIVE_BRANCH_LEFT = null;
-        Oper? LIVE_BRANCH_RIGHT = null;
-        Oper?[] TWIG = new[] { LIVE_BRANCH_LEFT, LIVE_BRANCH_RIGHT };
+        //Oper?[] TWIG = new[] { LIVE_BRANCH_LEFT, LIVE_BRANCH_RIGHT };
+        Oper? LIVE_BRANCH = null;
 
         // The algebra solver state machine
         // You should NOT access the state of Equation within this loop, instead referring to layers
@@ -109,7 +119,8 @@ public class Equation : RelationalMap
         int TOTAL_CHANGES = 0;
         int MAX_FUEL = 10;
         int FUEL = MAX_FUEL;
-        while (true)
+        bool SOLVED = false;
+        while (!SOLVED)
         {
             if (CODE.Count < 1)
                 throw Scribe.Issue("No instructions provided");
@@ -134,7 +145,7 @@ public class Equation : RelationalMap
             else if (MODE != SolveMode.PICK)
                 STATUS += $" on";
             if (!WAS_PICK)
-                Scribe.Info($"  {layL.OpTree[0][0]} = {layR.OpTree[0][0]}");
+                Scribe.Info($"  {LAYERS.LEFT.Get(0, 0)} = {LAYERS.RIGHT.Get(0, 0)}");
             if (MODE != SolveMode.PICK)
                 STATUS += $" the {SIDE} side of the equation:";
             Scribe.Info(STATUS);
@@ -142,288 +153,96 @@ public class Equation : RelationalMap
             if (MODE == SolveMode.PICK)
             {
                 TOTAL_PICKS++;
+                //CHOOSEROOTS();
 
                 /* total rewrite of pick */
                 //TWIG[0] = null;
                 //TWIG[1] = null;
-                //
-                //WAS_PICK = true;
-                //continue;
-                /* end total rewrite */
 
-                TWIG[0] = null;
-                TWIG[1] = null;
-                // First, find matches on both sides
-                List<Oper> MATCHES_TERMS_LEFT = new();
-                List<Oper> MATCHES_OTHER_LEFT = new();
-                List<Oper> MATCHES_TERMS_RIGHT = new();
-                List<Oper> MATCHES_OTHER_RIGHT = new();
-                int[] NON_MATCHES_ALL = new[] { 0, 0 };
-                List<Oper>[] MATCHES_TERMS_ALL = { MATCHES_TERMS_LEFT, MATCHES_TERMS_RIGHT };
-                List<Oper>[] MATCHES_OTHER_ALL = { MATCHES_OTHER_LEFT, MATCHES_OTHER_RIGHT };
+                // Get match information
+                //MatchState MS_LEFT = LAYERS.LEFT.GetInfo(0, 0).ms;
+                //MatchState MS_RIGHT = LAYERS.RIGHT.GetInfo(0, 0).ms;
+                MatchState MS_CHOSEN = GETLAYER(SIDE).GetInfo(0, 0).ms;
+                MatchState MS_OPPOSITE = GETLAYER(1 - SIDE).GetInfo(0, 0).ms;
+                SolveSide SIDE_HIGHEST_MATCH = LAYERS.LEFT.GetInfo(0, 0).ms < LAYERS.RIGHT.GetInfo(0, 0).ms ? SolveSide.LEFT : SolveSide.RIGHT;
+                SolveSide SIDE_MOST_ARGS = LAYERS.LEFT.Root[0].AllArgs.Count > LAYERS.RIGHT.Root[0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT;
+                MatchPairs MATCH = (MatchPairs)((int)MS_CHOSEN * (int)MS_OPPOSITE);
 
-                // Determine matches on either side
-                int LR_SWITCH = 0;
-                foreach (List<List<Oper>> h in new List<List<List<Oper>>>() { layL.OpTree!, layR.OpTree! })
+                List<Oper> LIVE_BRANCHES(SolveSide s) => GETLAYER(s).LiveBranches(0, 0);
+                List<Oper> DIRECTLY_LIVE(SolveSide s) => LIVE_BRANCHES(s).Where(o => GETLAYER(s).GetInfo(o).ms == MatchState.DIRECT).ToList();
+
+                switch (MATCH)
                 {
-                    //Scribe.Info($"h00 {h[0][0]}:");
-                    // Are we a variable?
-                    if (h[0][0] is Variable v_ && v_ == VAR)
-                    {
-                        //Scribe.Info($"  is our variable");
-                        MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
-                        TWIG[LR_SWITCH] = VAR;
-                    }
-                    // Are we a term containing v?
-                    else if (h[0][0] is not SumDiff && h[0][0].Contains(VAR))
-                    {
-                        //Scribe.Info($"  is a {h[0][0].GetType()} term containing our variable");
-                        MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
-                        TWIG[LR_SWITCH] = VAR;
-                    }
-                    else if (h[0][0] is SumDiff && h[0][0].Contains(VAR))
-                    {
-                        //Scribe.Info($"  is a {h[0][0].GetType()} non-term containing our variable");
-                        MATCHES_OTHER_ALL[LR_SWITCH].Add(h[0][0]);
-                        TWIG[LR_SWITCH] = h[0][0];
-                        //foreach (Oper o in h[0][0].AllArgs)
-                        //{
-                        //    // If we see the variable in question, that counts as a term automatically
-                        //    if (o is Variable v__ && v__ == VAR)
-                        //    {
-                        //        MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
-                        //        TWIG[LR_SWITCH] = o;
-                        //    }
-                        //    // otherwise, test to see if o is a term
-                        //    else if (o.Contains(VAR))
-                        //    {
-                        //        if (o.IsTerm)
-                        //        {
-                        //            MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
-                        //        }
-                        //        else
-                        //        {
-                        //            MATCHES_OTHER_ALL[LR_SWITCH].Add(o);
-                        //        }
-                        //        TWIG[LR_SWITCH] = o;
-                        //    }
-                        //    // otherwise, this didn't match at all
-                        //    else
-                        //    {
-                        //        NON_MATCHES_ALL[LR_SWITCH] = NON_MATCHES_ALL[LR_SWITCH] + 1;
-                        //    }
-                        //}
-                    }
-                    else
-                    {
-                        //Scribe.Info($"  does not contain our variable");
-                        NON_MATCHES_ALL[LR_SWITCH]++;
-                    }
-                    LR_SWITCH++;
-                }
-                if (TWIG[0] is null && TWIG[1] is null)
-                {
-                    throw Scribe.Issue("Tree died");
-                }
-
-                int NUMTERMLEFT = MATCHES_TERMS_LEFT.Count;
-                int NUMTERMRIGHT = MATCHES_TERMS_RIGHT.Count;
-                int NUMOTHERLEFT = MATCHES_OTHER_LEFT.Count;
-                int NUMOTHERRIGHT = MATCHES_OTHER_RIGHT.Count;
-
-                /* 4x4 truth table for determining next instruction */
-                // No direct matches on either side
-                if (NUMTERMLEFT + NUMTERMRIGHT == 0)
-                {
-                    // No indirect matches on either side
-                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
-                    {
-                        //CURRENT_PICK = (0, 0);
-                        throw Scribe.Issue($"Given variable {VAR} was not found");
-                    }
-                    // One indirect match
-                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
-                    {
-                        CURRENT_PICK = (1, 0);
-                        //PREPAREISOLATE(NUMOTHERLEFT == 1 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                        PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // Multiple indirect matches on one side
-                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
-                    {
+                    case MatchPairs.DEAD:
+                        throw Scribe.Issue($"No matches for {VAR}");
+                    case MatchPairs.TAUT:
+                        throw Scribe.Issue("Tautological equation");
+                    case MatchPairs.SOLVED:
+                        Oper newChosen = GETLAYER(SIDE).Get(0, 0).Copy();
+                        Oper newOpposite = GETLAYER(1 - SIDE).Get(0, 0).Copy();
+                        solvedEq = newChosen is Variable ? new(newChosen, Fulcrum.EQUALS, newOpposite, v, Unknowns.Count - 1) : new(newOpposite, Fulcrum.EQUALS, newChosen, v, Unknowns.Count - 1);
+                        Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions: {solvedEq}");
+                        SOLVED = true;
+                        break;
+                    // x is isolated on one side, but also exists on the other side
+                    case MatchPairs.ISOLATED:
+                        if (LIVE_BRANCHES(1 - SIDE_HIGHEST_MATCH).Count == 0)
+                        {
+                            throw Scribe.Issue($"This should not occur");
+                        }
+                        else if (LIVE_BRANCHES(1 - SIDE_HIGHEST_MATCH).Count == 1 && DIRECTLY_LIVE(1 - SIDE_HIGHEST_MATCH).Count == 1)
+                        {
+                            CURRENT_PICK = (0, 0);
+                            PREPAREEXTRACT(1 - SIDE_HIGHEST_MATCH, VAR);
+                            LIVE_BRANCH = LIVE_BRANCHES(1 - SIDE_HIGHEST_MATCH)[0];
+                        }
+                        else
+                        {
+                            CURRENT_PICK = (0, 1);
+                            PREPARESIMPLIFY(1 - SIDE_HIGHEST_MATCH, VAR);
+                        }
+                        break;
+                    // x exists on one side only, but is not isolated
+                    case MatchPairs.CONFINED:
+                        if (LIVE_BRANCHES(SIDE_HIGHEST_MATCH).Count == 0)
+                        {
+                            throw Scribe.Issue("This should not occur");
+                        }
+                        else if (LIVE_BRANCHES(SIDE_HIGHEST_MATCH).Count == 1 && DIRECTLY_LIVE(SIDE_HIGHEST_MATCH).Count == 0)
+                        {
+                            CURRENT_PICK = (1, 0);
+                            PREPAREEXTRACT(SIDE_HIGHEST_MATCH, VAR);
+                            LIVE_BRANCH = LIVE_BRANCHES(SIDE_HIGHEST_MATCH)[0];
+                        }
+                        else if (LIVE_BRANCHES(SIDE_HIGHEST_MATCH).Count == 1 && DIRECTLY_LIVE(SIDE_HIGHEST_MATCH).Count == 1)
+                        {
+                            CURRENT_PICK = (1, 1);
+                            PREPAREISOLATE(SIDE_HIGHEST_MATCH, VAR);
+                            LIVE_BRANCH = LIVE_BRANCHES(SIDE_HIGHEST_MATCH)[0];
+                        }
+                        else
+                        {
+                            CURRENT_PICK = (1, 2);
+                            PREPARESIMPLIFY(SIDE_HIGHEST_MATCH, VAR);
+                        }
+                        break;
+                    // x exists on both sides, and is isolated on neither
+                    case MatchPairs.INDIRECTS:
                         CURRENT_PICK = (2, 0);
-                        PREPARESIMPLIFY(NUMOTHERLEFT != 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // At least one indirect match on both sides
-                    else
-                    {
-                        CURRENT_PICK = (3, 0);
-                        PREPARESIMPLIFY(GENBOTH(), VAR);
-                    }
-                }
-                // One direct match on either side
-                else if (NUMTERMLEFT + NUMTERMRIGHT == 1)
-                {
-                    // No indirect matches on either side
-                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (0, 1);
-                        // Solved
-                        if ((layL.OpTree[0][0].AllArgs.Count == 0 && layL.OpTree[0][0] == v) || (layR.OpTree[0][0].AllArgs.Count == 0 && layR.OpTree[0][0] == v))
-                        {
-                            Oper newChosenRoot = layL.OpTree[0][0].Copy();
-                            Oper newOppositeRoot = layR.OpTree[0][0].Copy();
-                            solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v, Unknowns.Count - 1);
-                            Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions: {solvedEq}");
-                            break;
-                        }
-                        PREPAREISOLATE(layL.OpTree[0][0].Degree(v) != 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // One indirect match on either side
-                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
-                    {
-                        CURRENT_PICK = (1, 1);
-                        // Extract the direct match
-                        SolveSide newSide = NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
-                        {
-                            PREPAREEXTRACT(newSide, VAR);
-                        }
-                        else
-                        {
-                            PREPARESIMPLIFY(newSide, VAR);
-                        }
-                    }
-                    // Multiple indirect matches on one side
-                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (2, 1);
-                        SolveSide newSide = NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
-                        {
-                            PREPAREEXTRACT(newSide, VAR);
-                        }
-                        else
-                        {
-                            PREPARESIMPLIFY(newSide, VAR);
-                        }
-                    }
-                    // At least one indirect match on both sides
-                    else
-                    {
-                        CURRENT_PICK = (3, 1);
-                        //PREPAREEXTRACT(SMALLESTCHAFFDEGREE(), VAR);
-                        PREPARESIMPLIFY(GENBOTH(), VAR);
-                    }
-                }
-                // Multiple direct matches on one side
-                else if (NUMTERMLEFT * NUMTERMRIGHT == 0)
-                {
-                    // No indirect matches
-                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (0, 2);
-                        PREPARESIMPLIFY(NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // One indirect match on either side
-                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
-                    {
-                        CURRENT_PICK = (1, 2);
-                        // Same side?
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
-                        {
-                            PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                        }
-                        else
-                        {
-                            PREPARESIMPLIFY(GENBOTH(), VAR);
-                        }
-                    }
-                    // Multiple indirect matches on one side
-                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (2, 2);
-                        // Same side?
-                        if ((NUMTERMLEFT ^ NUMOTHERLEFT) == 0)
-                        {
-                            PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                        }
-                        else
-                        {
-                            PREPARESIMPLIFY(GENBOTH(), VAR);
-                        }
-                    }
-                    // At least one indirect match on either side
-                    else
-                    {
-                        CURRENT_PICK = (3, 2);
-                        PREPARESIMPLIFY(GENBOTH(), VAR);
-                    }
-                }
-                // At least one direct match on both sides
-                else
-                {
-                    // No indirect matches
-                    if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (0, 3);
-                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // One indirect match on either side
-                    else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
-                    {
-                        CURRENT_PICK = (1, 3);
-                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // Multiple indirect matches on one side
-                    else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
-                    {
-                        CURRENT_PICK = (2, 3);
-                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
-                    // At least one indirect match on both sides
-                    else
-                    {
-                        CURRENT_PICK = (3, 3);
-                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
-                    }
+                        PREPAREEXTRACT(SIDE_MOST_ARGS, VAR);
+                        LIVE_BRANCH = LIVE_BRANCHES(SIDE_MOST_ARGS)[0];
+                        //PREPARESIMPLIFY(GENBOTH(), VAR);
+                        break;
                 }
                 WAS_PICK = true;
                 continue;
+                /* end rewrite */
             }
             // Manipulate the tree in favour of being solved
             else
             {
                 WAS_PICK = false;
-                if (SIDE == SolveSide.BOTHL)
-                {
-                    CHOSENROOT = layL.OpTree[0];
-                    OPPOSITEROOT = layR.OpTree[0];
-                }
-                else if (SIDE == SolveSide.BOTHR)
-                {
-                    CHOSENROOT = layR.OpTree[0];
-                    OPPOSITEROOT = layL.OpTree[0];
-                }
-                else
-                {
-                    //CHOSENROOT = layers.Hands[(int)SIDE][0];
-                    //OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
-                    if (SIDE == SolveSide.LEFT)
-                    {
-                        CHOSENROOT = layL.OpTree[0];
-                        OPPOSITEROOT = layR.OpTree[0];
-                    }
-                    else if (SIDE == SolveSide.RIGHT)
-                    {
-                        CHOSENROOT = layR.OpTree[0];
-                        OPPOSITEROOT = layL.OpTree[0];
-                    }
-                    else
-                    {
-                        throw Scribe.Issue("Bad solve side");
-                    }
-                }
+                CHOOSEROOTS();
                 CHOSENDEG = CHOSENROOT[0].Degree(VAR);
                 NEWCHOSEN = CHOSENROOT[0];
                 NEWOPPOSITE = OPPOSITEROOT[0];
@@ -431,40 +250,40 @@ public class Equation : RelationalMap
                 if (MODE == SolveMode.ISOLATE)
                 {
                     TOTAL_CHANGES++;
-                    if (TWIG[(int)SIDE] is null)
+                    if (LIVE_BRANCH is null)
                         throw Scribe.Issue($"No live branch to isolate axis from");
-                    (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!, VAR);
+                    (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], LIVE_BRANCH, VAR);
                 }
                 else if (MODE == SolveMode.EXTRACT)
                 {
                     TOTAL_CHANGES++;
-                    if (TWIG[(int)SIDE] is null)
+                    if (LIVE_BRANCH is null)
                         throw Scribe.Issue("No live branch to extract axis from");
-                    (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], TWIG[(int)SIDE]!);
+                    (NEWCHOSEN, NEWOPPOSITE) = Oper.ExtractOperFrom(CHOSENROOT[0], OPPOSITEROOT[0], LIVE_BRANCH);
                 }
                 else if (MODE == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
                     if (SIDE == SolveSide.BOTHL || SIDE == SolveSide.BOTHR)
                     {
-                        layL.OpTree[0][0].Associate();
-                        layL.OpTree[0][0].Simplify(v);
-                        layL.OpTree[0][0].Commute();
-                        layR.OpTree[0][0].Associate();
-                        layR.OpTree[0][0].Simplify(v);
-                        layR.OpTree[0][0].Commute();
+                        LAYERS.LEFT.Get(0, 0).Associate();
+                        LAYERS.LEFT.Get(0, 0).Simplify(v);
+                        LAYERS.LEFT.Get(0, 0).Commute();
+                        LAYERS.RIGHT.Get(0, 0).Associate();
+                        LAYERS.RIGHT.Get(0, 0).Simplify(v);
+                        LAYERS.RIGHT.Get(0, 0).Commute();
                     }
                     else if (SIDE == SolveSide.LEFT)
                     {
-                        layL.OpTree[0][0].Associate();
-                        layL.OpTree[0][0].Simplify(v);
-                        layL.OpTree[0][0].Commute();
+                        LAYERS.LEFT.Get(0, 0).Associate();
+                        LAYERS.LEFT.Get(0, 0).Simplify(v);
+                        LAYERS.LEFT.Get(0, 0).Commute();
                     }
                     else if (SIDE == SolveSide.RIGHT)
                     {
-                        layR.OpTree[0][0].Associate();
-                        layR.OpTree[0][0].Simplify(v);
-                        layR.OpTree[0][0].Commute();
+                        LAYERS.RIGHT.Get(0, 0).Associate();
+                        LAYERS.RIGHT.Get(0, 0).Simplify(v);
+                        LAYERS.RIGHT.Get(0, 0).Commute();
                     }
                     else
                     {
@@ -474,50 +293,29 @@ public class Equation : RelationalMap
                     NEWOPPOSITE = OPPOSITEROOT[0].Trim();
                 }
 
-                // If no progress was made, enter PICK mode
-                //bool ncbd = NOCHANGE(NEWCHOSEN, NEWOPPOSITE);
-                //Scribe.Info($"\t NOCHANGE: {OLDCHOSEN}->{NEWCHOSEN}, {OLDOPPOSITE}->{NEWOPPOSITE} ? {ncbd}");
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
                     if (LAST_PICK == CURRENT_PICK || FUEL < 0)
                     {
                         throw Scribe.Issue($"Failed to solve to equation for {v} with {FUEL} fuel remaining. Implement approximator");
                     }
-                    PREPAREPICK(VAR);
                     FUEL--;
                 }
-                // also pick if our live branch isn't present in our chosen side
-                else if (!NEWCHOSEN.AllArgs.Contains(TWIG[(int)SIDE]!))
-                {
+                if (MODE != SolveMode.EXTRACT)
                     PREPAREPICK(VAR);
-                }
-                // also PICK if we isolated or simplified
-                else if (MODE == SolveMode.ISOLATE || MODE == SolveMode.SIMPLIFY)
-                {
+                else if (!NEWCHOSEN.AllArgs.Contains(LIVE_BRANCH!))
                     PREPAREPICK(VAR);
-                }
-
-                // Otherwise, keep extracting
                 else
-                {
                     CODE.Add(INSTRUCTION);
-                }
             }
 
             LAST_PICK = CURRENT_PICK;
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
-            if (SIDE == SolveSide.LEFT)
-            {
-                layL = new(NEWCHOSEN);
-                layR = new(NEWOPPOSITE);
-            }
-
+            if (SIDE == SolveSide.LEFT || SIDE == SolveSide.BOTHL)
+                LAYERS = (new(NEWCHOSEN, VAR), new(NEWOPPOSITE, VAR));
             else
-            {
-                layR = new(NEWCHOSEN);
-                layL = new(NEWOPPOSITE);
-            }
+                LAYERS = (new(NEWOPPOSITE, VAR), new(NEWCHOSEN, VAR));
         }
 
         /* Algebra machine helper methods */
@@ -528,8 +326,8 @@ public class Equation : RelationalMap
             foreach (Variable otr in chaffVars)
             {
                 double degL, degR;
-                degL = layL.OpTree[0][0].Degree(VAR);
-                degR = layR.OpTree[0][0].Degree(VAR);
+                degL = LAYERS.LEFT.Get(0, 0).Degree(VAR);
+                degR = LAYERS.RIGHT.Get(0, 0).Degree(VAR);
                 totalDegrees.Item1 += degL;
                 totalDegrees.Item2 += degR;
             }
@@ -545,11 +343,43 @@ public class Equation : RelationalMap
         {
             return SIDE == SolveSide.LEFT ? SolveSide.BOTHL : SolveSide.BOTHR;
         }
+        void CHOOSEROOTS()
+        {
+            if (SIDE == SolveSide.BOTHL)
+            {
+                CHOSENROOT = LAYERS.LEFT.Root;
+                OPPOSITEROOT = LAYERS.RIGHT.Root;
+            }
+            else if (SIDE == SolveSide.BOTHR)
+            {
+                CHOSENROOT = LAYERS.RIGHT.Root;
+                OPPOSITEROOT = LAYERS.LEFT.Root;
+            }
+            else
+            {
+                //CHOSENROOT = layers.Hands[(int)SIDE][0];
+                //OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+                if (SIDE == SolveSide.LEFT)
+                {
+                    CHOSENROOT = LAYERS.LEFT.Root;
+                    OPPOSITEROOT = LAYERS.RIGHT.Root;
+                }
+                else if (SIDE == SolveSide.RIGHT)
+                {
+                    CHOSENROOT = LAYERS.RIGHT.Root;
+                    OPPOSITEROOT = LAYERS.LEFT.Root;
+                }
+                else
+                {
+                    throw Scribe.Issue("Bad solve side");
+                }
+            }
+        }
 
         // Write the next instruction
         void PREPAREPICK(Variable targ)
         {
-            CODE.Add((SolveMode.PICK, SolveSide.EITHER, targ));
+            CODE.Add((SolveMode.PICK, SolveSide.LEFT, targ));
         }
         void PREPAREISOLATE(SolveSide s, Variable targ)
         {

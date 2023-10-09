@@ -2,40 +2,36 @@ namespace Magician.Symbols;
 
 internal class OperLayers
 {
-    public List<List<Oper>> OpTree = new();
-    public Dictionary<Oper, OperInfo> OpInfoMap = new();
-    public OperLayers(Oper o)
+    readonly List<List<Oper>> OpTree = new();
+    Dictionary<Oper, OperInfo> OpInfoMap = new();
+    public OperLayers(Oper o, Variable v)
     {
         OpTree = new() {new() {o}};
-        GatherInfo(o);
+        GatherInfo(o, v);
     }
 
-    void GatherInfo(Oper o, int depth=0, List<List<Oper>>? opTree=null)
+    void GatherInfo(Oper o, Variable v, int depth=0, List<Variable>? assocArgs=null, bool isTerm=true, List<List<Oper>>? opTree=null)
     {
-        if (opTree is null)
-            opTree = OpTree;
-        OperInfo i = new OperInfo(o);
-
+        opTree ??= OpTree;
+        assocArgs ??= new();
         if (opTree.Count > depth)
-        {
-            OpTree[depth].Add(o);
-            OpInfoMap.TryAdd(o, i);
-        }
+            opTree[depth].Add(o);
         else if (OpTree.Count == depth)
-        {
-            OpTree.Add(new List<Oper>{o});
-            OpInfoMap.TryAdd(o, i);
-        }
+            opTree.Add(new List<Oper>{o});
         else
-        {
             throw Scribe.Issue("this can't happen");
-        }
+
         foreach (Oper a in o.AllArgs)
         {
-            GatherInfo(a, depth+1, opTree);
+            if (a is Variable v2 && !v2.Found)
+                assocArgs.Add(v2);
+            GatherInfo(a, v, depth+1, assocArgs, o is not SumDiff && isTerm, opTree);
         }
+        OperInfo i = new(o, v, assocArgs, isTerm);
+        OpInfoMap.TryAdd(o, i);
     }
     
+    public List<Oper> Root => OpTree[0];
     public Oper Get(int n, int k)
     {
         return OpTree[n][k];
@@ -48,17 +44,37 @@ internal class OperLayers
     {
         return OpInfoMap[o];
     }
+    public List<Oper> LiveBranches(Oper o)
+    {
+        return o.AllArgs.Where(a => GetInfo(a).ms != Equation.MatchState.NONE).ToList();
+    }
+    public List<Oper> LiveBranches(int n, int k)
+    {
+        return LiveBranches(Get(n, k));
+    }
 }
 
 internal readonly struct OperInfo
 {
-    readonly List<Variable> eventContains;
-    readonly double deg;
-    readonly bool empty;
-    public OperInfo(Oper o)
+    public readonly double deg;
+    public readonly Equation.MatchState ms;
+    public readonly List<Variable> assocArgs;
+    public OperInfo(Oper o, Variable v, IEnumerable<Variable> assocArgs, bool isTerm)
     {
-        eventContains = new();
-        deg = -1;
-        empty = true;
+        deg = o.Degree(v);
+        this.assocArgs = assocArgs.ToList();
+        ms = Equation.MatchState.NONE;
+        if (o is Variable v2)
+            if (v2 == v)
+                ms = Equation.MatchState.DIRECT;
+            else
+                ms = Equation.MatchState.NONE;
+        else if (assocArgs.Contains(v))
+        {
+            if (isTerm)
+                ms = Equation.MatchState.INDIRECT;
+            else
+                ms = Equation.MatchState.INDIRECT;
+        }
     }
 }
