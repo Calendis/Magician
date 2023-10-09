@@ -5,8 +5,8 @@ public abstract partial class Oper
     public static readonly Dictionary<Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>, int> OpOrders = new()
     {
         {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(Variable.StaticNew), -1},
-        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(SumDiff.StaticNew), 0},
-        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(Fraction.StaticNew), 1}
+        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(SumDiff.StaticNew), 1},
+        {new Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>(Fraction.StaticNew), 2}
     };
     static readonly Dictionary<Type, Func<IEnumerable<Oper>, IEnumerable<Oper>, Oper>> virtualStaticMap = new()
     {
@@ -56,42 +56,47 @@ public abstract partial class Oper
             (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
 
         //cs.Simplify(v);
-        return (axis.Copy(), cs);
+        return (axis.Copy().Trim(), cs.Trim());
     }
 
     public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis, bool downcasting = false)
     {
-        Scribe.Info($"Extracting {axis} from {chosenSide}, and moving it to {oppositeSide}");
-        Oper cs = chosenSide.Copy();
+        //Scribe.Info($"Extracting {axis} from {chosenSide}, and moving it to {oppositeSide}");
+        Oper cs = chosenSide;
         Oper os = oppositeSide.Copy();
+
+        // If the two Opers are not the same type, downcast so that the types match before extraction
+        if (oppositeSide.GetType() != chosenSide.GetType())
+        {
+            //Scribe.Info($"  Downcasting...");
+            return ExtractOperFrom(Downcast(chosenSide, oppositeSide), Downcast(oppositeSide, chosenSide), axis, true);
+        }
 
         Oper newOpposite;
         if (cs.posArgs.Contains(axis))
         {
             cs.posArgs.Remove(axis);
-            newOpposite = os.New(new List<Oper>() { os }, new List<Oper>() { axis });
+            newOpposite = os.New(new List<Oper>() { os.Trim() }, new List<Oper>() { axis });
         }
         else if (cs.negArgs.Contains(axis))
         {
             cs.negArgs.Remove(axis);
-            newOpposite = os.New(new List<Oper>() { os, axis }, new List<Oper>() { });
+            newOpposite = os.New(new List<Oper>() { os.Trim(), axis }, new List<Oper>() { });
 
         }
         else if (downcasting)
         {
-            newOpposite = os.New(new List<Oper>() { os }, new List<Oper>() { axis }).Copy();
-            cs = new Variable(cs.identity);
+            newOpposite = os.New(new List<Oper>() { os.Trim() }, new List<Oper>() { axis }).Copy();
+            //cs = new Variable(cs.identity);
+            if (!cs.posArgs[0].posArgs.Remove(axis))
+                cs.posArgs[0].negArgs.Remove(axis);
         }
         else
         {
-            throw Scribe.Issue($"Could not extract {axis} from {cs}");
+            throw Scribe.Issue($"Could not extract {axis} from {cs.GetType()} {cs}");
         }
-        // If the two Opers are not the same type, downcast so that the types match before extraction
-        if (oppositeSide.GetType() != chosenSide.GetType())
-        {
-            return ExtractOperFrom(Downcast(chosenSide, oppositeSide), oppositeSide, chosenSide, true);
-        }
-        return (cs, newOpposite);
+        //Scribe.Info($"  Got {cs}, {newOpposite}");
+        return (cs.Trim(), newOpposite.Trim());
     }
 
     public static void CombineConstantTerms(SumDiff sd)
@@ -217,10 +222,10 @@ public abstract partial class Oper
                     else if (aPositive)
                         ABbar = A.Divide(AB).Subtract(B.Divide(AB));
                     else if (bPositive)
-                        ABbar = B.Divide(AB).Subtract(A.Divide(AB));
+                        ABbar = A.Divide(AB).Subtract(B.Divide(AB));
                     else
-                        ABbar = A.Divide(AB).Add(B.Divide(AB));
-
+                        throw Scribe.Issue("haggu");
+                        
                     Oper combined;
                     if (A is Variable av && av.Found && av.Val == 0)
                         combined = B;
@@ -229,9 +234,9 @@ public abstract partial class Oper
                     else
                         combined = AB.Mult(ABbar);
 
-                    //Scribe.Warn($"  A, B, AB, ABbar, combined: {A}, {B}, {AB}, {ABbar}, {combined}");
+                    //Scribe.Warn($"  A, B, combined, +-: {A}, {B}, {combined}, {aPositive}{bPositive}");
 
-                    if (aPositive || bPositive)
+                    if ((positive || aPositive) && (aPositive || bPositive))
                         finalPosArgs.Add(combined);
                     else
                         finalNegArgs.Add(combined);
