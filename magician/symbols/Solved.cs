@@ -18,25 +18,40 @@ public class SolvedEquation : InverseParamMap
         solvedVar = v;
         map = MapFromIPFunc(Evaluate);
     }
+    public Multi Plot(params (Variable, PlotOptions)[] varPairedOptions)
+    {
+        // Every Unknown not paired with an axis becomes a slider
+        List<Variable> pairedUnknowns = varPairedOptions.Select(t => t.Item1).ToList();
+        eq.Sliders = eq.Unknowns.Except(pairedUnknowns.Append(solvedVar)).ToList();
+        // The map can temporarily be considered to have fewer inputs
+        ins -= eq.Sliders.Count;
+        Multi plot = base.Plot(varPairedOptions.Select(t => t.Item2).ToArray());
+        // Restore the proper number of inputs
+        ins += eq.Sliders.Count;
+        eq.Sliders.Clear();
+        return plot;
+    }
 
     public override double Evaluate(params double[] vals)
     {
-        if (vals.Length != eq.Unknowns.Length - 1)
+        int expectedArgs = eq.Unknowns.Count - eq.Sliders.Count - 1;
+        if (vals.Length != expectedArgs)
         {
-            throw Scribe.Error($"Equation expected {eq.Unknowns.Length - 1} arguments, got {vals.Length}");
+            throw Scribe.Error($"Equation expected {expectedArgs} arguments, got {vals.Length}");
         }
         int counter = 0;
-        List<Variable> knowns = eq.Unknowns.ToList();
-        knowns.Remove(solvedVar);
+        List<Variable> unknowns = eq.Unknowns.ToList();
+        unknowns.Remove(solvedVar);
+        unknowns = unknowns.Except(eq.Sliders).ToList();
         
-        foreach (Variable x in knowns)
+        // Set the values
+        foreach (Variable x in unknowns)
         {
             x.Val = vals[counter++];
         }
         
         Variable result = opposite.Solution();
-        Array.ForEach(eq.Unknowns, v => v.Reset());
-        Array.ForEach<Variable>(knowns.ToArray(), v => v.Reset());
+        unknowns.ForEach(v => v.Reset());
         return result.Val;
     }
 

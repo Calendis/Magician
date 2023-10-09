@@ -4,13 +4,13 @@ public class Variable : Oper
 {
     protected override int identity { get => throw Scribe.Error("Undefined");}
     public bool found = false;
-    Quantity q = new Quantity(0);
+    Quantity q = new(0);
     public double Val
     {
         get
         {
             if (!found)
-                throw Scribe.Error($"Variable {name} is unknown");
+                throw Scribe.Error($"Variable {name} is unknown: {q}");
             return q.Get();
         }
         set
@@ -40,9 +40,7 @@ public class Variable : Oper
     public override Variable Copy()
     {
         if (!found)
-        {
             return this;
-        }
         return new Variable(Val);
     }
     public override string ToString()
@@ -54,11 +52,11 @@ public class Variable : Oper
     // TODO: fix it
     public override Oper New(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
-        throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
+        throw Scribe.Error("Variables are not newable. Use .Copy if you need a copy");
     }
     public static Oper StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
-        throw Scribe.Error("Variable cannot store arguments. Pass the variable or use Notate.Val to represent a constant");
+        throw Scribe.Error("Variables are not newable. Use .Copy if you need a copy");
     }
 
     public override Variable Solution()

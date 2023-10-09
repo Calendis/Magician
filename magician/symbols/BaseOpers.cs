@@ -44,7 +44,7 @@ public class SumDiff : Oper, ISum
 
     public override double Degree(Variable v)
     {
-        double minD = double.MaxValue;
+        double minD = 0;
         double maxD = double.MinValue;
         foreach (Oper o in AllArgs)
         {
@@ -52,7 +52,7 @@ public class SumDiff : Oper, ISum
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return maxD - minD;
+        return Math.Abs(maxD - minD);
     }
 
     public override void Reduce(Variable axis)

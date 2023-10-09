@@ -36,10 +36,10 @@ public class MapPlotting : Spell
         );
 
         InverseParamMap ipm = new(new Func<double[], double>(vars => -600000d / (vars[0] * vars[0] + vars[1] * vars[1])), 2);
-        //Origin["plot3"] = ipm.Plot(
-        //    new(AxisSpecifier.X, new(-250, 250, 20)),
-        //    new(AxisSpecifier.Z, new(-250, 250, 20))
-        //).Positioned(0, 0, 600);
+        Origin["plot3"] = ipm.Plot(
+            new PlotOptions(AxisSpecifier.X, new(-250, 250, 20)),
+            new(AxisSpecifier.Z, new(-250, 250, 20))
+        ).Positioned(0, 0, 600);
 
         Equation ipmCompare = new(
             Var("y"),

@@ -4,7 +4,6 @@ public abstract partial class Oper : IArithmetic
     public List<Oper> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();
-    public abstract double Degree(Variable v);
     public string Name => name;
     public bool cancelled = false;
     public List<Variable> eventuallyContains = new();
@@ -18,7 +17,7 @@ public abstract partial class Oper : IArithmetic
     protected bool commutative = false;
     protected bool invertable = true;
     protected bool posUnaryIdentity = false;
-    internal Oper? parent = null;
+    //internal Oper? parent = null;
 
     // Alternating form
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
@@ -36,13 +35,13 @@ public abstract partial class Oper : IArithmetic
         negArgs = nega.ToList();
         foreach (Oper o in AllArgs)
         {
-            o.parent = this;
             if (o is Variable v && !v.Found)
                 eventuallyContains.Add(v);
             eventuallyContains = eventuallyContains.Union(o.eventuallyContains).ToList();
         }
     }
 
+    public abstract double Degree(Variable v);
     public bool Like(Oper o)
     {
         if (o.posUnaryIdentity && o.posArgs.Count == 1 && o.negArgs.Count == 0)
@@ -72,7 +71,7 @@ public abstract partial class Oper : IArithmetic
         return true;
     }
 
-    public string Ord(string? ord=null)
+    public string Ord(string? ord = null)
     {
         Dictionary<Type, (char neg, char pos)> typeHeaders = new()
         {
@@ -159,7 +158,7 @@ public abstract partial class Oper : IArithmetic
     {
         foreach (Oper o in AllArgs)
             o.Commute();
-        
+
         if (!commutative)
             return;
 
@@ -174,16 +173,22 @@ public abstract partial class Oper : IArithmetic
         foreach (Oper o in AllArgs)
             o.Simplify(v, this);
         Reduce(v);
+        BaseReduce(parent);
+    }
 
+    public virtual void Reduce(Variable axis){}
+    public void BaseReduce(Oper? parent)
+    {
         // Drop identities
         posArgs = posArgs.Where(o => !o.IsIdentity(identity)).ToList();
         if (commutative)
             negArgs = negArgs.Where(o => !o.IsIdentity(identity)).ToList();
 
-        // Absorb trivial Opers
-        if (parent is not null)
-        {
-            if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
+        if (parent is null)
+            return;
+
+        // Absorb trivial
+        if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
             {
                 if (parent!.negArgs.Contains(this))
                 {
@@ -196,50 +201,51 @@ public abstract partial class Oper : IArithmetic
                     parent.posArgs.AddRange(posArgs);
                 }
             }
-            if (IsEmpty)
+        if (IsEmpty && this is not Variable)
+        {
+            if (parent!.negArgs.Contains(this))
             {
-                if (parent!.negArgs.Contains(this))
-                {
-                    parent.negArgs.Remove(this);
-                    parent.negArgs.Add(new Variable(identity));
-                }
-                else if (parent.posArgs.Contains(this))
-                {
-                    parent.posArgs.Remove(this);
-                    parent.posArgs.Add(new Variable(identity));
-                }
+                parent.negArgs.Remove(this);
+                parent.negArgs.Add(new Variable(identity));
+            }
+            else if (parent.posArgs.Contains(this))
+            {
+                parent.posArgs.Remove(this);
+                parent.posArgs.Add(new Variable(identity));
             }
         }
     }
 
-    public virtual void Reduce(Variable axis) { }
-
+    public Oper Trim()
+    {
+        if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
+            return posArgs[0];
+        return this;
+    }
     public bool IsIdentity(int id)
     {
         if (this is Variable v)
             return v.Found && v.Val == id;
         if (IsEmpty)
             return true;
-        foreach (Oper o in posArgs)
-            if (!o.IsIdentity(identity))
-                return false;
-        foreach (Oper o in negArgs)
-            if (!o.IsIdentity(identity))
-                return false;
-        return true;
+        if (eventuallyContains.Count == 0)
+            return Solution().Val == identity;
+        
+        return false;
     }
 
-    // An Oper is considered a term when it:
+    // An Oper is considered a Term when it:
     // 1.  Has no SumDiffs anywhere in the tree
     // and either
     // 2a. Is the root node
     // or
     // 2b. Has the root node as a parent, which must be a SumDiff
-    public bool IsTerm
+    /* public bool IsTerm(Oper? parent = null)
     {
-        get
-        {
-            bool noSumDiffs = false;
+        if (this is SumDiff && AllArgs.Count > 1)
+            return false;
+
+        bool noSumDiffs = false;
             bool rootOrSumDiffParentRoot = false;
 
             // Condition 2
@@ -258,10 +264,11 @@ public abstract partial class Oper : IArithmetic
                 }
                 noSumDiffs = true;
             }
+            if (this is SumDiff && AllArgs.Count > 1)
+                noSumDiffs = false;
 
             return noSumDiffs && rootOrSumDiffParentRoot;
-        }
-    }
+    } */
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
 
     public bool CheckFor<T>() where T : Oper
@@ -303,43 +310,6 @@ public abstract partial class Oper : IArithmetic
 
     // Write this if necessary
     //public List<(int, int)> LocateAll
-
-    // Recursively gather all variables, constants, and operators in an Oper
-    public void CollectOpers(
-        ref List<Oper> varBasket,
-        ref List<int> layerBasket,
-        ref int knowns,
-        ref int unknowns,
-        int counter = 0)
-    {
-        // This will occur because each time "x" appears in the equation, it refers to a sole instance...
-        // ... of Variable with the name "x"
-        bool likeTermSeen = varBasket.Contains(this);
-        if (this is Variable v)
-        {
-            // Handles constants
-            if (v.found)
-            {
-                knowns++;
-            }
-            // Handles free variables
-            else if (!likeTermSeen)
-            {
-                unknowns++;
-            }
-            // Track all variables in the basket
-            varBasket.Add((Variable)this);
-            layerBasket.Add(counter);
-            return;
-        }
-        varBasket.Add(this);
-        layerBasket.Add(counter);
-        // Collect opers recursively
-        foreach (Oper o in AllArgs)
-        {
-            o.CollectOpers(ref varBasket, ref layerBasket, ref knowns, ref unknowns, counter + 1);
-        }
-    }
 
     public virtual Oper Copy()
     {

@@ -3,37 +3,30 @@ using Magician.Maps;
 
 public class Equation : RelationalMap
 {
-    Variable[] unknowns;
-    public Variable[] Unknowns => unknowns;
-    EquationLayers layers;
-    EquationLayers layersBackup;
-    List<Variable> isolates;
-    public Oper LHS;
-    public Oper RHS;
-    public Oper Side(bool s) { return s ? LHS : RHS; }
+    public List<Variable> Unknowns { get; private set; }  // all unknowns
+    public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
+    public Oper LHS { get; private set; }
+    public Oper RHS { get; private set; }
     Fulcrum TheFulcrum { get; set; }
-    SolvedEquation? solvedEq = null;
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
         TheFulcrum = f;
         LHS = o0;
         RHS = o1;
 
-        layers = new(LHS, RHS);
-        layersBackup = new(o0.Copy(), o1.Copy());
-        isolates = new();
+        List<Variable> initialIsolates = new();
         if (o0 is Variable v && !v.Found)
         {
-            isolates.Add(v);
+            initialIsolates.Add(v);
         }
         if (o1 is Variable v2 && !v2.Found)
         {
-            isolates.Add(v2);
+            initialIsolates.Add(v2);
         }
-        unknowns = o0.eventuallyContains.Concat(o1.eventuallyContains).Union(isolates).ToArray();
+        Unknowns = LHS.eventuallyContains.Concat(RHS.eventuallyContains).Union(initialIsolates).ToList();
         // Can't do this through the base constructor, unfortunately
         map = new Func<double[], double[]>(vals => Approximate(vals));
-        ins = unknowns.Length - 1;
+        ins = Unknowns.Count - 1;
     }
 
     internal enum SolveMode
@@ -51,16 +44,26 @@ public class Equation : RelationalMap
         BOTHR,  // both sides, but reverts to the right side
         EITHER
     }
+    internal enum MatchState
+    {
+        DIRECT,
+        TERM,
+        INDIRECT,
+        NONE
+    }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
     public SolvedEquation Solved(Variable? v = null)
     {
+        SolvedEquation? solvedEq = null;
+        OperLayers layL = new(LHS);
+        OperLayers layR = new(RHS);
         // By default, solve for the variable with the highest degree
         if (v == null)
         {
             Variable? chosenSolveVar = null;
             double minDegree = double.MaxValue;
-            foreach (Variable uk in unknowns)
+            foreach (Variable uk in Unknowns)
             {
                 double deg = Math.Max(Math.Abs(LHS.Degree(uk)), Math.Abs(RHS.Degree(uk)));
                 if (deg < minDegree)
@@ -131,7 +134,7 @@ public class Equation : RelationalMap
             else if (MODE != SolveMode.PICK)
                 STATUS += $" on";
             if (!WAS_PICK)
-                Scribe.Info($"  {layers.LeftHand[0][0]} = {layers.RightHand[0][0]}");
+                Scribe.Info($"  {layL.OpTree[0][0]} = {layR.OpTree[0][0]}");
             if (MODE != SolveMode.PICK)
                 STATUS += $" the {SIDE} side of the equation:";
             Scribe.Info(STATUS);
@@ -139,7 +142,15 @@ public class Equation : RelationalMap
             if (MODE == SolveMode.PICK)
             {
                 TOTAL_PICKS++;
-                //WAS_PICK = 2;
+
+                /* total rewrite of pick */
+                //TWIG[0] = null;
+                //TWIG[1] = null;
+                //
+                //WAS_PICK = true;
+                //continue;
+                /* end total rewrite */
+
                 TWIG[0] = null;
                 TWIG[1] = null;
                 // First, find matches on both sides
@@ -153,46 +164,60 @@ public class Equation : RelationalMap
 
                 // Determine matches on either side
                 int LR_SWITCH = 0;
-                foreach (Dictionary<int, List<Oper>> h in layers.Hands)
+                foreach (List<List<Oper>> h in new List<List<List<Oper>>>() { layL.OpTree!, layR.OpTree! })
                 {
+                    //Scribe.Info($"h00 {h[0][0]}:");
                     // Are we a variable?
                     if (h[0][0] is Variable v_ && v_ == VAR)
                     {
+                        //Scribe.Info($"  is our variable");
                         MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
                         TWIG[LR_SWITCH] = VAR;
                     }
                     // Are we a term containing v?
-                    else if (h[0][0].IsTerm && h[0][0].Contains(VAR))
+                    else if (h[0][0] is not SumDiff && h[0][0].Contains(VAR))
                     {
+                        //Scribe.Info($"  is a {h[0][0].GetType()} term containing our variable");
                         MATCHES_TERMS_ALL[LR_SWITCH].Add(h[0][0]);
                         TWIG[LR_SWITCH] = VAR;
                     }
-                    foreach (Oper o in h[0][0].AllArgs)
+                    else if (h[0][0] is SumDiff && h[0][0].Contains(VAR))
                     {
-                        // If we see the variable in question, that counts as a term automatically
-                        if (o is Variable v__ && v__ == VAR)
-                        {
-                            MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
-                            TWIG[LR_SWITCH] = o;
-                        }
-                        // otherwise, test to see if o is a term
-                        else if (o.Contains(VAR))
-                        {
-                            if (o.IsTerm)
-                            {
-                                MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
-                            }
-                            else
-                            {
-                                MATCHES_OTHER_ALL[LR_SWITCH].Add(o);
-                            }
-                            TWIG[LR_SWITCH] = o;
-                        }
-                        // otherwise, this didn't match at all
-                        else
-                        {
-                            NON_MATCHES_ALL[LR_SWITCH] = NON_MATCHES_ALL[LR_SWITCH] + 1;
-                        }
+                        //Scribe.Info($"  is a {h[0][0].GetType()} non-term containing our variable");
+                        MATCHES_OTHER_ALL[LR_SWITCH].Add(h[0][0]);
+                        TWIG[LR_SWITCH] = h[0][0];
+                        //foreach (Oper o in h[0][0].AllArgs)
+                        //{
+                        //    // If we see the variable in question, that counts as a term automatically
+                        //    if (o is Variable v__ && v__ == VAR)
+                        //    {
+                        //        MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
+                        //        TWIG[LR_SWITCH] = o;
+                        //    }
+                        //    // otherwise, test to see if o is a term
+                        //    else if (o.Contains(VAR))
+                        //    {
+                        //        if (o.IsTerm)
+                        //        {
+                        //            MATCHES_TERMS_ALL[LR_SWITCH].Add(o);
+                        //        }
+                        //        else
+                        //        {
+                        //            MATCHES_OTHER_ALL[LR_SWITCH].Add(o);
+                        //        }
+                        //        TWIG[LR_SWITCH] = o;
+                        //    }
+                        //    // otherwise, this didn't match at all
+                        //    else
+                        //    {
+                        //        NON_MATCHES_ALL[LR_SWITCH] = NON_MATCHES_ALL[LR_SWITCH] + 1;
+                        //    }
+                        //}
+                    }
+                    else
+                    {
+                        //Scribe.Info($"  does not contain our variable");
+                        NON_MATCHES_ALL[LR_SWITCH]++;
                     }
                     LR_SWITCH++;
                 }
@@ -220,13 +245,14 @@ public class Equation : RelationalMap
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 0);
-                        PREPAREISOLATE(NUMOTHERLEFT == 1 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        //PREPAREISOLATE(NUMOTHERLEFT == 1 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 0);
-                        PREPARESIMPLIFY(NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPARESIMPLIFY(NUMOTHERLEFT != 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // At least one indirect match on both sides
                     else
@@ -243,21 +269,22 @@ public class Equation : RelationalMap
                     {
                         CURRENT_PICK = (0, 1);
                         // Solved
-                        if (layers.LeftHand[0][0].AllArgs.Count == 0 || layers.RightHand[0][0].AllArgs.Count == 0)
+                        if ((layL.OpTree[0][0].AllArgs.Count == 0 && layL.OpTree[0][0] == v) || (layR.OpTree[0][0].AllArgs.Count == 0 && layR.OpTree[0][0] == v))
                         {
-                            Oper newChosenRoot = layers.LeftHand[0][0].Copy();
-                            Oper newOppositeRoot = layers.RightHand[0][0].Copy();
-                            solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v, unknowns.Length - 1);
+                            Oper newChosenRoot = layL.OpTree[0][0].Copy();
+                            Oper newOppositeRoot = layR.OpTree[0][0].Copy();
+                            solvedEq = new(newChosenRoot, Fulcrum.EQUALS, newOppositeRoot, v, Unknowns.Count - 1);
                             Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions: {solvedEq}");
                             break;
                         }
-                        PREPAREISOLATE(layers.LeftHand[0][0].Degree(v) != 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPAREISOLATE(layL.OpTree[0][0].Degree(v) != 0 ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 1);
-                        SolveSide newSide = NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
+                        // Extract the direct match
+                        SolveSide newSide = NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
                         {
                             PREPAREEXTRACT(newSide, VAR);
@@ -271,7 +298,7 @@ public class Equation : RelationalMap
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 1);
-                        SolveSide newSide = NUMOTHERLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
+                        SolveSide newSide = NUMTERMLEFT > 0 ? SolveSide.LEFT : SolveSide.RIGHT;
                         if ((NUMTERMLEFT ^ NUMOTHERLEFT) != 0 && NON_MATCHES_ALL[(int)newSide] == 0)
                         {
                             PREPAREEXTRACT(newSide, VAR);
@@ -340,25 +367,25 @@ public class Equation : RelationalMap
                     if (NUMOTHERLEFT + NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (0, 3);
-                        PREPAREEXTRACT(layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // One indirect match on either side
                     else if (NUMOTHERLEFT + NUMOTHERRIGHT == 1)
                     {
                         CURRENT_PICK = (1, 3);
-                        PREPAREEXTRACT(layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // Multiple indirect matches on one side
                     else if (NUMOTHERLEFT * NUMOTHERRIGHT == 0)
                     {
                         CURRENT_PICK = (2, 3);
-                        PREPAREEXTRACT(layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                     // At least one indirect match on both sides
                     else
                     {
                         CURRENT_PICK = (3, 3);
-                        PREPAREEXTRACT(layers.LeftHand[0][0].AllArgs.Count <= layers.RightHand[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                        PREPAREEXTRACT(layL.OpTree[0][0].AllArgs.Count <= layR.OpTree[0][0].AllArgs.Count ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
                     }
                 }
                 WAS_PICK = true;
@@ -370,18 +397,32 @@ public class Equation : RelationalMap
                 WAS_PICK = false;
                 if (SIDE == SolveSide.BOTHL)
                 {
-                    CHOSENROOT = layers.LeftHand[0];
-                    OPPOSITEROOT = layers.RightHand[0];
+                    CHOSENROOT = layL.OpTree[0];
+                    OPPOSITEROOT = layR.OpTree[0];
                 }
                 else if (SIDE == SolveSide.BOTHR)
                 {
-                    CHOSENROOT = layers.RightHand[0];
-                    OPPOSITEROOT = layers.LeftHand[0];
+                    CHOSENROOT = layR.OpTree[0];
+                    OPPOSITEROOT = layL.OpTree[0];
                 }
                 else
                 {
-                    CHOSENROOT = layers.Hands[(int)SIDE][0];
-                    OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+                    //CHOSENROOT = layers.Hands[(int)SIDE][0];
+                    //OPPOSITEROOT = layers.Hands[1 - (int)SIDE][0];
+                    if (SIDE == SolveSide.LEFT)
+                    {
+                        CHOSENROOT = layL.OpTree[0];
+                        OPPOSITEROOT = layR.OpTree[0];
+                    }
+                    else if (SIDE == SolveSide.RIGHT)
+                    {
+                        CHOSENROOT = layR.OpTree[0];
+                        OPPOSITEROOT = layL.OpTree[0];
+                    }
+                    else
+                    {
+                        throw Scribe.Issue("Bad solve side");
+                    }
                 }
                 CHOSENDEG = CHOSENROOT[0].Degree(VAR);
                 NEWCHOSEN = CHOSENROOT[0];
@@ -406,22 +447,36 @@ public class Equation : RelationalMap
                     TOTAL_CHANGES++;
                     if (SIDE == SolveSide.BOTHL || SIDE == SolveSide.BOTHR)
                     {
-                        layers.LeftHand[0][0].Associate();
-                        layers.LeftHand[0][0].Simplify(v);
-                        layers.LeftHand[0][0].Commute();
-                        layers.RightHand[0][0].Associate();
-                        layers.RightHand[0][0].Simplify(v);
-                        layers.RightHand[0][0].Commute();
+                        layL.OpTree[0][0].Associate();
+                        layL.OpTree[0][0].Simplify(v);
+                        layL.OpTree[0][0].Commute();
+                        layR.OpTree[0][0].Associate();
+                        layR.OpTree[0][0].Simplify(v);
+                        layR.OpTree[0][0].Commute();
+                    }
+                    else if (SIDE == SolveSide.LEFT)
+                    {
+                        layL.OpTree[0][0].Associate();
+                        layL.OpTree[0][0].Simplify(v);
+                        layL.OpTree[0][0].Commute();
+                    }
+                    else if (SIDE == SolveSide.RIGHT)
+                    {
+                        layR.OpTree[0][0].Associate();
+                        layR.OpTree[0][0].Simplify(v);
+                        layR.OpTree[0][0].Commute();
                     }
                     else
                     {
-                        layers.Hands[(int)SIDE][0][0].Associate();
-                        layers.Hands[(int)SIDE][0][0].Simplify(v);
-                        layers.Hands[(int)SIDE][0][0].Commute();
+                        throw Scribe.Issue($"Bad simplify side");
                     }
+                    NEWCHOSEN = CHOSENROOT[0].Trim();
+                    NEWOPPOSITE = OPPOSITEROOT[0].Trim();
                 }
 
                 // If no progress was made, enter PICK mode
+                //bool ncbd = NOCHANGE(NEWCHOSEN, NEWOPPOSITE);
+                //Scribe.Info($"\t NOCHANGE: {OLDCHOSEN}->{NEWCHOSEN}, {OLDOPPOSITE}->{NEWOPPOSITE} ? {ncbd}");
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
                 {
                     if (LAST_PICK == CURRENT_PICK || FUEL < 0)
@@ -441,7 +496,7 @@ public class Equation : RelationalMap
                 {
                     PREPAREPICK(VAR);
                 }
-                
+
                 // Otherwise, keep extracting
                 else
                 {
@@ -453,21 +508,28 @@ public class Equation : RelationalMap
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
             if (SIDE == SolveSide.LEFT)
-                layers = new(NEWCHOSEN, NEWOPPOSITE);
+            {
+                layL = new(NEWCHOSEN);
+                layR = new(NEWOPPOSITE);
+            }
+
             else
-                layers = new(NEWOPPOSITE, NEWCHOSEN);
+            {
+                layR = new(NEWCHOSEN);
+                layL = new(NEWOPPOSITE);
+            }
         }
 
         /* Algebra machine helper methods */
         SolveSide SMALLESTCHAFFDEGREE()
         {
-            List<Variable> chaffVars = unknowns.Where(b => b != VAR).ToList();
+            List<Variable> chaffVars = Unknowns.Where(b => b != VAR).ToList();
             (double, double) totalDegrees = (0, 0);
             foreach (Variable otr in chaffVars)
             {
                 double degL, degR;
-                degL = layers.LeftHand[0][0].Degree(VAR);
-                degR = layers.RightHand[0][0].Degree(VAR);
+                degL = layL.OpTree[0][0].Degree(VAR);
+                degR = layR.OpTree[0][0].Degree(VAR);
                 totalDegrees.Item1 += degL;
                 totalDegrees.Item2 += degR;
             }
@@ -503,10 +565,6 @@ public class Equation : RelationalMap
             CODE.Add((SolveMode.SIMPLIFY, s, targ));
         }
 
-        // Revert
-        layers = layersBackup;
-        layersBackup = new(layersBackup.LeftHand[0][0].Copy(), layersBackup.RightHand[0][0].Copy());
-
         if (solvedEq is null)
             throw Scribe.Issue("Error in solve loop");
         //solvedEq.IsSolved = true;
@@ -520,7 +578,7 @@ public class Equation : RelationalMap
     }
     public double[] Approximate(double[] vals)
     {
-        return Approximate(vals, unknowns[0]);
+        return Approximate(vals, Unknowns[0]);
     }
 
     public override string ToString()
@@ -544,7 +602,7 @@ public class Equation : RelationalMap
                 fulcrumString = ">=";
                 break;
         }
-        return $"{layers.LeftHand[0][0]} {fulcrumString} {layers.RightHand[0][0]}";
+        return $"{LHS} {fulcrumString} {RHS}";
     }
 }
 // The fulcrum is the =, >, <, etc.

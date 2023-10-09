@@ -49,10 +49,14 @@ public class InverseParamMap : RelationalMap
     {
         return Plot(null, options);
     }
-    public virtual Multi Plot(Symbols.AxisSpecifier? outAxis=null, params Symbols.PlotOptions[] options)
+    public Multi Plot(Symbols.AxisSpecifier? outAxis=null, params Symbols.PlotOptions[] options)
     {
         if (ins == -1)
             throw Scribe.Error("Unknown number of inputs");
+        else if (ins > 2)
+        {
+            throw Scribe.Error("Too many input variables");
+        }
 
         NDCounter solveSpace = new(options.Select(o => o.Range).ToArray());
         List<AxisSpecifier> axes = options.Select(o => o.Axis).ToList();
@@ -96,12 +100,13 @@ public class InverseParamMap : RelationalMap
             // Put the x, y, and z values in an array in that order
             double[] argsByAxis = new double[3];
             // Replace with inVals based on the axis specifiers
-            //foreach (AxisSpecifier a in axes)
             for (int i = 0; i < inVals.Length; i++)
             {
                 argsByAxis[(int)axes[i]] = inVals[i];
             }
-            argsByAxis[outAxis is null ? 0 : (int)outAxis] = outVal;
+            argsByAxis[outAxis is null ?
+                (int)new List<AxisSpecifier> {AxisSpecifier.X, AxisSpecifier.Y, AxisSpecifier.Z}.Except(options.Select(o => o.Axis)).ToList()[0]
+                : (int)outAxis] = outVal;
 
             // Plot colouring code can go here
             // TODO: provide an API for this

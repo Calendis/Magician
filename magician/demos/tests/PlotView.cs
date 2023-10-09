@@ -11,6 +11,7 @@ public class EqPlotting : Spell
     Brush? b;
     double walkSpeed = 4.0;
     Equation plotTest3d;
+    SolvedEquation spt3d;
     public override void Loop()
     {
         Renderer.RControl.Clear();
@@ -49,37 +50,24 @@ public class EqPlotting : Spell
             Ref.Perspective.y.Delta(-walkSpeed);
         }
 
-        //Equation plotTest3d = new(
-        //    new SumDiff(new Fraction(
-        //        Var("y"),
-        //        Val(Math.Sin(Time / 3) / 6)
-        //        ),
-        //        Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
-        //    Fulcrum.EQUALS,
-        //    new Fraction(
-        //        new SumDiff(
-        //            new Fraction(Var("x"), Val(230), Var("x")),
-        //            new Fraction(Var("z"), Val(230), Var("z"))
-        //        )
-        //    )
-        //);
-        //
-        //SolvedEquation spt3d = plotTest3d.Solved();
+        Var("time").Val = 0.2 * Math.Sin(Time / 3) + 0.1;
+        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
+            (Var("x"), new(AxisSpecifier.X, new(-500, 500, 20))),
+            (Var("z"), new(AxisSpecifier.Z, new(-500, 500, 40)))
+        );
         //Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
-        //    new(AxisSpecifier.X, new(-500, 500, 20)),
+        //    new PlotOptions(AxisSpecifier.X, new(-500, 500, 20)),
         //    new(AxisSpecifier.Z, new(-500, 500, 40))
         //);
-
+        //Var("time").Reset();
     }
 
     public override void PreLoop()
     {
         Equation plotTest3d = new(
-            new SumDiff(new Fraction(
+            new Fraction(
                 Var("y"),
-                Val(0.3)
-                ),
-                Val(0), Var("y"), Val(0), new Fraction(Var("y"), Val(1), Val(0.2))),
+                Var("time")),
             Fulcrum.EQUALS,
             new Fraction(
                 new SumDiff(
@@ -88,12 +76,19 @@ public class EqPlotting : Spell
                 )
             )
         );
+        spt3d = plotTest3d.Solved();
 
-        SolvedEquation spt3d = plotTest3d.Solved();
-        Var("time").Val = Time;
-        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
-            new(AxisSpecifier.X, new(-500, 500, 20)),
-            new(AxisSpecifier.Z, new(-500, 500, 40))
+        /* Extended testing */
+        Equation unsolved = new(
+            new SumDiff(
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("y"), Val(1), Var("x")),
+                new Fraction(Var("y"), Val(1), Var("z")),
+                new Fraction(Var("y"), Val(1), Var("z"), Val(1), Var("z"))
+            ),
+            Fulcrum.EQUALS,
+            Val(1)
         );
+        SolvedEquation solved = unsolved.Solved();
     }
 }

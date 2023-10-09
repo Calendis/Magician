@@ -28,7 +28,6 @@ public abstract partial class Oper
             throw Scribe.Issue("You need to fix this to support non-commutative Opers");
         //Oper os = oppositeSide.Copy();
         bool invertedAxis = false;
-        Scribe.Info($"  Isolating Oper {axis} on {chosenSide} and moving rest to {oppositeSide}");
         if (chosenSide.negArgs.Contains(axis) && chosenSide.Degree(v) < 0)
         {
             invertedAxis = true;
@@ -57,7 +56,6 @@ public abstract partial class Oper
             (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
 
         //cs.Simplify(v);
-        Scribe.Info($"  Got {axis} = {cs}");
         return (axis.Copy(), cs);
     }
 
