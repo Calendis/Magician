@@ -108,7 +108,7 @@ public class Tests
         );
         // Chosen arbitrarily
         double[] args = new[] { 4.3, -12.3 };
-        Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
+        Assert.That(s.Evaluate(args.Reverse().ToArray()), Is.EqualTo(manual.Evaluate(args)));
     }
 
     [Test]
