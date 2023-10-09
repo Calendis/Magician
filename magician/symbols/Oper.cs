@@ -6,10 +6,9 @@ public abstract partial class Oper : IArithmetic
     public List<Oper> negArgs = new();
     public string Name => name;
     public bool cancelled = false;
-    public List<Variable> eventuallyContains = new();
-    public bool Contains(Variable v) => (this is Variable v_ && v_ == v) || eventuallyContains.Contains(v);
 
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
+    public bool Contains(Oper o) => this == o || AllArgs.Contains(o);
     protected string name;
     // TODO: make this a generic property
     protected abstract int identity { get; }
@@ -33,12 +32,6 @@ public abstract partial class Oper : IArithmetic
         this.name = name;
         posArgs = posa.ToList();
         negArgs = nega.ToList();
-        foreach (Oper o in AllArgs)
-        {
-            if (o is Variable v && !v.Found)
-                eventuallyContains.Add(v);
-            eventuallyContains = eventuallyContains.Union(o.eventuallyContains).ToList();
-        }
     }
 
     public abstract double Degree(Variable v);
@@ -228,9 +221,6 @@ public abstract partial class Oper : IArithmetic
             return v.Found && v.Val == id;
         if (IsEmpty)
             return true;
-        if (eventuallyContains.Count == 0)
-            return Solution().Val == identity;
-        
         return false;
     }
 
