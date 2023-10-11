@@ -7,8 +7,8 @@ public class Equation : IRelation
     public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
     public Oper LHS { get; private set; }
     public Oper RHS { get; private set; }
-    public int Ins {get; set;}
-    public int Outs {get{return Unknowns.Count;} set{}}
+    public int Ins { get; set; }
+    public int Outs { get { return Unknowns.Count; } set { } }
     Fulcrum TheFulcrum { get; set; }
     public Equation(Oper o0, Fulcrum f, Oper o1)
     {
@@ -233,12 +233,40 @@ public class Equation : IRelation
                             PREPARESIMPLIFY(SIDE_HIGHEST_MATCH, VAR);
                         }
                         break;
-                    // x exists on both sides, and is isolated on neither
+                    // The hardest (most ambiguous) case. x exists on both sides, and is isolated on neither
                     case MatchPairs.INDIRECTS:
-                        CURRENT_PICK = (2, 0);
-                        PREPAREEXTRACT(SIDE_MOST_ARGS, VAR);
-                        LIVE_BRANCH = LIVE_BRANCHES(SIDE_MOST_ARGS)[0];
-                        //PREPARESIMPLIFY(GENBOTH(), VAR);
+                        // If we have a side with no indirect matches, extract to that side
+                        // If we have two sides wiht no indirect matches, extract from whichever side has fewer direct matches
+                        int DL = DIRECTLY_LIVE(SolveSide.LEFT).Count;
+                        int iDL = LIVE_BRANCHES(SolveSide.LEFT).Count - DL;
+                        int DR = DIRECTLY_LIVE(SolveSide.RIGHT).Count;
+                        int iDR = LIVE_BRANCHES(SolveSide.RIGHT).Count - DR;
+                        if (iDL * iDR == 0)
+                        {
+                            List<SolveSide> sidesWDirectMatches = new List<SolveSide> { SolveSide.LEFT, SolveSide.RIGHT }
+                                .Where(ss => DIRECTLY_LIVE(ss).Count > 0).ToList();
+                            switch (sidesWDirectMatches.Count)
+                            {
+                                case 0:
+                                    throw Scribe.Issue($"this cannot occur");
+                                case 1:
+                                    CURRENT_PICK = (2, 0);
+                                    LIVE_BRANCH = LIVE_BRANCHES(sidesWDirectMatches[0] == SolveSide.LEFT ? SolveSide.LEFT : SolveSide.RIGHTZ)[0];
+                                    PREPAREEXTRACT(sidesWDirectMatches[0], VAR);
+                                    break;
+                                case 2:
+                                    CURRENT_PICK = (2, 1);
+                                    LIVE_BRANCH = LIVE_BRANCHES(DL < DR ? SolveSide.RIGHT : SolveSide.LEFT)[0];
+                                    PREPAREEXTRACT(DL < DR ? SolveSide.LEFT : SolveSide.RIGHT, VAR);
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            //LIVE_BRANCH = LIVE_BRANCHES(SIDE_MOST_ARGS)[0];
+                            CURRENT_PICK = (2, 2);
+                            PREPARESIMPLIFY(GENBOTH(), VAR);
+                        }
                         break;
                 }
                 WAS_PICK = true;
