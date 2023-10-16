@@ -108,7 +108,7 @@ public class Tests
         );
         // Chosen arbitrarily
         double[] args = new[] { 4.3, -12.3 };
-        Assert.That(s.Evaluate(args.Reverse().ToArray()), Is.EqualTo(manual.Evaluate(args)));
+        Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
     }
 
     [Test]
@@ -128,7 +128,24 @@ public class Tests
                 )
             )
         );
-        SolvedEquation s = plotTest3d.Solved();
+        plotTest3d.Solved();
+    }
+    [Test]
+    public void SolveSaddle2()
+    {
+        Equation plotTest3d = new(
+            new Fraction(
+                new SumDiff(Var("y"), Val(1)),
+                Var("time")),
+            Fulcrum.EQUALS,
+            new Fraction(
+                new SumDiff(
+                    new Fraction(Var("x"), Val(230), Var("x")),
+                    new Fraction(Var("z"), Val(230), Var("z"))
+                )
+            )
+        );
+        plotTest3d.Solved();
     }
 
     [Test]
@@ -179,13 +196,24 @@ public class Tests
     }
 
     [Test]
+    public void SolveSlider()
+    {
+        Equation e = new
+        (
+            new Fraction(Var("y"), Var("time")),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("x"), Val(10))
+        );
+        SolvedEquation s = e.Solved(Var("y"));
+        double res = s.Evaluate(10.5, 2);
+        Assert.That(res, Is.EqualTo(-84));
+    }
+
+    [Test]
     public void OperAsIFunction()
     {
         Oper decr = new SumDiff(Var("x"), Val(1));
-        Oper triangleNumbers = new Fraction(
-            new List<Oper>{Var("x"), new SumDiff(Var("x"), Val(0), Val(1))},
-            new List<Oper>{Val(2)}
-        );
+        Assert.That(decr.Evaluate(0), Is.EqualTo(-1));
 
         Oper offsetSquares = new SumDiff
         (
@@ -202,6 +230,10 @@ public class Tests
             Assert.That(ossNums[4], Is.EqualTo(21));
         });
         
+        Oper triangleNumbers = new Fraction(
+            new List<Oper>{Var("x"), new SumDiff(Var("x"), Val(0), Val(1))},
+            new List<Oper>{Val(2)}
+        );
         List<double> triNums = Enumerable.Range(0, 5).Select(n => triangleNumbers.Evaluate(n)).ToList();
         Assert.Multiple(() =>
         {
@@ -210,7 +242,89 @@ public class Tests
             Assert.That(triNums[2], Is.EqualTo(3));
             Assert.That(triNums[3], Is.EqualTo(6));
             Assert.That(triNums[4], Is.EqualTo(10));
-            Assert.That(decr.Evaluate(0), Is.EqualTo(-1));
         });
+    }
+
+    [Test]
+    public void SolveFoil()
+    {
+        //
+    }
+
+    [Test]
+    public void SolveParasingle()
+    {
+        Equation eq = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)))
+        );
+        Assert.That(eq.Solved(Var("x")).Evaluate(2), Is.EqualTo(1.5));
+        Assert.That(eq.Solved(Var("y")).Evaluate(1.5), Is.EqualTo(2));
+    }
+    [Test]
+    public void SolveParamultipleFracSimp()
+    {
+        Equation eq = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new Fraction(new SumDiff(Var("x"), Var("y")), Val(4)))
+        );
+        eq.Solved();
+    }
+    [Test]
+    public void SolveParamultiple()
+    {
+        Equation eq = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new SumDiff(new SumDiff(Var("x"), Var("y")), Val(4)))
+        );
+        Assert.That(eq.Solved(Var("x")).Evaluate(0), Is.EqualTo(-12));
+        Assert.That(eq.Solved(Var("x")).Evaluate(1), Is.EqualTo(-12));
+        Assert.That(eq.Solved(Var("x")).Evaluate(100), Is.EqualTo(-12));
+    }
+    [Test]
+    public void SolveImbalancedFoil()
+    {
+        Equation eq = new(
+            new Fraction(Var("x"), Val(3)),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
+        );
+        eq.Solved(Var("x"));
+    }
+    [Test]
+    public void SolveImbalanced()
+    {
+        Equation eq = new(
+            new SumDiff(Var("x"), Val(3)),
+            Fulcrum.EQUALS,
+            new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
+        );
+        Assert.That(eq.Solved(Var("x")).Evaluate(1), Is.EqualTo(-16));
+        Assert.That(eq.Solved(Var("x")).Evaluate(2), Is.EqualTo(-8));
+    }
+    [Test]
+    public void SolveDual()
+    {
+        Equation eq = new(
+            new SumDiff(Var("x"), Val(3), Var("y")),
+            Fulcrum.EQUALS,
+            new SumDiff(Val(1), new Fraction(Var("x"), Val(3)))
+        );
+        eq.Solved();
+        Assert.That(eq.Solved(Var("x")).Evaluate(2), Is.EqualTo(1.5));
+        Assert.That(eq.Solved(Var("x")).Evaluate(4), Is.EqualTo(0));
+    }
+    [Test]
+    public void SolveFluid()
+    {
+        Equation eq = new(
+            new SumDiff(Var("x"), Val(3), Var("y"), new SumDiff(Var("x"), Val(1))),
+            Fulcrum.EQUALS,
+            new SumDiff(Val(1), new Fraction(Var("x"), Val(3)), new Fraction(Var("x"), Val(5), Var("y")))
+        );
+        eq.Solved(Var("x"));
     }
 }
