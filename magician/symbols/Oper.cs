@@ -11,13 +11,15 @@ public abstract partial class Oper : IFunction, IArithmetic
 
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     public bool Contains(Oper o) => this == o || AllArgs.Contains(o);
-    public List<Variable> AssociatedVars;
+    List<Variable> AssociatedVars;
     protected string name;
     // TODO: make this a generic property
     protected abstract int identity { get; }
     protected bool associative = false;
     protected bool commutative = false;
-    protected bool invertable = true;
+    public bool invertible = true;
+    // TODO: incorporate unarity with DirectMap Opers
+    public bool unary = false;
     protected bool posUnaryIdentity = false;
     
     public int Ins {get; set;}
@@ -28,9 +30,9 @@ public abstract partial class Oper : IFunction, IArithmetic
         posArgs = posa.ToList();
         negArgs = nega.ToList();
         OperLayers ol = new(this, Variable.Undefined);
-        AssociatedVars = ol.GetInfo(0, 0).assocArgs;
-        if (this is Variable v && !v.Found)
-            AssociatedVars.Add(v);
+        AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
+        //if (this is Variable v && !v.Found)
+        //    AssociatedVars.Add(v);
 
         //map = new Func<double[], double>(vals => Evaluate(vals));
     }

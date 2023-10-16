@@ -3,34 +3,42 @@ namespace Magician.Symbols;
 internal class OperLayers
 {
     readonly List<List<Oper>> OpTree = new();
-    Dictionary<Oper, OperInfo> OpInfoMap = new();
+    readonly Dictionary<Oper, OperInfo> OpInfoMap = new();
+    //public readonly List<(int, int)> Matches = new();
     public OperLayers(Oper o, Variable v)
     {
-        OpTree = new() {new() {o}};
+        OpTree = new() { new() { o } };
         GatherInfo(o, v);
     }
 
-    void GatherInfo(Oper o, Variable v, int depth=0, List<Variable>? assocArgs=null, bool isTerm=true, List<List<Oper>>? opTree=null)
+    void GatherInfo(Oper o, Variable v, int depth = 0, List<Variable>? assocArgs = null, List<List<Oper>>? opTree = null)
     {
         opTree ??= OpTree;
         assocArgs ??= new();
         if (opTree.Count > depth)
             opTree[depth].Add(o);
         else if (OpTree.Count == depth)
-            opTree.Add(new List<Oper>{o});
+            opTree.Add(new List<Oper> { });
         else
             throw Scribe.Issue("this can't happen");
 
+        if (o is Variable u && !u.Found)
+            assocArgs.Add(u);
+
+        List<List<Variable>> assocArgBranches = new();
         foreach (Oper a in o.AllArgs)
         {
-            if (a is Variable v2 && !v2.Found)
-                assocArgs.Add(v2);
-            GatherInfo(a, v, depth+1, assocArgs, o is not SumDiff && isTerm, opTree);
+            assocArgBranches.Add(new());
+            GatherInfo(a, v, depth + 1, assocArgBranches.Last(), opTree);
         }
-        OperInfo i = new(o, v, assocArgs, isTerm);
+        List<Variable> combinedAssocBranches = new();
+        assocArgBranches.ForEach(assocArgBranch => combinedAssocBranches.AddRange(assocArgBranch));
+        assocArgs.AddRange(combinedAssocBranches);
+
+        OperInfo i = new(o, v, assocArgs);
         OpInfoMap.TryAdd(o, i);
     }
-    
+
     public List<Oper> Root => OpTree[0];
     public Oper Get(int n, int k)
     {
@@ -59,22 +67,17 @@ internal readonly struct OperInfo
     public readonly double deg;
     public readonly Equation.MatchState ms;
     public readonly List<Variable> assocArgs;
-    public OperInfo(Oper o, Variable v, IEnumerable<Variable> assocArgs, bool isTerm)
+    public OperInfo(Oper o, Variable v, IEnumerable<Variable> assocArgs)
     {
         deg = o.Degree(v);
         this.assocArgs = assocArgs.ToList();
+        int liveBranches = assocArgs.Where(a => { return a == v; }).Count();
         ms = Equation.MatchState.NONE;
-        if (o is Variable v2)
-            if (v2 == v)
-                ms = Equation.MatchState.DIRECT;
-            else
-                ms = Equation.MatchState.NONE;
-        else if (assocArgs.Contains(v))
-        {
-            if (isTerm)
-                ms = Equation.MatchState.INDIRECT;
-            else
-                ms = Equation.MatchState.INDIRECT;
-        }
+        if (o is Variable v2 && v2 == v)
+            ms = Equation.MatchState.DIRECT;
+        else if (liveBranches > 1)
+            ms = Equation.MatchState.MULTIPLE;
+        else if (liveBranches > 0)
+            ms = Equation.MatchState.SINGLE;
     }
 }
