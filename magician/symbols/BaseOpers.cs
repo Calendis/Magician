@@ -72,6 +72,8 @@ public class SumDiff : Oper, ISum
 
     public override string ToString()
     {
+        if (AllArgs.Count == 0)
+            return "0";
         string sumdiff = "";
         foreach (Oper o in posArgs)
         {
@@ -135,6 +137,11 @@ public class Fraction : Oper, IFrac
     public override double Degree(Variable v)
     {
         return posArgs.Select(o => o.Degree(v)).Sum() - negArgs.Select(o => o.Degree(v)).Sum();
+    }
+
+    public override void Reduce(Variable axis)
+    {
+        CombineFoil();
     }
 
     public override Fraction Mult(params Oper[] osa)
