@@ -23,4 +23,15 @@ public class Form : Oper
     {
         throw new NotImplementedException();
     }
+
+    public static bool Term(Oper o)
+    {
+        if (o is Variable)
+            return true;
+        if (o is SumDiff)
+            return false;
+        bool term = true;
+        o.AllArgs.ForEach(a => term &= Term(a));
+        return term;
+    }
 }
