@@ -50,8 +50,6 @@ public class Equation : IRelation
     {
         LEFT,
         RIGHT,
-        BOTHL,  // both sides, but reverts to the left side
-        BOTHR,  // both sides, but reverts to the right side
         EITHER  // side does not matter
     }
     internal enum MatchState
@@ -326,12 +324,12 @@ public class Equation : IRelation
                 List<Oper> CHOSENROOT;
                 List<Oper> OPPOSITEROOT;
 
-                if (INSTRUCTION.SIDE == SolveSide.BOTHL || INSTRUCTION.SIDE == SolveSide.LEFT)
+                if (INSTRUCTION.SIDE == SolveSide.LEFT)
                 {
                     CHOSENROOT = LAYERS.LEFT.Root;
                     OPPOSITEROOT = LAYERS.RIGHT.Root;
                 }
-                else if (INSTRUCTION.SIDE == SolveSide.BOTHR || INSTRUCTION.SIDE == SolveSide.RIGHT)
+                else if (INSTRUCTION.SIDE == SolveSide.RIGHT)
                 {
                     CHOSENROOT = LAYERS.RIGHT.Root;
                     OPPOSITEROOT = LAYERS.LEFT.Root;
@@ -357,33 +355,11 @@ public class Equation : IRelation
                 else if (INSTRUCTION.MOD == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    if (INSTRUCTION.SIDE == SolveSide.BOTHL || INSTRUCTION.SIDE == SolveSide.BOTHR)
-                    {
-                        LAYERS.LEFT.Get(0, 0).Associate();
-                        LAYERS.LEFT.Get(0, 0).Simplify(v);
-                        LAYERS.LEFT.Get(0, 0).Commute();
-                        LAYERS.RIGHT.Get(0, 0).Associate();
-                        LAYERS.RIGHT.Get(0, 0).Simplify(v);
-                        LAYERS.RIGHT.Get(0, 0).Commute();
-                    }
-                    else if (INSTRUCTION.SIDE == SolveSide.LEFT)
-                    {
-                        LAYERS.LEFT.Get(0, 0).Associate();
-                        LAYERS.LEFT.Get(0, 0).Simplify(v);
-                        LAYERS.LEFT.Get(0, 0).Commute();
-                    }
-                    else if (INSTRUCTION.SIDE == SolveSide.RIGHT)
-                    {
-                        LAYERS.RIGHT.Get(0, 0).Associate();
-                        LAYERS.RIGHT.Get(0, 0).Simplify(v);
-                        LAYERS.RIGHT.Get(0, 0).Commute();
-                    }
-                    else
-                    {
-                        throw Scribe.Issue($"Bad simplify side");
-                    }
-                    NEWCHOSEN = CHOSENROOT[0].Trim().Trim();
-                    NEWOPPOSITE = OPPOSITEROOT[0].Trim().Trim();
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Associate();
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Simplify(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Commute();
+                    NEWCHOSEN = CHOSENROOT[0].Trim();
+                    NEWOPPOSITE = OPPOSITEROOT[0].Trim();
                 }
 
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
@@ -401,7 +377,7 @@ public class Equation : IRelation
             LAST_PICK = CURRENT_PICK;
             OLDCHOSEN = NEWCHOSEN.Copy();
             OLDOPPOSITE = NEWOPPOSITE.Copy();
-            if (INSTRUCTION.SIDE == SolveSide.LEFT || INSTRUCTION.SIDE == SolveSide.BOTHL)
+            if (INSTRUCTION.SIDE == SolveSide.LEFT)
                 LAYERS = (new(NEWCHOSEN, INSTRUCTION.VAR), new(NEWOPPOSITE, INSTRUCTION.VAR));
             else
                 LAYERS = (new(NEWOPPOSITE, INSTRUCTION.VAR), new(NEWCHOSEN, INSTRUCTION.VAR));
