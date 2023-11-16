@@ -2,9 +2,6 @@ namespace Magician.Interactive;
 using Magician.Maps;
 public static class Sensor
 {
-    public static DirectMap Click = new DirectMap(b => Events.Click ? 1 : 0);
-
-
     public static DirectMap MouseOver(Multi m)
     {
         return new DirectMap(b => Geo.Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0);

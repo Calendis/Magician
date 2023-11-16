@@ -55,7 +55,7 @@ public class Button : Clickable
         }
 
         // Button is clicked
-        if (hovered && Sensor.Click.Evaluate(0) > 0)
+        if (hovered && Events.Click)
         {
             ControlAction.Invoke();
         }
