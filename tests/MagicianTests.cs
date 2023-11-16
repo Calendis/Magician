@@ -31,6 +31,17 @@ public class Tests
     }
 
     [Test]
+    public void CombineConstants()
+    {
+        SumDiff sd = new(Val(10), Val(6));
+        Scribe.Info(sd);
+        sd.Simplify(Val(0));
+        Assert.That(sd.AllArgs[0].Solution().Val, Is.EqualTo(Val(4).Solution().Val));
+        Assert.That(sd.AllArgs, Has.Count.EqualTo(1));
+        Scribe.Info(sd);
+    }
+
+    [Test]
     public void SolveAddLike()
     {
         Equation unsolved = new(
@@ -248,7 +259,7 @@ public class Tests
     [Test]
     public void SolveFoil()
     {
-        //
+        throw Scribe.Issue("implement this test");
     }
 
     [Test]
@@ -285,7 +296,7 @@ public class Tests
         Assert.That(eq.Solved(Var("x")).Evaluate(100), Is.EqualTo(-12));
     }
     [Test]
-    public void SolveImbalancedFoil()
+    public void SolveImbalanced()
     {
         Equation eq = new(
             new Fraction(Var("x"), Val(3)),
@@ -295,7 +306,7 @@ public class Tests
         eq.Solved(Var("x"));
     }
     [Test]
-    public void SolveImbalanced()
+    public void SolveImbalanced2()
     {
         Equation eq = new(
             new SumDiff(Var("x"), Val(3)),
@@ -325,6 +336,14 @@ public class Tests
             Fulcrum.EQUALS,
             new SumDiff(Val(1), new Fraction(Var("x"), Val(3)), new Fraction(Var("x"), Val(5), Var("y")))
         );
-        eq.Solved(Var("x"));
+        SolvedEquation s = eq.Solved(Var("x"));
+        SolvedEquation manual = new(Var("x"), Fulcrum.EQUALS,
+            new Fraction(
+                Val(15),
+                new SumDiff(new Fraction(Val(3), Val(1), Var("y")), Val(5)),
+                new SumDiff(Var("y"), Val(3))
+            ),
+        Var("x"), 1);
+        Assert.That(s.Evaluate(0.125), Is.EqualTo(manual.Evaluate(0.125)));
     }
 }
