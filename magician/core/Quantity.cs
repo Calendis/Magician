@@ -6,7 +6,7 @@
 */
 namespace Magician;
 
-public class Quantity : IArithmetic
+public class Quantity
 {
     //List<IMap> drivers = new List<IMap>();
 

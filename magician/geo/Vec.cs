@@ -3,7 +3,7 @@ using Silk.NET.Maths;
 
 namespace Magician.Geo
 {
-    public class Vec : IArithmetic
+    public class Vec
     {
         protected Quantity[] vecArgs;
         public int Dims => vecArgs.Length;
