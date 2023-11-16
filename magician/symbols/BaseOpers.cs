@@ -1,7 +1,7 @@
 namespace Magician.Symbols;
 
-// Alternating sum to reprsent addition and subtraction
-public class SumDiff : Oper, ISum
+// SumDiff objects represent addition and subtraction operations with any number of arguments
+public class SumDiff : Oper
 {
     protected override int identity { get => 0; }
 
@@ -57,17 +57,7 @@ public class SumDiff : Oper, ISum
 
     public override void Reduce(Variable axis)
     {
-        CombineConstantTerms(this);
         CombineLikeTerms(this, axis);
-    }
-
-    public override SumDiff Add(params Oper[] os)
-    {
-        return New(posArgs.Concat(os), negArgs);
-    }
-    public override SumDiff Subtract(params Oper[] os)
-    {
-        return New(posArgs, negArgs.Concat(os));
     }
 
     public override string ToString()
@@ -91,8 +81,8 @@ public class SumDiff : Oper, ISum
     }
 }
 
-// Alternating reciprocal
-public class Fraction : Oper, IFrac
+// Fraction objects represent multiplication and division operations with any number of arguments
+public class Fraction : Oper
 {
     protected override int identity { get => 1; }
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b)
@@ -142,57 +132,26 @@ public class Fraction : Oper, IFrac
     public override void Reduce(Variable axis)
     {
         CombineFoil();
+        //Scribe.Info($"I don't know fractions!");
     }
 
-    public override Fraction Mult(params Oper[] osa)
-    {
-        if (osa.Length == 1 && osa[0] is Fraction)
-            if (osa[0].negArgs.Count == 0)
-                return Mult(osa[0].posArgs.ToArray());
-            else if (osa[0].posArgs.Count == 0)
-                return Divide(osa[0].posArgs.ToArray());
+    //public static Fraction Mult(Oper a, Oper b)
+    //{
+    //    //
+    //}
 
-        OperLike oc = new();
-        List<Oper> os = osa.ToList();
-        List<Oper> final = new(negArgs);
-        for (int i = 0; i < os.Count; i++)
-        {
-            Oper o = os[i];
-            if (posArgs.Contains(o, oc))
-            {
-                if (o is Variable)
-                    final.Remove(o);
-                else
-                    final.Remove(o.posArgs[0]);
-                os.Remove(o);
-            }
-        }
-        return New(posArgs.Concat(os), final);
+    public override Fraction Mult(Oper o)
+    {
+        if (o is Fraction)
+            return new Fraction(posArgs.Concat(o.posArgs), negArgs.Concat(o.negArgs));
+        return (Fraction)base.Mult(o);
     }
-    public override Fraction Divide(params Oper[] osa)
-    {
-        if (osa.Length == 1 && osa[0] is Fraction)
-            if (osa[0].negArgs.Count == 0)
-                return Divide(osa[0].posArgs.ToArray());
-            else if (osa[0].posArgs.Count == 0)
-                return Mult(osa[0].posArgs.ToArray());
 
-        OperLike oc = new();
-        List<Oper> os = osa.ToList();
-        List<Oper> pos = new(posArgs);
-        for (int i = 0; i < os.Count; i++)
-        {
-            Oper o = os[i];
-            if (posArgs.Contains(o, oc))
-            {
-                if (o is Variable)
-                    pos.Remove(o);
-                else
-                    pos.Remove(o.posArgs[0]);
-                os[i].cancelled = true;
-            }
-        }
-        return New(pos, negArgs.Concat(os.Where(o => !o.cancelled)));
+    public override Fraction Divide(Oper o)
+    {
+        if (o is Fraction)
+            return new Fraction(posArgs.Concat(o.negArgs), negArgs.Concat(o.posArgs));
+        return (Fraction)base.Divide(o);
     }
 
     public override string ToString()
@@ -211,6 +170,9 @@ public class Fraction : Oper, IFrac
         {
             denominator += "*" + o.ToString();
         }
-        return negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}";
+        string unbracketed = negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}";
+        if (negArgs.Count > 0)
+            return $"({unbracketed})";
+        return unbracketed;
     }
 }

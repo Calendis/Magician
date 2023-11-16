@@ -71,11 +71,32 @@ public class Variable : Oper
         return 0;
     }
 
-    public override Fraction Divide(params Oper[] os)
+    public override Oper Add(Oper o)
     {
-        if (os.Length == 1 && (os[0] == this) || (os[0].Contains(this) && os[0].posArgs.Count == 1 && os[0].negArgs.Count == 0))
-            return new();
-        return base.Divide(os);
+        if (Found && o.IsConstant)
+            return new Variable(Val+o.Solution().Val);
+        return base.Add(o);
     }
+    public override Oper Subtract(Oper o)
+    {
+        if (Found && o.IsConstant)
+            return new Variable(Val-o.Solution().Val);
+        return base.Subtract(o);
+    }
+    public override Oper Mult(Oper o)
+    {
+        if (Found && o.IsConstant)
+            return new Variable(Val*o.Solution().Val);
+        return base.Mult(o);
+    }
+    public override Oper Divide(Oper o)
+    {
+        if (Found && o.IsConstant)
+            return new Variable(Val/o.Solution().Val);
+        return base.Divide(o);
+    }
+
+    
+
     public static Variable Undefined = new Variable("undefined");
 }
