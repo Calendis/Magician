@@ -1,5 +1,6 @@
 namespace Magician.Symbols;
 
+/* TODO: Merge with Quantity */
 public class Variable : Oper
 {
     protected override int identity { get => throw Scribe.Error("Undefined");}

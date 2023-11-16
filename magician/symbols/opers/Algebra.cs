@@ -54,79 +54,6 @@ public abstract partial class Oper
         return (chosenSide.Trim(), chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis }).Trim());
     }
 
-    public static void CombineLikeTerms(SumDiff sd, Variable axis)
-    {
-        List<Oper> finalPosArgs = new();
-        List<Oper> finalNegArgs = new();
-
-        var (fhs, gao) = sd.FlaggedHandshakes(axis);
-        List<List<(int, int, bool, bool)>> grpFlagHandshakes = fhs;
-        List<List<(Oper, bool)>> grpAxisOpers = gao;
-
-        for (int c = 0; c < 2; c++)
-        {
-            List<(int, int, bool, bool)> flaggedHandshakes = grpFlagHandshakes[c];
-            List<(Oper, bool)> termsToCombine = grpAxisOpers[c];
-            List<int> termsNeedingHandshake = Enumerable.Range(0, termsToCombine.Count).ToList();
-
-            List<int> termsFoundHandshake = new();
-            while (termsNeedingHandshake.Count > 0)
-            {
-                foreach ((int, int, bool, bool) flaggedHandshake in flaggedHandshakes)
-                {
-                    int i = flaggedHandshake.Item1;
-                    int j = flaggedHandshake.Item2;
-                    Oper A = termsToCombine[i].Item1;
-                    Oper B = termsToCombine[j].Item1;
-                    bool aPositive = flaggedHandshake.Item3;
-                    bool bPositive = flaggedHandshake.Item4;
-                    bool positive = !(aPositive ^ bPositive);
-                    
-                    if (termsFoundHandshake.Contains(i) || termsFoundHandshake.Contains(j))
-                        continue;
-
-                    Oper AB = Intersect(A, B);
-                    Oper ABbar;
-                    if (positive)
-                        ABbar = A.Divide(AB).Add(B.Divide(AB));
-                    else if (aPositive)
-                        ABbar = A.Divide(AB).Subtract(B.Divide(AB));
-                    else if (bPositive)
-                        ABbar = B.Divide(AB).Subtract(A.Divide(AB));
-                    else
-                        throw Scribe.Issue("haggu");
-
-                    Oper combined;
-                    if (A is Variable av && av.Found && av.Val == 0)
-                        combined = B;
-                    else if (B is Variable bv && bv.Found && bv.Val == 0)
-                        combined = A;
-                    else
-                        combined = AB.Mult(ABbar);
-
-                    //Scribe.Warn($"  A, B, combined, +-: {A}, {B}, {combined}, {aPositive}{bPositive}");
-
-                    if ((positive || aPositive) && (aPositive || bPositive))
-                        finalPosArgs.Add(combined);
-                    else
-                        finalNegArgs.Add(combined);
-
-                    // We're done for this term, and this also implies a handshake for the pair term
-                    termsNeedingHandshake.Remove(i);
-                    termsFoundHandshake.Add(i);
-                    termsNeedingHandshake.Remove(j);
-                    termsFoundHandshake.Add(j);
-                    break;
-                }
-            }
-            // Apply the changes
-            sd.posArgs.Clear();
-            sd.posArgs.AddRange(finalPosArgs);
-            sd.negArgs.Clear();
-            sd.negArgs.AddRange(finalNegArgs);
-        }
-    }
-
     public static Oper Intersect(Oper o, Oper p)
     {
         if (o is Variable v)
@@ -188,10 +115,5 @@ public abstract partial class Oper
                 d[c] = matches - 1;
             }
         }
-    }
-
-    public static void CombineFoil()
-    {
-        //c
     }
 }

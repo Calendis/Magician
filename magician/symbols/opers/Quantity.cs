@@ -2,7 +2,7 @@
     A Quantity is the basic "unit" math object in Magician
     from which more complex kinds of objects are derived
     TODO:
-        make this a subclass of Oper
+        make this a subclass of Oper, merge with Variable
 */
 namespace Magician;
 
