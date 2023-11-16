@@ -1,16 +1,22 @@
+using System.Globalization;
+using System.Numerics;
 using Magician.Maps;
 
 namespace Magician.Symbols;
-public abstract partial class Oper : IFunction, IArithmetic
+public abstract partial class Oper : IFunction
 {
-    public List<Oper> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
-    public List<Oper> posArgs = new();
-    public List<Oper> negArgs = new();
+    //public List<INum> AllArgs { get => posArgs.Concat(negArgs).ToList(); }
+    //public List<INum> posArgs = new();
+    //public List<INum> negArgs = new();
     public string Name => name;
     public bool cancelled = false;
+    public List<Oper> posArgs = new();
+    public List<Oper> negArgs = new();
+    public List<Oper> AllArgs => posArgs.Concat(negArgs).ToList();
 
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     public bool Contains(Oper o) => this == o || AllArgs.Contains(o);
+    public bool PosContains(Oper o) => !Contains(o) ? throw Scribe.Error($"{o} not found in {this}") : posArgs.Contains(o);
     List<Variable> AssociatedVars;
     protected string name;
     // TODO: make this a generic property
@@ -18,11 +24,13 @@ public abstract partial class Oper : IFunction, IArithmetic
     protected bool associative = false;
     protected bool commutative = false;
     public bool invertible = true;
-    // TODO: incorporate unarity with DirectMap Opers
     public bool unary = false;
     protected bool posUnaryIdentity = false;
-    
-    public int Ins {get; set;}
+
+    public int Ins { get; set; }
+    public int Dimensions { get { return Ins + 1; } set { } }
+
+    public bool IsConstant => this is Variable v && v.Found;
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
@@ -48,7 +56,7 @@ public abstract partial class Oper : IFunction, IArithmetic
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
         if (associates.Count != args.Length)
             throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
-        
+
         int counter = 0;
         foreach (Variable a in associates)
             a.Val = args[counter++];
@@ -61,7 +69,7 @@ public abstract partial class Oper : IFunction, IArithmetic
     public bool Like(Oper o)
     {
         if (o.posUnaryIdentity && o.posArgs.Count == 1 && o.negArgs.Count == 0)
-            return o.posArgs[0].Like(this);
+            return ((Oper)o.posArgs[0]).Like(this);
 
         if (o.GetType() != GetType())
             return false;
@@ -80,7 +88,7 @@ public abstract partial class Oper : IFunction, IArithmetic
         List<Oper> args = AllArgs;
         for (int i = 0; i < AllArgs.Count; i++)
         {
-            if (!o.AllArgs[i].Like(args[i]))
+            if (!((Oper)o.AllArgs[i]).Like(args[i]))
                 return false;
         }
 
@@ -138,6 +146,13 @@ public abstract partial class Oper : IFunction, IArithmetic
             else
                 ord += n.Ord();
         }
+        if (this is Variable u)
+        {
+            if (u.Found)
+                ord += $"#{u.Val}#";
+            else
+                ord += $"${u.Name}$";
+        }
         //Scribe.Info($"Total ord size of {this} is {ord.Length} bytes");
         return ord;
     }
@@ -178,8 +193,8 @@ public abstract partial class Oper : IFunction, IArithmetic
         if (!commutative)
             return;
 
-        posArgs = posArgs.OrderBy(o => o.Ord()).ToList();
-        negArgs = negArgs.OrderBy(o => o.Ord()).ToList();
+        posArgs = posArgs.OrderBy(o => ((Oper)o).Ord()).ToList();
+        negArgs = negArgs.OrderBy(o => ((Oper)o).Ord()).ToList();
     }
 
     public abstract Variable Solution();
@@ -192,31 +207,86 @@ public abstract partial class Oper : IFunction, IArithmetic
         BaseReduce(parent);
     }
 
-    public virtual void Reduce(Variable axis){}
-    public void BaseReduce(Oper? parent)
+    public virtual void Reduce(Variable axis) { }
+    private void BaseReduce(Oper? parent)
     {
         // Drop identities
-        posArgs = posArgs.Where(o => !o.IsIdentity(identity)).ToList();
+        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == identity)).ToList();
+        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == identity)).ToList();
+
+        // Drop things found in both sets of arguments
         if (commutative)
-            negArgs = negArgs.Where(o => !o.IsIdentity(identity)).ToList();
+        {
+            Dictionary<string, Oper> selectedOpers = new();
+            Dictionary<string, int> operCoefficients = new();
+            foreach (Oper o in posArgs)
+            {
+                string ord = o.Ord();
+                if (selectedOpers.ContainsKey(ord))
+                {
+                    operCoefficients[ord]++;
+                }
+                else
+                {
+                    selectedOpers.Add(ord, o);
+                    operCoefficients.Add(ord, 1);
+                }
+            }
+            foreach (Oper o in negArgs)
+            {
+                string ord = o.Ord();
+                if (selectedOpers.ContainsKey(ord))
+                {
+                    operCoefficients[ord]--;
+                }
+                else
+                {
+                    selectedOpers.Add(ord, o);
+                    operCoefficients.Add(ord, -1);
+                }
+            }
+            posArgs.Clear();
+            negArgs.Clear();
+            foreach (string ord in operCoefficients.Keys)
+            {
+                int coefficient = operCoefficients[ord];
+                Oper o = selectedOpers[ord];
+                if (coefficient == 0)
+                    continue;
+                else if (coefficient > 0)
+                {
+                    while (coefficient-- > 0)
+                        posArgs.Add(o.Copy());
+                }
+                else if (coefficient < 0)
+                {
+                    while (coefficient++ < 0)
+                        negArgs.Add(o.Copy());
+                }
+            }
+        }
+
+        // Make identities explicit
+        if (posArgs.Count == 0 && this is not Variable)
+            posArgs.Add(New(new List<Oper>{Notate.Val(identity)}, new List<Oper>{}));
 
         if (parent is null)
             return;
 
         // Absorb trivial
         if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
+        {
+            if (parent!.negArgs.Contains(this))
             {
-                if (parent!.negArgs.Contains(this))
-                {
-                    parent.negArgs.Remove(this);
-                    parent.negArgs.AddRange(posArgs);
-                }
-                else if (parent.posArgs.Contains(this))
-                {
-                    parent.posArgs.Remove(this);
-                    parent.posArgs.AddRange(posArgs);
-                }
+                parent.negArgs.Remove(this);
+                parent.negArgs.AddRange(posArgs);
             }
+            else if (parent.posArgs.Contains(this))
+            {
+                parent.posArgs.Remove(this);
+                parent.posArgs.AddRange(posArgs);
+            }
+        }
         if (IsEmpty && this is not Variable)
         {
             if (parent!.negArgs.Contains(this))
@@ -235,16 +305,45 @@ public abstract partial class Oper : IFunction, IArithmetic
     public Oper Trim()
     {
         if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
-            return posArgs[0];
+            return (Oper)posArgs[0];
         return this;
     }
-    public bool IsIdentity(int id)
+
+    public (List<List<(int, int, bool, bool)>>, List<List<(Oper, bool)>>) FlaggedHandshakes(Variable axis)
     {
-        if (this is Variable v)
-            return v.Found && v.Val == id;
-        if (IsEmpty)
-            return true;
-        return false;
+
+        List<(Oper, bool)> argsContainingAxis = new();
+        List<(Oper, bool)> argsNotContainingAxis = new();
+        List<List<(int, int, bool, bool)>> groupedHandshakes = new() { new() { }, new() { } };
+
+        int posLimit = posArgs.Count;
+        // Group the Opers into terms containing the axis, and terms not containing the axis
+        for (int i = 0; i < AllArgs.Count; i++)
+        {
+            Oper o = AllArgs[i];
+            if (o.Contains(axis))
+                argsContainingAxis.Add((o, i < posLimit));
+            else
+                argsNotContainingAxis.Add((o, i < posLimit));
+        }
+        int c = 0;
+        foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>>
+            { argsNotContainingAxis, argsContainingAxis })
+        {
+            if (flaggedArgs.Count % 2 != 0)
+                flaggedArgs.Add((new Variable(identity), true));
+            for (int i = 0; i < flaggedArgs.Count; i++)
+            {
+                for (int j = i + 1; j < flaggedArgs.Count; j++)
+                {
+                    groupedHandshakes[c].Add((i, j, flaggedArgs[i].parity, flaggedArgs[j].parity));
+                }
+            }
+            c++;
+        }
+
+        return (groupedHandshakes, new List<List<(Oper, bool)>>
+            { argsNotContainingAxis, argsContainingAxis });
     }
 
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
@@ -291,24 +390,29 @@ public abstract partial class Oper : IFunction, IArithmetic
 
     public virtual Oper Copy()
     {
-        return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList());
+        return New(posArgs.Select((o, i) => ((Oper)o).Copy()).ToList(), negArgs.Select((o, i) => ((Oper)o).Copy()).ToList());
     }
 
-    public virtual SumDiff Add(params Oper[] os)
+    public virtual Oper Add(Oper o)
     {
-        return new SumDiff(os.Where(o => o is not Variable v || !v.Found || v.Val != 0).Append(this), new List<Oper>() { });
+        return new SumDiff(new List<Oper> { this, o }, new List<Oper> { });
+        // Old params Oper[] implementation
+        //return new SumDiff(os.Where(o => o is not Variable v || !v.Found || v.Val != 0).Append(this), new List<Oper>() { });
     }
-    public virtual SumDiff Subtract(params Oper[] os)
+    public virtual Oper Subtract(Oper o)
     {
-        return new SumDiff(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 0));
+        return new SumDiff(new List<Oper> { this }, new List<Oper> { o });
+        //return new SumDiff(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 0));
     }
-    public virtual Fraction Mult(params Oper[] os)
+    public virtual Oper Mult(Oper o)
     {
-        return new Fraction(os.Where(o => o is not Variable v || !v.Found || v.Val != 1).Append(this), new List<Oper>() { });
+        return new Fraction(new List<Oper> { this, o }, new List<Oper> { });
+        //return new Fraction(os.Where(o => o is not Variable v || !v.Found || v.Val != 1).Append(this), new List<Oper>() { });
     }
-    public virtual Fraction Divide(params Oper[] os)
+    public virtual Oper Divide(Oper o)
     {
-        return new Fraction(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 1));
+        return new Fraction(new List<Oper> { this }, new List<Oper> { o });
+        //return new Fraction(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 1));
     }
 }
 
