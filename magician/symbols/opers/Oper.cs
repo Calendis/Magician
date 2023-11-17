@@ -17,10 +17,11 @@ public abstract partial class Oper : IFunction
     public bool IsEmpty => AllArgs.Count == 0 && this is not Variable;
     public bool Contains(Oper o) => this == o || AllArgs.Contains(o);
     public bool PosContains(Oper o) => !Contains(o) ? throw Scribe.Error($"{o} not found in {this}") : posArgs.Contains(o);
-    List<Variable> AssociatedVars;
+    protected List<Variable> AssociatedVars = new();
+
+    // TODO: Maybe put some of these behind an interface
     protected string name;
-    // TODO: make this a generic property
-    protected abstract int identity { get; }
+    protected virtual int? Identity { get; }
     protected bool associative = false;
     protected bool commutative = false;
     public bool invertible = true;
@@ -30,7 +31,9 @@ public abstract partial class Oper : IFunction
     public int Ins { get; set; }
     public int Dimensions { get { return Ins + 1; } set { } }
 
+    // TODO: maybe implement Forms for these
     public bool IsConstant => this is Variable v && v.Found;
+    public bool IsDetermined => IsConstant || (AssociatedVars.Count == 0 && this is not Variable);
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
@@ -45,11 +48,7 @@ public abstract partial class Oper : IFunction
         //map = new Func<double[], double>(vals => Evaluate(vals));
     }
     // Alternating form
-    protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList())
-    {
-        if (this is not Variable && cstArgs.Length == 0)
-            posArgs.Add(new Variable(identity));
-    }
+    protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList()) { }
 
     public double Evaluate(params double[] args)
     {
@@ -65,7 +64,20 @@ public abstract partial class Oper : IFunction
         return s;
     }
 
-    public abstract double Degree(Variable v);
+    public abstract Oper Degree(Variable v);
+    public Oper Degree()
+    {
+        if (IsDetermined)
+            return new Variable(0);
+        List<Oper> degs = AssociatedVars.Select(av => Degree(av)).ToList();
+        Oper result = new SumDiff(degs, new List<Oper> { });
+        result = Form.Canonical(result);
+        if (result.IsDetermined)
+            return result.Solution();
+        return result;
+    }
+
+    public virtual void Combine(Variable axis) { }
     public bool Like(Oper o)
     {
         if (o.posUnaryIdentity && o.posArgs.Count == 1 && o.negArgs.Count == 0)
@@ -97,11 +109,15 @@ public abstract partial class Oper : IFunction
 
     public string Ord(string? ord = null)
     {
+        /* YOU MUST DEFINE A TYPE HEADER FOR EVERY CLASS THAT INHERITS OPER */
         Dictionary<Type, (char neg, char pos)> typeHeaders = new()
         {
-            { typeof(Variable), ('v', 'V') },
-            { typeof(SumDiff),  ('-', '+') },
-            { typeof(Fraction), ('/', '*') }
+            {typeof(Variable),  ('v', 'V')},
+            {typeof(SumDiff),   ('-', '+')},
+            {typeof(Fraction),  ('/', '*')},
+            {typeof(Funcs.Abs), ('A', 'A')},
+            {typeof(Funcs.Min), ('m', 'm')},
+            {typeof(Funcs.Max), ('M', 'M')}
         };
         int totalHeaders = 1;
         int totalLeaves = 0;
@@ -185,6 +201,7 @@ public abstract partial class Oper : IFunction
         }
     }
 
+    // Recursively moves args into a canonical form
     public void Commute()
     {
         foreach (Oper o in AllArgs)
@@ -203,16 +220,15 @@ public abstract partial class Oper : IFunction
         // Brackets first, recursively
         foreach (Oper o in AllArgs)
             o.Simplify(v, this);
-        Reduce(v);
-        BaseReduce(parent);
+        Combine(v);
+        Reduce(parent);
     }
-
-    public virtual void Reduce(Variable axis) { }
-    private void BaseReduce(Oper? parent)
+    public virtual void Reduce(Oper? parent = null)
     {
-        // Drop identities
-        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == identity)).ToList();
-        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == identity)).ToList();
+        foreach (Oper a in AllArgs)
+        {
+            a.Reduce(this);
+        }
 
         // Drop things found in both sets of arguments
         if (commutative)
@@ -265,13 +281,26 @@ public abstract partial class Oper : IFunction
                 }
             }
         }
+        if (Identity is null)
+            return;
 
-        // Make identities explicit
+        // Drop identities
+        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
+        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
+
+        // Prefer explicit identity over empty args
+        // TODO: account for the fact that this implementation will break ExpLogs, as they have no identity
         if (posArgs.Count == 0 && this is not Variable)
-            posArgs.Add(New(new List<Oper>{Notate.Val(identity)}, new List<Oper>{}));
+            posArgs.Add(New(new List<Oper> { Notate.Val((int)Identity) }, new List<Oper> { }));
 
         if (parent is null)
             return;
+
+        // Destructive routine that uses Reduced instead of Reduce
+        for (int i = 0; i < AllArgs.Count; i++)
+        {
+            AllArgs[i] = AllArgs[i].Reduced(this);
+        }
 
         // Absorb trivial
         if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
@@ -292,14 +321,27 @@ public abstract partial class Oper : IFunction
             if (parent!.negArgs.Contains(this))
             {
                 parent.negArgs.Remove(this);
-                parent.negArgs.Add(new Variable(identity));
+                parent.negArgs.Add(new Variable((int)Identity));
             }
             else if (parent.posArgs.Contains(this))
             {
                 parent.posArgs.Remove(this);
-                parent.posArgs.Add(new Variable(identity));
+                parent.posArgs.Add(new Variable((int)Identity));
             }
         }
+    }
+    internal Oper Reduced(Oper? parent = null)
+    {
+        if (IsDetermined && this is not Variable)
+            return Solution();
+        if (parent is null)
+        {
+            Oper r = new SumDiff(this);
+            r.Reduce();
+            return r;
+        }
+        parent.Reduce();
+        return parent;
     }
 
     public Oper Trim()
@@ -322,16 +364,23 @@ public abstract partial class Oper : IFunction
         {
             Oper o = AllArgs[i];
             if (o.Contains(axis))
+            {
                 argsContainingAxis.Add((o, i < posLimit));
+                //Scribe.Info($"\t{o} does contain {axis}, degree {o.Degree(axis)}, total degree {o.Degree()}");
+            }
             else
+            {
                 argsNotContainingAxis.Add((o, i < posLimit));
+                //Scribe.Info($"\t{o} does not contain {axis}");
+            }
         }
         int c = 0;
-        foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>>
-            { argsNotContainingAxis, argsContainingAxis })
+        foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>> { argsNotContainingAxis, argsContainingAxis })
         {
+            if (Identity is null)
+                throw Scribe.Issue($"TODO: support this case");
             if (flaggedArgs.Count % 2 != 0)
-                flaggedArgs.Add((new Variable(identity), true));
+                flaggedArgs.Add((new Variable((int)Identity), true));
             for (int i = 0; i < flaggedArgs.Count; i++)
             {
                 for (int j = i + 1; j < flaggedArgs.Count; j++)
@@ -385,34 +434,92 @@ public abstract partial class Oper : IFunction
         return (-1, -1);
     }
 
-    // Write this if necessary
-    //public List<(int, int)> LocateAll
-
+    // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
     public virtual Oper Copy()
     {
         return New(posArgs.Select((o, i) => ((Oper)o).Copy()).ToList(), negArgs.Select((o, i) => ((Oper)o).Copy()).ToList());
     }
 
+    /* Binary arithmetic methods */
     public virtual Oper Add(Oper o)
     {
         return new SumDiff(new List<Oper> { this, o }, new List<Oper> { });
-        // Old params Oper[] implementation
-        //return new SumDiff(os.Where(o => o is not Variable v || !v.Found || v.Val != 0).Append(this), new List<Oper>() { });
     }
     public virtual Oper Subtract(Oper o)
     {
         return new SumDiff(new List<Oper> { this }, new List<Oper> { o });
-        //return new SumDiff(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 0));
     }
     public virtual Oper Mult(Oper o)
     {
         return new Fraction(new List<Oper> { this, o }, new List<Oper> { });
-        //return new Fraction(os.Where(o => o is not Variable v || !v.Found || v.Val != 1).Append(this), new List<Oper>() { });
     }
     public virtual Oper Divide(Oper o)
     {
         return new Fraction(new List<Oper> { this }, new List<Oper> { o });
-        //return new Fraction(new List<Oper>() { this }, os.Where(o => o is not Variable v || !v.Found || v.Val != 1));
+    }
+    public virtual Oper Pow(Oper o)
+    {
+        return new PowRoot(new List<Oper> { this, o }, new List<Oper> { });
+    }
+    public virtual Oper Root(Oper o)
+    {
+        return new PowRoot(new List<Oper> { this }, new List<Oper> { o });
+    }
+    public virtual Oper Exp(Oper o)
+    {
+        return new ExpLog(new List<Oper> { this, o }, new List<Oper> { });
+    }
+    public virtual Oper Log(Oper o)
+    {
+        return new ExpLog(new List<Oper> { this }, new List<Oper> { o });
+    }
+
+    /*
+    public int CompareTo(object? obj)
+    {
+        if (obj is null || obj is not Oper)
+            throw Scribe.Error($"Cannot compare {this} with {obj}");
+        Oper o = (Oper)obj;
+        bool lessThan = IsDetermined ? !o.IsDetermined || Solution().Val < o.Solution().Val : !o.IsDetermined && this < (Oper)obj;
+        if (lessThan)
+            return -1;
+        else if (Form.Canonical(Degree()).Like(Form.Canonical(((Oper)obj).Degree())))
+            return 0;
+        else
+            return 1;
+    }
+    */
+
+    public static bool operator <(Oper o0, Oper o1)
+    {
+        if (o0.IsDetermined)
+        {
+            if (o1.IsDetermined)
+            {
+                return o0.Solution().Val < o1.Solution().Val;
+            }
+            else
+                return true;
+        }
+        else if (o1.IsDetermined)
+            return false;
+        //Scribe.Info($"{o0} < {o1} ?");
+        Oper d0 = o0.Degree(); Oper d1 = o1.Degree();
+        //d0.Reduce(); d1.Reduce();
+        return d0 < d1;
+    }
+    public static bool operator >(Oper o0, Oper o1)
+    {
+        if (o0.IsDetermined)
+        {
+            if (o1.IsDetermined)
+                return o0.Solution().Val > o1.Solution().Val;
+            else
+                return true;
+        }
+        else if (o1.IsDetermined)
+            return false;
+        return o0.Degree() > o1.Degree();
     }
 }
 
