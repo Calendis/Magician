@@ -2,6 +2,85 @@ namespace Magician.Symbols;
 
 public abstract partial class Oper
 {
+    public void DropIdentities()
+    {
+        if (Identity is null)
+            throw Scribe.Error($"{this} has no identity to drop");
+        // Drop identities
+        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
+        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
+        // Prefer explicit identity over empty args
+        // TODO: account for the fact that this implementation will break ExpPows, as they have no identity
+        if (posArgs.Count == 0 && this is not Variable)
+            posArgs.Add(New(new List<Oper> { Notate.Val((int)Identity) }, new List<Oper> { }));
+    }
+    public void BalanceArguments()
+    {
+        Dictionary<string, Oper> selectedOpers = new();
+        Dictionary<string, int> operCoefficients = new();
+        foreach (Oper o in posArgs)
+        {
+            string ord = o.Ord();
+            if (selectedOpers.ContainsKey(ord))
+            {
+                operCoefficients[ord]++;
+            }
+            else
+            {
+                selectedOpers.Add(ord, o);
+                operCoefficients.Add(ord, 1);
+            }
+        }
+        foreach (Oper o in negArgs)
+        {
+            string ord = o.Ord();
+            if (selectedOpers.ContainsKey(ord))
+            {
+                operCoefficients[ord]--;
+            }
+            else
+            {
+                selectedOpers.Add(ord, o);
+                operCoefficients.Add(ord, -1);
+            }
+        }
+        posArgs.Clear();
+        negArgs.Clear();
+        foreach (string ord in operCoefficients.Keys)
+        {
+            int coefficient = operCoefficients[ord];
+            Oper o = selectedOpers[ord];
+            if (coefficient == 0)
+                continue;
+            else if (coefficient > 0)
+            {
+                while (coefficient-- > 0)
+                    posArgs.Add(o.Copy());
+            }
+            else if (coefficient < 0)
+            {
+                while (coefficient++ < 0)
+                    negArgs.Add(o.Copy());
+            }
+        }
+    }
+    public void AbsorbTrivial(Oper parent)
+    {
+        // Absorb trivial
+        if (absorbable && posArgs.Count == 1 && negArgs.Count == 0)
+        {
+            if (parent!.negArgs.Contains(this))
+            {
+                parent.negArgs.Remove(this);
+                parent.negArgs.AddRange(posArgs);
+            }
+            else if (parent.posArgs.Contains(this))
+            {
+                parent.posArgs.Remove(this);
+                parent.posArgs.AddRange(posArgs);
+            }
+        }
+    }
     public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axis, Variable v)
     {
         if (!chosenSide.commutative)
@@ -44,7 +123,6 @@ public abstract partial class Oper
         // need extract method
         if (chosenSide is Variable || axis == chosenSide)
             return ExtractOperFrom(SumDiff.StaticNew(new List<Oper> { chosenSide }, new List<Oper>()), oppositeSide, axis);
-        // TODO stop writing code like this and make Oper an IDualCollection or something
         if (chosenSide.posArgs.Contains(axis))
             chosenSide.posArgs.Remove(axis);
         else if (chosenSide.negArgs.Contains(axis))

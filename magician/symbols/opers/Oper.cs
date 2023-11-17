@@ -26,7 +26,7 @@ public abstract partial class Oper : IFunction
     protected bool commutative = false;
     public bool invertible = true;
     public bool unary = false;
-    protected bool posUnaryIdentity = false;
+    protected bool absorbable = false;
 
     public int Ins { get; set; }
     public int Dimensions { get { return Ins + 1; } set { } }
@@ -40,6 +40,14 @@ public abstract partial class Oper : IFunction
         this.name = name;
         posArgs = posa.ToList();
         negArgs = nega.ToList();
+        /* Eventually we could optimize with something like */
+        /*
+            if (LayerCache.Locked)
+                LayerCache.TryKry(this)  // the key would consist of am ord-address pair
+                return;                  // break out early if we can't get access to the layer cache. the assumption
+                                         // is that a the root constructor will successfully unlock the cache
+                                         // and distribute AssociatedVar information
+        */
         OperLayers ol = new(this, Variable.Undefined);
         AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
         //if (this is Variable v && !v.Found)
@@ -80,7 +88,7 @@ public abstract partial class Oper : IFunction
     public virtual void Combine(Variable axis) { }
     public bool Like(Oper o)
     {
-        if (o.posUnaryIdentity && o.posArgs.Count == 1 && o.negArgs.Count == 0)
+        if (o.absorbable && o.posArgs.Count == 1 && o.negArgs.Count == 0)
             return ((Oper)o.posArgs[0]).Like(this);
 
         if (o.GetType() != GetType())
@@ -115,7 +123,8 @@ public abstract partial class Oper : IFunction
             {typeof(Variable),  ('v', 'V')},
             {typeof(SumDiff),   ('-', '+')},
             {typeof(Fraction),  ('/', '*')},
-            {typeof(Funcs.Abs), ('A', 'A')},
+            {typeof(PowTowRootLog),  ('R', '^')},
+            {typeof(Funcs.Abs), ('|', '|')},
             {typeof(Funcs.Min), ('m', 'm')},
             {typeof(Funcs.Max), ('M', 'M')}
         };
@@ -226,127 +235,37 @@ public abstract partial class Oper : IFunction
     public virtual void Reduce(Oper? parent = null)
     {
         foreach (Oper a in AllArgs)
-        {
             a.Reduce(this);
-        }
 
         // Drop things found in both sets of arguments
         if (commutative)
-        {
-            Dictionary<string, Oper> selectedOpers = new();
-            Dictionary<string, int> operCoefficients = new();
-            foreach (Oper o in posArgs)
-            {
-                string ord = o.Ord();
-                if (selectedOpers.ContainsKey(ord))
-                {
-                    operCoefficients[ord]++;
-                }
-                else
-                {
-                    selectedOpers.Add(ord, o);
-                    operCoefficients.Add(ord, 1);
-                }
-            }
-            foreach (Oper o in negArgs)
-            {
-                string ord = o.Ord();
-                if (selectedOpers.ContainsKey(ord))
-                {
-                    operCoefficients[ord]--;
-                }
-                else
-                {
-                    selectedOpers.Add(ord, o);
-                    operCoefficients.Add(ord, -1);
-                }
-            }
-            posArgs.Clear();
-            negArgs.Clear();
-            foreach (string ord in operCoefficients.Keys)
-            {
-                int coefficient = operCoefficients[ord];
-                Oper o = selectedOpers[ord];
-                if (coefficient == 0)
-                    continue;
-                else if (coefficient > 0)
-                {
-                    while (coefficient-- > 0)
-                        posArgs.Add(o.Copy());
-                }
-                else if (coefficient < 0)
-                {
-                    while (coefficient++ < 0)
-                        negArgs.Add(o.Copy());
-                }
-            }
-        }
+            BalanceArguments();
+
         if (Identity is null)
             return;
-
-        // Drop identities
-        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
-        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
-
-        // Prefer explicit identity over empty args
-        // TODO: account for the fact that this implementation will break ExpLogs, as they have no identity
-        if (posArgs.Count == 0 && this is not Variable)
-            posArgs.Add(New(new List<Oper> { Notate.Val((int)Identity) }, new List<Oper> { }));
+        DropIdentities();
 
         if (parent is null)
             return;
-
-        // Destructive routine that uses Reduced instead of Reduce
         for (int i = 0; i < AllArgs.Count; i++)
-        {
             AllArgs[i] = AllArgs[i].Reduced(this);
-        }
-
-        // Absorb trivial
-        if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
-        {
-            if (parent!.negArgs.Contains(this))
-            {
-                parent.negArgs.Remove(this);
-                parent.negArgs.AddRange(posArgs);
-            }
-            else if (parent.posArgs.Contains(this))
-            {
-                parent.posArgs.Remove(this);
-                parent.posArgs.AddRange(posArgs);
-            }
-        }
-        if (IsEmpty && this is not Variable)
-        {
-            if (parent!.negArgs.Contains(this))
-            {
-                parent.negArgs.Remove(this);
-                parent.negArgs.Add(new Variable((int)Identity));
-            }
-            else if (parent.posArgs.Contains(this))
-            {
-                parent.posArgs.Remove(this);
-                parent.posArgs.Add(new Variable((int)Identity));
-            }
-        }
+        AbsorbTrivial(parent);
     }
     internal Oper Reduced(Oper? parent = null)
     {
         if (IsDetermined && this is not Variable)
             return Solution();
-        if (parent is null)
-        {
-            Oper r = new SumDiff(this);
-            r.Reduce();
-            return r;
-        }
+        parent ??= new SumDiff(this);
         parent.Reduce();
+        if (parent.AllArgs.Count == 1 && parent.posArgs.Count == 1 && parent.posArgs[0].absorbable &&
+        parent.posArgs[0].AllArgs.Count == 1 && parent.posArgs[0].posArgs.Count == 1)
+            return parent.posArgs[0];
         return parent;
     }
 
     public Oper Trim()
     {
-        if (posUnaryIdentity && posArgs.Count == 1 && negArgs.Count == 0)
+        if (absorbable && posArgs.Count == 1 && negArgs.Count == 0)
             return (Oper)posArgs[0];
         return this;
     }
@@ -459,19 +378,19 @@ public abstract partial class Oper : IFunction
     }
     public virtual Oper Pow(Oper o)
     {
-        return new PowRoot(new List<Oper> { this, o }, new List<Oper> { });
-    }
-    public virtual Oper Root(Oper o)
-    {
-        return new PowRoot(new List<Oper> { this }, new List<Oper> { o });
+        return new PowTowRootLog(new List<Oper> { this, o }, new List<Oper> { });
     }
     public virtual Oper Exp(Oper o)
     {
-        return new ExpLog(new List<Oper> { this, o }, new List<Oper> { });
+        return new PowTowRootLog(new List<Oper> { o, this }, new List<Oper> { });
+    }
+    public virtual Oper Root(Oper o)
+    {
+        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> { o });
     }
     public virtual Oper Log(Oper o)
     {
-        return new ExpLog(new List<Oper> { this }, new List<Oper> { o });
+        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> { new Variable(1), o });
     }
 
     /*
