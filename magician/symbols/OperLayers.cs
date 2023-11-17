@@ -64,12 +64,12 @@ internal class OperLayers
 
 internal readonly struct OperInfo
 {
-    public readonly double deg;
+    //public readonly Oper deg;
     public readonly Equation.MatchState ms;
     public readonly List<Variable> assocArgs;
     public OperInfo(Oper o, Variable v, IEnumerable<Variable> assocArgs)
     {
-        deg = o.Degree(v);
+        //deg = o.Degree(v);
         this.assocArgs = assocArgs.ToList();
         int liveBranches = assocArgs.Where(a => { return a == v; }).Count();
         ms = Equation.MatchState.NONE;
