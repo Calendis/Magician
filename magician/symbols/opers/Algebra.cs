@@ -56,6 +56,18 @@ public abstract partial class Oper
 
     public static Oper Intersect(Oper o, Oper p)
     {
+        if (o.IsDetermined || p.IsDetermined)
+            return new Variable(1);
+        if (o.Like(p))
+        {
+            if (o.IsDetermined)
+                return new Variable(1);
+            else return o;
+        }
+        if (o.IsDetermined)
+        {
+
+        }
         if (o is Variable v)
         {
             if (p is Variable u)
@@ -73,6 +85,8 @@ public abstract partial class Oper
                 return new Variable(uu.Val == 0 ? 0 : 1);
             p = o.New(new List<Oper> { p }, new List<Oper> { });
         }
+        //if (o.Like(p))
+        //    return new Variable(1);
         IEnumerable<Oper> pos = IntersectPos(o, p);
         IEnumerable<Oper> neg = IntersectNeg(o, p);
         return o.New(pos, neg);
