@@ -3,7 +3,7 @@ using static MathCache;
 
 public static class Notate
 {
-    // Denote an unknown
+    // Denote and access variables with a string
     public static Variable Var(string name)
     {
         if (freeVars.ContainsKey(name))
