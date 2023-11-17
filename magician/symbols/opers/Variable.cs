@@ -3,8 +3,7 @@ namespace Magician.Symbols;
 /* TODO: Merge with Quantity */
 public class Variable : Oper
 {
-    protected override int identity { get => throw Scribe.Error("Undefined");}
-    public bool found = false;
+    bool found = false;
     Quantity q = new(0);
     public double Val
     {
@@ -31,7 +30,7 @@ public class Variable : Oper
     }
 
     // Creating an unsolved variable
-    public Variable(string n) : base(n){}
+    public Variable(string n) : base(n) {}
     public Variable(string n, double v) : base(n)
     {
         Val = v;
@@ -40,8 +39,10 @@ public class Variable : Oper
 
     public override Variable Copy()
     {
+        // Unknown variables share an instance
         if (!found)
             return this;
+        // Knowns actually get copied
         return new Variable(Val);
     }
     public override string ToString()
@@ -65,11 +66,11 @@ public class Variable : Oper
         return new Variable(Val);
     }
 
-    public override double Degree(Variable v)
+    public override Oper Degree(Variable v)
     {
         if (!found && this == v)
-            return 1;
-        return 0;
+            return new Variable(1);
+        return new Variable(0);
     }
 
     public override Oper Add(Oper o)
@@ -99,5 +100,5 @@ public class Variable : Oper
 
     
 
-    public static Variable Undefined = new Variable("undefined");
+    public static readonly Variable Undefined = new("undefined");
 }
