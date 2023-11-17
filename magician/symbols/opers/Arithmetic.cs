@@ -10,13 +10,13 @@ public class SumDiff : Oper
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b)
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
     public override Variable Solution()
     {
@@ -165,13 +165,13 @@ public class Fraction : Oper
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
     public Fraction(params Oper[] ops) : base("fraction", ops)
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
 
     public override Variable Solution()
@@ -257,7 +257,7 @@ public class Fraction : Oper
                     else if (B is Variable bv && bv.Found && bv.Val == 0)
                         combined = A;
                     else
-                        combined = AB.Exp(ABbar);
+                        combined = AB.Pow(ABbar);
 
                     if ((positive || aPositive) && (aPositive || bPositive))
                         finalPosArgs.Add(combined);
@@ -318,12 +318,16 @@ public class Fraction : Oper
     }
 }
 
-public class PowRoot : Oper
+public class PowTowRootLog : Oper
 {
     protected override int? Identity => 1;
 
-    public PowRoot(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("powroot", posArgs, negArgs) { }
-    public PowRoot(params Oper[] ops) : base("powroot", ops) { }
+    public PowTowRootLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("powtow", posArgs, negArgs)
+    {
+        if (!posArgs.Any())
+            throw Scribe.Error($"{this.GetType().Name} requires at least one positive argument");
+    }
+    public PowTowRootLog(params Oper[] ops) : base("powtowlogroot", ops) { }
 
     public override Oper Degree(Variable v)
     {
@@ -332,33 +336,54 @@ public class PowRoot : Oper
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
     {
-        throw new NotImplementedException();
+        return new PowTowRootLog(pa, na);
     }
 
     public override Variable Solution()
     {
-        throw new NotImplementedException();
+        Variable sol0 = posArgs[0].Solution();
+        Variable pos;
+        Variable neg;
+        if (posArgs.Count == 0)
+            pos = new Variable(1);
+        else if (posArgs.Count == 1)
+            pos = posArgs[0].Solution();
+        else if (posArgs.Count == 2)
+            pos = new Variable(Math.Pow(sol0.Val, posArgs[1].Solution().Val));
+        else
+            pos = new PowTowRootLog(new List<Oper> { sol0, new PowTowRootLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Solution();
+
+        if (negArgs.Count == 0)
+            return pos;
+        else if (negArgs.Count == 1)
+            return new Variable(Math.Pow(pos.Val, 1d / negArgs[0].Solution().Val));
+        else if (negArgs.Count == 2)
+            return new Variable(Math.Log(Math.Pow(pos.Val, 1d / negArgs[0].Solution().Val), negArgs[1].Solution().Val));
+        else
+            return new PowTowRootLog(new List<Oper> { new PowTowRootLog(new List<Oper> { pos }, new List<Oper> { negArgs[^1], negArgs[^2] }) }, negArgs.SkipLast(2)).Solution();
+
     }
-}
 
-public class ExpLog : Oper
-{
-    protected override int? Identity => throw Scribe.Error("undefined explog identity");
-    public ExpLog(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("explog", pa, na) { }
-    public ExpLog(params Oper[] ops) : base("explog", ops) { }
-
-    public override Oper Degree(Variable v)
+    public override void Reduce(Oper? parent = null)
     {
-        throw new NotImplementedException();
-    }
+        foreach (Oper a in AllArgs)
+            a.Reduce(this);
 
-    public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override Variable Solution()
-    {
-        throw new NotImplementedException();
+        int? idIdx = null;
+        for (int i = 0; i < posArgs.Count; i++)
+        {
+            if (posArgs[i].IsConstant && posArgs[i].Solution().Val == Identity)
+            {
+                idIdx = i;
+                break;
+            }
+        }
+        if (idIdx is not null)
+            posArgs = posArgs.Take((int)idIdx).ToList();
+        if (parent is null)
+            return;
+        for (int i = 0; i < AllArgs.Count; i++)
+            AllArgs[i] = AllArgs[i].Reduced(this);
+        AbsorbTrivial(parent);
     }
 }

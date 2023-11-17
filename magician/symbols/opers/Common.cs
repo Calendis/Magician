@@ -6,7 +6,7 @@ public class Abs : Oper
     public Abs(Oper o) : base("abs", o)
     {
         unary = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
 
     public override Oper Degree(Variable v)
@@ -49,13 +49,13 @@ public class Max : Oper
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
     public Max(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper>{})
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
 
     public override Oper Degree(Variable v)
@@ -109,13 +109,13 @@ public class Min : Oper
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
     public Min(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper>{})
     {
         commutative = true;
         associative = true;
-        posUnaryIdentity = true;
+        absorbable = true;
     }
 
     public override Oper Degree(Variable v)
