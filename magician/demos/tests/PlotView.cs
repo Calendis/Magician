@@ -78,6 +78,6 @@ public class EqPlotting : Spell
                 )
             )
         );
-        spt3d = plotTest3d.Solved();
+        spt3d = plotTest3d.Solved(Var("y"));
     }
 }

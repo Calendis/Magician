@@ -97,7 +97,7 @@ public class Tests
             Fulcrum.EQUALS,
             new Fraction(Val(2), Val(1), Var("y"), Val(1), Var("x"), Val(1), Var("z"))
         );
-        SolvedEquation s = unsolved.Solved();
+        SolvedEquation s = unsolved.Solved(Var("x"));
         SolvedEquation manual = new(
             Var("x"),
             Fulcrum.EQUALS,
