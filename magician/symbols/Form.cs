@@ -14,9 +14,10 @@ public class Form
 
     public static Oper Canonical(Oper o)
     {
-        o.Associate();
-        o.Reduce();
-        o.Commute();
-        return o.Reduced();
+        Oper p = o.Copy();
+        p.Associate();
+        p.Reduce();
+        p.Commute();
+        return p.Reduced();
     }
 }
