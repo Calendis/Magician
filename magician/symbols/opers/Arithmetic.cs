@@ -3,8 +3,9 @@ namespace Magician.Symbols;
 // SumDiff objects represent addition and subtraction operations with any number of arguments
 public class SumDiff : Oper
 {
-    protected override int identity { get => 0; }
+    protected override int? Identity { get => 0; }
 
+    // TODO: make it so that you don't need to write both constructors
     public SumDiff(params Oper[] ops) : base("sumdiff", ops)
     {
         commutative = true;
@@ -42,21 +43,24 @@ public class SumDiff : Oper
         return new SumDiff(a, b);
     }
 
-    public override double Degree(Variable v)
+    public override Oper Degree(Variable v)
     {
-        double minD = 0;
-        double maxD = double.MinValue;
+        if (IsDetermined)
+            return new Variable(0);
+        Oper minD = new Variable(0);
+        Oper maxD = new Variable(1);
         foreach (Oper o in AllArgs)
         {
-            double d = o.Degree(v);
+            Oper d = o.Degree(v);
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return Math.Abs(maxD - minD);
+        return Form.Canonical(new Funcs.Abs(maxD.Subtract(minD)));
     }
 
-    public override void Reduce(Variable axis)
+    public override void Combine(Variable axis)
     {
+        //Scribe.Info($"Combining {name} {this}");
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
 
@@ -86,6 +90,7 @@ public class SumDiff : Oper
                     if (termsFoundHandshake.Contains(i) || termsFoundHandshake.Contains(j))
                         continue;
 
+                    Oper combined;
                     Oper AB = Intersect(A, B);
                     Oper ABbar;
                     if (positive)
@@ -97,13 +102,15 @@ public class SumDiff : Oper
                     else
                         throw Scribe.Issue("haggu!");
 
-                    Oper combined;
                     if (A is Variable av && av.Found && av.Val == 0)
                         combined = B;
                     else if (B is Variable bv && bv.Found && bv.Val == 0)
                         combined = A;
                     else
                         combined = AB.Mult(ABbar);
+                    //Scribe.Info($"  combined: {combined}");
+                    combined.Reduce();
+                    //Scribe.Info($"  Reduced combined: {combined}");
 
                     //Scribe.Warn($"  A, B, combined, +-: {A}, {B}, {combined}, {aPositive}{bPositive}");
 
@@ -120,12 +127,13 @@ public class SumDiff : Oper
                     break;
                 }
             }
-            // Apply the changes
-            posArgs.Clear();
-            posArgs.AddRange(finalPosArgs);
-            negArgs.Clear();
-            negArgs.AddRange(finalNegArgs);
         }
+        // Apply the changes
+        posArgs.Clear();
+        posArgs.AddRange(finalPosArgs);
+        negArgs.Clear();
+        negArgs.AddRange(finalNegArgs);
+        //Scribe.Info($"Got {this}");
     }
 
     public override string ToString()
@@ -152,7 +160,7 @@ public class SumDiff : Oper
 // Fraction objects represent multiplication and division operations with any number of arguments
 public class Fraction : Oper
 {
-    protected override int identity { get => 1; }
+    protected override int? Identity { get => 1; }
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b)
     {
         commutative = true;
@@ -191,15 +199,16 @@ public class Fraction : Oper
         return new Fraction(a, b);
     }
 
-    // TODO: when you introduce power laws, Degree is going to need to be an Oper
-    public override double Degree(Variable v)
+    public override Oper Degree(Variable v)
     {
-        return posArgs.Select(o => o.Degree(v)).Sum() - negArgs.Select(o => o.Degree(v)).Sum();
+        if (IsDetermined)
+            return new Variable(0);
+        return new SumDiff(posArgs.Select(a => a.Degree(v)), negArgs.Select(a => a.Degree(v)));
+        //return Form.Canonical(posArgs.Aggregate<Oper, Oper>(new SumDiff(), (o, a) => o.Add(a)).Subtract(negArgs.Aggregate<Oper, Oper>(new SumDiff(), (o, a) => o.Add(a))));
     }
 
-    public override void Reduce(Variable axis)
+    public override void Combine(Variable axis)
     {
-        Scribe.Warn("Not implemented");
         return;
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
@@ -248,7 +257,7 @@ public class Fraction : Oper
                     else if (B is Variable bv && bv.Found && bv.Val == 0)
                         combined = A;
                     else
-                        combined = AB.Mult(ABbar);
+                        combined = AB.Exp(ABbar);
 
                     if ((positive || aPositive) && (aPositive || bPositive))
                         finalPosArgs.Add(combined);
@@ -263,11 +272,11 @@ public class Fraction : Oper
                     break;
                 }
             }
-            posArgs.Clear();
-            posArgs.AddRange(finalPosArgs);
-            negArgs.Clear();
-            negArgs.AddRange(finalNegArgs);
         }
+        posArgs.Clear();
+        posArgs.AddRange(finalPosArgs);
+        negArgs.Clear();
+        negArgs.AddRange(finalNegArgs);
     }
 
     //public static Fraction Mult(Oper a, Oper b)
@@ -305,21 +314,18 @@ public class Fraction : Oper
         {
             denominator += "*" + o.ToString();
         }
-        string unbracketed = negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}";
-        if (negArgs.Count > 0)
-            return $"({unbracketed})";
-        return unbracketed;
+        return $"({(negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}")})";
     }
 }
 
 public class PowRoot : Oper
 {
-    protected override int identity => 1;
+    protected override int? Identity => 1;
 
-    public PowRoot(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("powroot", posArgs, negArgs){}
-    public PowRoot(params Oper[] ops) : base("powroot", ops) {}
+    public PowRoot(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("powroot", posArgs, negArgs) { }
+    public PowRoot(params Oper[] ops) : base("powroot", ops) { }
 
-    public override double Degree(Variable v)
+    public override Oper Degree(Variable v)
     {
         throw new NotImplementedException();
     }
@@ -337,11 +343,11 @@ public class PowRoot : Oper
 
 public class ExpLog : Oper
 {
-    protected override int identity => throw Scribe.Error("undefined explog identity");
-    public ExpLog(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("explog", pa, na) {}
-    public ExpLog(params Oper[] ops) : base("explog", ops) {}
+    protected override int? Identity => throw Scribe.Error("undefined explog identity");
+    public ExpLog(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("explog", pa, na) { }
+    public ExpLog(params Oper[] ops) : base("explog", ops) { }
 
-    public override double Degree(Variable v)
+    public override Oper Degree(Variable v)
     {
         throw new NotImplementedException();
     }
