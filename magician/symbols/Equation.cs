@@ -83,14 +83,23 @@ public class Equation : IRelation
         // By default, solve for the variable with the highest degree
         if (v == null)
         {
+            Scribe.Info($"Determining minimum-degree unknown for {LHS} = {RHS}");
             Variable? chosenSolveVar = null;
-            double minDegree = double.MaxValue;
+            Oper? minDegree = null;
             foreach (Variable uk in Unknowns)
             {
-                double deg = Math.Max(Math.Abs(LHS.Degree(uk)), Math.Abs(RHS.Degree(uk)));
-                if (deg < minDegree)
+                Oper deg = new Funcs.Max(new Funcs.Abs(LHS.Degree(uk)), new Funcs.Abs(RHS.Degree(uk)));
+                Scribe.Info($"Unknown: {uk}, Deg: {deg}, Min: {minDegree}, Deg<Min?: {(minDegree == null ? "nullmin" : deg < minDegree)}");
+                deg = deg.Reduced();
+                //Scribe.Info($"deg after: {deg}");
+                if (minDegree == null)
                 {
-                    if (deg == 0)
+                    minDegree = deg;
+                    chosenSolveVar = uk;
+                }
+                else if (!(deg > minDegree))
+                {
+                    if (deg.Solution().Val == 0)
                         Scribe.Warn($"deg was 0");
                     minDegree = deg;
                     chosenSolveVar = uk;
@@ -146,7 +155,8 @@ public class Equation : IRelation
                 Scribe.Info($"  {LAYERS.LEFT.Get(0, 0)} = {LAYERS.RIGHT.Get(0, 0)}");
             if (INSTRUCTION.MOD != SolveMode.PICK)
                 STATUS += $" the {INSTRUCTION.SIDE} side of the equation:";
-            Scribe.Info(STATUS);
+            if (INSTRUCTION.MOD != SolveMode.PICK)
+                Scribe.Info(STATUS);
 
             if (INSTRUCTION.MOD == SolveMode.PICK)
             {
