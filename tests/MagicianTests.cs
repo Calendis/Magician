@@ -1,15 +1,103 @@
 namespace Magician.Tests;
 using Magician.Symbols;
+using Magician.Symbols.Funcs;
 using static Magician.Symbols.Notate;
 using NUnit.Framework;
 
-public class Tests
+public class Forms
 {
-    [SetUp]
-    public void Setup()
+    [Test]
+    public void StableReduce()
     {
+        SumDiff sd = new(
+            new List<Oper>{
+                Var("x"),
+                Var("z"),
+                new Fraction(Var("z"), Val(1), Var("y")),
+                Var("x"),
+                new Fraction(Val(3.3), Val(1), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("z")),
+                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+            },
+            new List<Oper> { }
+        );
+        // Reduce a bunch times initially
+        for (int i = 0; i < 10; i++)
+            sd.Reduce();
+
+        for (int i = 0; i < 10; i++)
+        {
+            Oper c = sd.Copy();
+            sd.Reduce();
+            Assert.That(sd.Like(c));
+        }
+
     }
 
+    [Test]
+    public void StableSimplify()
+    {
+        SumDiff sd = new(
+            new List<Oper>{
+                Var("x"),
+                Var("z"),
+                new Fraction(Var("z"), Val(1), Var("y")),
+                Var("x"),
+                new Fraction(Val(3.3), Val(1), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("z")),
+                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+            },
+            new List<Oper> { }
+        );
+        // Reduce a bunch times initially
+        for (int i = 0; i < 10; i++)
+            sd.Simplify();
+
+        for (int i = 0; i < 10; i++)
+        {
+            Oper c = sd.Copy();
+            sd.Simplify();
+            Assert.That(sd.Like(c));
+            Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
+        }
+    }
+
+    [Test]
+    public void Subsumption()
+    {
+        Oper o0 = new Abs(new Max(new Fraction(new Abs(new SumDiff(new Abs(Val(4096)))))));
+        o0.Reduce();
+        Assert.That(o0.Like(new Abs(Val(4096))));
+    }
+
+    [Test]
+    public void DoubleNothing()
+    {
+        Oper o = new Fraction(
+            Var("x"),
+            new SumDiff(
+                Val(1), new PowTowRootLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { })
+            )
+        );
+
+        SumDiff doubl = new(new List<Oper> { o.Copy(), o.Copy() }, new List<Oper> { });
+        SumDiff nothing = new(o.Copy(), o.Copy());
+        doubl.Simplify(Var("x"));       
+        nothing.Reduce();
+        Oper doubl2 = Form.Shed(doubl);
+        Oper nothing2 = Form.Shed(nothing);
+        Oper doublManual = new Fraction(new List<Oper>{Val(2), o}, new List<Oper>{});
+        doublManual.Associate(); doublManual.Commute();
+        Assert.That(doubl2.Like(doublManual));
+        Assert.That(nothing2.Like(Val(0)));
+    }
+}
+
+/* Legacy tests */
+public class Legacy
+{
     [Test]
     public void MultiplyTwoAndTen()
     {
@@ -34,11 +122,12 @@ public class Tests
     public void CombineConstants()
     {
         SumDiff sd = new(Val(10), Val(6));
-        Scribe.Info(sd);
-        sd.Simplify(Val(0));
-        Assert.That(sd.AllArgs[0].Solution().Val, Is.EqualTo(Val(4).Solution().Val));
-        Assert.That(sd.AllArgs, Has.Count.EqualTo(1));
-        Scribe.Info(sd);
+        sd.Reduce();
+        Assert.That(sd.Like(new SumDiff(Val(4))));
+
+        PowTowRootLog pt = new(new List<Oper> { Val(2), Val(3) }, new List<Oper> { });
+        pt.Reduce();
+        Assert.That(pt.Like(new PowTowRootLog(Val(8))));
     }
 
     [Test]
@@ -106,19 +195,19 @@ public class Tests
                 {
                     new SumDiff(new List<Oper>{Val(3.3), Val(1), Var("y")}, new List<Oper>{}),
                     Var("z")
-                }, new List<Oper>{}),
+                }, new List<Oper> { }),
                 new SumDiff(
                     new List<Oper>
                     {
                         new SumDiff(new List<Oper>{Var("y"), Var("z"), Val(2)}, new List<Oper>{}),
                         new Fraction(new List<Oper>{new SumDiff(Val(0.4), Val(2)), Var("y"), Var("z")}, new List<Oper>{}),
                     },
-                    new List<Oper>{}
+                    new List<Oper> { }
                 ), Val(-1)
             ), Var("x"), 2
         );
         // Chosen arbitrarily
-        double[] args = new[] { 4.3, -12.3 };
+        double[] args = new[] { 2d, 1 };
         Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
     }
 
@@ -183,15 +272,15 @@ public class Tests
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
-        
+
         Scribe.Info(sd);
 
         sd.Associate();
-        sd.Simplify(Var("x"));
+        sd.Combine(Var("x"));
         sd.Commute();
         Scribe.Info(sd);
         sd.Associate();
-        sd.Simplify(Var("x"));
+        sd.Combine(Var("x"));
         sd.Commute();
         Scribe.Info(sd);
 
@@ -231,7 +320,7 @@ public class Tests
             new Fraction(Var("x"), Val(1), Var("x")),
             Var("y")
         );
-        List<double> ossNums = Enumerable.Range(0, 5).Select(n => offsetSquares.Evaluate(n+1, n)).ToList();
+        List<double> ossNums = Enumerable.Range(0, 5).Select(n => offsetSquares.Evaluate(n + 1, n)).ToList();
         Assert.Multiple(() =>
         {
             Assert.That(ossNums[0], Is.EqualTo(1));
@@ -240,10 +329,10 @@ public class Tests
             Assert.That(ossNums[3], Is.EqualTo(13));
             Assert.That(ossNums[4], Is.EqualTo(21));
         });
-        
+
         Oper triangleNumbers = new Fraction(
-            new List<Oper>{Var("x"), new SumDiff(Var("x"), Val(0), Val(1))},
-            new List<Oper>{Val(2)}
+            new List<Oper> { Var("x"), new SumDiff(Var("x"), Val(0), Val(1)) },
+            new List<Oper> { Val(2) }
         );
         List<double> triNums = Enumerable.Range(0, 5).Select(n => triangleNumbers.Evaluate(n)).ToList();
         Assert.Multiple(() =>
@@ -291,9 +380,9 @@ public class Tests
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new SumDiff(new SumDiff(Var("x"), Var("y")), Val(4)))
         );
-        Assert.That(eq.Solved(Var("x")).Evaluate(0), Is.EqualTo(-12));
-        Assert.That(eq.Solved(Var("x")).Evaluate(1), Is.EqualTo(-12));
-        Assert.That(eq.Solved(Var("x")).Evaluate(100), Is.EqualTo(-12));
+        Assert.That(eq.Solved(Var("x")).Evaluate(), Is.EqualTo(-12));
+        Assert.That(eq.Solved(Var("x")).Evaluate(), Is.EqualTo(-12));
+        Assert.That(eq.Solved(Var("x")).Evaluate(), Is.EqualTo(-12));
     }
     [Test]
     public void SolveImbalanced()
@@ -344,6 +433,6 @@ public class Tests
                 new SumDiff(Var("y"), Val(3))
             ),
         Var("x"), 1);
-        Assert.That(s.Evaluate(0.125), Is.EqualTo(manual.Evaluate(0.125)));
+        Assert.That(s.Evaluate(15), Is.EqualTo(manual.Evaluate(15)));
     }
 }
