@@ -29,11 +29,17 @@ public class Variable : Oper
         found = false;
     }
 
+    public override void Reduce()
+    {
+        // do nothing
+    }
+
     // Creating an unsolved variable
-    public Variable(string n) : base(n) {}
+    public Variable(string n) : base(n) {/* absorbable = true; */}
     public Variable(string n, double v) : base(n)
     {
         Val = v;
+        //absorbable = true;
     }
     public Variable(double v) : this($"constant({v})", v) { }
 

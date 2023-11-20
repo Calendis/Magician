@@ -90,7 +90,7 @@ public class Equation : IRelation
             {
                 Oper deg = new Funcs.Max(new Funcs.Abs(LHS.Degree(uk)), new Funcs.Abs(RHS.Degree(uk)));
                 Scribe.Info($"Unknown: {uk}, Deg: {deg}, Min: {minDegree}, Deg<Min?: {(minDegree == null ? "nullmin" : deg < minDegree)}");
-                deg = deg.Reduced();
+                //deg = deg.SpecialSimplified();
                 //Scribe.Info($"deg after: {deg}");
                 if (minDegree == null)
                 {
@@ -252,7 +252,7 @@ public class Equation : IRelation
                     // Pick inversion path of lesser "degree", up to term
                     case MatchPairs.DUAL:
                         CURRENT_PICK = (7, 0);
-                        if (Form.Term(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPARESIMPLIFY(1-MOST_DIRECT_SIDE, INSTRUCTION.VAR);
@@ -277,7 +277,7 @@ public class Equation : IRelation
                     // Pick inversion path from SINGLE side, up to term
                     case MatchPairs.IMBALANCED:
                         CURRENT_PICK = (8, 0);
-                        if (Form.Term(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPAREEXTRACT(MOST_DIRECT_SIDE, INSTRUCTION.VAR, GETLAYER(MOST_DIRECT_SIDE).Get(0, 0));
@@ -301,7 +301,7 @@ public class Equation : IRelation
                     // The hardest case. Attempt to create case MatchPairs.Multiple
                     case MatchPairs.FLUID:
                         CURRENT_PICK = (9, 0);
-                        if (Form.Term(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPAREEXTRACT(MOST_DIRECT_SIDE, INSTRUCTION.VAR, GETLAYER(MOST_DIRECT_SIDE).Get(0, 0));
@@ -365,11 +365,12 @@ public class Equation : IRelation
                 else if (INSTRUCTION.MOD == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Associate();
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Simplify(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).SimplifyAll(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Reduce();
+                    // TODO: is the following line necessary?
                     GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Commute();
-                    NEWCHOSEN = CHOSENROOT[0].Trim();
-                    NEWOPPOSITE = OPPOSITEROOT[0].Trim();
+                    NEWCHOSEN = Form.Shed(CHOSENROOT[0]);
+                    NEWOPPOSITE = Form.Shed(OPPOSITEROOT[0]);
                 }
 
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
