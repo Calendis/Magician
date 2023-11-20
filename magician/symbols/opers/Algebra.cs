@@ -1,20 +1,73 @@
 namespace Magician.Symbols;
 
+/* Class for additional algebraic functionality for Oper */
 public abstract partial class Oper
 {
-    public void DropIdentities()
+    // Flagged grouped handshakes, flagged grouped opers, pos/neg filtered args
+    //public abstract void Combine(Variable axis);
+    internal (List<List<(int, int, bool, bool)>>, List<List<(Oper, bool)>>) GrpFlagHshakes(Variable axis)
+    {
+
+        List<(Oper, bool)> argsContainingAxis = new();
+        List<(Oper, bool)> argsNotContainingAxis = new();
+        List<List<(int, int, bool, bool)>> groupedHandshakes = new() { new() { }, new() { } };
+
+        // Group the Opers into terms containing the axis, and terms not containing the axis
+        int posLimit = posArgs.Count;
+        for (int i = 0; i < AllArgs.Count; i++)
+        {
+            Oper o = AllArgs[i];
+            if (o.AssociatedVars.Contains(axis) || (o is Variable v && v == axis))
+            {
+                argsContainingAxis.Add((o, i < posLimit));
+                //Scribe.Info($"\t{o} does contain {axis}, degree {o.Degree(axis)}, total degree {o.Degree()}");
+            }
+            else
+            {
+                argsNotContainingAxis.Add((o, i < posLimit));
+                //Scribe.Info($"\t{o} does not contain {axis}");
+            }
+        }
+        int c = 0;
+        foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>> { argsNotContainingAxis, argsContainingAxis })
+        {
+            if (Identity is null)
+                throw Scribe.Issue($"TODO: support this case");
+            if (flaggedArgs.Count % 2 != 0)
+                flaggedArgs.Add((new Variable((int)Identity), true));
+            for (int i = 0; i < flaggedArgs.Count; i++)
+            {
+                for (int j = i + 1; j < flaggedArgs.Count; j++)
+                {
+                    groupedHandshakes[c].Add((i, j, flaggedArgs[i].parity, flaggedArgs[j].parity));
+                }
+            }
+            c++;
+        }
+        //posArgs.AddRange(posNegFilteredArgs[0]);
+        //negArgs.AddRange(posNegFilteredArgs[1]);
+
+        return (groupedHandshakes, new List<List<(Oper, bool)>>
+            { argsNotContainingAxis, argsContainingAxis });
+    }
+    internal void DropIdentities()
     {
         if (Identity is null)
-            throw Scribe.Error($"{this} has no identity to drop");
+            throw Scribe.Issue($"{this} has no identity to drop");
         // Drop identities
         posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
         negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
-        // Prefer explicit identity over empty args
-        // TODO: account for the fact that this implementation will break ExpPows, as they have no identity
-        if (posArgs.Count == 0 && this is not Variable)
-            posArgs.Add(New(new List<Oper> { Notate.Val((int)Identity) }, new List<Oper> { }));
     }
-    public void BalanceArguments()
+    internal void MakeExplicit(int? i=null)
+    {
+        if (Identity is null && i is null)
+            throw Scribe.Error($"Could not make explicit {this}");
+        i ??= Identity;
+        if (posArgs.Count == 0 && this is not Variable)
+            posArgs.Add(New(new List<Oper> { Notate.Val((int)i!) }, new List<Oper> { }));
+    }
+
+    (Dictionary<string, Oper>, Dictionary<string, int>) ArgBalance()
     {
         Dictionary<string, Oper> selectedOpers = new();
         Dictionary<string, int> operCoefficients = new();
@@ -44,6 +97,11 @@ public abstract partial class Oper
                 operCoefficients.Add(ord, -1);
             }
         }
+        return (selectedOpers, operCoefficients);
+    }
+    public void Balance()
+    {
+        var (selectedOpers, operCoefficients) = ArgBalance();
         posArgs.Clear();
         negArgs.Clear();
         foreach (string ord in operCoefficients.Keys)
@@ -64,23 +122,23 @@ public abstract partial class Oper
             }
         }
     }
-    public void AbsorbTrivial(Oper parent)
-    {
-        // Absorb trivial
-        if (absorbable && posArgs.Count == 1 && negArgs.Count == 0)
-        {
-            if (parent!.negArgs.Contains(this))
-            {
-                parent.negArgs.Remove(this);
-                parent.negArgs.AddRange(posArgs);
-            }
-            else if (parent.posArgs.Contains(this))
-            {
-                parent.posArgs.Remove(this);
-                parent.posArgs.AddRange(posArgs);
-            }
-        }
-    }
+    //internal void AbsorbTrivial(Oper parent)
+    //{
+    //    // Absorb trivial
+    //    if (absorbable && posArgs.Count == 1 && negArgs.Count == 0)
+    //    {
+    //        if (parent!.negArgs.Contains(this))
+    //        {
+    //            parent.negArgs.Remove(this);
+    //            parent.negArgs.AddRange(posArgs);
+    //        }
+    //        else if (parent.posArgs.Contains(this))
+    //        {
+    //            parent.posArgs.Remove(this);
+    //            parent.posArgs.AddRange(posArgs);
+    //        }
+    //    }
+    //}
     public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axis, Variable v)
     {
         if (!chosenSide.commutative)
@@ -115,7 +173,7 @@ public abstract partial class Oper
             (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
 
         //cs.Simplify(v);
-        return (axis.Trim(), cs.Trim());
+        return (Form.Shed(axis), Form.Shed(cs));
     }
 
     public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
@@ -129,83 +187,75 @@ public abstract partial class Oper
             chosenSide.negArgs.Remove(axis);
         else
             throw Scribe.Issue($"Could not extract {axis} from {chosenSide.GetType()} {chosenSide}");
-        return (chosenSide.Trim(), chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis }).Trim());
+        return (Form.Shed(chosenSide), Form.Shed(chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis })));
     }
+
+    //public static Oper Intersect(Oper o, Oper p)
+    //{
+    //    if (o.GetType() != p.GetType())
+    //        throw Scribe.Error($"Could not intersect {o.name} {o} with {p.name} {p}");
+    //    if (o.Like(p))
+    //        return o;
+    //}
 
     public static Oper Intersect(Oper o, Oper p)
     {
-        if (o.IsDetermined || p.IsDetermined)
-            return new Variable(1);
-        if (o.Like(p))
-        {
-            if (o.IsDetermined)
+        if ((o.IsDetermined && o.Solution().Val == 0) || (p.IsDetermined && p.Solution().Val == 0))
+            return new Variable(0);
+        else if (o is Variable v0 && p is Variable v1)
+            if (v0.Found ^ v1.Found)
                 return new Variable(1);
-            else return o;
-        }
-        if (o.IsDetermined)
+            else if (v0.Found)
+                return new Variable(1);
+            else
+                return o == p ? o : new Variable(1);
+        else if (o is Variable ^ p is Variable)
         {
-
-        }
-        if (o is Variable v)
-        {
-            if (p is Variable u)
-                if (v == u)
-                    return v;
-                else
+            if (o is Variable v)
+            {
+                if (v.Found && v.Val == 0)
+                    return new Variable(0);
+                else if (v.Found)
                     return new Variable(1);
-            if (v.Found)
-                return new Variable(v.Val == 0 ? 0 : 1);
-            o = p.New(new List<Oper> { o }, new List<Oper> { });
+            }
+            if (p is Variable u)
+            {
+                if (u.Found && u.Val == 0)
+                    return new Variable(0);
+                else if (u.Found)
+                    return new Variable(1);
+            }
         }
-        if (p is Variable uu)
-        {
-            if (uu.Found)
-                return new Variable(uu.Val == 0 ? 0 : 1);
-            p = o.New(new List<Oper> { p }, new List<Oper> { });
-        }
-        //if (o.Like(p))
-        //    return new Variable(1);
-        IEnumerable<Oper> pos = IntersectPos(o, p);
-        IEnumerable<Oper> neg = IntersectNeg(o, p);
-        return o.New(pos, neg);
-    }
 
-    public static IEnumerable<Oper> IntersectPos(Oper o, Oper p)
-    {
-        OperLike oc = new();
-        Dictionary<Oper, int> d = new(oc);
-        foreach (Oper c in p.posArgs)
+        if (o is not Fraction)
+            o = new Fraction(o);
+        if (p is not Fraction)
+            p = new Fraction(p);
+            
+        var (selectedOpers0, operCoefficients0) = o.ArgBalance();
+        var (selectedOpers1, operCoefficients1) = p.ArgBalance();
+        List<Oper> newPos = new(); List<Oper> newNeg = new();
+        foreach (string ord in selectedOpers0.Keys.Intersect(selectedOpers1.Keys))
         {
-            d.TryGetValue(c, out int matches);
-            d[c] = matches + 1;
-        }
-        foreach (Oper c in o.posArgs)
-        {
-            d.TryGetValue(c, out int matches);
-            if (matches > 0)
+            int co0 = operCoefficients0[ord];
+            int co1 = operCoefficients1[ord];
+            int coNew = 0;
+            if (co0*co1 > 0)
+                if (co0 > 0)
+                    coNew = Math.Min(co0, co1);
+                else
+                    coNew = Math.Max(co0, co1);
+            while (coNew > 0)
             {
-                yield return c.Copy();
-                d[c] = matches - 1;
+                newPos.Add(selectedOpers0[ord].Copy());
+                coNew--;
+            }
+            while (coNew < 0)
+            {
+                newNeg.Add(selectedOpers0[ord].Copy());
+                coNew++;
             }
         }
-    }
-    public static IEnumerable<Oper> IntersectNeg(Oper o, Oper p)
-    {
-        OperLike oc = new();
-        Dictionary<Oper, int> d = new(oc);
-        foreach (Oper c in p.negArgs)
-        {
-            d.TryGetValue(c, out int matches);
-            d[c] = matches + 1;
-        }
-        foreach (Oper c in o.negArgs)
-        {
-            d.TryGetValue(c, out int matches);
-            if (matches > 0)
-            {
-                yield return c.Copy();
-                d[c] = matches - 1;
-            }
-        }
+        return new Fraction(newPos, newNeg);
     }
 }
