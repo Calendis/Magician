@@ -1,14 +1,14 @@
 namespace Magician.Symbols;
 public class Form
 {
-    public static bool Term(Oper o)
+    public static bool IsTerm(Oper o)
     {
         if (o is Variable)
             return true;
         if (o is SumDiff)
             return false;
         bool term = true;
-        o.AllArgs.ForEach(a => term &= Term(a));
+        o.AllArgs.ForEach(a => term &= IsTerm(a));
         return term;
     }
 
@@ -18,6 +18,20 @@ public class Form
         p.Associate();
         p.Reduce();
         p.Commute();
-        return p.Reduced();
+        return Shed(p);
+    }
+
+    public static Oper Term(Oper o)
+    {
+        if (o is Variable || o is Fraction)
+            return o;
+        return new Fraction(o);
+    }
+
+    public static Oper Shed(Oper o)
+    {
+        if (o.IsTrivial)
+            return Shed(o.posArgs[0]);
+        return o;
     }
 }
