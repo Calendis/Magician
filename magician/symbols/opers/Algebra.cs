@@ -18,15 +18,9 @@ public abstract partial class Oper
         {
             Oper o = AllArgs[i];
             if (o.AssociatedVars.Contains(axis) || (o is Variable v && v == axis))
-            {
                 argsContainingAxis.Add((o, i < posLimit));
-                //Scribe.Info($"\t{o} does contain {axis}, degree {o.Degree(axis)}, total degree {o.Degree()}");
-            }
             else
-            {
                 argsNotContainingAxis.Add((o, i < posLimit));
-                //Scribe.Info($"\t{o} does not contain {axis}");
-            }
         }
         int c = 0;
         foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>> { argsNotContainingAxis, argsContainingAxis })
@@ -36,16 +30,10 @@ public abstract partial class Oper
             if (flaggedArgs.Count % 2 != 0)
                 flaggedArgs.Add((new Variable((int)Identity), true));
             for (int i = 0; i < flaggedArgs.Count; i++)
-            {
                 for (int j = i + 1; j < flaggedArgs.Count; j++)
-                {
                     groupedHandshakes[c].Add((i, j, flaggedArgs[i].parity, flaggedArgs[j].parity));
-                }
-            }
             c++;
         }
-        //posArgs.AddRange(posNegFilteredArgs[0]);
-        //negArgs.AddRange(posNegFilteredArgs[1]);
 
         return (groupedHandshakes, new List<List<(Oper, bool)>>
             { argsNotContainingAxis, argsContainingAxis });
@@ -67,7 +55,7 @@ public abstract partial class Oper
             posArgs.Add(New(new List<Oper> { Notate.Val((int)i!) }, new List<Oper> { }));
     }
 
-    (Dictionary<string, Oper>, Dictionary<string, int>) ArgBalance()
+    internal (Dictionary<string, Oper>, Dictionary<string, int>) ArgBalance()
     {
         Dictionary<string, Oper> selectedOpers = new();
         Dictionary<string, int> operCoefficients = new();
@@ -99,6 +87,7 @@ public abstract partial class Oper
         }
         return (selectedOpers, operCoefficients);
     }
+
     public void Balance()
     {
         var (selectedOpers, operCoefficients) = ArgBalance();
@@ -122,23 +111,6 @@ public abstract partial class Oper
             }
         }
     }
-    //internal void AbsorbTrivial(Oper parent)
-    //{
-    //    // Absorb trivial
-    //    if (absorbable && posArgs.Count == 1 && negArgs.Count == 0)
-    //    {
-    //        if (parent!.negArgs.Contains(this))
-    //        {
-    //            parent.negArgs.Remove(this);
-    //            parent.negArgs.AddRange(posArgs);
-    //        }
-    //        else if (parent.posArgs.Contains(this))
-    //        {
-    //            parent.posArgs.Remove(this);
-    //            parent.posArgs.AddRange(posArgs);
-    //        }
-    //    }
-    //}
     public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axis, Variable v)
     {
         if (!chosenSide.commutative)
@@ -173,7 +145,7 @@ public abstract partial class Oper
             (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
 
         //cs.Simplify(v);
-        return (Form.Shed(axis), Form.Shed(cs));
+        return (LegacyForm.Shed(axis), LegacyForm.Shed(cs));
     }
 
     public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
@@ -187,75 +159,6 @@ public abstract partial class Oper
             chosenSide.negArgs.Remove(axis);
         else
             throw Scribe.Issue($"Could not extract {axis} from {chosenSide.GetType()} {chosenSide}");
-        return (Form.Shed(chosenSide), Form.Shed(chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis })));
-    }
-
-    //public static Oper Intersect(Oper o, Oper p)
-    //{
-    //    if (o.GetType() != p.GetType())
-    //        throw Scribe.Error($"Could not intersect {o.name} {o} with {p.name} {p}");
-    //    if (o.Like(p))
-    //        return o;
-    //}
-
-    public static Oper Intersect(Oper o, Oper p)
-    {
-        if ((o.IsDetermined && o.Solution().Val == 0) || (p.IsDetermined && p.Solution().Val == 0))
-            return new Variable(0);
-        else if (o is Variable v0 && p is Variable v1)
-            if (v0.Found ^ v1.Found)
-                return new Variable(1);
-            else if (v0.Found)
-                return new Variable(1);
-            else
-                return o == p ? o : new Variable(1);
-        else if (o is Variable ^ p is Variable)
-        {
-            if (o is Variable v)
-            {
-                if (v.Found && v.Val == 0)
-                    return new Variable(0);
-                else if (v.Found)
-                    return new Variable(1);
-            }
-            if (p is Variable u)
-            {
-                if (u.Found && u.Val == 0)
-                    return new Variable(0);
-                else if (u.Found)
-                    return new Variable(1);
-            }
-        }
-
-        if (o is not Fraction)
-            o = new Fraction(o);
-        if (p is not Fraction)
-            p = new Fraction(p);
-            
-        var (selectedOpers0, operCoefficients0) = o.ArgBalance();
-        var (selectedOpers1, operCoefficients1) = p.ArgBalance();
-        List<Oper> newPos = new(); List<Oper> newNeg = new();
-        foreach (string ord in selectedOpers0.Keys.Intersect(selectedOpers1.Keys))
-        {
-            int co0 = operCoefficients0[ord];
-            int co1 = operCoefficients1[ord];
-            int coNew = 0;
-            if (co0*co1 > 0)
-                if (co0 > 0)
-                    coNew = Math.Min(co0, co1);
-                else
-                    coNew = Math.Max(co0, co1);
-            while (coNew > 0)
-            {
-                newPos.Add(selectedOpers0[ord].Copy());
-                coNew--;
-            }
-            while (coNew < 0)
-            {
-                newNeg.Add(selectedOpers0[ord].Copy());
-                coNew++;
-            }
-        }
-        return new Fraction(newPos, newNeg);
+        return (LegacyForm.Shed(chosenSide), LegacyForm.Shed(chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis })));
     }
 }
