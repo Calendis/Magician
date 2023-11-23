@@ -104,7 +104,5 @@ public class Variable : Oper
         return base.Divide(o);
     }
 
-    
-
     public static readonly Variable Undefined = new("undefined");
 }
