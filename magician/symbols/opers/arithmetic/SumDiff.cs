@@ -53,7 +53,7 @@ public class SumDiff : Arithmetic
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return Form.Canonical(new Funcs.Abs(maxD.Subtract(minD)));
+        return LegacyForm.Canonical(new Funcs.Abs(maxD.Subtract(minD)));
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
@@ -69,6 +69,10 @@ public class SumDiff : Arithmetic
             throw Scribe.Issue("haggu!");
 
         Oper combined = AB.Mult(ABbar);
+        if (A is Variable av && av.Found && av.Val == 0)
+            combined = B;
+        else if (B is Variable bv && bv.Found && bv.Val == 0)
+            combined = A;
         return combined;
     }
 
