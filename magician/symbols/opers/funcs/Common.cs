@@ -25,9 +25,9 @@ public class Abs : Oper
     public override void Reduce()
     {
         for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = Form.Shed(AllArgs[i]);
+            posArgs[i] = LegacyForm.Shed(AllArgs[i]);
         for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = Form.Shed(AllArgs[i]);
+            posArgs[i] = LegacyForm.Shed(AllArgs[i]);
     }
 
     public override Variable Solution()
