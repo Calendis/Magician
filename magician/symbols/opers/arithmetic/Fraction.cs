@@ -6,6 +6,7 @@ public class Fraction : Arithmetic
     protected override int? Identity { get => 1; }
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b)
     {
+        // TODO: move these up to Arithmetic
         commutative = true;
         associative = true;
     }
@@ -15,11 +16,14 @@ public class Fraction : Arithmetic
         associative = true;
     }
 
-    // temporary override for debugging. this disables combine for fractions
+    // temporary override for debugging
     public override void Simplify(Variable? axis = null)
     {
         ReduceAll();
         Associate();
+        //Scribe.Info($"\tSimplifying {this}...!\n\t\t===========================");
+        //base.Simplify(axis);
+        //Scribe.Info($"\tGot {this}");
     }
 
     public override Variable Solution()
@@ -52,8 +56,7 @@ public class Fraction : Arithmetic
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
-        Scribe.Info($"  InnerCombine {this}");
-        Scribe.Info($"\t  A, B: {A}, {B}");
+        Scribe.Info($"    A, B: {A}, {B}");
         Oper ABbar;
         if (!(aPositive ^ bPositive))
             ABbar = A.Divide(AB).Add(B.Divide(AB));
@@ -65,10 +68,42 @@ public class Fraction : Arithmetic
             throw Scribe.Issue("haggu!");
         Scribe.Info($"\t  AB, ABbar: {AB}, {ABbar}");
 
-        Oper combined = AB.Exp(ABbar);
-        //combined.ReduceAll();
+        Oper combined = AB.Pow(ABbar);
+        if (A is Variable av && av.Found && av.Val == 1)
+            combined = B;
+        else if (B is Variable bv && bv.Found && bv.Val == 1)
+            combined = A;
+        else if (A is Variable av2 && av2.Found && av2.Val == 0)
+            combined = new Variable(0);
+        else if (B is Variable bv2 && bv2.Found && bv2.Val == 0)
+            combined = new Variable(0);
+
         return combined;
     }
+
+    //public override Oper Add(Oper o)
+    //{
+    //    if (posArgs.Count == 2)
+    //    {
+    //        if (posArgs[0].IsDetermined)
+    //        {
+    //            if (posArgs[1].Like(o))
+    //            {
+    //                posArgs[0] = new Variable(posArgs[0].Solution().Val + 1);
+    //                return this;
+    //            }
+    //        }
+    //        if (posArgs[1].IsDetermined)
+    //        {
+    //            if (posArgs[0].Like(o))
+    //            {
+    //                posArgs[1] = new Variable(posArgs[0].Solution().Val + 1);
+    //                return this;
+    //            }
+    //        }
+    //    }
+    //    return base.Add(o);
+    //}
 
     public override Fraction Mult(Oper o)
     {
@@ -101,5 +136,10 @@ public class Fraction : Arithmetic
             denominator += "*" + o.ToString();
         }
         return $"({(negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}")})";
+    }
+
+    public override Fraction Factors()
+    {
+        return (Fraction)Copy();
     }
 }
