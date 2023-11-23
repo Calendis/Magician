@@ -12,9 +12,9 @@ public abstract class Arithmetic : Oper
         if (commutative)
             Balance();
         for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = Form.Shed(posArgs[i]);
+            posArgs[i] = LegacyForm.Shed(posArgs[i]);
         for (int i = 0; i < negArgs.Count; i++)
-            negArgs[i] = Form.Shed(negArgs[i]);
+            negArgs[i] = LegacyForm.Shed(negArgs[i]);
 
         // Combine constant terms
         List<Oper> posDetermined = posArgs.Where(o => o.IsDetermined).ToList();
@@ -45,7 +45,13 @@ public abstract class Arithmetic : Oper
     {
         if (AllArgs.Count < 2)
             return;
-        axis ??= new Variable(0);
+        if (axis == null)
+        {
+            if (AssociatedVars.Count > 0)
+                axis = AssociatedVars[0];
+            else
+                axis = new Variable(0);
+        }
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
 
@@ -69,7 +75,8 @@ public abstract class Arithmetic : Oper
                     Oper A = termsToCombine[i].Item1;
                     Oper B = termsToCombine[j].Item1;
 
-                    Oper AB = Intersect(Form.Term(A), Form.Term(B));
+                    //Oper AB = Intersect(Form.Term(A), Form.Term(B));
+                    Oper AB = LegacyForm.Shed(A).CommonFactors(LegacyForm.Shed(B));
 
                     bool aPositive = flaggedHandshake.Item3;
                     bool bPositive = flaggedHandshake.Item4;
@@ -80,12 +87,7 @@ public abstract class Arithmetic : Oper
 
                     /* Inner combine */
                     Oper combined;
-                    if (A is Variable av && av.Found && av.Val == 0)
-                        combined = B;
-                    else if (B is Variable bv && bv.Found && bv.Val == 0)
-                        combined = A;
-                    else
-                        combined = Handshake(axis, A, B, AB, aPositive, bPositive);
+                    combined = Handshake(axis, A, B, AB, aPositive, bPositive);
                     /* End inner combine */
                     //Scribe.Info($"  combined: {combined}");
 
@@ -114,8 +116,10 @@ public abstract class Arithmetic : Oper
     }
     public override void Simplify(Variable? axis = null)
     {
+        Scribe.Info($"    Simplifying arithmetic {this}");
         Combine(axis);
         ReduceAll();
         base.Simplify(axis);
+        Scribe.Info($"    Simplify {name} got {this}");
     }
 }
