@@ -58,9 +58,14 @@ public class Forms
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
+            c.Commute();
             sd.Simplify();
-            Assert.That(sd.Like(c));
-            Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
+            sd.Commute();
+            Assert.Multiple(() =>
+            {
+                Assert.That(sd.Like(c));
+                Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
+            });
         }
     }
 
@@ -73,7 +78,7 @@ public class Forms
     }
 
     [Test]
-    public void DoubleNothing()
+    public void AddingOrSubtractingAnOperFromItself()
     {
         Oper o = new Fraction(
             Var("x"),
@@ -84,19 +89,93 @@ public class Forms
 
         SumDiff doubl = new(new List<Oper> { o.Copy(), o.Copy() }, new List<Oper> { });
         SumDiff nothing = new(o.Copy(), o.Copy());
-        doubl.Simplify(Var("x"));       
+        doubl.Simplify(Var("x"));
+        doubl.ReduceAll();
         nothing.Reduce();
-        Oper doubl2 = Form.Shed(doubl);
-        Oper nothing2 = Form.Shed(nothing);
-        Oper doublManual = new Fraction(new List<Oper>{Val(2), o}, new List<Oper>{});
-        doublManual.Associate(); doublManual.Commute();
-        Assert.That(doubl2.Like(doublManual));
-        Assert.That(nothing2.Like(Val(0)));
+        
+        Oper doublManual = new Fraction(new List<Oper> { Val(2), o }, new List<Oper> { });
+        doublManual.Associate(); doublManual.Commute(); doubl.Commute();
+        Assert.That(LegacyForm.Shed(doubl).Like(doublManual));
+        Assert.That(LegacyForm.Shed(nothing).Like(Val(0)));
+    }
+
+    [Test]
+    public void XCubeYsquare()
+    {
+        Fraction f = new(
+            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
+            new List<Oper> { }
+        );
+        f.SimplifyFull();
+        f.Commute();
+        Fraction need = new(
+            new List<Oper>{new PowTowRootLog(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
+            new PowTowRootLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
+            new List<Oper> { }
+        );
+        need.Commute();
+        Scribe.Info($"got {f}, need {need}");
+        Assert.That(f.Like(need));
+    }
+    [Test]
+    public void XTripleYdouble()
+    {
+        SumDiff need = new(
+            new List<Oper>{new Fraction(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
+            new Fraction(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
+            new List<Oper> { }
+        );
+        need.Commute();
+
+        SumDiff f = new(
+            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
+            new List<Oper> { }
+        );
+        f.SimplifyFull();
+
+        f.Commute();
+        Scribe.Info(f);
+        
+        Scribe.Info($"got: {f}, need {need}");
+        Assert.That(f.Like(need));
+    }
+
+    [Test]
+    public void CommonFactors()
+    {
+        Oper i0, i1;
+        
+        // Trivial 1 intersection
+        i0 = Var("x");
+        i1 = Val(242141);
+        Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
+        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Val(1)));
+        
+        // single x intersection
+        i0 = Var("x");
+        i1 = Var("x");
+        Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
+        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Var("x")));
+        
+        // double x intersection
+        i0 = new Fraction(new List<Oper>{Val(2), Var("x")}, new List<Oper>{});
+        i1 = Var("x");
+        Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
+        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Var("x")));
+
+        // sumdiff null intersection
+        i0 = new SumDiff(new List<Oper>{
+            new Fraction(new List<Oper>{Val(3), Var("y")}, new List<Oper>{}),
+            new Fraction(new List<Oper>{Var("x"), Var("y")}, new List<Oper>{})
+            }, new List<Oper>{});
+        i1 = Var("y");
+        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Val(1)));
+
+        //Assert.That(Oper.Intersect(i0, i1).Like(Var("x")));
     }
 }
 
-/* Legacy tests */
-public class Legacy
+public class BasicAlgebraCases
 {
     [Test]
     public void MultiplyTwoAndTen()
@@ -208,7 +287,7 @@ public class Legacy
         );
         // Chosen arbitrarily
         double[] args = new[] { 2d, 1 };
-        Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
+        Assert.That(s.Evaluate(args.Reverse().ToArray()), Is.EqualTo(manual.Evaluate(args)));
     }
 
     [Test]
