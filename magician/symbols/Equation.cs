@@ -83,13 +83,13 @@ public class Equation : IRelation
         // By default, solve for the variable with the highest degree
         if (v == null)
         {
-            Scribe.Info($"Determining minimum-degree unknown for {LHS} = {RHS}");
+            //Scribe.Info($"Determining minimum-degree unknown for {LHS} = {RHS}");
             Variable? chosenSolveVar = null;
             Oper? minDegree = null;
             foreach (Variable uk in Unknowns)
             {
                 Oper deg = new Funcs.Max(new Funcs.Abs(LHS.Degree(uk)), new Funcs.Abs(RHS.Degree(uk)));
-                Scribe.Info($"Unknown: {uk}, Deg: {deg}, Min: {minDegree}, Deg<Min?: {(minDegree == null ? "nullmin" : deg < minDegree)}");
+                //Scribe.Info($"Unknown: {uk}, Deg: {deg}, Min: {minDegree}, Deg<Min?: {(minDegree == null ? "nullmin" : deg < minDegree)}");
                 //deg = deg.SpecialSimplified();
                 //Scribe.Info($"deg after: {deg}");
                 if (minDegree == null)
@@ -182,7 +182,7 @@ public class Equation : IRelation
                         Oper solvedLeft = LAYERS.LEFT.Get(0, 0).Copy();
                         Oper solvedRight = LAYERS.RIGHT.Get(0, 0).Copy();
                         solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
-                        Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions: {solvedEq}");
+                        Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions:\n{solvedEq}");
                         SOLVED = true;
                         break;
                     // Solveability known. Create case MatchPairs.SOLVED or approximate
@@ -252,7 +252,7 @@ public class Equation : IRelation
                     // Pick inversion path of lesser "degree", up to term
                     case MatchPairs.DUAL:
                         CURRENT_PICK = (7, 0);
-                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (LegacyForm.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPARESIMPLIFY(1-MOST_DIRECT_SIDE, INSTRUCTION.VAR);
@@ -277,7 +277,7 @@ public class Equation : IRelation
                     // Pick inversion path from SINGLE side, up to term
                     case MatchPairs.IMBALANCED:
                         CURRENT_PICK = (8, 0);
-                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (LegacyForm.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPAREEXTRACT(MOST_DIRECT_SIDE, INSTRUCTION.VAR, GETLAYER(MOST_DIRECT_SIDE).Get(0, 0));
@@ -301,7 +301,7 @@ public class Equation : IRelation
                     // The hardest case. Attempt to create case MatchPairs.Multiple
                     case MatchPairs.FLUID:
                         CURRENT_PICK = (9, 0);
-                        if (Form.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
+                        if (LegacyForm.IsTerm(GETLAYER(MOST_DIRECT_SIDE).Get(0, 0)))
                         {
                             CURRENT_PICK = (8, 1);
                             PREPAREEXTRACT(MOST_DIRECT_SIDE, INSTRUCTION.VAR, GETLAYER(MOST_DIRECT_SIDE).Get(0, 0));
@@ -365,12 +365,10 @@ public class Equation : IRelation
                 else if (INSTRUCTION.MOD == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).SimplifyAll(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Simplify(INSTRUCTION.VAR);
                     GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Reduce();
-                    // TODO: is the following line necessary?
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Commute();
-                    NEWCHOSEN = Form.Shed(CHOSENROOT[0]);
-                    NEWOPPOSITE = Form.Shed(OPPOSITEROOT[0]);
+                    NEWCHOSEN = LegacyForm.Shed(CHOSENROOT[0]);
+                    NEWOPPOSITE = LegacyForm.Shed(OPPOSITEROOT[0]);
                 }
 
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
