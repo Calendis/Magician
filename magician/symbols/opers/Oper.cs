@@ -89,6 +89,23 @@ public abstract partial class Oper : IFunction
             a.SimplifyAll(axis);
         Simplify(axis);
     }
+    // Perform advanced simplifications in this Oper as much as possible
+    public void SimplifyFull(Variable? axis=null)
+    {
+        Oper prev;
+        do 
+        {
+            prev = Copy();
+            Simplify(axis);
+        } while (!Like(prev));
+    }
+    // Perform advanced simplifications in this Oper as much as possible, recursively
+    public void SimplifyFullAll(Variable? axis=null)
+    {
+        foreach (Oper a in AllArgs)
+            a.SimplifyFullAll();
+        SimplifyFull();
+    }
 
     // Provide arguments to solve the expression at a point
     public double Evaluate(params double[] args)
@@ -112,7 +129,7 @@ public abstract partial class Oper : IFunction
             return new Variable(0);
         List<Oper> degs = AssociatedVars.Select(av => Degree(av)).ToList();
         Oper result = new SumDiff(degs, new List<Oper> { });
-        result = Form.Canonical(result);
+        result = LegacyForm.Canonical(result);
         if (result.IsDetermined)
             return result.Solution();
         return result;
@@ -160,15 +177,6 @@ public abstract partial class Oper : IFunction
         negArgs = negArgs.OrderBy(o => ((Oper)o).Ord()).ToList();
     }
 
-    //public Oper SpecialSimplified()
-    //{
-    //    if (IsDetermined)
-    //        return Solution();
-    //    if (absorbable && AllArgs.Count == 1 && posArgs.Count == 1)
-    //        return posArgs[0];
-    //    return this;
-    //}
-
     /* Binary arithmetic methods */
     public virtual Oper Add(Oper o)
     {
@@ -201,6 +209,30 @@ public abstract partial class Oper : IFunction
     public virtual Oper Log(Oper o)
     {
         return new PowTowRootLog(new List<Oper> { this }, new List<Oper> { new Variable(1), o });
+    }
+
+    public virtual Fraction Factors()
+    {
+        return new Fraction(Copy());
+    }
+
+    public Oper CommonFactors(Oper o)
+    {
+        OperLike ol = new();
+        Fraction facs = Factors();
+        Fraction oFacs = o.Factors();
+        
+        List<Oper> commonPos = new();
+        foreach (Oper fac in facs.posArgs)
+            if (oFacs.posArgs.Contains(fac, ol))
+                commonPos.Add(fac);
+        List<Oper> commonNeg = new();
+        foreach (Oper fac in facs.negArgs)
+            if (oFacs.negArgs.Contains(fac, ol))
+                commonNeg.Add(fac);
+        if (commonPos.Count == 0)
+            commonPos.Add(new Variable(1));
+        return new Fraction(commonPos, commonNeg);
     }
 
     public static bool operator <(Oper o0, Oper o1)
