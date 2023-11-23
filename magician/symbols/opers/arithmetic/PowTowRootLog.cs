@@ -51,7 +51,7 @@ public class PowTowRootLog : Oper
 
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {        
         /* Truncate power tower at any 1s */
         int? idIdx = null;

@@ -24,12 +24,12 @@ public class Forms
         );
         // Reduce a bunch times initially
         for (int i = 0; i < 10; i++)
-            sd.Reduce();
+            sd.ReduceOuter();
 
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
-            sd.Reduce();
+            sd.ReduceOuter();
             Assert.That(sd.Like(c));
         }
 
@@ -53,13 +53,13 @@ public class Forms
         );
         // Reduce a bunch times initially
         for (int i = 0; i < 10; i++)
-            sd.Simplify();
+            sd.SimplifyOuter();
 
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
             c.Commute();
-            sd.Simplify();
+            sd.SimplifyOuter();
             sd.Commute();
             Assert.Multiple(() =>
             {
@@ -73,7 +73,7 @@ public class Forms
     public void Subsumption()
     {
         Oper o0 = new Abs(new Max(new Fraction(new Abs(new SumDiff(new Abs(Val(4096)))))));
-        o0.Reduce();
+        o0.ReduceOuter();
         Assert.That(o0.Like(new Abs(Val(4096))));
     }
 
@@ -89,12 +89,13 @@ public class Forms
 
         SumDiff doubl = new(new List<Oper> { o.Copy(), o.Copy() }, new List<Oper> { });
         SumDiff nothing = new(o.Copy(), o.Copy());
-        doubl.Simplify(Var("x"));
-        doubl.ReduceAll();
-        nothing.Reduce();
+        doubl.SimplifyOuter(Var("x"));
+        doubl.Reduce();
+        nothing.ReduceOuter();
         
         Oper doublManual = new Fraction(new List<Oper> { Val(2), o }, new List<Oper> { });
-        doublManual.Associate(); doublManual.Commute(); doubl.Commute();
+        doublManual.Commute(); doubl.Commute(); doublManual.Associate();
+        //Scribe.Info($"  {doubl} vs. {doublManual}");
         Assert.That(LegacyForm.Shed(doubl).Like(doublManual));
         Assert.That(LegacyForm.Shed(nothing).Like(Val(0)));
     }
@@ -102,19 +103,21 @@ public class Forms
     [Test]
     public void XCubeYsquare()
     {
-        Fraction f = new(
-            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
-            new List<Oper> { }
-        );
-        f.SimplifyFull();
-        f.Commute();
         Fraction need = new(
             new List<Oper>{new PowTowRootLog(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
             new PowTowRootLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
             new List<Oper> { }
         );
         need.Commute();
-        Scribe.Info($"got {f}, need {need}");
+
+        Fraction f = new(
+            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
+            new List<Oper> { }
+        );
+        f.SimplifyFull();
+        f.Commute();
+        
+        Scribe.Info($"got {f} need {need}");
         Assert.That(f.Like(need));
     }
     [Test]
@@ -132,9 +135,7 @@ public class Forms
             new List<Oper> { }
         );
         f.SimplifyFull();
-
         f.Commute();
-        Scribe.Info(f);
         
         Scribe.Info($"got: {f}, need {need}");
         Assert.That(f.Like(need));
@@ -201,11 +202,11 @@ public class BasicAlgebraCases
     public void CombineConstants()
     {
         SumDiff sd = new(Val(10), Val(6));
-        sd.Reduce();
+        sd.ReduceOuter();
         Assert.That(sd.Like(new SumDiff(Val(4))));
 
         PowTowRootLog pt = new(new List<Oper> { Val(2), Val(3) }, new List<Oper> { });
-        pt.Reduce();
+        pt.ReduceOuter();
         Assert.That(pt.Like(new PowTowRootLog(Val(8))));
     }
 

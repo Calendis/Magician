@@ -69,25 +69,22 @@ public abstract partial class Oper : IFunction
     public virtual Oper Copy() { return New(posArgs.Select((o, i) => ((Oper)o).Copy()).ToList(), negArgs.Select((o, i) => ((Oper)o).Copy()).ToList()); }
     
     // Perform basic simplifications on this Oper
-    public abstract void Reduce();
+    public abstract void ReduceOuter();
     // Perform basic simplifications on this Oper, recursively
-    public void ReduceAll()
+    public void Reduce()
     {
         foreach (Oper a in AllArgs)
-            a.ReduceAll();
-        Reduce();
+            a.Reduce();
+        ReduceOuter();
     }
     // Perform advanced simplifications on this Oper
-    public virtual void Simplify(Variable? axis=null)
-    {
-        Associate();
-    }
+    public virtual void SimplifyOuter(Variable? axis=null){}
     // Perform advanced simplifications on this Oper, recursivelyz
     public void SimplifyAll(Variable? axis=null)
     {
         foreach (Oper a in AllArgs)
             a.SimplifyAll(axis);
-        Simplify(axis);
+        SimplifyOuter(axis);
     }
     // Perform advanced simplifications in this Oper as much as possible
     public void SimplifyFull(Variable? axis=null)
@@ -96,15 +93,16 @@ public abstract partial class Oper : IFunction
         do 
         {
             prev = Copy();
-            Simplify(axis);
+            SimplifyOuter(axis);
+            ReduceOuter();
         } while (!Like(prev));
     }
     // Perform advanced simplifications in this Oper as much as possible, recursively
     public void SimplifyFullAll(Variable? axis=null)
     {
         foreach (Oper a in AllArgs)
-            a.SimplifyFullAll();
-        SimplifyFull();
+            a.SimplifyFullAll(axis);
+        SimplifyFull(axis);
     }
 
     // Provide arguments to solve the expression at a point

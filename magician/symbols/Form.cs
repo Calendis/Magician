@@ -14,11 +14,12 @@ public class LegacyForm
         return term;
     }
 
+    // TODO: write tests to make sure canonical and SimplifyFull actually simplify all the way!
     public static Oper Canonical(Oper o)
     {
         Oper p = o.Copy();
         p.SimplifyFullAll();
-        p.ReduceAll();
+        p.Reduce();
         p.Commute();
         return Shed(p);
     }
@@ -56,7 +57,7 @@ public class Form : Oper
         throw new NotImplementedException();
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         throw new NotImplementedException();
     }

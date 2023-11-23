@@ -22,7 +22,7 @@ public class Abs : Oper
         return new Abs(pa.ToList()[0]);
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         for (int i = 0; i < posArgs.Count; i++)
             posArgs[i] = LegacyForm.Shed(AllArgs[i]);
@@ -84,7 +84,7 @@ public class Max : Oper
         return sols[maxIdx];
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         Oper max = AllArgs.Max();
         posArgs.Clear(); negArgs.Clear();
@@ -125,7 +125,7 @@ public class Min : Oper
         return AllArgs.Select(a => a.Solution()).Min() ?? throw Scribe.Error("Undefined");
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         Oper min = AllArgs.Min();
         posArgs.Clear(); negArgs.Clear();

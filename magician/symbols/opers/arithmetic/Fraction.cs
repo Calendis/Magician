@@ -17,9 +17,9 @@ public class Fraction : Arithmetic
     }
 
     // temporary override for debugging
-    public override void Simplify(Variable? axis = null)
+    public override void SimplifyOuter(Variable? axis = null)
     {
-        ReduceAll();
+        Reduce();
         Associate();
         //Scribe.Info($"\tSimplifying {this}...!\n\t\t===========================");
         //base.Simplify(axis);
@@ -73,10 +73,6 @@ public class Fraction : Arithmetic
             combined = B;
         else if (B is Variable bv && bv.Found && bv.Val == 1)
             combined = A;
-        else if (A is Variable av2 && av2.Found && av2.Val == 0)
-            combined = new Variable(0);
-        else if (B is Variable bv2 && bv2.Found && bv2.Val == 0)
-            combined = new Variable(0);
 
         return combined;
     }

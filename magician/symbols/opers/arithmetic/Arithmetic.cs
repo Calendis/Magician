@@ -6,7 +6,7 @@ public abstract class Arithmetic : Oper
     protected Arithmetic(string name, params Oper[] cstArgs) : base(name, cstArgs) { }
     protected abstract Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive);
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         // Drop things found in both sets of arguments
         if (commutative)
@@ -112,14 +112,11 @@ public abstract class Arithmetic : Oper
         posArgs.AddRange(finalPosArgs);
         negArgs.Clear();
         negArgs.AddRange(finalNegArgs);
-        Reduce();
     }
-    public override void Simplify(Variable? axis = null)
+    public override void SimplifyOuter(Variable? axis = null)
     {
-        Scribe.Info($"    Simplifying arithmetic {this}");
         Combine(axis);
-        ReduceAll();
-        base.Simplify(axis);
-        Scribe.Info($"    Simplify {name} got {this}");
+        Reduce();
+        Associate();
     }
 }

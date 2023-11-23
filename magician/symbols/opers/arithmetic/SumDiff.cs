@@ -68,6 +68,7 @@ public class SumDiff : Arithmetic
         else
             throw Scribe.Issue("haggu!");
 
+        ABbar.Reduce();
         Oper combined = AB.Mult(ABbar);
         if (A is Variable av && av.Found && av.Val == 0)
             combined = B;

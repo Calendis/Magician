@@ -29,7 +29,7 @@ public class Variable : Oper
         found = false;
     }
 
-    public override void Reduce()
+    public override void ReduceOuter()
     {
         // do nothing
     }

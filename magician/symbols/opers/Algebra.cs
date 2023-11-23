@@ -98,16 +98,33 @@ public abstract partial class Oper
             int coefficient = operCoefficients[ord];
             Oper o = selectedOpers[ord];
             if (coefficient == 0)
-                continue;
+            {
+                // Update assoc arg info on reduce
+                if (o is Variable v && !v.Found)
+                {
+                    if (AssociatedVars.Contains(v))
+                        AssociatedVars.Remove(v);
+                }
+            }
             else if (coefficient > 0)
             {
                 while (coefficient-- > 0)
                     posArgs.Add(o.Copy());
+                if (o is Variable v && !v.Found)
+                {
+                    if (!AssociatedVars.Contains(v))
+                        AssociatedVars.Add(v);
+                }
             }
             else if (coefficient < 0)
             {
                 while (coefficient++ < 0)
                     negArgs.Add(o.Copy());
+                if (o is Variable v && !v.Found)
+                {
+                    if (!AssociatedVars.Contains(v))
+                        AssociatedVars.Add(v);
+                }
             }
         }
     }
