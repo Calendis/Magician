@@ -1,5 +1,7 @@
+
 namespace Magician.Symbols;
-public class Form
+// TODO: move this stuff to Oper
+public class LegacyForm
 {
     public static bool IsTerm(Oper o)
     {
@@ -15,23 +17,52 @@ public class Form
     public static Oper Canonical(Oper o)
     {
         Oper p = o.Copy();
-        p.Associate();
-        p.Reduce();
+        p.SimplifyFullAll();
+        p.ReduceAll();
         p.Commute();
         return Shed(p);
     }
 
-    public static Oper Term(Oper o)
-    {
-        if (o is Variable || o is Fraction)
-            return o;
-        return new Fraction(o);
-    }
+    //public static Oper Term(Oper o)
+    //{
+    //    if (o is Variable || o is Fraction)
+    //        return o;
+    //    return new Fraction(o);
+    //}
 
+    // TODO: move this back to Oper.Trim
     public static Oper Shed(Oper o)
     {
         if (o.IsTrivial)
             return Shed(o.posArgs[0]);
         return o;
+    }
+}
+
+public class Form : Oper
+{
+    public Form(Oper o) : base("typeform_placeholder_name", o.posArgs, o.negArgs)
+    {
+        //
+    }
+
+    public override Oper Degree(Variable v)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Reduce()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override Variable Solution()
+    {
+        throw new NotImplementedException();
     }
 }
