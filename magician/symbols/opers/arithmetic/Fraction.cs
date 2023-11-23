@@ -16,16 +16,6 @@ public class Fraction : Arithmetic
         associative = true;
     }
 
-    // temporary override for debugging
-    public override void SimplifyOuter(Variable? axis = null)
-    {
-        Reduce();
-        Associate();
-        //Scribe.Info($"\tSimplifying {this}...!\n\t\t===========================");
-        //base.Simplify(axis);
-        //Scribe.Info($"\tGot {this}");
-    }
-
     public override Variable Solution()
     {
         double quo = 1;
