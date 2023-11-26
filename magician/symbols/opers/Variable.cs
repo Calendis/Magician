@@ -35,11 +35,11 @@ public class Variable : Oper
     }
 
     // Creating an unsolved variable
-    public Variable(string n) : base(n) {/* absorbable = true; */}
+    public Variable(string n) : base(n) {/* trivialAssociative = true; */}
     public Variable(string n, double v) : base(n)
     {
         Val = v;
-        //absorbable = true;
+        //trivialAssociative = true;
     }
     public Variable(double v) : this($"constant({v})", v) { }
 
@@ -72,9 +72,9 @@ public class Variable : Oper
         return new Variable(Val);
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
-        if (!found && this == v)
+        if (Like(v))
             return new Variable(1);
         return new Variable(0);
     }
