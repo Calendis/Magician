@@ -3,36 +3,32 @@ namespace Magician.Symbols.Funcs;
 
 public class Abs : Oper
 {
-    public Abs(Oper o) : base("abs", o) {}
+    public Abs(Oper o) : base("abs", o) {trivialAssociative = false; associative = true;}
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
         return posArgs[0].Degree(v);
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
     {
-        //Scribe.Info($"\t  {this} newing {Scribe.Expand<IEnumerable<Oper>, Oper>(pa)}, {Scribe.Expand<IEnumerable<Oper>, Oper>(na)}...");
         if (!(pa.Count() <= 1 && !na.Any()))
         {
-            //Scribe.Warn($"got {Scribe.Expand<IEnumerable<Oper>, Oper>(pa)} and {Scribe.Expand<IEnumerable<Oper>, Oper>(na)} on unary");
             throw Scribe.Error($"{this.GetType().Name} is a unary Oper");
         }
-        //Scribe.Info($"\tNEW POSARGS [{pa.Count()}]: {Scribe.Expand<List<Oper>, Oper>(pa.ToList())}");
         return new Abs(pa.ToList()[0]);
     }
 
     public override void ReduceOuter()
     {
-        for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = LegacyForm.Shed(AllArgs[i]);
-        for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = LegacyForm.Shed(AllArgs[i]);
+        Oper o = posArgs[0];
+        posArgs.Clear();
+        posArgs.Add(o);
     }
 
     public override Variable Solution()
     {
-        return Notate.Val(Math.Abs(posArgs[0].Solution().Val));
+        return new Variable(Math.Abs(posArgs[0].Solution().Val));
     }
 
     public override string ToString()
@@ -40,6 +36,45 @@ public class Abs : Oper
         return $"|{posArgs[0]}|";
     }
 }
+public class Sign : Oper
+{
+    public Sign(Oper o) : base("sign", o) {trivialAssociative = false; associative = true;}
+    public override Oper Degree(Oper v)
+    {
+        return new Variable(0);
+    }
+
+    public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
+    {
+        if (!(pa.Count() <= 1 && !na.Any()))
+            throw Scribe.Error($"{this.GetType().Name} is a unary Oper");
+        return new Sign(pa.ToList()[0]);
+    }
+
+    public override void ReduceOuter()
+    {
+        Oper o = posArgs[0];
+        posArgs.Clear();
+        posArgs.Add(o);
+    }
+
+    public override Variable Solution()
+    {
+        double result = posArgs[0].Solution().Val;
+        if (result == 0)
+            return new Variable(0);
+        else if (result > 0)
+            return new Variable(1);
+        else
+            return new Variable(-1);
+    }
+    public override string ToString()
+    {
+        return $"Sign({posArgs[0]})";
+    }
+}
+
+//
 public class Max : Oper
 {
     public Max(params Oper[] os) : base("max", os, new List<Oper>{})
@@ -53,9 +88,9 @@ public class Max : Oper
         associative = true;
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
-        return posArgs[0].Degree(v);
+        return New(posArgs.Select(pa => pa.Degree()), new List<Oper>{});
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
@@ -110,9 +145,9 @@ public class Min : Oper
         associative = true;
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
-        return posArgs[0].Degree(v);
+        return New(posArgs.Select(pa => pa.Degree()), new List<Oper>{});
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
