@@ -4,17 +4,11 @@ namespace Magician.Symbols;
 public class Fraction : Arithmetic
 {
     protected override int? Identity { get => 1; }
-    public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b)
-    {
-        // TODO: move these up to Arithmetic
-        commutative = true;
-        associative = true;
-    }
-    public Fraction(params Oper[] ops) : base("fraction", ops)
-    {
-        commutative = true;
-        associative = true;
-    }
+    public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b) { }
+    public Fraction(params Oper[] ops) : base("fraction", ops) { }
+
+    public List<Oper> Numerator => posArgs;
+    public List<Oper> Denominator => negArgs;
 
     public override Variable Solution()
     {
@@ -37,69 +31,95 @@ public class Fraction : Arithmetic
         return new Fraction(a, b);
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
         if (IsDetermined)
             return new Variable(0);
+        if (Like(v))
+            return new Variable(1);
         return new SumDiff(posArgs.Select(a => a.Degree(v)), negArgs.Select(a => a.Degree(v)));
+    }
+    public override Fraction Factors()
+    {
+        (Dictionary<string, Oper> ordToOper, Dictionary<string, int> ordToCount) = ArgBalance();
+        Fraction factors = new();
+        foreach (string ord in ordToOper.Keys)
+        {
+            Oper fac = ordToOper[ord];
+            Variable deg = new(ordToCount[ord]);
+            //Scribe.Info($"\t\tfac, deg: {fac}, {deg}");
+            if (deg.Val > 0)
+                factors.Numerator.Add(fac.Pow(deg));
+            else if (deg.Val < 0)
+                factors.Denominator.Add(fac.Pow(deg));
+        }
+        return factors;
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
-        Scribe.Info($"    A, B: {A}, {B}");
+        if (AB.IsDetermined && AB.Solution().Val == 1)
+        {
+            if (aPositive)
+                if (bPositive)
+                    return New(new List<Oper> { A, B }, new List<Oper> { });
+                else
+                    return New(new List<Oper> { A }, new List<Oper> { B });
+            else if (bPositive)
+                return New(new List<Oper> { B }, new List<Oper> { A });
+            else
+                return New(new List<Oper> { }, new List<Oper> { A, B });
+        }
         Oper ABbar;
         if (!(aPositive ^ bPositive))
-            ABbar = A.Divide(AB).Add(B.Divide(AB));
+            ABbar = A.Degree(AB).Add(B.Degree(AB));
         else if (aPositive)
-            ABbar = A.Divide(AB).Subtract(B.Divide(AB));
+            ABbar = A.Degree(AB).Subtract(B.Degree(AB));
         else if (bPositive)
-            ABbar = B.Divide(AB).Subtract(A.Divide(AB));
+            ABbar = B.Degree(AB).Subtract(A.Degree(AB));
         else
             throw Scribe.Issue("haggu!");
-        Scribe.Info($"\t  AB, ABbar: {AB}, {ABbar}");
-
-        Oper combined = AB.Pow(ABbar);
+        
+        ABbar.Reduce(2);
+        Oper combined;
         if (A is Variable av && av.Found && av.Val == 1)
+        {
+            //Scribe.Info($"\t\t\tCase B: {B}");
             combined = B;
+        }
         else if (B is Variable bv && bv.Found && bv.Val == 1)
+        {
+            //Scribe.Info($"\t\t\tCase A: {A}");
             combined = A;
+        }
+        else if (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Val == 1)
+        {
+            //Scribe.Info($"\t\t\tCase ABbar: {ABbar}");
+            combined = ABbar;
+        }
+        else
+        {
+            //Scribe.Info($"\t\t\tCase Pow: {AB}.Pow{ABbar}");
+            //combined = LegacyForm.Shed(AB).Pow(LegacyForm.Shed(ABbar));
+            combined = AB.Pow(ABbar);
+        }
 
         return combined;
     }
 
-    //public override Oper Add(Oper o)
-    //{
-    //    if (posArgs.Count == 2)
-    //    {
-    //        if (posArgs[0].IsDetermined)
-    //        {
-    //            if (posArgs[1].Like(o))
-    //            {
-    //                posArgs[0] = new Variable(posArgs[0].Solution().Val + 1);
-    //                return this;
-    //            }
-    //        }
-    //        if (posArgs[1].IsDetermined)
-    //        {
-    //            if (posArgs[0].Like(o))
-    //            {
-    //                posArgs[1] = new Variable(posArgs[0].Solution().Val + 1);
-    //                return this;
-    //            }
-    //        }
-    //    }
-    //    return base.Add(o);
-    //}
-
-    public override Fraction Mult(Oper o)
+    public override Oper Mult(Oper o)
     {
+        if (IsUnary)
+            return posArgs[0].Mult(o);
         if (o is Fraction)
             return new Fraction(posArgs.Concat(o.posArgs), negArgs.Concat(o.negArgs));
         return (Fraction)base.Mult(o);
     }
 
-    public override Fraction Divide(Oper o)
+    public override Oper Divide(Oper o)
     {
+        if (IsUnary)
+            return posArgs[0].Divide(o);
         if (o is Fraction)
             return new Fraction(posArgs.Concat(o.negArgs), negArgs.Concat(o.posArgs));
         return (Fraction)base.Divide(o);
@@ -122,10 +142,5 @@ public class Fraction : Arithmetic
             denominator += "*" + o.ToString();
         }
         return $"({(negArgs.Count == 0 ? numerator.TrimStart('*') : $"{numerator.TrimStart('*')}/{denominator.TrimStart('*')}")})";
-    }
-
-    public override Fraction Factors()
-    {
-        return (Fraction)Copy();
     }
 }
