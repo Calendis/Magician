@@ -6,16 +6,8 @@ public class SumDiff : Arithmetic
     protected override int? Identity { get => 0; }
 
     // TODO: expand Notate and drop support for this constructor
-    public SumDiff(params Oper[] ops) : base("sumdiff", ops)
-    {
-        commutative = true;
-        associative = true;
-    }
-    public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b)
-    {
-        commutative = true;
-        associative = true;
-    }
+    public SumDiff(params Oper[] ops) : base("sumdiff", ops) { }
+    public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b) { }
     public override Variable Solution()
     {
         double total = 0;
@@ -41,10 +33,12 @@ public class SumDiff : Arithmetic
         return new SumDiff(a, b);
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
         if (IsDetermined)
             return new Variable(0);
+        if (Like(v))
+            return new Variable(1);
         Oper minD = new Variable(0);
         Oper maxD = new Variable(1);
         foreach (Oper o in AllArgs)
@@ -53,11 +47,29 @@ public class SumDiff : Arithmetic
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return LegacyForm.Canonical(new Funcs.Abs(maxD.Subtract(minD)));
+        return new Funcs.Abs(maxD.Subtract(minD));
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
+        //if (AB.IsDetermined && AB.Solution().Val == 1)
+        //{
+        //    if (aPositive)
+        //    {
+        //        if (bPositive)
+        //            return New(new List<Oper> { A, B }, new List<Oper> { });
+        //        else
+        //            return New(new List<Oper> { A }, new List<Oper> { B });
+        //    }
+        //    else
+        //    {
+        //        if (bPositive)
+        //            return New(new List<Oper> { B }, new List<Oper> { A });
+        //        else
+        //            return New(new List<Oper> { }, new List<Oper> { A, B });
+        //    }
+        //}
+
         Oper ABbar;
         if (!(aPositive ^ bPositive))
             ABbar = A.Divide(AB).Add(B.Divide(AB));
@@ -68,12 +80,15 @@ public class SumDiff : Arithmetic
         else
             throw Scribe.Issue("haggu!");
 
-        ABbar.Reduce();
-        Oper combined = AB.Mult(ABbar);
+        ABbar.Reduce(2);
+        Oper combined;
         if (A is Variable av && av.Found && av.Val == 0)
             combined = B;
         else if (B is Variable bv && bv.Found && bv.Val == 0)
             combined = A;
+        else
+            combined = AB.Mult(ABbar);
+        //combined.ReduceOuter();
         return combined;
     }
 
