@@ -8,13 +8,42 @@ public class PowTowRootLog : Oper
     public PowTowRootLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("pwtwrtlg", posArgs, negArgs)
     {
         if (!posArgs.Any())
-            posArgs = posArgs.Append(new Variable((int)Identity!));
+            this.posArgs.Add(new Variable((int)Identity!));
+        trivialAssociative = true;
     }
-    public PowTowRootLog(params Oper[] ops) : base("pwtwrtlg", ops) { }
+    public PowTowRootLog(params Oper[] ops) : base("pwtwrtlg", ops) { trivialAssociative = true; }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
-        throw new NotImplementedException();
+        Oper deg;
+        int c = 1;
+        foreach (Oper pa in posArgs)
+        {
+            if (pa.Like(v))
+                break;
+            c++;
+        }
+        deg = New(posArgs.Skip(c), new List<Oper> { });
+        c = 0;
+        foreach (Oper na in negArgs)
+        {
+            if (c % 2 == 0)
+            {
+                deg = deg.Divide(na);
+            }
+            else
+            {
+                // TODO: test the consequences of defining log degree like this
+                deg = deg.Log(na);
+            }
+            c++;
+        }
+        return deg;
+    }
+
+    public override Fraction Factors()
+    {
+        return new Fraction(Copy());
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
@@ -48,11 +77,10 @@ public class PowTowRootLog : Oper
             return new Variable(Math.Log(Math.Pow(pos.Val, 1d / negArgs[0].Solution().Val), negArgs[1].Solution().Val));
         else
             return new PowTowRootLog(new List<Oper> { new PowTowRootLog(new List<Oper> { pos }, new List<Oper> { negArgs[^1], negArgs[^2] }) }, negArgs.SkipLast(2)).Solution();
-
     }
 
     public override void ReduceOuter()
-    {        
+    {
         /* Truncate power tower at any 1s */
         int? idIdx = null;
         for (int i = 0; i < posArgs.Count; i++)
@@ -65,6 +93,24 @@ public class PowTowRootLog : Oper
         }
         if (idIdx is not null)
             posArgs = posArgs.Take((int)idIdx).ToList();
+
+        // Combine positive constant terms
+        posArgs.Reverse();
+        int runLen = 0;
+        foreach (Oper pa in posArgs)
+        {
+            if (!pa.IsDetermined)
+                break;
+            runLen++;
+        }
+        posArgs.Reverse();
+        if (runLen > 0)
+        {
+            List<Oper> toCombine = posArgs.TakeLast(runLen).ToList();
+            Variable combined = new PowTowRootLog(toCombine, new List<Oper> { }).Solution();
+            posArgs = posArgs.Take(posArgs.Count - runLen).ToList();
+            posArgs.Add(combined);
+        }
     }
 
     //public override PowTowRootLog Mult(Oper o)
