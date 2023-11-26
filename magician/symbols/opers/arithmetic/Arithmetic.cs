@@ -2,27 +2,30 @@ namespace Magician.Symbols;
 
 public abstract class Arithmetic : Oper
 {
-    protected Arithmetic(string name, IEnumerable<Oper> pa, IEnumerable<Oper> na) : base(name, pa, na) { }
-    protected Arithmetic(string name, params Oper[] cstArgs) : base(name, cstArgs) { }
+    protected Arithmetic(string name, IEnumerable<Oper> pa, IEnumerable<Oper> na) : base(name, pa, na)
+    {
+        associative = true;
+        commutative = true;
+        trivialAssociative = true;
+    }
+    protected Arithmetic(string name, params Oper[] cstArgs) : base(name, cstArgs)
+    {
+        associative = true;
+        commutative = true;
+        trivialAssociative = true;
+    }
     protected abstract Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive);
 
     public override void ReduceOuter()
     {
-        // Drop things found in both sets of arguments
-        if (commutative)
-            Balance();
-        for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = LegacyForm.Shed(posArgs[i]);
-        for (int i = 0; i < negArgs.Count; i++)
-            negArgs[i] = LegacyForm.Shed(negArgs[i]);
-
+        Balance();
         // Combine constant terms
         List<Oper> posDetermined = posArgs.Where(o => o.IsDetermined).ToList();
         List<Oper> negDetermined = negArgs.Where(o => o.IsDetermined).ToList();
         posArgs.RemoveAll(o => o.IsDetermined);
         negArgs.RemoveAll(o => o.IsDetermined);
-        double posMag = New(posDetermined, new List<Oper>{}).Solution().Val;
-        double negMag = New(negDetermined, new List<Oper>{}).Solution().Val;
+        double posMag = New(posDetermined, new List<Oper> { }).Solution().Val;
+        double negMag = New(negDetermined, new List<Oper> { }).Solution().Val;
         Variable consts;
         if (posMag >= negMag)
         {
@@ -34,14 +37,14 @@ public abstract class Arithmetic : Oper
             consts = New(negDetermined, posDetermined).Solution();
             negArgs.Add(consts);
         }
-        
 
+        // Remove unnecessary arguments
         if (Identity is null)
             return;
         DropIdentities();
         MakeExplicit();
     }
-    public void Combine(Variable? axis)
+    internal void Combine(Variable? axis)
     {
         if (AllArgs.Count < 2)
             return;
@@ -74,9 +77,12 @@ public abstract class Arithmetic : Oper
                     int j = flaggedHandshake.Item2;
                     Oper A = termsToCombine[i].Item1;
                     Oper B = termsToCombine[j].Item1;
-
-                    //Oper AB = Intersect(Form.Term(A), Form.Term(B));
+                    
+                    A.Reduce(3);
+                    B.Reduce(3);
                     Oper AB = LegacyForm.Shed(A).CommonFactors(LegacyForm.Shed(B));
+                    AB.Reduce(2);
+                    AB = LegacyForm.Shed(AB);
 
                     bool aPositive = flaggedHandshake.Item3;
                     bool bPositive = flaggedHandshake.Item4;
@@ -85,13 +91,12 @@ public abstract class Arithmetic : Oper
                     if (termsFoundHandshake.Contains(i) || termsFoundHandshake.Contains(j))
                         continue;
 
-                    /* Inner combine */
-                    Oper combined;
-                    combined = Handshake(axis, A, B, AB, aPositive, bPositive);
-                    /* End inner combine */
-                    //Scribe.Info($"  combined: {combined}");
-
-                    //Scribe.Warn($"  A, B, combined, +-: {A}, {B}, {combined}, {aPositive}{bPositive}");
+                    //Scribe.Info($"\t\tA, B, AB: {A}, {B}, {AB}");
+                    //AB.ReduceAll();
+                    
+                    Oper combined = Handshake(axis, A, B, AB, aPositive, bPositive);
+                    
+                    //Scribe.Info($"\t\tCombined: {combined}");
 
                     if ((positive || aPositive) && (aPositive || bPositive))
                         finalPosArgs.Add(combined);
@@ -113,10 +118,9 @@ public abstract class Arithmetic : Oper
         negArgs.Clear();
         negArgs.AddRange(finalNegArgs);
     }
-    public override void SimplifyOuter(Variable? axis = null)
+    internal override void SimplifyOnceOuter(Variable? axis = null)
     {
         Combine(axis);
-        Reduce();
-        Associate();
+        Reduce(3);
     }
 }
