@@ -5,7 +5,7 @@ public class SolvedEquation : InverseParamMap
 {
     Equation eq;
     Variable solvedVar;
-    Oper chosen, opposite;
+    public Oper chosen, opposite;
     public Equation Eq => eq;
     public Variable SolvedVar => solvedVar;
     // Constructs a solved equation from sides
@@ -14,6 +14,7 @@ public class SolvedEquation : InverseParamMap
         eq = new(chosenRoot, fulc, oppositeRoot);
         chosen = chosenRoot;
         opposite = oppositeRoot;
+        //opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? 1 : v0.Name[0] > v1.Name[0] ? -1 : 0);
         solvedVar = v;
 
         Ins = ins;
@@ -42,7 +43,8 @@ public class SolvedEquation : InverseParamMap
             throw Scribe.Error($"Equation expected {expectedArgs} arguments, got {vals.Length}");
         }
         int counter = 0;
-        List<Variable> unknowns = eq.Unknowns.ToList();
+        //List<Variable> unknowns = eq.Unknowns.ToList();
+        List<Variable> unknowns = opposite.AssociatedVars;
         unknowns.Remove(solvedVar);
         unknowns = unknowns.Except(eq.Sliders).ToList();
 
