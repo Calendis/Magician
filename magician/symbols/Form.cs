@@ -15,15 +15,31 @@ public class LegacyForm
     }
 
     // TODO: write tests to make sure canonical and SimplifyFull actually simplify all the way!
-    public static Oper Canonical(Oper o)
+    public static Oper Canonical(Oper o, bool makeCopy=true)
     {
-        Oper p = o.Copy();
-        p.SimplifyFullAll();
-        p.Reduce();
+        //Scribe.Info($"  Canonicalizing {o}");
+        Oper p;
+        if (makeCopy)
+            p = o.Copy();
+        else
+            p = o;
+        //Scribe.Info($"  ...partial {p}");
+
+        for (int i = 0; i < p.posArgs.Count; i++)
+        {
+            p.posArgs[i] = Canonical(p.posArgs[i], false);
+        }
+        for (int i = 0; i < p.negArgs.Count; i++)
+        {
+            p.negArgs[i] = Canonical(p.negArgs[i], false);
+        }
+        p.SimplifyAll();
         p.Commute();
+        //Scribe.Info($"  ...to-shed {p}");
         return Shed(p);
     }
 
+    // TODO: you can possibly make this a Form type like Fraction(n->PTRL)
     //public static Oper Term(Oper o)
     //{
     //    if (o is Variable || o is Fraction)
@@ -47,7 +63,7 @@ public class Form : Oper
         //
     }
 
-    public override Oper Degree(Variable v)
+    public override Oper Degree(Oper v)
     {
         throw new NotImplementedException();
     }
