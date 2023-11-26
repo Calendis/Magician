@@ -57,11 +57,6 @@ public class EqPlotting : Spell
         );
         // Optionally, reset the variable to an unknown state
         Var("time").Reset();
-        
-        //Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
-        //    new PlotOptions(AxisSpecifier.X, new(-500, 500, 20)),
-        //    new(AxisSpecifier.Z, new(-500, 500, 40))
-        //);
     }
 
     public override void PreLoop()
