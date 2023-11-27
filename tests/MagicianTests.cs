@@ -4,7 +4,7 @@ using Magician.Symbols.Funcs;
 using static Magician.Symbols.Notate;
 using NUnit.Framework;
 
-public class BasicCases2
+public class SimpleAlgebraCases
 {
     [Test]
     public void StableReduce()
@@ -102,26 +102,6 @@ public class BasicCases2
         Assert.That(LegacyForm.Shed(nothing).Like(Val(0)));
     }
 
-    [Test]
-    public void XCubeYsquare()
-    {
-        Fraction need = new(
-            new List<Oper>{new PowTowRootLog(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
-            new PowTowRootLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
-            new List<Oper> { }
-        );
-        need.Commute();
-
-        Fraction f = new(
-            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
-            new List<Oper> { }
-        );
-        f.Simplify();
-        f.Commute();
-
-        Scribe.Info($"got {f} need {need}");
-        Assert.That(f.Like(need));
-    }
     [Test]
     public void BasicFracSimp()
     {
@@ -227,9 +207,29 @@ public class BasicCases2
         Scribe.Info($"Got {xcb}, need {new Fraction(new PowTowRootLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xcb.Like(new Fraction(new PowTowRootLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
+    [Test]
+    public void XCubeYsquare()
+    {
+        Fraction need = new(
+            new List<Oper>{new PowTowRootLog(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
+            new PowTowRootLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
+            new List<Oper> { }
+        );
+        need.Commute();
+
+        Fraction f = new(
+            new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
+            new List<Oper> { }
+        );
+        f.Simplify();
+        f.Commute();
+
+        Scribe.Info($"got {f} need {need}");
+        Assert.That(f.Like(need));
+    }
 }
 
-public class BasicAlgebraCases
+public class SimpleAlgebraCases2
 {
     [Test]
     public void MultiplyTwoAndTen()
@@ -561,5 +561,41 @@ public class BasicAlgebraCases
             ),
         Var("x"), 1);
         Assert.That(s.Evaluate(15), Is.EqualTo(manual.Evaluate(15)));
+    }
+}
+
+public class AdvancedAlgebraCases
+{
+    [Test]
+    public void SqrtX()
+    {
+        Oper parabola = new PowTowRootLog(Var("x"), Val(2));
+        Equation eq = new(
+            Var("y"),
+            Fulcrum.EQUALS,
+            parabola
+        );
+        SolvedEquation s = eq.Solved(Var("x"));
+        SolvedEquation manual = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            Var("y").Root(Val(2)),
+            Var("x"), 1
+        );
+        // Make sure basic root functionality is working
+        Assert.That(manual.Evaluate(2.8989), Is.EqualTo(Math.Sqrt(2.8989)));
+        // Make sure that the algebra machine can invert exponents/powers correctly
+        Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
+        Assert.That(manual.Evaluate(2), Is.EqualTo(s.Evaluate(2)));
+    }
+    [Test]
+    public void Sqrt3D()
+    {
+        //
+    }
+    [Test]
+    public void LogBase2()
+    {
+        //
     }
 }
