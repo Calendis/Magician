@@ -667,27 +667,44 @@ public class AdvancedAlgebraCases
         Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
 
         // Inverting and solving for nested logarithms
-        Assert.That(sa.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d/1.4)));
+        Assert.That(sa.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d / 1.4)));
         Assert.That(sx.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.3, Math.Pow(1.2, 1.4))));
-        Assert.That(sb.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.3, 1d/Math.Pow(1.2, 1.4))));
+        Assert.That(sb.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.3, 1d / Math.Pow(1.2, 1.4))));
     }
 
 
     [Test]
     public void PTRLBig()
     {
-        PowTowRootLog ptrl = new(new List<Oper> { Var("A"), Var("B"), Var("C"), Var("D"), Var("E") }, new List<Oper> { Var("a"), Var("b"), Var("c"), Var("d"), Var("e") });
+        PowTowRootLog ptrl = new(new List<Oper> { Var("a"), Var("b"), Var("c"), Var("d"), Var("e") }, new List<Oper> { Var("A"), Var("B"), Var("C"), Var("D"), Var("E") });
+        Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
         Scribe.Info(ptrl);
         Scribe.Info("------------------------------------------");
-        Scribe.Info(ptrl.Inverse(Var("A")));
-        Scribe.Info(ptrl.Inverse(Var("B")));
-        Scribe.Info(ptrl.Inverse(Var("C")));
-        Scribe.Info(ptrl.Inverse(Var("D")));
-        Scribe.Info(ptrl.Inverse(Var("E")));
-        Scribe.Info(ptrl.Inverse(Var("a")));
-        Scribe.Info(ptrl.Inverse(Var("b")));
-        Scribe.Info(ptrl.Inverse(Var("c")));
-        Scribe.Info(ptrl.Inverse(Var("d")));
-        Scribe.Info(ptrl.Inverse(Var("e")));
+        double a, b, c, d, e, A, B, C, D, E;
+        a = 1.05; b = 2.1; c = 2.15; d = 1.2; e = 2.25;
+        A = 1.3; B = 1.35; C = 1.4; D = 1.45; E = 1.5;
+
+        Assert.That(
+            ptrl.Evaluate(a, A, b, B, c, C, d, D, e, E), Is.EqualTo(
+            Math.Log(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), E)
+        ));
+
+        SolvedEquation sa = eq.Solved(Var("a")); SolvedEquation sA = eq.Solved(Var("A"));
+        SolvedEquation sb = eq.Solved(Var("b")); SolvedEquation sB = eq.Solved(Var("B"));
+        SolvedEquation sc = eq.Solved(Var("c")); SolvedEquation sC = eq.Solved(Var("C"));
+        SolvedEquation sd = eq.Solved(Var("d")); SolvedEquation sD = eq.Solved(Var("D"));
+        SolvedEquation se = eq.Solved(Var("e")); SolvedEquation sE = eq.Solved(Var("E"));
+        double y = 2.2;
+
+        Assert.That(sE.Evaluate(a,A,b,B,c,C,d,D,e,y), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d/y)));
+        Assert.That(sD.Evaluate(a,A,b,B,c,C,d,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), 1d/Math.Pow(E, y))));
+        Assert.That(sC.Evaluate(a,A,b,B,c,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), 1d/Math.Pow(D, Math.Pow(E, y)))));
+        Assert.That(sB.Evaluate(a,A,b,c,C,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), 1d/Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))));
+        Assert.That(sA.Evaluate(a,b,B,c,C,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), 1d/Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y)))))));
+        Assert.That(se.Evaluate(a,A,b,B,c,C,d,D,E,y), Is.EqualTo(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), d)));
+        Assert.That(sd.Evaluate(a,A,b,B,c,C,D,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), 1d/e)));
+        Assert.That(sc.Evaluate(a,A,b,B,C,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), 1d/Math.Pow(d, e))));
+        Assert.That(sb.Evaluate(a,A,B,c,C,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d/Math.Pow(c, Math.Pow(d, e)))));
+        Assert.That(sa.Evaluate(A,b,B,c,C,d,D,e,E,y), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d/Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
     }
 }
