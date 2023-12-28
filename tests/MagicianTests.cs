@@ -640,9 +640,6 @@ public class AdvancedAlgebraCases
     {
         PowTowRootLog ptrl = new(new List<Oper> { Var("a"), Var("x"), Var("b") }, new List<Oper> { });
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        Scribe.Info(ptrl.Inverse(Var("a")));
-        Scribe.Info(ptrl.Inverse(Var("x")));
-        Scribe.Info(ptrl.Inverse(Var("b")));
         SolvedEquation sa = eq.Solved(Var("a"));
         SolvedEquation sx = eq.Solved(Var("x"));
         SolvedEquation sb = eq.Solved(Var("b"));
@@ -660,15 +657,17 @@ public class AdvancedAlgebraCases
     public void NestedLogInverse()
     {
         PowTowRootLog ptrl = new(new List<Oper> { Var("x") }, new List<Oper> { Var("b"), Var("a") });
-        Scribe.Info(ptrl);
-        Scribe.Info(ptrl.Inverse(Var("a")));
-        Scribe.Info(ptrl.Inverse(Var("b")));
-        Scribe.Info(ptrl.Inverse(Var("x")));
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        //SolvedEquation sa = eq.Solved(Var("a"));
-        //SolvedEquation sx = eq.Solved(Var("x"));
-        //SolvedEquation sb = eq.Solved(Var("b"));
+        SolvedEquation sa = eq.Solved(Var("a"));
+        SolvedEquation sx = eq.Solved(Var("x"));
+        SolvedEquation sb = eq.Solved(Var("b"));
+        // Basic functionality of logarithms
         Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
+
+        // Inverting and solving for nested logarithms
+        Assert.That(sa.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d/1.4)));
+        Assert.That(sx.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.3, Math.Pow(1.2, 1.4))));
+        Assert.That(sb.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.3, 1d/Math.Pow(1.2, 1.4))));
     }
 
 
