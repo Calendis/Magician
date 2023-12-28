@@ -1,6 +1,3 @@
-/*
-*  A Multi exists as a point (two quantities), and as a list of constituent Multis that exist relative to the parent
-*/
 using System.Collections;
 using Magician.Geo;
 using Magician.Renderer;
