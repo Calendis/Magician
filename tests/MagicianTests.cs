@@ -645,8 +645,10 @@ public class AdvancedAlgebraCases
         SolvedEquation sb = eq.Solved(Var("b"));
         Assert.Multiple(() =>
         {
+            // Basic exponenet functionality
             Assert.That(ptrl.Evaluate(1.2, 1.4, 1.3), Is.EqualTo(Math.Pow(1.2, Math.Pow(1.3, 1.4))));
 
+            // Inverting and solving for exponents
             Assert.That(sa.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
             Assert.That(sx.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
             Assert.That(sb.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
