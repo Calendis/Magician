@@ -33,7 +33,7 @@ public class Text : IDisposable
     {
         if (font == IntPtr.Zero)
         {
-            Scribe.Error($"{SDL_GetError()}");
+            Scribe.Error($"Null font pointer. {SDL_GetError()}");
         }
 
         // Create an SDL color from a Color
