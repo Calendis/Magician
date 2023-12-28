@@ -274,14 +274,14 @@ public class SimpleAlgebraCases2
                 new Fraction(Var("y"), Val(1), Var("z"), Val(1), Var("z"))
             ),
             Fulcrum.EQUALS,
-            Val(1)
+            Val(4096)
         );
         SolvedEquation solved = unsolved.Solved();
         SolvedEquation manuallySolved = new(
             Var("y"),
             Fulcrum.EQUALS,
             new Fraction(
-                Val(1),
+                Val(4096),
                 new SumDiff(
                     Var("x"),
                     new Fraction(Var("x"), Val(1), Var("x")),
@@ -569,7 +569,7 @@ public class AdvancedAlgebraCases
     [Test]
     public void SqrtX()
     {
-        Oper parabola = new PowTowRootLog(Var("x"), Val(2));
+        Oper parabola = new PowTowRootLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
         Equation eq = new(
             Var("y"),
             Fulcrum.EQUALS,
@@ -584,18 +584,109 @@ public class AdvancedAlgebraCases
         );
         // Make sure basic root functionality is working
         Assert.That(manual.Evaluate(2.8989), Is.EqualTo(Math.Sqrt(2.8989)));
+
         // Make sure that the algebra machine can invert exponents/powers correctly
         Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
         Assert.That(manual.Evaluate(2), Is.EqualTo(s.Evaluate(2)));
     }
     [Test]
-    public void Sqrt3D()
-    {
-        //
-    }
-    [Test]
     public void LogBase2()
     {
-        //
+        Oper base2Exp = new PowTowRootLog(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
+        Equation eq = new(
+            Var("y"),
+            Fulcrum.EQUALS,
+            base2Exp
+        );
+        SolvedEquation s = eq.Solved(Var("x"));
+        SolvedEquation manual = new(
+            Var("x"),
+            Fulcrum.EQUALS,
+            Var("y").Log(Val(2)),
+            Var("x"), 1
+        );
+        // Make sure basic root functionality is working
+        Assert.That(manual.Evaluate(2.8989), Is.EqualTo(Math.Log(2.8989, 2)));
+
+        // Make sure that the algebra machine can invert exponents/powers correctly
+        Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
+        Assert.That(manual.Evaluate(2), Is.EqualTo(s.Evaluate(2)));
+    }
+
+    [Test]
+    public void LogBase2Then3()
+    {
+        PowTowRootLog log23 = new(new List<Oper> { Var("x") }, new List<Oper> { Val(2), Val(3) });
+        Scribe.Info(log23);
+        Assert.That(log23.Evaluate(4096), Is.EqualTo(Math.Log(12, 3)));
+    }
+    [Test]
+    public void Root2Then3()
+    {
+        PowTowRootLog root23 = new(new List<Oper>() { Var("x"), new Fraction(Val(1), Val(2), Val(1), Val(3)) }, new List<Oper> { });
+        Scribe.Info(root23);
+        Assert.That(root23.Evaluate(4097), Is.EqualTo(4.0001627438622904));
+    }
+    [Test]
+    public void Root3ThenLogBase2()
+    {
+        PowTowRootLog root3log2 = new(new List<Oper> { Var("x"), Val(1d / 3) }, new List<Oper>() { Val(2) });
+        Scribe.Info(root3log2);
+        Assert.That(root3log2.Evaluate(8192), Is.EqualTo(4.333333333333333333333333333));
+    }
+
+    [Test]
+    public void ThreePow()
+    {
+        PowTowRootLog ptrl = new(new List<Oper> { Var("a"), Var("x"), Var("b") }, new List<Oper> { });
+        Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
+        Scribe.Info(ptrl.Inverse(Var("a")));
+        Scribe.Info(ptrl.Inverse(Var("x")));
+        Scribe.Info(ptrl.Inverse(Var("b")));
+        SolvedEquation sa = eq.Solved(Var("a"));
+        SolvedEquation sx = eq.Solved(Var("x"));
+        SolvedEquation sb = eq.Solved(Var("b"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(ptrl.Evaluate(1.2, 1.4, 1.3), Is.EqualTo(Math.Pow(1.2, Math.Pow(1.3, 1.4))));
+
+            Assert.That(sa.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
+            Assert.That(sx.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
+            Assert.That(sb.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
+        });
+    }
+
+    [Test]
+    public void NestedLogInverse()
+    {
+        PowTowRootLog ptrl = new(new List<Oper> { Var("x") }, new List<Oper> { Var("b"), Var("a") });
+        Scribe.Info(ptrl);
+        Scribe.Info(ptrl.Inverse(Var("a")));
+        Scribe.Info(ptrl.Inverse(Var("b")));
+        Scribe.Info(ptrl.Inverse(Var("x")));
+        Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
+        //SolvedEquation sa = eq.Solved(Var("a"));
+        //SolvedEquation sx = eq.Solved(Var("x"));
+        //SolvedEquation sb = eq.Solved(Var("b"));
+        Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
+    }
+
+
+    [Test]
+    public void PTRLBig()
+    {
+        PowTowRootLog ptrl = new(new List<Oper> { Var("A"), Var("B"), Var("C"), Var("D"), Var("E") }, new List<Oper> { Var("a"), Var("b"), Var("c"), Var("d"), Var("e") });
+        Scribe.Info(ptrl);
+        Scribe.Info("------------------------------------------");
+        Scribe.Info(ptrl.Inverse(Var("A")));
+        Scribe.Info(ptrl.Inverse(Var("B")));
+        Scribe.Info(ptrl.Inverse(Var("C")));
+        Scribe.Info(ptrl.Inverse(Var("D")));
+        Scribe.Info(ptrl.Inverse(Var("E")));
+        Scribe.Info(ptrl.Inverse(Var("a")));
+        Scribe.Info(ptrl.Inverse(Var("b")));
+        Scribe.Info(ptrl.Inverse(Var("c")));
+        Scribe.Info(ptrl.Inverse(Var("d")));
+        Scribe.Info(ptrl.Inverse(Var("e")));
     }
 }

@@ -1,7 +1,7 @@
 namespace Magician.Symbols;
 
 /* TODO: Merge with Quantity */
-public class Variable : Oper
+public class Variable : Invertable
 {
     bool found = false;
     Quantity q = new(0);
@@ -33,6 +33,8 @@ public class Variable : Oper
     {
         // do nothing
     }
+
+    public override Oper Inverse(Oper axis) {return this;}
 
     // Creating an unsolved variable
     public Variable(string n) : base(n) {/* trivialAssociative = true; */}

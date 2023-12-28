@@ -331,58 +331,6 @@ public class Multi : Vec3, ICollection<Multi>
         Col.L = l;
         return this;
     }
-    public Multi RShifted(double r)
-    {
-        Col.R += r;
-        return this;
-    }
-    public Multi GShifted(double g)
-    {
-        Col.G += g;
-        return this;
-    }
-    public Multi BShifted(double b)
-    {
-        Col.B += b;
-        return this;
-    }
-    public Multi AShifted(double b)
-    {
-        Col.A += b;
-        return this;
-    }
-    public Multi HShifted(double h)
-    {
-        Col.H += h;
-        return this;
-    }
-    public Multi SShifted(double s)
-    {
-        Col.S += s;
-        return this;
-    }
-    public Multi LShifted(double l)
-    {
-        Col.L += l;
-        return this;
-    }
-
-    /* Translation methods */
-    public Multi AtX(double offset)
-    {
-        x.Set(offset);
-        return this;
-    }
-    public Multi AtY(double offset)
-    {
-        y.Set(offset);
-        return this;
-    }
-    public Multi AtZ(double offset)
-    {
-        z.Set(offset);
-        return this;
-    }
 
     public Multi Translated(double xOffset, double yOffset, double zOffset = 0)
     {

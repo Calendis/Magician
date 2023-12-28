@@ -1,7 +1,7 @@
 namespace Magician.Symbols;
 
-/* Combines powers, exponents, logs, and roots using the form logD(logB((a^b^c...)^A^-1)^C-1)... */
-public class PowTowRootLog : Oper
+/* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
+public class PowTowRootLog : Invertable
 {
     protected override int? Identity => 1;
 
@@ -15,6 +15,8 @@ public class PowTowRootLog : Oper
 
     public override Oper Degree(Oper v)
     {
+        if (IsDetermined)
+            return new Variable(0);
         Oper deg;
         int c = 1;
         foreach (Oper pa in posArgs)
@@ -24,21 +26,10 @@ public class PowTowRootLog : Oper
             c++;
         }
         deg = New(posArgs.Skip(c), new List<Oper> { });
-        c = 0;
-        foreach (Oper na in negArgs)
-        {
-            if (c % 2 == 0)
-            {
-                deg = deg.Divide(na);
-            }
-            else
-            {
-                // TODO: test the consequences of defining log degree like this
-                deg = deg.Log(na);
-            }
-            c++;
-        }
-        return deg;
+        if (negArgs.Count == 0)
+            return deg;
+        // this way of determining degree for logs is experimental
+        return new Fraction(deg, New(posArgs, new List<Oper> { new Variable(negArgs.Count) }));
     }
 
     public override Fraction Factors()
@@ -54,9 +45,8 @@ public class PowTowRootLog : Oper
     public override Variable Solution()
     {
         if (posArgs.Count == 0)
-        {
             return new Variable(1);
-        }
+
         Variable sol0 = posArgs[0].Solution();
         Variable pos;
         //Variable neg;
@@ -72,11 +62,11 @@ public class PowTowRootLog : Oper
         if (negArgs.Count == 0)
             return pos;
         else if (negArgs.Count == 1)
-            return new Variable(Math.Pow(pos.Val, 1d / negArgs[0].Solution().Val));
-        else if (negArgs.Count == 2)
-            return new Variable(Math.Log(Math.Pow(pos.Val, 1d / negArgs[0].Solution().Val), negArgs[1].Solution().Val));
+        {
+            return new Variable(Math.Log(pos.Solution().Val, negArgs[0].Solution().Val));
+        }
         else
-            return new PowTowRootLog(new List<Oper> { new PowTowRootLog(new List<Oper> { pos }, new List<Oper> { negArgs[^1], negArgs[^2] }) }, negArgs.SkipLast(2)).Solution();
+            return new Variable(Math.Log(new PowTowRootLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Solution().Val, negArgs[^1].Solution().Val));
     }
 
     public override void ReduceOuter()
@@ -104,12 +94,20 @@ public class PowTowRootLog : Oper
             runLen++;
         }
         posArgs.Reverse();
+        //if (runLen > 1)
         if (runLen > 0)
         {
             List<Oper> toCombine = posArgs.TakeLast(runLen).ToList();
             Variable combined = new PowTowRootLog(toCombine, new List<Oper> { }).Solution();
             posArgs = posArgs.Take(posArgs.Count - runLen).ToList();
             posArgs.Add(combined);
+        }
+
+        // Remove trailing ones from negArgs
+        while (negArgs.Count > 0 && negArgs[^1] is Variable v && v.Found && v.Val == 1)
+        {
+            throw Scribe.Issue("this should no longer occur");
+            negArgs.RemoveAt(negArgs.Count - 1);
         }
     }
 
@@ -134,16 +132,68 @@ public class PowTowRootLog : Oper
         s = $"({s})";
         if (negArgs.Count == 0)
             return s;
+        for (int i = 0; i < negArgs.Count; i++)
+            s = $"log_{negArgs[i]}({s})";
+        return s;
+    }
+
+    public override Oper Inverse(Oper axis)
+    {
+        PowTowRootLog inverse = new();
+        OperLike ol = new();
+        // find axis
+        bool pos;
+        if (posArgs.Contains(axis, ol))
+            pos = true;
+        else if (negArgs.Contains(axis, ol))
+            pos = false;
         else
+            throw Scribe.Error($"Inversion failed, as {name} {this} does not directly contain axis {axis}");
+
+        // build a new PTRL by shedding args from the current one, starting with any negargs and then getting to the posargs
+        List<Oper> tower = new();
+        for (int i = 0; i < negArgs.Count; i++)
         {
-            for (int i = 0; i < negArgs.Count; i++)
+            int j = negArgs.Count - 1 - i;
+
+            if (!pos && negArgs[j].Like(axis))
             {
-                if (i % 2 == 0)
-                    s += $"^({negArgs[i]}^-1)";
-                else
-                    s = $"log_{negArgs[i]}({s})";
+                // All preceeding negative arguments will remain negative
+                tower.Reverse();
+                inverse.negArgs = negArgs.Take(j).ToList();
+                inverse.posArgs = posArgs;
+                inverse = new PowTowRootLog(new List<Oper>{inverse, new PowTowRootLog(new Fraction(new Variable(1), new PowTowRootLog(tower.Append(axis).ToList(), new List<Oper>{})))}, new List<Oper>{});
+
+                
+                //inverse.posArgs = new List<Oper> { axis }.Concat(inverse.posArgs).ToList();
+                //inverse.negArgs = negArgs.Skip(j+1).ToList();
+                ////Scribe.Info($"inverse c1 {Scribe.Expand<List<Oper>, Oper>(posArgs)}, {Scribe.Expand<List<Oper>, Oper>(negArgs)}");
+                inverse.ReduceOuter();
+                return LegacyForm.Shed(inverse);
             }
-            return s;
+            // Add an exponential base to the bottom of the new tower
+            //inverse.posArgs = new List<Oper> { negArgs[j] }.Concat(inverse.posArgs).ToList();
+            tower.Add(negArgs[j]);
         }
+        tower.Reverse();
+        inverse.posArgs.AddRange(tower);
+        // the position of the axis determines how many logs and how many roots
+        for (int i = 0; i < posArgs.Count; i++)
+        {
+            if (posArgs[i].Like(axis))
+            {
+                // Everything below becomes a log, everything above becomes a root
+                List<Oper> log = posArgs.Take(i).ToList();
+                List<Oper> root = posArgs.Skip(i+1).ToList();
+                inverse.negArgs = log;
+                inverse.posArgs.Add(axis);
+                Fraction fRoot = new(new Variable(1), new PowTowRootLog(root, new List<Oper>{}));
+                //inverse.posArgs.Add(new Fraction(new Variable(1), new PowTowRootLog(root, new List<Oper>{})));
+                inverse = new PowTowRootLog(new List<Oper>{inverse, fRoot}, new List<Oper>{});
+            }
+        }
+
+        //throw Scribe.Issue($"no axis {axis.Name} {axis} for inverse {inverse.Name} {inverse}");
+        return LegacyForm.Shed(inverse);
     }
 }

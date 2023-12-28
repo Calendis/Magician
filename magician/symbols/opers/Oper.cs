@@ -124,7 +124,7 @@ public abstract partial class Oper : IFunction
             throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
 
         int counter = 0;
-        foreach (Variable a in associates)
+        foreach (Variable a in associates.OrderBy(v => v.Name))
             a.Val = args[counter++];
         double s = Solution().Val;
         associates.ToList().ForEach(a => a.Reset());
@@ -222,14 +222,14 @@ public abstract partial class Oper : IFunction
     }
     public virtual Oper Root(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> { o });
+        return new PowTowRootLog(new List<Oper> { this , new Fraction(Notate.Val(1), o)}, new List<Oper> {});
     }
     public virtual Oper Log(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> { new Variable(1), o });
+        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> {o});
     }
 
-    // TODO: in the future, this can have a type form something like Fraction(n->PowTowRootLog, n->PowTowRootLog)
+    // TODO: in the future, this could have a type form like Fraction(n->PowTowRootLog, n->PowTowRootLog)
     public virtual Fraction Factors(){return new Fraction(new PowTowRootLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
 
     public Fraction CommonFactors(Oper o)

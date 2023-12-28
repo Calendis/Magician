@@ -28,10 +28,6 @@ public class SumDiff : Arithmetic
     {
         return new SumDiff(a, b);
     }
-    public static SumDiff StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
-    {
-        return new SumDiff(a, b);
-    }
 
     public override Oper Degree(Oper v)
     {
@@ -52,24 +48,6 @@ public class SumDiff : Arithmetic
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
-        //if (AB.IsDetermined && AB.Solution().Val == 1)
-        //{
-        //    if (aPositive)
-        //    {
-        //        if (bPositive)
-        //            return New(new List<Oper> { A, B }, new List<Oper> { });
-        //        else
-        //            return New(new List<Oper> { A }, new List<Oper> { B });
-        //    }
-        //    else
-        //    {
-        //        if (bPositive)
-        //            return New(new List<Oper> { B }, new List<Oper> { A });
-        //        else
-        //            return New(new List<Oper> { }, new List<Oper> { A, B });
-        //    }
-        //}
-
         Oper ABbar;
         if (!(aPositive ^ bPositive))
             ABbar = A.Divide(AB).Add(B.Divide(AB));

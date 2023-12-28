@@ -1,6 +1,7 @@
 namespace Magician.Symbols;
 using Magician.Maps;
 
+// TODO: make equals an Oper, as well as <, >, Onto
 public class Equation : IRelation
 {
     public List<Variable> Unknowns { get; private set; }  // all unknowns
@@ -181,6 +182,7 @@ public class Equation : IRelation
                     case MatchPairs.SOLVED:
                         Oper solvedLeft = LAYERS.LEFT.Get(0, 0).Copy();
                         Oper solvedRight = LAYERS.RIGHT.Get(0, 0).Copy();
+                        solvedLeft.ReduceOuter(); solvedRight.ReduceOuter();
                         solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
                         Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions:\n{solvedEq}");
                         SOLVED = true;
@@ -203,9 +205,7 @@ public class Equation : IRelation
                         }
                         // Evaluate the solve path
                         foreach (Oper a in solvePath)
-                        {
                             PREPAREISOLATE(MOST_DIRECT_SIDE, INSTRUCTION.VAR, a);
-                        }
                         CURRENT_PICK = (3, 0);
 
                         break;
@@ -355,7 +355,22 @@ public class Equation : IRelation
                 if (INSTRUCTION.MOD == SolveMode.ISOLATE)
                 {
                     TOTAL_CHANGES++;
-                    (NEWCHOSEN, NEWOPPOSITE) = Oper.IsolateOperOn(CHOSENROOT[0], OPPOSITEROOT[0], INSTRUCTION.AXIS, INSTRUCTION.VAR);
+                    if (OPPOSITEROOT[0] is not Invertable)
+                        throw Scribe.Issue("Function was not invertible! Implement approximator");
+
+                    Oper newNCho, newNOpp;
+                    newNOpp = ((Invertable)CHOSENROOT[0]).Inverse(INSTRUCTION.AXIS);
+                    
+                    // TODO: replace this hack with custom insertion behaviour
+                    if (newNOpp is PowTowRootLog && newNOpp.posArgs.Count == 2 && newNOpp.posArgs[0] is PowTowRootLog && newNOpp.posArgs[1] is Fraction)
+                        newNOpp.posArgs[0].posArgs[0] = OPPOSITEROOT[0];
+                    else if (newNOpp.posArgs.Count == 0)
+                        newNOpp.posArgs.Add(OPPOSITEROOT[0]);
+                    else
+                        newNOpp.posArgs[0] = OPPOSITEROOT[0];
+
+                    // Apply changes
+                    (NEWCHOSEN, NEWOPPOSITE) = (INSTRUCTION.AXIS, LegacyForm.Shed(newNOpp));
                 }
                 else if (INSTRUCTION.MOD == SolveMode.EXTRACT)
                 {

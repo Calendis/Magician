@@ -9,6 +9,7 @@ public class SolvedEquation : InverseParamMap
     public Equation Eq => eq;
     public Variable SolvedVar => solvedVar;
     // Constructs a solved equation from sides
+    // TODO: chosenRoot and v are redundant. We can make chosenRoot a Variable and eliminate v
     public SolvedEquation(Oper chosenRoot, Fulcrum fulc, Oper oppositeRoot, Variable v, int ins) : base(oppositeRoot.Evaluate, ins)
     {
         eq = new(chosenRoot, fulc, oppositeRoot);
@@ -44,11 +45,15 @@ public class SolvedEquation : InverseParamMap
         }
         int counter = 0;
         //List<Variable> unknowns = eq.Unknowns.ToList();
-        List<Variable> unknowns = opposite.AssociatedVars;
+        List<Variable> unknowns = opposite.AssociatedVars.ToList();
+        
         unknowns.Remove(solvedVar);
         unknowns = unknowns.Except(eq.Sliders).ToList();
 
+        // Sort the arguments so you don't get inconsistent behaviour
+        unknowns = unknowns.OrderBy(v => v.Name).ToList();
         // Set the values
+        //Scribe.Warn($"Got vals: {Scribe.Expand<List<double>, double>(vals.ToList())}, for vars {Scribe.Expand<List<Variable>, Variable>(unknowns)}");
         foreach (Variable x in unknowns)
         {
             x.Val = vals[counter++];
