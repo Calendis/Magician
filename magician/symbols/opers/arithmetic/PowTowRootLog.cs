@@ -137,7 +137,7 @@ public class PowTowRootLog : Invertable
         return s;
     }
 
-    public override Oper Inverse(Oper axis)
+    public override Oper Inverse(Oper axis, Oper? opp=null)
     {
         PowTowRootLog inverse = new();
         OperLike ol = new();
@@ -149,6 +149,7 @@ public class PowTowRootLog : Invertable
             pos = false;
         else
             throw Scribe.Error($"Inversion failed, as {name} {this} does not directly contain axis {axis}");
+        opp ??= axis;
 
         // build a new PTRL by shedding args from the current one, starting with any negargs and then getting to the posargs
         List<Oper> tower = new();
@@ -162,7 +163,7 @@ public class PowTowRootLog : Invertable
                 tower.Reverse();
                 inverse.negArgs = negArgs.Take(j).ToList();
                 inverse.posArgs = posArgs;
-                inverse = new PowTowRootLog(new List<Oper>{inverse, new PowTowRootLog(new Fraction(new Variable(1), new PowTowRootLog(tower.Append(axis).ToList(), new List<Oper>{})))}, new List<Oper>{});
+                inverse = new PowTowRootLog(new List<Oper>{inverse, new PowTowRootLog(new Fraction(new Variable(1), new PowTowRootLog(tower.Append(opp).ToList(), new List<Oper>{})))}, new List<Oper>{});
 
                 
                 //inverse.posArgs = new List<Oper> { axis }.Concat(inverse.posArgs).ToList();
@@ -186,7 +187,7 @@ public class PowTowRootLog : Invertable
                 List<Oper> log = posArgs.Take(i).ToList();
                 List<Oper> root = posArgs.Skip(i+1).ToList();
                 inverse.negArgs = log;
-                inverse.posArgs.Add(axis);
+                inverse.posArgs.Add(opp);
                 Fraction fRoot = new(new Variable(1), new PowTowRootLog(root, new List<Oper>{}));
                 //inverse.posArgs.Add(new Fraction(new Variable(1), new PowTowRootLog(root, new List<Oper>{})));
                 inverse = new PowTowRootLog(new List<Oper>{inverse, fRoot}, new List<Oper>{});

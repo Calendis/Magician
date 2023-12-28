@@ -34,7 +34,7 @@ public class Variable : Invertable
         // do nothing
     }
 
-    public override Oper Inverse(Oper axis) {return this;}
+    public override Oper Inverse(Oper axis, Oper? opp=null) {return this;}
 
     // Creating an unsolved variable
     public Variable(string n) : base(n) {/* trivialAssociative = true; */}

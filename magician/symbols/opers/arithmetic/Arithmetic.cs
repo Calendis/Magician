@@ -124,12 +124,12 @@ public abstract class Arithmetic : Invertable
         Reduce(3);
     }
 
-    public override Oper Inverse(Oper axis)
+    public override Oper Inverse(Oper axis, Oper? opp=null)
     {
         Oper inverse = New(posArgs, negArgs);
         OperLike ol = new();
         // find axis
-        bool? pos = null;
+        bool pos;
         if (posArgs.Contains(axis, ol))
             pos = true;
         else if (negArgs.Contains(axis, ol))
@@ -137,21 +137,23 @@ public abstract class Arithmetic : Invertable
         else
             throw Scribe.Error($"Inversion failed, as {name} {this} does not directly contain axis {axis}");
         
+        opp ??= axis;
+        
         // Flip everything
         (inverse.posArgs, inverse.negArgs) = (inverse.negArgs, inverse.posArgs);
         // Take the axis away and add it back to the opposite side
-        if ((bool)pos)
+        if (pos)
         {
             inverse.negArgs = inverse.negArgs.Where(o => !o.Like(axis)).ToList();
-            inverse.posArgs = new List<Oper> {axis}.Concat(inverse.posArgs).ToList();
+            inverse.posArgs = new List<Oper> {opp}.Concat(inverse.posArgs).ToList();
         }
         else
         {
             inverse.posArgs = inverse.posArgs.Where(o => !o.Like(axis)).ToList();
-            inverse.negArgs = new List<Oper> {axis}.Concat(inverse.negArgs).ToList();
-            // Flip everything again if needed
+            inverse.negArgs = new List<Oper> {opp}.Concat(inverse.negArgs).ToList();
             (inverse.posArgs, inverse.negArgs) = (inverse.negArgs, inverse.posArgs);
         }
+        // path is always [(0, 0)]
         return inverse;
     }
 }
