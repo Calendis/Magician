@@ -128,46 +128,8 @@ public abstract partial class Oper
             }
         }
     }
-    // During an "isolate", the axis does not cross the equals sign
-    //public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axis, Variable v)
-    //{
-    //    //
-    //}
-    // Move non-axis arguments away from the chosen side
-    //public static (Oper, Oper) IsolateOperOn(Oper chosenSide, Oper oppositeSide, Oper axisLiveBranch)
-    //{
-    //    if (!chosenSide.commutative)
-    //        throw Scribe.Issue("You need to fix this to support non-commutative Opers");
-    //    bool invertedAxis = false;
-    //    // Remove the live branch from the appropriate list in chosenside
-    //    if (chosenSide.negArgs.Contains(axisLiveBranch))
-    //    {
-    //        invertedAxis = true;
-    //        chosenSide.negArgs.Remove(axisLiveBranch);
-    //    }
-    //    else if (chosenSide.posArgs.Contains(axisLiveBranch))
-    //        chosenSide.posArgs.Remove(axisLiveBranch);
-    //    else
-    //        throw Scribe.Issue($"Axis {axisLiveBranch} not in {chosenSide}");
-//
-    //    // Construct and swap
-    //    Oper cs = chosenSide.New(new List<Oper> { }, new List<Oper> { });
-    //    cs.posArgs.AddRange(chosenSide.posArgs);
-    //    cs.negArgs.AddRange(chosenSide.negArgs);
-    //    (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
-    //    
-    //    Scribe.Info($"\t\t In isolate: {chosenSide}, {oppositeSide}, {axisLiveBranch}");
-    //    cs.posArgs.Add(oppositeSide.Copy());
-    //    // Perform an additional inversion if necessary
-    //    if (invertedAxis)
-    //        (cs.posArgs, cs.negArgs) = (cs.negArgs, cs.posArgs);
-    //        
-    //    //cs.Simplify(v);
-    //    return (LegacyForm.Shed(axisLiveBranch), LegacyForm.Shed(cs));
-    //}
     
     // During an extract, the axis crosses the equals sign
-    // Move axis to opposite side
     public static (Oper, Oper) ExtractOperFrom(Oper chosenSide, Oper oppositeSide, Oper axis)
     {
         // need extract method
