@@ -11,5 +11,5 @@ public abstract class Invertable : Oper
     {
     }
 
-    public abstract Oper Inverse(Oper axis);
+    public abstract Oper Inverse(Oper axis, Oper? opposite);
 }
