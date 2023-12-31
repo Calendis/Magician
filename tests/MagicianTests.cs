@@ -676,10 +676,12 @@ public class AdvancedAlgebraCases
     [Test]
     public void PTRLBig()
     {
-        PowTowRootLog ptrl = new(new List<Oper> { Var("a"), Var("b"), Var("c"), Var("d"), Var("e") }, new List<Oper> { Var("A"), Var("B"), Var("C"), Var("D"), Var("E") });
+        PowTowRootLog ptrl = new(
+            new List<Oper>{ Var("a"), Var("b"), Var("c"), Var("d"), Var("e") },
+            new List<Oper>{ Var("A"), Var("B"), Var("C"), Var("D"), Var("E") }
+        );
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        Scribe.Info(ptrl);
-        Scribe.Info("------------------------------------------");
+        
         double a, b, c, d, e, A, B, C, D, E;
         a = 1.05; b = 2.1; c = 2.15; d = 1.2; e = 2.25;
         A = 1.3; B = 1.35; C = 1.4; D = 1.45; E = 1.5;
