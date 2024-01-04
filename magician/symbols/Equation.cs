@@ -380,7 +380,7 @@ public class Equation : IRelation
                 else if (INSTRUCTION.MOD == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).SimplifyOnceOuter(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).SimplifyOuter(INSTRUCTION.VAR);
                     GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Reduce(2);
                     NEWCHOSEN = LegacyForm.Shed(CHOSENROOT[0]);
                     NEWOPPOSITE = LegacyForm.Shed(OPPOSITEROOT[0]);

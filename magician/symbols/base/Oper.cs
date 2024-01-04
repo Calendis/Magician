@@ -80,30 +80,30 @@ public abstract partial class Oper : IFunction
         ReduceOuter();
     }
     // Perform advanced simplifications on this Oper
-    internal virtual void SimplifyOnceOuter(Variable? axis = null) { ReduceOuter(); }
+    internal virtual void SimplifyOuter(Variable? axis = null) { ReduceOuter(); }
     // Perform advanced simplifications on this Oper, recursivel
-    public void SimplifyOnce(Variable? axis = null, int depth=1)
+    public void Simplify(Variable? axis = null, int depth=3)
     {
-        if (depth == 9)
+        if (depth == 0)
             return;
         if (depth > 0)
             depth--;
         foreach (Oper a in AllArgs)
-            a.SimplifyOnce(axis, depth);
-        SimplifyOnceOuter(axis);
+            a.Simplify(axis, depth);
+        SimplifyOuter(axis);
     }
     // Perform advanced simplifications in this Oper as much as possible
-    public void Simplify(Variable? axis = null, int bailout=9999)
+    public void SimplifyIterated(Variable? axis = null, int bailout=9999)
     {
         int iters = 0;
         Oper prev;
         do
         {
             prev = Copy();
-            SimplifyOnceOuter(axis);
+            SimplifyOuter(axis);
             if (++iters >= bailout)
             {
-                Scribe.Warn("Bailed out after {iters} simplifications");
+                Scribe.Warn($"Bailed out after {iters} simplifications");
                 break;
             }
         } while (!Like(prev));
@@ -113,7 +113,7 @@ public abstract partial class Oper : IFunction
     {
         foreach (Oper a in AllArgs)
             a.SimplifyAll(axis);
-        Simplify(axis);
+        SimplifyIterated(axis);
     }
 
     // Provide arguments to solve the expression at a point

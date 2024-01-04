@@ -122,7 +122,7 @@ public abstract class Arithmetic : Invertable
         negArgs.Clear();
         negArgs.AddRange(finalNegArgs);
     }
-    internal override void SimplifyOnceOuter(Variable? axis = null)
+    internal override void SimplifyOuter(Variable? axis = null)
     {
         Combine(axis);
         Reduce(3);
