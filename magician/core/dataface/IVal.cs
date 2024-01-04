@@ -124,13 +124,13 @@ public interface IVal : IDimensional
 
     public static IVal Exp(IVal i, IVal v)
     {
-        if (i.Dims * v.Dims == 1)
+        if (i.Trim().Dims * v.Trim().Dims == 1)
             return new ValWrapper(Math.Pow(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
     public static IVal Log(IVal i, IVal v)
     {
-        if (i.Dims * v.Dims == 1)
+        if (i.Trim().Dims * v.Trim().Dims == 1)
             return new ValWrapper(Math.Log(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex logarithms");
     }
