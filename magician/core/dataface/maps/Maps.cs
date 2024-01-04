@@ -1,86 +1,55 @@
 namespace Magician.Maps;
 
+using Magician.Geo;
 using Magician.Symbols;
 using static Magician.Geo.Create;
 
-public interface IRelation
+public interface IRelation : IDimensional
 {
-    public double[] Evaluate(params double[] args);
+    public IMultival Evaluate(params double[] args);
+    public IMultival Evaluate(IVal args) => Evaluate(args.All);
     public int Ins { get; protected set; }
     public int Outs { get; protected set; }
+    int IDimensional.Dims => Ins + Outs;
 }
 public interface IFunction : IRelation
 {
+    public new IVal Evaluate(params double[] args);
+    public new IVal Evaluate(IVal args) => Evaluate(args.All);
+    IMultival IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).All);
+    IMultival IRelation.Evaluate(Magician.IVal args) => new Vec(Evaluate(args.All));
     int IRelation.Outs { get { return 1; } set { } }
-    public new double Evaluate(params double[] args);
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        return new[] { Evaluate(args) };
-    }
 }
 public interface IParametric : IRelation
 {
     int IRelation.Ins { get { return 1; } set { } }
-    public double[] Evaluate(double x);
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        return new[] { Evaluate(args[0]) }[0];
-    }
+    public IMultival Evaluate(double x);
+    IMultival IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
+    IMultival IRelation.Evaluate(Magician.IVal args) => Evaluate(args.Get());
 }
-public interface IMap : IFunction, IParametric
+public interface IMap : IFunction
 {
-    public new double Evaluate(double x);
-    double[] IParametric.Evaluate(double x)
-    {
-        return new[] { Evaluate(x) };
-    }
-    double IFunction.Evaluate(params double[] args)
-    {
-        return Evaluate(args[0]);
-    }
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        return new[] { Evaluate(args[0]) };
-    }
+    int IRelation.Ins { get { return 1; } set { } }
+    public IVal Evaluate(double x);
+    IVal IFunction.Evaluate(params double[] args) => Evaluate(args[0]);
+    IVal IFunction.Evaluate(Magician.IVal args) => Evaluate(args.Get());
 }
 
-// Multiple inputs, multiple outputs
-// Plottable when the number of inputs and outputs are specified
-public class RelationalMap : IRelation
-{
-    protected Func<double[], double[]> map;
-    public int Ins { get; set; }
-    public int Outs { get; set; }
-    public RelationalMap(int ins, int outs, Func<double[], double[]> m)
-    {
-        map = m;
-        Ins = ins;
-        Outs = outs;
-    }
-
-    public double[] Evaluate(params double[] args)
-    {
-        return map.Invoke(args);
-    }
-    //public virtual Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
-    public virtual Multi Plot(params Symbols.PlotOptions[] options)
-    {
-        throw Scribe.Issue("RelationalMap plotting not implemented");
-    }
-}
 
 // Multiple inputs, one output
 // Plottable when the number of inputs is specified
 public class InverseParamMap : IFunction
 {
-    Func<double[], double> map;
+    Func<double[], IVal> map;
     public int Ins { get; set; }
     //public InverseParamMap(Func<double[], double>? f = null, int inputs = -1) : base(f is null ? null : xs => new double[] { f.Invoke(xs) })
-    public InverseParamMap(Func<double[], double> f, int inputs)
+    public InverseParamMap(Func<double[], IVal> f, int inputs)
     {
         Ins = inputs;
         map = f;
     }
+    // TODO: is there a non-hack way to do this?? I don't want to just wrap the output like this, but oh well
+    public InverseParamMap(Func<double[], double> nonwrapped, int inputs) : this(xs => IVal.FromLiteral(nonwrapped.Invoke(xs)), inputs) { }
 
     public Multi Plot(params Symbols.PlotOptions[] options)
     {
@@ -102,7 +71,7 @@ public class InverseParamMap : IFunction
         {
             // Get arguments from the counter
             double[] inVals = new double[Ins];
-            double outVal;
+            IVal outVal;
             for (int i = 0; i < Ins; i++)
             {
                 inVals[i] = solveSpace.Get(i);
@@ -141,7 +110,7 @@ public class InverseParamMap : IFunction
             }
             argsByAxis[outAxis is null ?
                 (int)new List<AxisSpecifier> { AxisSpecifier.X, AxisSpecifier.Y, AxisSpecifier.Z }.Except(options.Select(o => o.Axis)).ToList()[0]
-                : (int)outAxis] = outVal;
+                : (int)outAxis] = outVal.Get();
 
             // Plot colouring code can go here
             // TODO: provide an API for this
@@ -179,19 +148,14 @@ public class InverseParamMap : IFunction
         // 2D plot
         return plot;
     }
-    public static Func<double[], double[]> MapFromIPFunc(Func<double[], double> f)
-    {
-        return xs => new double[] { f.Invoke(xs) };
-    }
+    //public static Func<double[], double[]> MapFromIPFunc(Func<double[], double> f)
+    //{
+    //    return xs => new double[] { f.Invoke(xs) };
+    //}
 
-    public double Evaluate(params double[] args)
+    public IVal Evaluate(params double[] args)
     {
         return map.Invoke(args);
-    }
-
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        return new double[] { map.Invoke(args) };
     }
 }
 
@@ -201,9 +165,9 @@ public class ParamMap : IParametric
 {
     //public int Params { get; set; }
     public int Outs { get; set; }
-    public Func<double, double>[] Maps;
+    public Func<double, IVal>[] Maps;
     //public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
-    public ParamMap(params Func<double, double>[] fs)
+    public ParamMap(params Func<double, IVal>[] fs)
     {
         Outs = fs.Length;
         Maps = fs.ToArray();
@@ -215,12 +179,19 @@ public class ParamMap : IParametric
         //}
         //Maps = fs2;
     }
-    //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
-    public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, double>>(im => im.Evaluate).ToArray()) { }
-    public double[] Evaluate(double x = 0)
+    public ParamMap(params Func<double, double>[] ns) : this(FromFuncs(ns)) {}
+    public static Func<double, IVal>[] FromFuncs(params Func<double, double>[] ns)
     {
-        return Maps.Select(f => f.Invoke(x)).ToArray();
+        List<Func<double, IVal>> wrapped = new();
+        foreach (Func<double, double> nw in ns)
+        {
+            wrapped.Add(x => IVal.FromLiteral(nw.Invoke(x)));
+        }
+        return wrapped.ToArray();
     }
+    //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
+    public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, IVal>>(im => im.Evaluate).ToArray()) { }
+    public IMultival Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public Multi Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
@@ -233,18 +204,18 @@ public class ParamMap : IParametric
         double dt = paramRange.Res;
         for (double t = start; t < end; t += dt)
         {
-            double[] out0 = Evaluate(t);
-            double[] out1 = Evaluate(t + dt);
+            IMultival out0 = ((IParametric)this).Evaluate(t);
+            IMultival out1 = ((IParametric)this).Evaluate(t + dt);
             double[] pos0 = { 0, 0, 0 };
             double[] pos1 = { 0, 0, 0 };
-            double[][] ous = new[] { out0, out1 };
+            IMultival[] ous = new[] { out0, out1 };
             double[][] poss = new[] { pos0, pos1 };
             int counter = 0;
             int innerCounter;
-            foreach (double[] ou in ous)
+            foreach (Vec ou in ous)
             {
                 innerCounter = 0;
-                foreach (double d in ou)
+                foreach (double d in ((IVal)ou).All)
                 {
                     poss[counter][innerCounter] = d;
                     innerCounter++;
@@ -257,27 +228,22 @@ public class ParamMap : IParametric
             );
         }
 
-        return plot.Positioned(x, y, z);
+        return plot.To(x, y, z);
     }
-
 }
 
 // One or fewer input, one output
 // Always plottable
 public class DirectMap : IMap
 {
-    Func<double, double> map;
-    public DirectMap(Func<double, double> f)
+    Func<double, IVal> map;
+    public DirectMap(Func<double, IVal> f)
     {
         map = f;
     }
-    public double Evaluate(double x = 0)
+    public DirectMap(Func<double, double> f) : this(x => IVal.FromLiteral(f.Invoke(x))) {}
+    public IVal Evaluate(double x = 0)
     {
         return map.Invoke(x);
     }
-}
-
-public static class Maps
-{
-    public static Random rng = new();
 }

@@ -2,6 +2,7 @@ using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
 using Magician.Maps;
+using Magician.Symbols;
 
 namespace Magician.Demos;
 public class DefaultSpell : Spell
@@ -15,7 +16,7 @@ public class DefaultSpell : Spell
         Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
         // Hexagonal grid
-        Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).Positioned(300, 0);
+        Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).To(300, 0);
 
         /* Multi-line text */
         Origin["paragraph1"] = new UI.RichParagraph(0, 0, HSLA.RandomVisible(), 16, UI.Justification.CENTRE,
@@ -26,7 +27,6 @@ public class DefaultSpell : Spell
             "Also, text can now be justified", "to left, right, or centre"
         );
 
-        // Non-square mouseover
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER)
         .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.SUB)  // spins the star
         ;
@@ -45,8 +45,8 @@ public class DefaultSpell : Spell
 
         Origin["myMulti"] = new Multi().Flagged(DrawMode.INNER);
         Origin["savMyMulti"] = new Multi().Flagged(DrawMode.INVISIBLE);
-        Origin["my star"].Heading = new Vec3(1, 1, -1).Normalized();
-
+        Origin["my star"].Heading = new Vec3(1, 1, -1);
+        Origin["my star"].Heading.Normalize();
     }
     Brush b = new(
         new DirectMap(x => Events.MouseX),
@@ -58,7 +58,7 @@ public class DefaultSpell : Spell
         Renderer.RControl.Clear();
         Origin["btn"].Update();
         Origin["my star"].Update();
-        Origin["my star"].Colored(new RGBA(0, 255 * mo!.Evaluate(), 255, 255));
+        Origin["my star"].Colored(new RGBA(0, (mo!.Evaluate()*255d).Get(), 255, 255));
 
         Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Multi().Flagged(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])

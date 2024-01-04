@@ -7,9 +7,9 @@ public class Driver
     public DriverMode DMode;
     public TargetMode TMode;
     public Multi Target { get; set; }
-    protected Func<double, double> X;
-    protected Func<double, double> Y;
-    protected Func<double, double> Z;
+    protected Func<double, IVal> X;
+    protected Func<double, IVal> Y;
+    protected Func<double, IVal> Z;
 
     public Driver(Multi m, DirectMap dm1, DirectMap dm2, DirectMap dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT) :
     this(m, new ParamMap(dm1, dm2, dm3), coordMode, driverMode, targetMode)
@@ -50,21 +50,22 @@ public class Driver
             return;
         }
 
+        // TODO: support and handke complex numbers
         switch (CMode)
         {
             case CoordMode.XYZ:
-                double x = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.x.Get());
-                double y = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.y.Get());
-                double z = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.z.Get());
-                Target.Positioned(x, y, z);
+                double x = (X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.x.Get())).Get();
+                double y = (Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.y.Get())).Get();
+                double z = (Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.z.Get())).Get();
+                Target.To(x, y, z);
                 break;
             case CoordMode.POLAR:
-                double mag   = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.Magnitude);
-                Target.Magnitude = mag;
-                double theta = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseXY);
-                Target.PhaseXY = theta;
-                double phi   = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseYZ);
-                Target.PhaseYZ = phi;
+                IVal mag   = X.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.Magnitude);
+                Target.Magnitude = mag.Get();
+                IVal theta = Y.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseXY);
+                Target.PhaseXY = theta.Get();
+                IVal phi   = Z.Invoke(t) + (DMode == DriverMode.SET ? 0 : Target.PhaseYZ);
+                Target.PhaseYZ = phi.Get();
                 break;
             case CoordMode.BRANCHED:
                 // TODO: implement this

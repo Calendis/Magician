@@ -24,7 +24,7 @@ public class Multi3D : Multi
         int cc = 0;
         foreach (int[] face in faces)
         {
-            Multi f = new Multi().Positioned(x.Get(), y.Get(), z.Get())
+            Multi f = new Multi().To(x.Get(), y.Get(), z.Get())
             .Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {

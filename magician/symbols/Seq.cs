@@ -13,14 +13,14 @@ public class Seq : DirectMap
     // Seq from literals
     public Seq(params double[] s) : base(x => 
     {
-        double d;
+        IVal d = IVal.FromLiteral(0);
         try
         {
-            d = s[(int)x];
+            d.Set(s[(int)x]);
         }
         catch (IndexOutOfRangeException)
         {
-            d = 0;
+            d.Set(0);
         }
         return d;
     })

@@ -30,7 +30,7 @@ public abstract partial class Oper : IFunction
 
     // Create a new Oper of the same type
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
-    public abstract IVal Solution();
+    public abstract Variable Sol();
     public abstract Oper Degree(Oper v);
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
@@ -117,7 +117,7 @@ public abstract partial class Oper : IFunction
     }
 
     // Provide arguments to solve the expression at a point
-    public double Evaluate(params double[] args)
+    public IVal Evaluate(params double[] args)
     {
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
         if (associates.Count != args.Length)
@@ -125,8 +125,9 @@ public abstract partial class Oper : IFunction
 
         int counter = 0;
         foreach (Variable a in associates.OrderBy(v => v.Name))
-            a.Val = args[counter++];
-        double s = Solution().Val;
+            a.Set(args[counter++]);
+        // TODO: this copy probably isn't necessary
+        Variable s = Sol().Copy();
         associates.ToList().ForEach(a => a.Reset());
         return s;
     }
@@ -140,7 +141,7 @@ public abstract partial class Oper : IFunction
         Oper result = new SumDiff(degs, new List<Oper> { });
         result = LegacyForm.Canonical(result);
         if (result.IsDetermined)
-            return result.Solution();
+            return result.Sol();
         return result;
     }
 
@@ -193,7 +194,7 @@ public abstract partial class Oper : IFunction
         negArgs = negArgs.OrderBy(o => ((Oper)o).Ord()).ToList();
     }
 
-    /* Binary arithmetic methods */
+    /* Customizable symbolic operator methods */
     public virtual Oper Add(Oper o)
     {
         return new SumDiff(new List<Oper> { this, o }, new List<Oper> { });
@@ -212,25 +213,25 @@ public abstract partial class Oper : IFunction
             return new Variable(1);
         return new Fraction(new List<Oper> { this }, new List<Oper> { o });
     }
-    public virtual PowTowRootLog Pow(Oper o)
+    public virtual ExpLog Pow(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { this, o }, new List<Oper> { });
+        return new ExpLog(new List<Oper> { this, o }, new List<Oper> { });
     }
-    public virtual PowTowRootLog Exp(Oper o)
+    public virtual ExpLog Exp(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { o, this }, new List<Oper> { });
+        return new ExpLog(new List<Oper> { o, this }, new List<Oper> { });
     }
     public virtual Oper Root(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { this , new Fraction(Notate.Val(1), o)}, new List<Oper> {});
+        return new ExpLog(new List<Oper> { this , new Fraction(Notate.Val(1), o)}, new List<Oper> {});
     }
     public virtual Oper Log(Oper o)
     {
-        return new PowTowRootLog(new List<Oper> { this }, new List<Oper> {o});
+        return new ExpLog(new List<Oper> { this }, new List<Oper> {o});
     }
 
     // TODO: in the future, this could have a type form like Fraction(n->PowTowRootLog, n->PowTowRootLog)
-    public virtual Fraction Factors(){return new Fraction(new PowTowRootLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
+    public virtual Fraction Factors(){return new Fraction(new ExpLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
 
     public Fraction CommonFactors(Oper o)
     {
@@ -252,14 +253,14 @@ public abstract partial class Oper : IFunction
         /* Get positive and negative factors from the passed Oper o */
         foreach (Oper p in facs1.Numerator)
         {
-            if (p is not PowTowRootLog ptrl)
+            if (p is not ExpLog ptrl)
                 throw Scribe.Issue("Fac was not ptrl");
             //Scribe.Info($"\t\t\tGot positive base {ptrl.posArgs[0]} from fac {ptrl}");
             basesPos.Add(ptrl.posArgs[0]);
         }
         foreach (Oper p in facs1.Denominator)
         {
-            if (p is not PowTowRootLog ptrl)
+            if (p is not ExpLog ptrl)
                 throw Scribe.Issue("Fac was not ptrl");
             //Scribe.Info($"\t\t\tGot negative base {ptrl.posArgs[0]} from fac {ptrl}");
             basesNeg.Add(ptrl.posArgs[0]);
@@ -270,7 +271,7 @@ public abstract partial class Oper : IFunction
         foreach (Oper facPos in facs0.Numerator)
         {
             // TODO: type forms should be able to handle thiss
-            if (facPos is not PowTowRootLog)
+            if (facPos is not ExpLog)
                 throw Scribe.Issue($"Factor {facPos} is not a PowTowRootLog!");
             if (basesPos.Contains(facPos.posArgs[0], ol))
             {
@@ -279,9 +280,9 @@ public abstract partial class Oper : IFunction
                 Oper ABsign = new Funcs.Sign(A.Mult(B)); //AB.ReduceOuter();
                 // common factors of x^A and x^B are: Max(AB.sign*A, AB.sign*B) - AB.sign*|A - B|
                 Oper commonFactorExponent = new Funcs.Max(ABsign.Mult(A), ABsign.Mult(B)).Subtract(ABsign.Mult(new Funcs.Abs(A.Subtract(B))));
-                PowTowRootLog commonFactor;
+                ExpLog commonFactor;
                 if (commonFactorExponent.IsDetermined)
-                    commonFactor = facPos.posArgs[0].Pow(commonFactorExponent.Solution());
+                    commonFactor = facPos.posArgs[0].Pow(commonFactorExponent.Sol());
                 else
                     commonFactor = facPos.posArgs[0].Pow(commonFactorExponent);
                 commonFactors.Numerator.Add(commonFactor);
@@ -290,7 +291,7 @@ public abstract partial class Oper : IFunction
         /* Find positive common factors */
         foreach (Oper facNeg in facs0.Denominator)
         {
-            if (facNeg is not PowTowRootLog)
+            if (facNeg is not ExpLog)
                 throw Scribe.Issue($"Factor {facNeg} is not a PowTowRootLog!");
             if (basesNeg.Contains(facNeg.posArgs[0], ol))
             {
@@ -298,9 +299,9 @@ public abstract partial class Oper : IFunction
                 Oper B = new Funcs.Abs(o.Degree(facNeg.posArgs[0]));
                 Oper ABsign = new Funcs.Sign(A.Mult(B)); //AB.ReduceOuter();
                 Oper commonFactorExponent = new Funcs.Max(ABsign.Mult(A), ABsign.Mult(B)).Subtract(ABsign.Mult(new Funcs.Abs(A.Subtract(B))));
-                PowTowRootLog commonFactor;
+                ExpLog commonFactor;
                 if (commonFactorExponent.IsDetermined)
-                    commonFactor = facNeg.posArgs[0].Pow(commonFactorExponent.Solution());
+                    commonFactor = facNeg.posArgs[0].Pow(commonFactorExponent.Sol());
                 else
                     commonFactor = facNeg.posArgs[0].Pow(commonFactorExponent);
                 commonFactors.Denominator.Add(commonFactor);
@@ -320,7 +321,7 @@ public abstract partial class Oper : IFunction
         {
             if (o1.IsDetermined)
             {
-                return o0.Solution().Val < o1.Solution().Val;
+                return o0.Sol().Value < o1.Sol().Value;
             }
             else
                 return true;
@@ -336,7 +337,7 @@ public abstract partial class Oper : IFunction
         if (o0.IsDetermined)
         {
             if (o1.IsDetermined)
-                return o0.Solution().Val > o1.Solution().Val;
+                return o0.Sol().Value > o1.Sol().Value;
             else
                 return true;
         }
@@ -355,7 +356,7 @@ public abstract partial class Oper : IFunction
         if (this is Variable v && o is Variable u)
         {
             if (v.Found && u.Found)
-                return v.Val == u.Val;
+                return ((IVal)v).EqValue(u);
             else
                 return v == u;
         }
@@ -378,7 +379,7 @@ public abstract partial class Oper : IFunction
             {typeof(Variable),  ('v', 'V')},
             {typeof(SumDiff),   ('-', '+')},
             {typeof(Fraction),  ('/', '*')},
-            {typeof(PowTowRootLog),  ('R', '^')},
+            {typeof(ExpLog),  ('R', '^')},
             {typeof(Funcs.Abs), ('|', '|')},
             {typeof(Funcs.Min), ('m', 'm')},
             {typeof(Funcs.Max), ('M', 'M')}
@@ -399,7 +400,7 @@ public abstract partial class Oper : IFunction
             {
                 string leafOrd;
                 if (v.Found)
-                    leafOrd = $"#{v.Val}#";
+                    leafOrd = $"#{v}#";
                 else
                     leafOrd = $"${v.Name}$";
                 totalLeaves += leafOrd.Length;
@@ -417,7 +418,7 @@ public abstract partial class Oper : IFunction
             {
                 string leafOrd;
                 if (v.Found)
-                    leafOrd = $"#{v.Val}#";
+                    leafOrd = $"#{((IVal)v).All.Length},{v}#";
                 else
                     leafOrd = $"${v.Name}$";
                 totalLeaves += leafOrd.Length;
@@ -429,7 +430,7 @@ public abstract partial class Oper : IFunction
         if (this is Variable u)
         {
             if (u.Found)
-                ord += $"#{u.Val}#";
+                ord += $"#{u}#";
             else
                 ord += $"${u.Name}$";
         }

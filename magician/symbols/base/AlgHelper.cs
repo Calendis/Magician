@@ -43,8 +43,8 @@ public abstract partial class Oper
         if (Identity is null)
             throw Scribe.Issue($"{this} has no identity to drop");
         // Drop identities
-        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
-        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Val == Identity)).ToList();
+        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Get() == Identity)).ToList();
+        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Get() == Identity)).ToList();
     }
     internal void MakeExplicit(int? i=null)
     {

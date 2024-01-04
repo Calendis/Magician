@@ -39,7 +39,7 @@ public class MapPlotting : Spell
         Origin["plot3"] = ipm.Plot(
             new PlotOptions(AxisSpecifier.X, new(-250, 250, 20)),
             new(AxisSpecifier.Z, new(-250, 250, 20))
-        ).Positioned(0, 0, 600);
+        ).To(0, 0, 600);
 
         Equation ipmCompare = new(
             Var("y"),

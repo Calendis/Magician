@@ -50,7 +50,7 @@ public class EqPlotting : Spell
             Ref.Perspective.y.Delta(-walkSpeed);
         }
 
-        Var("time").Val = 0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 3) + 0.1;
+        Var("time").Set(0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 3) + 0.1);
         Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
             (Var("x"), new(AxisSpecifier.X, new(-300, 300, 20))),
             (Var("z"), new(AxisSpecifier.Z, new(-300, 300, 20)))
@@ -74,7 +74,7 @@ public class EqPlotting : Spell
             )
         );
         plotTest3d = new(
-        new SumDiff(new PowTowRootLog(new List<Oper>{Var("x"), Val(2)}, new List<Oper>{}), Val(0), new PowTowRootLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{}), Val(0), new PowTowRootLog(new List<Oper>{Var("z"), Val(2)}, new List<Oper>{})),
+        new SumDiff(new ExpLog(new List<Oper>{Var("x"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("z"), Val(2)}, new List<Oper>{})),
             Fulcrum.EQUALS,
             new Fraction(Var("time"), Val(0.0000135))
         );

@@ -35,10 +35,10 @@ public class Equation : IRelation
         Ins = Unknowns.Count - 1;
     }
 
-    double[] IRelation.Evaluate(params double[] args)
-    {
-        return Approximate(args);
-    }
+    //double[] IRelation.Evaluate(params double[] args)
+    //{
+    //    return Approximate(args);
+    //}
 
     internal enum SolveMode
     {
@@ -100,7 +100,7 @@ public class Equation : IRelation
                 }
                 else if (!(deg > minDegree))
                 {
-                    if (deg.Solution().Val == 0)
+                    if (deg.Sol().Value.Get() == 0)
                         Scribe.Warn($"deg was 0");
                     minDegree = deg;
                     chosenSolveVar = uk;
@@ -472,6 +472,11 @@ public class Equation : IRelation
                 break;
         }
         return $"{LHS} {fulcrumString} {RHS}";
+    }
+
+    IMultival IRelation.Evaluate(params double[] args)
+    {
+        throw new NotImplementedException();
     }
 }
 // The fulcrum is the =, >, <, etc.

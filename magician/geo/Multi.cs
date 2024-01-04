@@ -3,6 +3,7 @@ using Magician.Geo;
 using Magician.Renderer;
 using Magician.Maps;
 using Silk.NET.Maths;
+using Magician.Symbols;
 
 namespace Magician;
 
@@ -38,7 +39,9 @@ public class Multi : Vec3, ICollection<Multi>
         {
             if (parent is null)
             {
-                throw Scribe.Error($"Orphan detected {tag}");
+                if (this == Ref.Origin)
+                    throw Scribe.Error($"Cannot get parent of origin");
+                throw Scribe.Error($"Orphan detected");
             }
             return parent;
         }
@@ -69,97 +72,77 @@ public class Multi : Vec3, ICollection<Multi>
             yaw = -Math.Atan2(value.x.Get(), value.z.Get());
         }
     }
-    Quantity RecursX
+    double RecursX
     {
         get
         {
             // Base case (top of the tree)
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return x;
-            }
-
+            if (parent is null)
+                return x.Get();
             // Recurse up the tree of Multis to find your position relative to the origin
-            return x.GetDelta(Parent.RecursX.Get());
+            return x.Get() + Parent.RecursX;
         }
     }
-    Quantity RecursY
+    double RecursY
     {
         get
         {
-            // Base case (top of the tree)
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return y;
-            }
-            // Recurse up the tree of Multis to find your position relative to the origin
-            return y.GetDelta(Parent.RecursY.Get());
+            if (parent is null)
+                return y.Get();
+            return y.Get() + Parent.RecursY;
         }
     }
-    Quantity RecursZ
+    double RecursZ
     {
         get
         {
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return z;
-            }
-            return z.GetDelta(Parent.RecursZ.Get());
+            if (parent is null)
+                return z.Get();
+            return z.Get() + Parent.RecursZ;
         }
     }
-    Quantity RecursHeadingX
+    double RecursHeadingX
     {
         get
         {
-            // TODO: This is bad
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return Heading.x;
-            }
-            return Heading.x.GetDelta(Parent.RecursHeadingX.Get());
+            if (parent is null)
+                return Heading.x.Get();
+            return x.Get() + Parent.RecursHeadingX;
         }
     }
-    Quantity RecursHeadingY
+    double RecursHeadingY
     {
         get
         {
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return Heading.y;
-            }
-            return Heading.y.GetDelta(Parent.RecursHeadingY.Get());
+            if (parent is null)
+                return Heading.y.Get();
+            return y.Get() + Parent.RecursHeadingY;
         }
     }
-    Quantity RecursHeadingZ
+    double RecursHeadingZ
     {
         get
         {
-            if (Ref.AllowedOrphans.Contains(this))
-            {
-                return Heading.z;
-            }
-            return Heading.z.GetDelta(Parent.RecursHeadingZ.Get());
+            if (parent is null)
+                return Heading.z.Get();
+            return z.Get() + Parent.RecursHeadingZ;
         }
     }
-    // Theta_x
-    public double thX => RecursHeadingX.Get();
-    public double thY => RecursHeadingY.Get();
-    public double thZ => RecursHeadingZ.Get();
 
     // Big X is the x-position relative to (0, 0)
     public double X
     {
-        get => RecursX.Get();
+        get => RecursX;
     }
     // Big Y is the Y-position relative to (0, 0)
     public double Y
     {
-        get => RecursY.Get();
+        get => RecursY;
     }
     // Big Z is the z-position relative to (0, 0)
     public double Z
     {
-        get => RecursZ.Get();
+        get => RecursZ;
     }
 
     /* NEVER REASSIGN A MULTI VARIABLE LIKE THIS: */
@@ -331,12 +314,12 @@ public class Multi : Vec3, ICollection<Multi>
 
     public Multi Translated(double xOffset, double yOffset, double zOffset = 0)
     {
-        x.Incr(xOffset);
-        y.Incr(yOffset);
-        z.Incr(zOffset);
+        x.Set(x + xOffset);
+        y.Set(y + yOffset);
+        z.Set(z + zOffset);
         return this;
     }
-    public Multi Positioned(double x, double y, double? z = null)
+    public Multi To(double x, double y, double? z = null)
     {
         this.x.Set(x);
         this.y.Set(y);
@@ -345,6 +328,17 @@ public class Multi : Vec3, ICollection<Multi>
             this.z.Set((double)z);
         }
         return this;
+    }
+    public Multi To(IVal mv)
+    {
+        if (mv.Dims > 3)
+            throw Scribe.Error($"Could not move Multi to {mv}");
+        double[] pos = new double[3];
+        for (int i = 0; i < mv.Dims; i++)
+        {
+            pos[i] = mv.Get(i);
+        }
+        return To(pos[0], pos[1], pos[2]);
     }
 
     /* Rotation methods */
@@ -423,20 +417,19 @@ public class Multi : Vec3, ICollection<Multi>
         return this;
     }
 
-
     /*
         Movement methods 
      */
     public void Forward(double amount)
     {
-        Vec newPos = this + Heading * amount;
+        Vec newPos = this + ((IMultival)Heading) * amount;
         x.Set(newPos.x);
         y.Set(newPos.y);
         z.Set(newPos.z);
     }
     public void Strafe(double amount)
     {
-        Vec newPos = this + Heading.YawPitchRotated(-Math.PI / 2, 0) * amount;
+        Vec newPos = ((IMultival)this) + ((IMultival)Heading.YawPitchRotated(-Math.PI / 2, 0)) * amount;
         x.Set(newPos.x);
         y.Set(newPos.y);
         z.Set(newPos.z);
@@ -535,7 +528,7 @@ public class Multi : Vec3, ICollection<Multi>
     {
         List<double> xs = new List<double>();
         List<double> ys = new List<double>();
-        Multi c = new Multi().Positioned(x.Get(), y.Get(), z.Get());
+        Multi c = new Multi().To(x.Get(), y.Get(), z.Get());
         foreach (Multi cst in constituents)
         {
             bool addMe = true;
@@ -737,7 +730,7 @@ public class Multi : Vec3, ICollection<Multi>
             );
 
             // These two vectors define the camera
-            Vec3 targV = Geo.Ref.Perspective + Geo.Ref.Perspective.Heading;
+            Vec3 targV = (Ref.Perspective + (IMultival)Ref.Perspective.Heading).ToVec3();
             Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
 
             // Matrix magic
@@ -850,7 +843,7 @@ public class Multi : Vec3, ICollection<Multi>
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
         if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
-        {            
+        {
             List<int> ect = EarCut.Triangulate(projectedVerts);
             if (ect.Count % 3 != 0)
             {

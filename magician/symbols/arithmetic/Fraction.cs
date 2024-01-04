@@ -10,19 +10,19 @@ public class Fraction : Arithmetic
     public List<Oper> Numerator => posArgs;
     public List<Oper> Denominator => negArgs;
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        double quo = 1;
+        IVal quo = new ValWrapper(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                quo *= v.Val;
+                quo *= v.Sol();
             else
-                quo *= o.Solution().Val;
+                quo *= o.Sol();
         foreach (Oper o in negArgs)
             if (o is Variable v)
-                quo /= v.Val;
+                quo /= v.Sol();
             else
-                quo /= o.Solution().Val;
+                quo /= o.Sol();
         return new Variable(quo);
     }
 
@@ -48,9 +48,9 @@ public class Fraction : Arithmetic
             Oper fac = ordToOper[ord];
             Variable deg = new(ordToCount[ord]);
             //Scribe.Info($"\t\tfac, deg: {fac}, {deg}");
-            if (deg.Val > 0)
+            if (((IVal)deg) > new Variable(0))
                 factors.Numerator.Add(fac.Pow(deg));
-            else if (deg.Val < 0)
+            else if (((IVal)deg) < new Variable(0))
                 factors.Denominator.Add(fac.Pow(deg));
         }
         return factors;
@@ -58,7 +58,7 @@ public class Fraction : Arithmetic
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
-        if (AB.IsDetermined && AB.Solution().Val == 1)
+        if (AB.IsDetermined && AB.Sol().Value.Get() == 1)
         {
             if (aPositive)
                 if (bPositive)
@@ -82,17 +82,17 @@ public class Fraction : Arithmetic
         
         ABbar.Reduce(2);
         Oper combined;
-        if (A is Variable av && av.Found && av.Val == 1)
+        if (A is Variable av && av.Found && av.Value.Get() == 1)
         {
             //Scribe.Info($"\t\t\tCase B: {B}");
             combined = B;
         }
-        else if (B is Variable bv && bv.Found && bv.Val == 1)
+        else if (B is Variable bv && bv.Found && bv.Value.Get() == 1)
         {
             //Scribe.Info($"\t\t\tCase A: {A}");
             combined = A;
         }
-        else if (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Val == 1)
+        else if (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Value.Get() == 1)
         {
             //Scribe.Info($"\t\t\tCase ABbar: {ABbar}");
             combined = ABbar;

@@ -36,7 +36,7 @@ public class SolvedEquation : InverseParamMap
         return plot;
     }
 
-    public new double Evaluate(params double[] vals)
+    public new IVal Evaluate(params double[] vals)
     {
         int expectedArgs = eq.Unknowns.Count - eq.Sliders.Count - 1;
         if (vals.Length != expectedArgs)
@@ -56,12 +56,12 @@ public class SolvedEquation : InverseParamMap
         //Scribe.Warn($"Got vals: {Scribe.Expand<List<double>, double>(vals.ToList())}, for vars {Scribe.Expand<List<Variable>, Variable>(unknowns)}");
         foreach (Variable x in unknowns)
         {
-            x.Val = vals[counter++];
+            x.Set(vals[counter++]);
         }
 
-        Variable result = opposite.Solution();
+        Variable result = opposite.Sol();
         unknowns.ForEach(v => v.Reset());
-        return result.Val;
+        return result;
     }
 
     public override string ToString()

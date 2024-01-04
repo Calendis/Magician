@@ -8,19 +8,19 @@ public class SumDiff : Arithmetic
     // TODO: expand Notate and drop support for this constructor
     public SumDiff(params Oper[] ops) : base("sumdiff", ops) { }
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b) { }
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        double total = 0;
+        IVal total = new ValWrapper(0);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                total += v.Val;
+                total += v.Sol();
             else
-                total += o.Solution().Val;
+                total += o.Sol();
         foreach (Oper o in negArgs)
             if (o is Variable v)
-                total -= v.Val;
+                total -= v.Sol();
             else
-                total -= o.Solution().Val;
+                total -= o.Sol();
         return new Variable(total);
     }
 
@@ -60,9 +60,9 @@ public class SumDiff : Arithmetic
 
         ABbar.Reduce(2);
         Oper combined;
-        if (A is Variable av && av.Found && av.Val == 0)
+        if (A is Variable av && av.Found && ((IVal)av).Magnitude() == 0)
             combined = B;
-        else if (B is Variable bv && bv.Found && bv.Val == 0)
+        else if (B is Variable bv && bv.Found && ((IVal)bv).Magnitude() == 0)
             combined = A;
         else
             combined = AB.Mult(ABbar);

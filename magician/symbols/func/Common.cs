@@ -26,9 +26,9 @@ public class Abs : Oper
         posArgs.Add(o);
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        return new Variable(Math.Abs(posArgs[0].Solution().Val));
+        return new Variable(((IVal)AllArgs[0].Sol()).Magnitude());
     }
 
     public override string ToString()
@@ -58,12 +58,12 @@ public class Sign : Oper
         posArgs.Add(o);
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        double result = posArgs[0].Solution().Val;
-        if (result == 0)
+        IVal result = posArgs[0].Sol();
+        if (result.Get() == 0)
             return new Variable(0);
-        else if (result > 0)
+        else if (result.Get() > 0)
             return new Variable(1);
         else
             return new Variable(-1);
@@ -98,18 +98,18 @@ public class Max : Oper
         return new Max(pa, na);
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        List<Variable> sols = AllArgs.Select(a => a.Solution()).ToList();
+        List<Variable> sols = AllArgs.Select(a => a.Sol()).ToList();
         //Scribe.Info($"  Max sols: {Scribe.Expand<List<Variable>, Variable>(sols)}");
         // TODO: find out why .Max wasn't working with my IComparer implementation
         //Scribe.Info($"  Sol: {AllArgs.Select(a => a.Solution()).Max() ?? throw Scribe.Error("Undefined")}");
         //return AllArgs.Select(a => a.Solution()).Max() ?? throw Scribe.Error("Undefined");
         int maxIdx = 0;
-        double max = double.MinValue;
+        IVal max = new Variable(double.MinValue);
         for (int i = 0; i < sols.Count; i++)
         {
-            double sol = sols[i].Solution().Val;
+            IVal sol = sols[i].Sol();
             if (sol > max)
             {
                 max = sol;
@@ -155,9 +155,9 @@ public class Min : Oper
         return new Min(pa, na);
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
-        return AllArgs.Select(a => a.Solution()).Min() ?? throw Scribe.Error("Undefined");
+        return AllArgs.Select(a => a.Sol()).Min() ?? throw Scribe.Error("Undefined");
     }
 
     public override void ReduceOuter()

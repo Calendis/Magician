@@ -4,13 +4,13 @@ using Silk.NET.Maths;
 public class Vec3 : Vec
 {
     public Vec3(double x, double y, double z) : base(x, y, z) { }
-    public Vec3(Quantity[] xyz) : base(xyz)
-    {
-        if (xyz.Length != 3)
-        {
-            throw Scribe.Error($"Cannot store {xyz.Length} values in 3-vector");
-        }
-    }
+    //public Vec3(Quantity[] xyz) : base(xyz)
+    //{
+    //    if (xyz.Length != 3)
+    //    {
+    //        throw Scribe.Error($"Cannot store {xyz.Length} values in 3-vector");
+    //    }
+    //}
     public Vec3(double[] xyz) : base(xyz)
     {
         if (xyz.Length != 3)
@@ -100,27 +100,27 @@ public class Vec3 : Vec
     }
 
     // TODO: find a better pattern for these... if only we had int literal types
-    public static Vec3 operator +(Vec3 v1, Vec3 v2)
-    {
-        return new(v1.vecArgs.Select((x, i) => x + v2.vecArgs[i]).ToArray());
-    }
-    public static Vec3 operator -(Vec3 v1, Vec3 v2)
-    {
-        return new(v1.vecArgs.Select((x, i) => x - v2.vecArgs[i]).ToArray());
-    }
-    // Scalar multiplication
-    public static Vec3 operator *(Vec3 v1, double x)
-    {
-        return new(v1.vecArgs.Select(va => va.Get() * x).ToArray());
-    }
-    public Vec3 Normalized()
-    {
-        double m = Magnitude;
-        List<double> news = new();
-        foreach (Quantity q in vecArgs)
-        {
-            news.Add(q.Get() / m);
-        }
-        return new(news.ToArray());
-    }
+    //public static Vec3 operator +(Vec3 v1, Vec3 v2)
+    //{
+    //    return new(v1.vecArgs.Select((x, i) => x + v2.vecArgs[i]).ToArray());
+    //}
+    //public static Vec3 operator -(Vec3 v1, Vec3 v2)
+    //{
+    //    return new(v1.vecArgs.Select((x, i) => x - v2.vecArgs[i]).ToArray());
+    //}
+    //// Scalar multiplication
+    //public static Vec3 operator *(Vec3 v1, double x)
+    //{
+    //    return new(v1.vecArgs.Select(va => va.Get() * x).ToArray());
+    //}
+    //public Vec3 Normalized()
+    //{
+    //    double m = Magnitude;
+    //    List<double> news = new();
+    //    foreach (Quantity q in vecArgs)
+    //    {
+    //        news.Add(q.Get() / m);
+    //    }
+    //    return new(news.ToArray());
+    //}
 }

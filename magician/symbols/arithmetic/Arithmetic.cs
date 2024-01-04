@@ -24,17 +24,21 @@ public abstract class Arithmetic : Invertable
         List<Oper> negDetermined = negArgs.Where(o => o.IsDetermined).ToList();
         posArgs.RemoveAll(o => o.IsDetermined);
         negArgs.RemoveAll(o => o.IsDetermined);
-        double posMag = New(posDetermined, new List<Oper> { }).Solution().Val;
-        double negMag = New(negDetermined, new List<Oper> { }).Solution().Val;
+        double posMag = New(posDetermined, new List<Oper> { }).Sol().Value.Get();
+        double negMag = New(negDetermined, new List<Oper> { }).Sol().Value.Get();
+        //Scribe.Info<List<Oper>, Oper>(posDetermined);
+        //Scribe.Info<List<Oper>, Oper>(negDetermined);
+        //Scribe.Info($"posmag: {posMag}");
+        //Scribe.Info($"negmag: {negMag}");
         Variable consts;
         if (posMag >= negMag)
         {
-            consts = New(posDetermined, negDetermined).Solution();
+            consts = New(posDetermined, negDetermined).Sol();
             posArgs.Add(consts);
         }
         else
         {
-            consts = New(negDetermined, posDetermined).Solution();
+            consts = New(negDetermined, posDetermined).Sol();
             negArgs.Add(consts);
         }
 

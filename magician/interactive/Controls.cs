@@ -26,7 +26,7 @@ public abstract class Clickable : InteractiveControl
     protected Clickable(double x, double y, Action? a) : base(x, y, Sensor.MouseOver, a) { }
     public override void Update()
     {
-        hovered = controlSensor.Evaluate(0) > 0;
+        hovered = controlSensor.Evaluate().Get() > 0;
     }
 }
 

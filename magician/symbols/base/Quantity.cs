@@ -6,18 +6,18 @@
 */
 namespace Magician;
 
-/*
-public class Quantity
+
+public class Quantity_old
 {
     //List<IMap> drivers = new List<IMap>();
 
     protected double q;
     // Setting the relative offset is useful when you want to offset a quantity while keeping the same reference
-    public Quantity(double q)
+    public Quantity_old(double q)
     {
         this.q = q;
     }
-    public Quantity(Quantity qq)
+    public Quantity_old(Quantity_old qq)
     {
         q = qq.Get();
         //drivers.AddRange(qq.drivers);
@@ -27,7 +27,7 @@ public class Quantity
     {
         q = x;
     }
-    public void Set(Quantity oq)
+    public void Set(Quantity_old oq)
     {
         this.q = oq.q;
     }
@@ -40,23 +40,23 @@ public class Quantity
     {
         return q + offset;
     }
-    public Quantity Delta(double x)
+    public Quantity_old Delta(double x)
     {
         q += x;
         return this;
     }
-    public Quantity GetDelta(double x)
+    public Quantity_old GetDelta(double x)
     {
-        return new Quantity(q + x);
+        return new Quantity_old(q + x);
     }
 
-    public static Quantity operator +(Quantity q1, Quantity q2)
+    public static Quantity_old operator +(Quantity_old q1, Quantity_old q2)
     {
-        return new Quantity(q1.q + q2.q);
+        return new Quantity_old(q1.q + q2.q);
     }
-    public static Quantity operator-(Quantity q1, Quantity q2)
+    public static Quantity_old operator-(Quantity_old q1, Quantity_old q2)
     {
-        return new Quantity(q1.q - q2.q);
+        return new Quantity_old(q1.q - q2.q);
     }
 
     // Driver code
@@ -90,4 +90,3 @@ public class Quantity
         return "Quantity " + q.ToString();
     }
 }
-*/

@@ -78,7 +78,7 @@ public class Form : Oper
         throw new NotImplementedException();
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
         throw new NotImplementedException();
     }

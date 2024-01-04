@@ -8,7 +8,7 @@ public static class Ref
     public static Multi Origin { get; internal set; }
     public static Multi Perspective { get; }
     public static Multi Undefined { get; internal set; }
-    public static List<Multi> AllowedOrphans;
+    //public static List<Multi> AllowedOrphans;
     public static Vec3 DefaultHeading = new(0,0,-1);
     public static double FOV
     {
@@ -23,12 +23,12 @@ public static class Ref
         FOV = 90;
         Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
 
-        AllowedOrphans = new List<Multi>()
-            {
-                Origin,
-                Perspective,
-                Undefined
-            };
+        //AllowedOrphans = new List<Multi>()
+        //    {
+        //        Origin,
+        //        Perspective,
+        //        Undefined
+        //    };
     }
 }
 public static class Create
@@ -102,7 +102,7 @@ public static class Create
             //.Textured(
              //   new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render()
             //)
-        ).Positioned(x, y);
+        ).To(x, y);
     }
 
     // Create a regular polygon with a position, number of sides, color, and magnitude
@@ -119,7 +119,7 @@ public static class Create
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
-        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
+        return ps.To(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
 
     }
     public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
@@ -146,7 +146,7 @@ public static class Create
             ps.Add(Point(outerX, outerY, col));
         }
 
-        return ps.Positioned(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
+        return ps.To(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
     public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
@@ -163,12 +163,12 @@ public static class Create
         Multi container = new();
         for (double x = start; x < end; x += spacing)
         {
-            List<double> pos = pm.Evaluate(x).ToList();
+            List<double> pos = pm.Evaluate(x).Values.Select(ival => ival.Get()).ToList();
             while (pos.Count < 3)
             {
                 pos.Add(0);
             }
-            container.Add(template.Copy().Positioned(pos[0], pos[1], pos[2]));
+            container.Add(template.Copy().To(pos[0], pos[1], pos[2]));
         }
         return container;
     }

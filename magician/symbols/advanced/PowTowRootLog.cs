@@ -1,17 +1,17 @@
 namespace Magician.Symbols;
 
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
-public class PowTowRootLog : Invertable
+public class ExpLog : Invertable
 {
     protected override int? Identity => 1;
 
-    public PowTowRootLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("pwtwrtlg", posArgs, negArgs)
+    public ExpLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("explog", posArgs, negArgs)
     {
         if (!posArgs.Any())
             this.posArgs.Add(new Variable((int)Identity!));
         trivialAssociative = true;
     }
-    public PowTowRootLog(params Oper[] ops) : base("pwtwrtlg", ops) { trivialAssociative = true; }
+    public ExpLog(params Oper[] ops) : base("explog", ops) { trivialAssociative = true; }
 
     public override Oper Degree(Oper v)
     {
@@ -39,34 +39,40 @@ public class PowTowRootLog : Invertable
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
     {
-        return new PowTowRootLog(pa, na);
+        return new ExpLog(pa, na);
     }
 
-    public override Variable Solution()
+    public override Variable Sol()
     {
         if (posArgs.Count == 0)
             return new Variable(1);
 
-        Variable sol0 = posArgs[0].Solution();
+        Variable sol0 = posArgs[0].Sol();
         Variable pos;
         //Variable neg;
         if (posArgs.Count == 0)
             pos = new Variable(1);
         else if (posArgs.Count == 1)
-            pos = posArgs[0].Solution();
+            pos = posArgs[0].Sol();
         else if (posArgs.Count == 2)
-            pos = new Variable(Math.Pow(sol0.Val, posArgs[1].Solution().Val));
+            pos = new(IVal.Exp(sol0, posArgs[1].Sol()));
+            //pos = new Variable(Math.Pow(sol0.Val, posArgs[1].Solution().Val));
         else
-            pos = new PowTowRootLog(new List<Oper> { sol0, new PowTowRootLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Solution();
+            pos = new ExpLog(new List<Oper> { sol0, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
 
         if (negArgs.Count == 0)
             return pos;
         else if (negArgs.Count == 1)
         {
-            return new Variable(Math.Log(pos.Solution().Val, negArgs[0].Solution().Val));
+            return new(IVal.Log(pos, negArgs[0].Sol()));
         }
         else
-            return new Variable(Math.Log(new PowTowRootLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Solution().Val, negArgs[^1].Solution().Val));
+        {
+            return new(IVal.Log(
+                new ExpLog(new List<Oper>{pos}, negArgs.SkipLast(1)).Sol(), negArgs[^1].Sol()
+            ));
+            //return new(Math.Log( new PowTowRootLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Sol().Val, negArgs[^1].Sol().Val));
+        }
     }
 
     public override void ReduceOuter()
@@ -75,7 +81,7 @@ public class PowTowRootLog : Invertable
         int? idIdx = null;
         for (int i = 0; i < posArgs.Count; i++)
         {
-            if (posArgs[i].IsConstant && posArgs[i].Solution().Val == Identity)
+            if (posArgs[i].IsConstant && posArgs[i].Sol().Value.Get() == Identity)
             {
                 idIdx = i;
                 break;
@@ -98,13 +104,13 @@ public class PowTowRootLog : Invertable
         if (runLen > 0)
         {
             List<Oper> toCombine = posArgs.TakeLast(runLen).ToList();
-            Variable combined = new PowTowRootLog(toCombine, new List<Oper> { }).Solution();
+            Variable combined = new ExpLog(toCombine, new List<Oper> { }).Sol();
             posArgs = posArgs.Take(posArgs.Count - runLen).ToList();
             posArgs.Add(combined);
         }
 
         // Remove trailing ones from negArgs
-        while (negArgs.Count > 0 && negArgs[^1] is Variable v && v.Found && v.Val == 1)
+        while (negArgs.Count > 0 && negArgs[^1] is Variable v && v.Found && v.Value.Get() == 1)
         {
             throw Scribe.Issue("this should no longer occur");
             negArgs.RemoveAt(negArgs.Count - 1);
@@ -139,7 +145,7 @@ public class PowTowRootLog : Invertable
 
     public override Oper Inverse(Oper axis, Oper? opp=null)
     {
-        PowTowRootLog inverse = new();
+        ExpLog inverse = new();
         OperLike ol = new();
         // find axis
         bool pos;
@@ -163,7 +169,7 @@ public class PowTowRootLog : Invertable
                 tower.Reverse();
                 inverse.negArgs = negArgs.Take(j).ToList();
                 inverse.posArgs = posArgs;
-                inverse = new PowTowRootLog(new List<Oper>{inverse, new PowTowRootLog(new Fraction(new Variable(1), new PowTowRootLog(tower.Append(opp).ToList(), new List<Oper>{})))}, new List<Oper>{});
+                inverse = new ExpLog(new List<Oper>{inverse, new ExpLog(new Fraction(new Variable(1), new ExpLog(tower.Append(opp).ToList(), new List<Oper>{})))}, new List<Oper>{});
 
                 
                 //inverse.posArgs = new List<Oper> { axis }.Concat(inverse.posArgs).ToList();
@@ -188,9 +194,9 @@ public class PowTowRootLog : Invertable
                 List<Oper> root = posArgs.Skip(i+1).ToList();
                 inverse.negArgs = log;
                 inverse.posArgs.Add(opp);
-                Fraction fRoot = new(new Variable(1), new PowTowRootLog(root, new List<Oper>{}));
+                Fraction fRoot = new(new Variable(1), new ExpLog(root, new List<Oper>{}));
                 //inverse.posArgs.Add(new Fraction(new Variable(1), new PowTowRootLog(root, new List<Oper>{})));
-                inverse = new PowTowRootLog(new List<Oper>{inverse, fRoot}, new List<Oper>{});
+                inverse = new ExpLog(new List<Oper>{inverse, fRoot}, new List<Oper>{});
             }
         }
 
