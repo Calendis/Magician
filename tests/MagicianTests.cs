@@ -53,14 +53,16 @@ public class SimpleAlgebraCases
         );
         // Reduce a bunch times initially
         for (int i = 0; i < 10; i++)
-            sd.SimplifyOnce();
+            sd.Simplify();
 
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
             c.Commute();
-            sd.SimplifyOnce();
+            sd.SimplifyIterated();
             sd.Commute();
+            Scribe.Info(sd);
+            Scribe.Info(c);
             Assert.Multiple(() =>
             {
                 Assert.That(sd.Like(c));
@@ -92,7 +94,7 @@ public class SimpleAlgebraCases
         SumDiff doubl = new(new List<Oper> { o.Copy(), o.Copy() }, new List<Oper> { });
         SumDiff nothing = new(o.Copy(), o.Copy());
         Scribe.Info(doubl);
-        doubl.SimplifyOnce(Var("x"));
+        doubl.Simplify(Var("x"));
         Scribe.Info(doubl);
         doubl.Reduce();
         nothing.ReduceOuter();
@@ -138,7 +140,7 @@ public class SimpleAlgebraCases
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.Simplify();
+        f.SimplifyIterated();
         f.Commute();
 
         Scribe.Info($"got: {f}, need {need}");
@@ -189,7 +191,7 @@ public class SimpleAlgebraCases
     {
         Fraction xsq = new(new List<Oper> { Var("x"), Var("x") }, new List<Oper> { });
         Scribe.Info($"have: {xsq}");
-        xsq.SimplifyOnce();
+        xsq.Simplify();
         Scribe.Info($"Got {xsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }))}");
         Assert.That(xsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }))));
     }
@@ -198,7 +200,7 @@ public class SimpleAlgebraCases
     {
         Fraction xxsq = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
         Scribe.Info($"have: {xxsq}");
-        xxsq.SimplifyOnce();
+        xxsq.Simplify();
         Scribe.Info($"Got {xxsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xxsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
@@ -207,7 +209,7 @@ public class SimpleAlgebraCases
     {
         Fraction xcb = new(new List<Oper> { Var("x"), Var("x"), Var("x") }, new List<Oper> { });
         Scribe.Info($"have: {xcb}");
-        xcb.Simplify();
+        xcb.SimplifyIterated();
         Scribe.Info($"Got {xcb}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xcb.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
@@ -225,7 +227,7 @@ public class SimpleAlgebraCases
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.Simplify();
+        f.SimplifyIterated();
         f.Commute();
 
         Scribe.Info($"got {f} need {need}");
@@ -614,7 +616,7 @@ public class AdvancedAlgebraCases
 
         // Make sure that the algebra machine can invert exponents/powers correctly
         Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
-        Assert.That(manual.Evaluate(2), Is.EqualTo(s.Evaluate(2)));
+        Assert.That(manual.Evaluate(2).Get(), Is.EqualTo(s.Evaluate(2).Get()));
     }
 
     [Test]
@@ -687,7 +689,7 @@ public class AdvancedAlgebraCases
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
         
         double a, b, c, d, e, A, B, C, D, E;
-        a = 1.05; b = 2.1; c = 2.15; d = 1.2; e = 2.25;
+        a = 1.05; b = 2; c = 2.15; d = 1.2; e = 2.25;
         A = 1.3; B = 1.35; C = 1.4; D = 1.45; E = 1.5;
 
         Assert.That(
