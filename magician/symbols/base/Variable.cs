@@ -14,7 +14,7 @@ public class Variable : Invertable, IVal
     }
     void IVal.Set(params double[] vs)
     {
-        if (vs.Length != qs.Length)
+        if (qs is not null && vs.Length != Value.Dims)
             throw Scribe.Error("Mismatch");
         qs = vs.ToArray();
     }
