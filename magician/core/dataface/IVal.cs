@@ -45,7 +45,7 @@ public interface IVal : IDimensional
     }
     public IVal Delta(params double[] vs)
     {
-        Set(vs);
+        Set(this + new ValWrapper(vs));
         return this;
     }
 
