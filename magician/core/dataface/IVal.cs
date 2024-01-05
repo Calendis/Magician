@@ -18,7 +18,7 @@ public interface IVal : IDimensional
     public bool EqValue(IVal other)
     {
         if (Dims != other.Dims)
-            if (Magnitude() == other.Magnitude() && Trim().Dims == other.Trim().Dims)
+            if (Trim().Get() == other.Trim().Get() && Trim().Dims == other.Trim().Dims)
                 return true;
             else
                 return false;
@@ -51,6 +51,15 @@ public interface IVal : IDimensional
 
     public IVal Trim()
     {
+        bool nz = false;
+        foreach (double d in All)
+            if (d != 0)
+            {
+                nz = true;
+                break;
+            }
+        if (!nz)
+            return new ValWrapper(0);
         if (Dims < 2)
             return this;
         int toTrim = 0;
