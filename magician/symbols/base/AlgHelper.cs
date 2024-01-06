@@ -40,14 +40,15 @@ public abstract partial class Oper
     }
     internal void DropIdentities()
     {
-        if (Identity is null)
-            throw Scribe.Issue($"{this} has no identity to drop");
-        // Drop identities
-        posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Get() == Identity)).ToList();
-        negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Get() == Identity)).ToList();
+        if (posArgs.Count > 1)
+            posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.Get() == Identity)).ToList();
+        if (negArgs.Count > 0)
+            negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.Get() == Identity)).ToList();
     }
     internal void MakeExplicit(int? i=null)
     {
+        if (posArgs.Count > 0)
+            return;
         if (Identity is null && i is null)
             throw Scribe.Error($"Could not make explicit {this}");
         i ??= Identity;
@@ -59,6 +60,7 @@ public abstract partial class Oper
     {
         Dictionary<string, Oper> selectedOpers = new();
         Dictionary<string, int> operCoefficients = new();
+        OperLike ol = new();
         foreach (Oper o in posArgs)
         {
             string ord = o.Ord();
