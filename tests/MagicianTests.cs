@@ -52,23 +52,73 @@ public class SimpleAlgebraCases
             new List<Oper> { }
         );
         // Reduce a bunch times initially
-        for (int i = 0; i < 10; i++)
-            sd.Simplify();
+        sd.SimplifyMax();
 
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
             c.Commute();
-            sd.SimplifyIterated();
+            sd.SimplifyMax();
             sd.Commute();
-            Scribe.Info(sd);
-            Scribe.Info(c);
+            Scribe.Info($"sd {sd} vs. c {c}");
             Assert.Multiple(() =>
             {
                 Assert.That(sd.Like(c));
                 Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
             });
         }
+    }
+    [Test]
+    public void SdStableSimplify()
+    {
+        Oper o0 = new SumDiff(Val(-1));
+        o0.Simplify();
+        Scribe.Info($"{o0.Name} {o0}");
+        Assert.That(o0.Like(new SumDiff(Val(-1))));
+
+        Oper o1 = new SumDiff(new SumDiff(Val(0)), Val(1));
+        Scribe.Info(o1);
+        o1.Simplify();
+        Scribe.Info(o1);
+        Assert.That(o1.Like(new SumDiff(Val(-1))));
+    }
+    [Test]
+    public void BrokenStableCanonical()
+    {
+        //Oper o0 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Val(0)}, new List<Oper>{Val(4)}), Val(3)}, new List<Oper>{});
+        //Scribe.Info(o0);
+        //Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
+        //Oper o0Canon = LegacyForm.Canonical(o0);
+        //Scribe.Info(o0Canon);
+        //Assert.That(o0Canon.Like(Val(-12)));
+
+        Oper o2 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Var("y")}, new List<Oper>{Val(3)}), Val(8)}, new List<Oper>{});
+        Scribe.Info($"{o2.Name} {o2}");
+        Oper o2canon = LegacyForm.Canonical(o2);
+        Scribe.Info($"{o2canon.Name} {o2canon}");
+        double x1 = o2.Evaluate(4.5).Get();
+        double x2 = o2canon.Evaluate(4.5).Get();
+        Scribe.Info($"{x1} vs. {x2}");
+
+        Var("y").Set(4.5);
+        Scribe.Info($"{o2}: {o2.Sol()} vs. {o2canon}: {o2canon.Sol()}");
+
+        Assert.That(x1, Is.EqualTo(x2));
+    }
+    [Test]
+    public void BrokenSimplify()
+    {
+        Oper o0 = new Fraction(new List<Oper>{new SumDiff(Val(1), Val(3)), Val(4)}, new List<Oper>{});
+        Scribe.Info($"{o0} = {o0.Sol()}");
+        o0.Simplify();
+        Scribe.Info(o0);
+        Assert.That(o0.Like(new Fraction(Val(-8))));
+
+        Oper o1 = new SumDiff(new Fraction(Val(0)), Val(1));
+        Scribe.Info($"{o1} = {o1.Sol()}");
+        o1.Simplify();
+        Scribe.Info(o1);
+        Assert.That(o1.Like(new SumDiff(Val(-1))));
     }
 
     [Test]
@@ -127,6 +177,27 @@ public class SimpleAlgebraCases
         Assert.That(LegacyForm.Canonical(f).Like(LegacyForm.Canonical(need)));
     }
     [Test]
+    public void Reciprocals()
+    {
+        Fraction r0 = new Fraction(Val(1), Var("x"));
+        Oper r1a = new Fraction(Var("x"), Var("x").Pow(Val(2)));
+        Oper r1b = new Fraction(Var("x"), Var("x").Mult(Var("x")));
+        Oper r2a = Val(1).Divide(Var("x").Pow(Val(2)));
+        Oper r2b = Val(1).Divide(Var("x").Mult(Var("x")));
+        Scribe.Info($"{r0}, {r1a}, {r1b}, {r2a}, {r2b}");
+        r0.Simplify();
+        r1a.Simplify(); r1b.Simplify();
+        r2a.Simplify(); r2b.Simplify();
+        Scribe.Info($"{r0}, {r1a}, {r1b}, {r2a}, {r2b}");
+
+        Assert.That(r0.Like(Val(1).Divide(Var("x"))));
+        Assert.That(r1a.Like(r1b));
+        Assert.That(r1a.Like(new Fraction(Var("x").Pow(Val(-1)))));
+        Assert.That(r2a.Like(new Fraction(Val(1), Var("x").Pow(Val(2)))));
+        Assert.That(r2b.Like(new Fraction(new List<Oper> { Val(1) }, new List<Oper> { Var("x"), Var("x") })));
+
+    }
+    [Test]
     public void XTripleYdouble()
     {
         SumDiff need = new(
@@ -140,17 +211,55 @@ public class SimpleAlgebraCases
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.SimplifyIterated();
+        f.SimplifyMax();
         f.Commute();
+        need.SimplifyMax();
 
         Scribe.Info($"got: {f}, need {need}");
         Assert.That(f.Like(need));
     }
 
     [Test]
+    public void Degrees()
+    {
+        Oper o0 = new ExpLog(new List<Oper> { Var("x"), Val(1) }, new List<Oper> { });
+        Oper o1 = Var("x");
+        Oper o2 = new ExpLog(new List<Oper> { Var("x") }, new List<Oper> { });
+        Oper o3 = new ExpLog(new List<Oper> { Var("x") }, new List<Oper> { });
+        Oper o4 = new ExpLog(new List<Oper> { Var("x") }, new List<Oper> { });
+
+        Assert.That(o0.Degree().Like(Val(1)));
+        Assert.That(o0.Degree().Like(o0.Degree(Var("x"))));
+        Assert.That(o0.Degree().Like(o1.Degree()));
+        Assert.That(o1.Degree().Like(o1.Degree(Var("x"))));
+    }
+    [Test]
+    public void Factors()
+    {
+        Oper a0 = Var("x").Mult(Var("x"));
+        Oper a1 = Var("x").Pow(Val(2));
+        Scribe.Info($"{a0.Factors().ToFraction()}, {a1.Factors().ToFraction()}");
+        Assert.That(a0.Factors().ToFraction().Like(a1.Factors().ToFraction()));
+        Oper b0 = Var("x").Mult(Var("x")).Mult(Var("x"));
+        Oper b1 = new Fraction(new List<Oper> { Var("x"), Var("x"), Var("x") }, new List<Oper> { });
+        Oper b2 = Var("x").Pow(Val(3));
+        Scribe.Info($"{b0.Factors().ToFraction()}, {b1.Factors().ToFraction()}, {b2.Factors().ToFraction()}");
+        Assert.That(b0.Factors().ToFraction().Like(b1.Factors().ToFraction()));
+        Assert.That(b0.Factors().ToFraction().Like(b2.Factors().ToFraction()));
+        Assert.That(b0.Factors().ToFraction().Like(new Fraction(Var("x").Pow(Val(3)))));
+        Oper c0 = Val(1).Divide(Var("x").Mult(Var("x")).Mult(Var("x")));
+        Oper c1 = new Fraction(new List<Oper> { }, new List<Oper> { Var("x"), Var("x"), Var("x") });
+        Oper c2 = Val(1).Divide(Var("x").Pow(Val(3)));
+        Scribe.Info($"{c0.Factors().ToFraction()}, {c1.Factors().ToFraction()}, {c2.Factors().ToFraction()}");
+        Assert.That(c0.Factors().ToFraction().Like(c1.Factors().ToFraction()));
+        Assert.That(c0.Factors().ToFraction().Like(c2.Factors().ToFraction()));
+        Assert.That(c0.Factors().ToFraction().Like(new Fraction(Val(1), Var("x").Pow(Val(3)))));
+    }
+
+    [Test]
     public void CommonFactors()
     {
-        Oper i0, i1;
+        Oper i0, i1, cf;
 
         // Trivial 1 intersection
         i0 = Var("x");
@@ -167,7 +276,7 @@ public class SimpleAlgebraCases
         // double x intersection
         i0 = new Fraction(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
         i1 = Var("x");
-        Oper cf = i0.CommonFactors(i1);
+        cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(LegacyForm.Shed(cf).Like(Var("x")));
@@ -183,7 +292,69 @@ public class SimpleAlgebraCases
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(LegacyForm.Shed(cf).Like(Val(1)));
 
-        //Assert.That(Oper.Intersect(i0, i1).Like(Var("x")));
+        // quadratic-x intersection
+        i0 = Var("x");
+        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf}");
+        Assert.That(LegacyForm.Shed(cf).Like(Var("x")));
+
+        // quad-quad intersection
+        i0 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf}");
+        Assert.That(LegacyForm.Shed(cf).Like(Var("x").Pow(Val(2))));
+
+        // quadratic-1/x intersection
+        i0 = new Fraction(Val(1), Var("x"));
+        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+
+        // alternate quadratic-1/x intersection
+        i0 = new ExpLog(new List<Oper> { Var("x"), Val(-1) }, new List<Oper> { });
+        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+
+        // quad-invquad intersection
+        i0 = Val(1).Divide(Var("x").Pow(Val(2)));
+        i1 = Var("x").Pow(Val(2));
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+
+        // alternate quad-invquad intersection
+        i0 = Var("x").Pow(Val(-2));
+        i1 = Var("x").Pow(Val(2));
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
+
+        // alternate quad-invquad intersection
+        i0 = Val(1).Divide(Var("x").Mult(Var("x")));
+        i1 = Var("x").Pow(Val(2));
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i1.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
+
+        //general intersection
+        i0 = new ExpLog(new List<Oper> { Var("x"), Var("n") }, new List<Oper> { });
+        i1 = new ExpLog(new List<Oper> { Var("x"), Var("k") }, new List<Oper> { });
+        cf = i0.CommonFactors(i1);
+        cf.Reduce();
+        Scribe.Info($"  {i0} CF {i1}: {cf}");
+        Assert.That(LegacyForm.Shed(cf).Like(Var("x").Pow(new Min(Var("n"), Var("k")))));
     }
 
     [Test]
@@ -199,8 +370,17 @@ public class SimpleAlgebraCases
     public void XXSquared()
     {
         Fraction xxsq = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
-        Scribe.Info($"have: {xxsq}");
+        Scribe.Info($"have: {xxsq}, {LegacyForm.Canonical(xxsq.Factors().ToFraction())}");
+        //xxsq.Commute();
         xxsq.Simplify();
+
+        Fraction xxsqWorking = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
+        xxsqWorking.Commute();
+        xxsqWorking.Simplify();
+
+        Scribe.Warn(Var("x").CommonFactors(Var("x").Pow(Val(2))));
+        Scribe.Warn(Var("x").Pow(Val(2).CommonFactors(Var("x"))));
+
         Scribe.Info($"Got {xxsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xxsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
@@ -209,7 +389,7 @@ public class SimpleAlgebraCases
     {
         Fraction xcb = new(new List<Oper> { Var("x"), Var("x"), Var("x") }, new List<Oper> { });
         Scribe.Info($"have: {xcb}");
-        xcb.SimplifyIterated();
+        xcb.SimplifyMax();
         Scribe.Info($"Got {xcb}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xcb.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
@@ -221,13 +401,13 @@ public class SimpleAlgebraCases
             new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
             new List<Oper> { }
         );
-        need.Commute();
+        need.SimplifyMax();
 
         Fraction f = new(
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.SimplifyIterated();
+        f.SimplifyMax();
         f.Commute();
 
         Scribe.Info($"got {f} need {need}");
@@ -261,7 +441,7 @@ public class SimpleAlgebraCases2
     public void CombineConstants()
     {
         SumDiff sd = new(Val(10), Val(6));
-        sd.ReduceOuter();
+        sd.Simplify();
         Assert.That(sd.Like(new SumDiff(Val(4))));
 
         ExpLog pt = new(new List<Oper> { Val(2), Val(3) }, new List<Oper> { });
@@ -349,7 +529,7 @@ public class SimpleAlgebraCases2
         manual.opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
         // Chosen arbitrarily
         double[] args = new[] { 2d, 1 };
-        Assert.That(s.Evaluate(args), Is.EqualTo(manual.Evaluate(args)));
+        Assert.That(s.Evaluate(args).Get(), Is.EqualTo(manual.Evaluate(args).Get()));
     }
 
     [Test]
@@ -489,9 +669,9 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)))
         );
-        SolvedEquation s = eq.Solved();
+        SolvedEquation s = eq.Solved(Var("y"));
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new SumDiff(new Fraction(Var("x"), Val(3)), Val(0), Var("x")), Var("y"), 1);
-        Assert.That(s.Evaluate(4.31), Is.EqualTo(manual.Evaluate(4.31)));
+        Assert.That(s.Evaluate(4.31).Get(), Is.EqualTo(manual.Evaluate(4.31).Get()));
     }
     [Test]
     public void SolveParamultipleFracSimp()
@@ -501,9 +681,11 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), Var("x"), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4)), Var("y"))
         );
-        SolvedEquation s = eq.Solved();
+        SolvedEquation s = eq.Solved(Var("y"));
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new Fraction(new SumDiff(Var("x"), new Fraction(Var("x"), Val(1.5)), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4))), Val(2)), Var("y"), 1);
-        Assert.That(s.Evaluate(3.1), Is.EqualTo(manual.Evaluate(3.1)));
+        Scribe.Info($"Need {manual}");
+        Scribe.Info($"Got {s}");
+        Assert.That(s.Evaluate(3.1).Get(), Is.EqualTo(manual.Evaluate(3.1).Get()));
     }
     [Test]
     public void SolveParamultiple()
@@ -513,9 +695,10 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new SumDiff(new SumDiff(Var("x"), Var("y")), Val(4)))
         );
-        Assert.That(eq.Solved(Var("x")).Evaluate().Get(), Is.EqualTo(-12));
-        Assert.That(eq.Solved(Var("x")).Evaluate().Get(), Is.EqualTo(-12));
-        Assert.That(eq.Solved(Var("x")).Evaluate().Get(), Is.EqualTo(-12));
+        SolvedEquation se = eq.Solved();
+        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
+        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
+        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
     }
     [Test]
     public void SolveImbalanced()
@@ -525,7 +708,8 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
-        eq.Solved(Var("x"));
+        SolvedEquation se = eq.Solved(Var("x"));
+        Assert.That(se.Evaluate(99).Get(), Is.EqualTo(125.05263157894736d));
     }
     [Test]
     public void SolveImbalanced2()
@@ -535,8 +719,9 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
-        Assert.That(eq.Solved(Var("x")).Evaluate(1).Get(), Is.EqualTo(-16));
-        Assert.That(eq.Solved(Var("x")).Evaluate(2).Get(), Is.EqualTo(-8));
+        SolvedEquation se = eq.Solved();
+        Assert.That(se.Evaluate(1).Get(), Is.EqualTo(-16));
+        Assert.That(se.Evaluate(2).Get(), Is.EqualTo(-8));
     }
     [Test]
     public void SolveDual()
@@ -546,9 +731,9 @@ public class SimpleAlgebraCases2
             Fulcrum.EQUALS,
             new SumDiff(Val(1), new Fraction(Var("x"), Val(3)))
         );
-        eq.Solved();
-        Assert.That(eq.Solved(Var("x")).Evaluate(2).Get(), Is.EqualTo(1.5));
-        Assert.That(eq.Solved(Var("x")).Evaluate(4).Get(), Is.EqualTo(0));
+        SolvedEquation se = eq.Solved();
+        Assert.That(se.Evaluate(2).Get(), Is.EqualTo(1.5));
+        Assert.That(se.Evaluate(4).Get(), Is.EqualTo(0));
     }
     [Test]
     public void SolveFluid()
@@ -683,11 +868,11 @@ public class AdvancedAlgebraCases
     public void PTRLBig()
     {
         ExpLog ptrl = new(
-            new List<Oper>{ Var("a"), Var("b"), Var("c"), Var("d"), Var("e") },
-            new List<Oper>{ Var("A"), Var("B"), Var("C"), Var("D"), Var("E") }
+            new List<Oper> { Var("a"), Var("b"), Var("c"), Var("d"), Var("e") },
+            new List<Oper> { Var("A"), Var("B"), Var("C"), Var("D"), Var("E") }
         );
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        
+
         double a, b, c, d, e, A, B, C, D, E;
         a = 1.05; b = 2; c = 2.15; d = 1.2; e = 2.25;
         A = 1.3; B = 1.35; C = 1.4; D = 1.45; E = 1.5;
@@ -704,16 +889,16 @@ public class AdvancedAlgebraCases
         SolvedEquation se = eq.Solved(Var("e")); SolvedEquation sE = eq.Solved(Var("E"));
         double y = 2.2;
 
-        Assert.That(sE.Evaluate(a,A,b,B,c,C,d,D,e,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d/y)));
-        Assert.That(sD.Evaluate(a,A,b,B,c,C,d,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), 1d/Math.Pow(E, y))));
-        Assert.That(sC.Evaluate(a,A,b,B,c,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), 1d/Math.Pow(D, Math.Pow(E, y)))));
-        Assert.That(sB.Evaluate(a,A,b,c,C,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), 1d/Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))));
-        Assert.That(sA.Evaluate(a,b,B,c,C,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), 1d/Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y)))))));
-        Assert.That(se.Evaluate(a,A,b,B,c,C,d,D,E,y).Get(), Is.EqualTo(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), d)));
-        Assert.That(sd.Evaluate(a,A,b,B,c,C,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), 1d/e)));
-        Assert.That(sc.Evaluate(a,A,b,B,C,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), 1d/Math.Pow(d, e))));
-        Assert.That(sb.Evaluate(a,A,B,c,C,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d/Math.Pow(c, Math.Pow(d, e)))));
-        Assert.That(sa.Evaluate(A,b,B,c,C,d,D,e,E,y).Get(), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d/Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
+        Assert.That(sE.Evaluate(a, A, b, B, c, C, d, D, e, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d / y)));
+        Assert.That(sD.Evaluate(a, A, b, B, c, C, d, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), 1d / Math.Pow(E, y))));
+        Assert.That(sC.Evaluate(a, A, b, B, c, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), 1d / Math.Pow(D, Math.Pow(E, y)))));
+        Assert.That(sB.Evaluate(a, A, b, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), 1d / Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))));
+        Assert.That(sA.Evaluate(a, b, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), 1d / Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y)))))));
+        Assert.That(se.Evaluate(a, A, b, B, c, C, d, D, E, y).Get(), Is.EqualTo(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), d)));
+        Assert.That(sd.Evaluate(a, A, b, B, c, C, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), 1d / e)));
+        Assert.That(sc.Evaluate(a, A, b, B, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), 1d / Math.Pow(d, e))));
+        Assert.That(sb.Evaluate(a, A, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d / Math.Pow(c, Math.Pow(d, e)))));
+        Assert.That(sa.Evaluate(A, b, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d / Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
     }
 }
 
@@ -727,7 +912,6 @@ public class Others
         Variable v2 = new(0, 1);
         Scribe.Info($"{v0}, {v1}, {v2}");
         Scribe.Info($"{v0.Ord()}, {v1.Ord()}, {v2.Ord()}");
-        //Scribe.Info($"{v0.Like(v1)}, {v1.Like(v0)}");
         Assert.That(v0.Like(v1));
         Assert.That(v0.Ord(), Is.EqualTo(v1.Ord()));
         Assert.That(v0.Ord(), Is.Not.EqualTo(v2.Ord()));
