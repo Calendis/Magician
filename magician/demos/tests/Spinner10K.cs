@@ -1,8 +1,8 @@
-using Magician.Geo;
-using Magician.Library;
-using Magician.Maps;
-
 namespace Magician.Demos.Tests;
+using Geo;
+using Library;
+using Core.Maps;
+
 public class Spinner10K : Spell
 {
     public override void PreLoop()

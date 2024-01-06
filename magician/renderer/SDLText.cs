@@ -1,7 +1,8 @@
+namespace Magician.Renderer;
+using Geo;
+
 using static SDL2.SDL;
 using static SDL2.SDL_ttf;
-
-namespace Magician.Renderer;
 
 public class Text : IDisposable
 {

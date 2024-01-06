@@ -1,10 +1,10 @@
-using Magician.Geo;
-using Magician.Interactive;
-using Magician.Library;
-using Magician.Maps;
-using Magician.Symbols;
-
 namespace Magician.Demos;
+using Core;
+using Core.Maps;
+using Geo;
+using Interactive;
+using Library;
+
 public class DefaultSpell : Spell
 {
 
@@ -16,7 +16,7 @@ public class DefaultSpell : Spell
         Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
 
         // Hexagonal grid
-        Origin["hex grid"] = new Symbols.Hexagonal(7, 7).Render(45).To(300, 0);
+        Origin["hex grid"] = new Geo.Tiles.Hexagonal(7, 7).Render(45).To(300, 0);
 
         /* Multi-line text */
         Origin["paragraph1"] = new UI.RichParagraph(0, 0, HSLA.RandomVisible(), 16, UI.Justification.CENTRE,

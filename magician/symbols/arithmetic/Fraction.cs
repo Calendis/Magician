@@ -1,4 +1,5 @@
 namespace Magician.Symbols;
+using Core;
 
 // Fraction objects represent multiplication and division operations with any number of arguments
 public class Fraction : Arithmetic
@@ -12,7 +13,7 @@ public class Fraction : Arithmetic
 
     public override Variable Sol()
     {
-        IVal quo = new ValWrapper(1);
+        IVal quo = new Number(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
                 quo *= v.Sol();

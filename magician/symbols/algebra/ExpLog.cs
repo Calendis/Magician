@@ -1,4 +1,5 @@
 namespace Magician.Symbols;
+using Core;
 
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
 public class ExpLog : Invertable

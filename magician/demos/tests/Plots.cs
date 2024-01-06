@@ -1,11 +1,10 @@
-using Magician.Geo;
-using Magician.Interactive;
-using Magician.Library;
-using Magician.Maps;
-using Magician.Symbols;
-using static Magician.Symbols.Notate;
-
 namespace Magician.Demos.Tests;
+using Core.Maps;
+using Geo;
+using Interactive;
+using Library;
+using Symbols;
+using static Magician.Symbols.Notate;
 
 public class MapPlotting : Spell
 {

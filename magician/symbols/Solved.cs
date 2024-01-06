@@ -1,5 +1,7 @@
 namespace Magician.Symbols;
-using Magician.Maps;
+using Core;
+using Core.Maps;
+using Geo;
 
 public class SolvedEquation : InverseParamMap
 {

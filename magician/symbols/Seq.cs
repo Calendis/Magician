@@ -1,4 +1,5 @@
-using Magician.Maps;
+using Magician.Core;
+using Magician.Core.Maps;
 
 namespace Magician.Symbols;
 public class Seq : DirectMap

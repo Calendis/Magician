@@ -1,6 +1,7 @@
 namespace Magician.Tests;
 using Magician.Symbols;
 using Magician.Symbols.Funcs;
+using Core;
 using static Magician.Symbols.Notate;
 using NUnit.Framework;
 

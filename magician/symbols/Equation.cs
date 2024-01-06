@@ -1,5 +1,6 @@
 namespace Magician.Symbols;
-using Magician.Maps;
+using Magician.Core.Maps;
+using Magician.Core;
 
 // TODO: make equals an Oper, as well as <, >, Onto
 public class Equation : IRelation

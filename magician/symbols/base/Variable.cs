@@ -1,5 +1,5 @@
-
 namespace Magician.Symbols;
+using Magician.Core;
 
 public class Variable : Invertable, IVal
 {

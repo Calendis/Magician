@@ -1,4 +1,5 @@
-using Magician.Maps;
+using Magician.Core;
+using Magician.Core.Maps;
 
 namespace Magician.Symbols;
 public abstract partial class Oper : IRelation
@@ -133,7 +134,7 @@ public abstract partial class Oper : IRelation
 
     IMultival IRelation.Evaluate(params double[] args)
     {
-        return new Geo.Vec(Evaluate(args));
+        return new Vec(Evaluate(args));
     }
 
     // Overall degree of the expression

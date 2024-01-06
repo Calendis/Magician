@@ -1,6 +1,4 @@
-using System;
-
-namespace Magician.Symbols;
+namespace Magician.Geo.Tiles;
 public interface ITiling
 {
     public abstract Multi Render(double d);

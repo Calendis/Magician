@@ -1,4 +1,4 @@
-namespace Magician.Maps;
+namespace Magician.Core.Maps;
 
 using Magician.Geo;
 using Magician.Symbols;
@@ -17,7 +17,7 @@ public interface IFunction : IRelation
     public new IVal Evaluate(params double[] args);
     public new IVal Evaluate(IVal args) => Evaluate(args.All);
     IMultival IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).All);
-    IMultival IRelation.Evaluate(Magician.IVal args) => new Vec(Evaluate(args.All));
+    IMultival IRelation.Evaluate(IVal args) => new Vec(Evaluate(args.All));
     int IRelation.Outs { get { return 1; } }
 }
 public interface IParametric : IRelation
@@ -25,14 +25,14 @@ public interface IParametric : IRelation
     int IRelation.Ins { get { return 1; } set { } }
     public IMultival Evaluate(double x);
     IMultival IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
-    IMultival IRelation.Evaluate(Magician.IVal args) => Evaluate(args.Get());
+    IMultival IRelation.Evaluate(IVal args) => Evaluate(args.Get());
 }
 public interface IMap : IFunction
 {
     int IRelation.Ins { get { return 1; } set { } }
     public IVal Evaluate(double x);
     IVal IFunction.Evaluate(params double[] args) => Evaluate(args[0]);
-    IVal IFunction.Evaluate(Magician.IVal args) => Evaluate(args.Get());
+    IVal IFunction.Evaluate(IVal args) => Evaluate(args.Get());
 }
 
 

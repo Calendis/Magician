@@ -1,6 +1,7 @@
-using Magician.Maps;
-
 namespace Magician.Interactive;
+
+using Core.Maps;
+using Geo;
 
 public abstract class Control : Multi
 {

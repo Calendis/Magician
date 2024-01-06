@@ -1,4 +1,4 @@
-namespace Magician;
+namespace Magician.Core;
 
 // TODO: possibly make this a generic, where IVal : IDimensional<double>, and IMultival : IDimensional<IVal>
 public interface IDimensional

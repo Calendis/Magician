@@ -1,9 +1,9 @@
-using Magician.Geo;
-using Magician.Interactive;
-using Magician.Library;
-using Magician.Maps;
-
 namespace Magician.Demos.Tests;
+using Geo;
+using Interactive;
+using Library;
+using Core.Maps;
+
 
 public class Proto3D : Spell
 {

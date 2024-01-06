@@ -1,4 +1,6 @@
 namespace Magician.Geo;
+using Magician.Core;
+
 using Silk.NET.Maths;
 
 public class Vec3 : Vec

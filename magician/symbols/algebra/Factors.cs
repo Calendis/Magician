@@ -1,4 +1,5 @@
 namespace Magician.Symbols;
+using Core;
 
 public class FactorMap
 {

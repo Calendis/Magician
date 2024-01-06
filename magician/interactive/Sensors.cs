@@ -1,5 +1,8 @@
 namespace Magician.Interactive;
-using Magician.Maps;
+using Core;
+using Core.Maps;
+using Geo;
+
 public static class Sensor
 {
     public static DirectMap MouseOver(Multi m)

@@ -1,12 +1,11 @@
-using System;
-
 /*
  * This code is a port of a C implementation of Seidel's algorithm
  * Thanks to Atul Narkhede and Dinesh Manocha
  * http://gamma.cs.unc.edu/SEIDEL/
 */
 
-namespace Seidel;
+namespace Magician.Geo.Tri.Seidel;
+using Magician.Geo;
 
 static class Alg
 {
@@ -229,17 +228,17 @@ public static class Triangulator
         //vss = vss.Distinct().ToArray();
         //Magician.Scribe.Dump<double[], double>(vss);
         // Construct an appropriate Multi from the given vertices
-        Magician.Multi m = new();
+        Multi m = new();
         //double[][] vssCcw = vss.OrderBy(vs => new Magician.Geo.Vec3(vs[0], vs[1], 0).PhaseXY).ToArray();
         foreach (double[]vs in vss)
         {
-            Magician.Multi mvs = new(vs[0], vs[1], vs[2]);
+            Multi mvs = new(vs[0], vs[1], vs[2]);
             m.Add(mvs);
         }
         //Magician.Scribe.Info(m);
         return Triangulate(m);
     }
-    public static List<int[]> Triangulate(Magician.Multi m)
+    public static List<int[]> Triangulate(Multi m)
     {
         //Magician.Multi m = new Magician.Multi();
         //m = m.Unique();

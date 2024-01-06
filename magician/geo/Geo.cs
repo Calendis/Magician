@@ -1,6 +1,6 @@
-using Magician.Maps;
-
 namespace Magician.Geo;
+using Core;
+using Core.Maps;
 
 public static class Ref
 {
@@ -221,7 +221,7 @@ public static class Check
 
         // For other shapes, grab the triangles from Siedel's algo and check each
         // TODO: account for perspective
-        List<int[]> triangles = Seidel.Triangulator.Triangulate(polygon);
+        List<int[]> triangles = Tri.Seidel.Triangulator.Triangulate(polygon);
         foreach (int[] vertexIdx in triangles)
         {
             if (vertexIdx.Length != 3) { Scribe.Issue("Renderer gave bad triangle :("); }

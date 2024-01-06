@@ -1,6 +1,6 @@
 using Magician.Symbols;
 
-namespace Magician;
+namespace Magician.Core;
 
 public interface IVal : IDimensional
 {
@@ -37,15 +37,9 @@ public interface IVal : IDimensional
         return Math.Sqrt(total);
     }
 
-    // TODO: this SHOULD work, but keep an eye on it
-    public IVal Delta(IVal iv)
-    {
-        Set(this + iv);
-        return this;
-    }
     public IVal Delta(params double[] vs)
     {
-        Set(this + new ValWrapper(vs));
+        Set(this + new Number(vs));
         return this;
     }
 
@@ -59,7 +53,7 @@ public interface IVal : IDimensional
                 break;
             }
         if (!nz)
-            return new ValWrapper(0);
+            return new Number(0);
         if (Dims < 2)
             return this;
         int toTrim = 0;
@@ -71,7 +65,7 @@ public interface IVal : IDimensional
             else
                 break;
         }
-        return new ValWrapper(All.SkipLast(toTrim).ToArray());
+        return new Number(All.SkipLast(toTrim).ToArray());
     }
 
     public static bool operator <(IVal iv0, IVal iv1)
@@ -87,32 +81,32 @@ public interface IVal : IDimensional
 
     public static IVal operator +(IVal i, IVal v)
     {
-        return new ValWrapper(i.All.Zip(v.All, (a, b) => a + b).ToArray());
+        return new Number(i.All.Zip(v.All, (a, b) => a + b).ToArray());
     }
     public static IVal operator -(IVal i, IVal v)
     {
-        return new ValWrapper(i.All.Zip(v.All, (a, b) => a - b).ToArray());
+        return new Number(i.All.Zip(v.All, (a, b) => a - b).ToArray());
     }
     public static IVal operator +(IVal i, double x)
     {
         double[] newAll = i.All.ToArray();
         newAll[0] += x;
-        return new ValWrapper(newAll);
+        return new Number(newAll);
     }
     public static IVal operator -(IVal i, double x)
     {
         double[] newAll = i.All.ToArray();
         newAll[0] -= x;
-        return new ValWrapper(newAll);
+        return new Number(newAll);
     }
     // Multiplication supported for one or two dimensions
     public static IVal operator *(IVal i, double x)
     {
-        return new ValWrapper(i.All.Select(k => k*x).ToArray());
+        return new Number(i.All.Select(k => k*x).ToArray());
     }
     public static IVal operator /(IVal i, double x)
     {
-        return new ValWrapper(i.All.Select(k => k/x).ToArray());
+        return new Number(i.All.Select(k => k/x).ToArray());
     }
     public static IVal operator *(IVal i, IVal v)
     {
@@ -120,7 +114,7 @@ public interface IVal : IDimensional
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new ValWrapper(a*c - b*c, a*d + b*c);
+        return new Number(a*c - b*c, a*d + b*c);
     }
     public static IVal operator /(IVal i, IVal v)
     {
@@ -128,32 +122,33 @@ public interface IVal : IDimensional
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new ValWrapper((a*c + b*d)/(c*c + d*d), (b*c - a*d)/(c*c + d*d));
+        return new Number((a*c + b*d)/(c*c + d*d), (b*c - a*d)/(c*c + d*d));
     }
 
     public static IVal Exp(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new ValWrapper(Math.Pow(i.Get(), v.Get()));
+            return new Number(Math.Pow(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
     public static IVal Log(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new ValWrapper(Math.Log(i.Get(), v.Get()));
+            return new Number(Math.Log(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex logarithms");
     }
 
+    // TODO: remove this method, as Number is now public
     public static IVal FromLiteral(double x)
     {
-        return new ValWrapper(x);
+        return new Number(x);
     }
 }
 
-internal class ValWrapper : IVal
+public class Number : IVal
 {
     private double[] vals;
-    public ValWrapper(params double[] ds)
+    public Number(params double[] ds)
     {
         vals = ds.ToArray();
     }

@@ -1,11 +1,11 @@
-using System.Collections;
-using Magician.Geo;
-using Magician.Renderer;
-using Magician.Maps;
-using Silk.NET.Maths;
-using Magician.Symbols;
+namespace Magician.Geo;
+using Core;
+using Core.Maps;
+using Renderer;
 
-namespace Magician;
+using System.Collections;
+using Silk.NET.Maths;
+
 
 public enum DrawMode : short
 {

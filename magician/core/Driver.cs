@@ -1,5 +1,6 @@
-namespace Magician;
-using Magician.Maps;
+namespace Magician.Core;
+using Maps;
+using Geo;
 
 public class Driver
 {

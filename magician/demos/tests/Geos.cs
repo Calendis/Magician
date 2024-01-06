@@ -1,7 +1,6 @@
-using Magician.Library;
-using Magician.Interactive;
-
 namespace Magician.Demos.Tests;
+using Library;
+using Geo;
 
 public class Geos : Spell
 {

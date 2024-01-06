@@ -1,4 +1,5 @@
 namespace Magician.Symbols;
+using Core;
 
 // SumDiff objects represent addition and subtraction operations with any number of arguments
 public class SumDiff : Arithmetic
@@ -10,7 +11,7 @@ public class SumDiff : Arithmetic
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b) { }
     public override Variable Sol()
     {
-        IVal total = new ValWrapper(0);
+        IVal total = new Number(0);
         foreach (Oper o in posArgs)
             if (o is Variable v)
                 total += v.Sol();

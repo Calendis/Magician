@@ -1,6 +1,7 @@
-using static Magician.Geo.Create;
-
 namespace Magician.UI;
+using Geo;
+using static Geo.Create;
+
 public class RuledAxes
 {
     Multi axis0;
