@@ -364,14 +364,6 @@ public class Equation : IRelation
 
                     Oper newNCho, newNOpp;
                     newNOpp = ((Invertable)CHOSENROOT[0]).Inverse(INSTRUCTION.AXIS, OPPOSITEROOT[0]);
-                    
-                    // TODO: replace this hack with custom insertion behaviour
-                    //if (newNOpp is PowTowRootLog && newNOpp.posArgs.Count == 2 && newNOpp.posArgs[0] is PowTowRootLog && newNOpp.posArgs[1] is Fraction)
-                    //    newNOpp.posArgs[0].posArgs[0] = OPPOSITEROOT[0];
-                    //else if (newNOpp.posArgs.Count == 0)
-                    //    newNOpp.posArgs.Add(OPPOSITEROOT[0]);
-                    //else
-                    //    newNOpp.posArgs[0] = OPPOSITEROOT[0];
 
                     // Apply changes
                     (NEWCHOSEN, NEWOPPOSITE) = (INSTRUCTION.AXIS, LegacyForm.Shed(newNOpp));
