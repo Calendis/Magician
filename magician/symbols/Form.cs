@@ -17,25 +17,10 @@ public class LegacyForm
     // TODO: write tests to make sure canonical and SimplifyFull actually simplify all the way!
     public static Oper Canonical(Oper o, bool makeCopy=true)
     {
-        //Scribe.Info($"  Canonicalizing {o}");
-        Oper p;
-        if (makeCopy)
-            p = o.Copy();
-        else
-            p = o;
-        //Scribe.Info($"  ...partial {p}");
-
-        for (int i = 0; i < p.posArgs.Count; i++)
-        {
-            p.posArgs[i] = Canonical(p.posArgs[i], false);
-        }
-        for (int i = 0; i < p.negArgs.Count; i++)
-        {
-            p.negArgs[i] = Canonical(p.negArgs[i], false);
-        }
-        p.SimplifyAll();
+        Oper p = o.Copy();
+        p.Reduce();
         p.Commute();
-        //Scribe.Info($"  ...to-shed {p}");
+        p.SimplifyMax();
         return Shed(p);
     }
 
@@ -53,33 +38,5 @@ public class LegacyForm
         if (o.IsTrivial)
             return Shed(o.posArgs[0]);
         return o;
-    }
-}
-
-public class Form : Oper
-{
-    public Form(Oper o) : base("typeform_placeholder_name", o.posArgs, o.negArgs)
-    {
-        //
-    }
-
-    public override Oper Degree(Oper v)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
-    {
-        throw new NotImplementedException();
-    }
-
-    public override void ReduceOuter()
-    {
-        throw new NotImplementedException();
-    }
-
-    public override Variable Sol()
-    {
-        throw new NotImplementedException();
     }
 }
