@@ -60,9 +60,9 @@ public class SumDiff : Arithmetic
 
         ABbar.Reduce(2);
         Oper combined;
-        if (A is Variable av && av.Found && ((IVal)av).Magnitude() == 0)
+        if (A is Variable av && av.Found && av.Value.Trim().Dims == 1 && av.Value.Get() == 0)
             combined = B;
-        else if (B is Variable bv && bv.Found && ((IVal)bv).Magnitude() == 0)
+        else if (B is Variable bv && bv.Found && bv.Value.Trim().Dims == 1 && bv.Value.Get() == 0)
             combined = A;
         else
             combined = AB.Mult(ABbar);
