@@ -72,8 +72,10 @@ public class Variable : Invertable, IVal
     }
     public override string ToString()
     {
+        if (!found)
+            return name;
         IVal trim = Value.Trim();
-        return !found ? name : trim.Dims < 2 ? $"{Value.Get()}" : $"({Value.All.Aggregate("", (d, n) => $"{d+n},").TrimEnd(',')})";
+        return trim.Dims < 2 ? $"{Value.Get()}" : $"({Value.All.Aggregate("", (d, n) => $"{d+n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
     }
 
@@ -133,6 +135,8 @@ public class Variable : Invertable, IVal
     }
     public override Oper Divide(Oper o)
     {
+        //if (o.IsDetermined && o.Sol().Value.Trim().Dims == 1 && o.Sol().Value.Get() == 1)
+        //    return Copy();
         if (Found && o.IsConstant)
         {
             AssertLengthMatch(o.Sol());
@@ -148,8 +152,8 @@ public class Variable : Invertable, IVal
 
     internal void AssertLengthMatch(IVal other)
     {
-        if (qs.Length != other.All.Length)
-            throw Scribe.Error($"Length of {this} did not match length of {other}");
+        if (Value.Trim().Dims != other.Trim().Dims)
+            throw Scribe.Error($"Length of {Value.Trim()} ({Value.Trim().Dims}) did not match length of {other.Trim()} ({other.Trim().Dims})");
     }
 
     public static readonly Variable Undefined = new("undefined");
