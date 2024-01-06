@@ -1,7 +1,7 @@
 using Magician.Maps;
 
 namespace Magician.Symbols;
-public abstract partial class Oper : IFunction
+public abstract partial class Oper : IRelation
 {
     // TODO: Maybe put some of these fields/properties behind an interface
     public string Name => name;
@@ -129,6 +129,11 @@ public abstract partial class Oper : IFunction
         Variable s = Sol().Copy();
         associates.ToList().ForEach(a => a.Reset());
         return s;
+    }
+
+    IMultival IRelation.Evaluate(params double[] args)
+    {
+        return new Geo.Vec(Evaluate(args));
     }
 
     // Overall degree of the expression

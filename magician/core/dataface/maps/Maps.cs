@@ -9,7 +9,7 @@ public interface IRelation : IDimensional
     public IMultival Evaluate(params double[] args);
     public IMultival Evaluate(IVal args) => Evaluate(args.All);
     public int Ins { get; protected set; }
-    public int Outs { get; protected set; }
+    public int Outs {get {return 0;}}
     int IDimensional.Dims => Ins + Outs;
 }
 public interface IFunction : IRelation
@@ -18,7 +18,7 @@ public interface IFunction : IRelation
     public new IVal Evaluate(IVal args) => Evaluate(args.All);
     IMultival IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).All);
     IMultival IRelation.Evaluate(Magician.IVal args) => new Vec(Evaluate(args.All));
-    int IRelation.Outs { get { return 1; } set { } }
+    int IRelation.Outs { get { return 1; } }
 }
 public interface IParametric : IRelation
 {
