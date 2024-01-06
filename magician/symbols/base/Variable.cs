@@ -1,7 +1,6 @@
 
 namespace Magician.Symbols;
 
-/* TODO: Merge with Quantity */
 public class Variable : Invertable, IVal
 {
     bool found = false;
