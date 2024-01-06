@@ -3,7 +3,7 @@ namespace Magician.Symbols.Funcs;
 
 public class Abs : Oper
 {
-    public Abs(Oper o) : base("abs", o) {trivialAssociative = false; associative = true;}
+    public Abs(Oper o) : base("abs", o) { trivialAssociative = false; associative = true; }
 
     public override Oper Degree(Oper v)
     {
@@ -38,7 +38,7 @@ public class Abs : Oper
 }
 public class Sign : Oper
 {
-    public Sign(Oper o) : base("sign", o) {trivialAssociative = false; associative = true;}
+    public Sign(Oper o) : base("sign", o) { trivialAssociative = false; associative = true; }
     public override Oper Degree(Oper v)
     {
         return new Variable(0);
@@ -77,12 +77,12 @@ public class Sign : Oper
 //
 public class Max : Oper
 {
-    public Max(params Oper[] os) : base("max", os, new List<Oper>{})
+    public Max(params Oper[] os) : base("max", os, new List<Oper> { })
     {
         commutative = true;
         associative = true;
     }
-    public Max(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper>{})
+    public Max(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper> { })
     {
         commutative = true;
         associative = true;
@@ -90,7 +90,7 @@ public class Max : Oper
 
     public override Oper Degree(Oper v)
     {
-        return New(posArgs.Select(pa => pa.Degree()), new List<Oper>{});
+        return New(posArgs.Select(pa => pa.Degree()), new List<Oper> { });
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
@@ -101,10 +101,6 @@ public class Max : Oper
     public override Variable Sol()
     {
         List<Variable> sols = AllArgs.Select(a => a.Sol()).ToList();
-        //Scribe.Info($"  Max sols: {Scribe.Expand<List<Variable>, Variable>(sols)}");
-        // TODO: find out why .Max wasn't working with my IComparer implementation
-        //Scribe.Info($"  Sol: {AllArgs.Select(a => a.Solution()).Max() ?? throw Scribe.Error("Undefined")}");
-        //return AllArgs.Select(a => a.Solution()).Max() ?? throw Scribe.Error("Undefined");
         int maxIdx = 0;
         IVal max = new Variable(double.MinValue);
         for (int i = 0; i < sols.Count; i++)
@@ -121,25 +117,25 @@ public class Max : Oper
 
     public override void ReduceOuter()
     {
-        Oper max = AllArgs.Max();
-        posArgs.Clear(); negArgs.Clear();
-        posArgs.Add(max);
+        //Oper max = AllArgs.Max();
+        //posArgs.Clear(); negArgs.Clear();
+        //posArgs.Add(max);
     }
 
     public override string ToString()
     {
-        return $"Max({AllArgs.Aggregate("", (s, o) => s += o.ToString()+", ").Trim().TrimEnd(',')})";
+        return $"Max({AllArgs.Aggregate("", (s, o) => s += o.ToString() + ", ").Trim().TrimEnd(',')})";
     }
 }
 
 public class Min : Oper
 {
-    public Min(params Oper[] os) : base("max", os, new List<Oper>{})
+    public Min(params Oper[] os) : base("max", os, new List<Oper> { })
     {
         commutative = true;
         associative = true;
     }
-    public Min(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper>{})
+    public Min(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper> { })
     {
         commutative = true;
         associative = true;
@@ -147,7 +143,7 @@ public class Min : Oper
 
     public override Oper Degree(Oper v)
     {
-        return New(posArgs.Select(pa => pa.Degree()), new List<Oper>{});
+        return New(posArgs.Select(pa => pa.Degree()), new List<Oper> { });
     }
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
@@ -157,13 +153,29 @@ public class Min : Oper
 
     public override Variable Sol()
     {
-        return AllArgs.Select(a => a.Sol()).Min() ?? throw Scribe.Error("Undefined");
+        List<Variable> sols = AllArgs.Select(a => a.Sol()).ToList();
+        int minIdx = 0;
+        IVal min = new Variable(double.MaxValue);
+        for (int i = 0; i < sols.Count; i++)
+        {
+            IVal sol = sols[i].Sol();
+            if (sol < min)
+            {
+                min = sol;
+                minIdx = i;
+            }
+        }
+        return sols[minIdx];
     }
 
     public override void ReduceOuter()
     {
-        Oper min = AllArgs.Min();
-        posArgs.Clear(); negArgs.Clear();
-        posArgs.Add(min);
+        //Oper min = AllArgs.Min();
+        //posArgs.Clear(); negArgs.Clear();
+        //posArgs.Add(min);
+    }
+    public override string ToString()
+    {
+        return $"Min({AllArgs.Aggregate("", (s, o) => s += o.ToString() + ", ").Trim().TrimEnd(',')})";
     }
 }
