@@ -46,7 +46,7 @@ public class SolvedEquation : InverseParamMap
         int counter = 0;
         //List<Variable> unknowns = eq.Unknowns.ToList();
         List<Variable> unknowns = opposite.AssociatedVars.ToList();
-        
+
         unknowns.Remove(solvedVar);
         unknowns = unknowns.Except(eq.Sliders).ToList();
 
