@@ -114,13 +114,6 @@ public abstract partial class Oper : IFunction
         } while (!Like(prev));
         //Scribe.Info($" done, as {this} is equal to {prev}");
     }
-    // Perform advanced simplifications in this Oper as much as possible, recursively
-    //public void SimplifyAll(Variable? axis = null)
-    //{
-    //    foreach (Oper a in AllArgs)
-    //        a.SimplifyAll(axis);
-    //    SimplifyIterated(axis);
-    //}
 
     // Provide arguments to solve the expression at a point
     public IVal Evaluate(params double[] args)
@@ -240,95 +233,7 @@ public abstract partial class Oper : IFunction
     //public virtual Fraction Factors(){return new Fraction(new ExpLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
     public virtual FactorMap Factors() => new(this);
 
-
     public Oper CommonFactors(Oper o) => Factors().Common(o.Factors()).ToFraction();
-
-    //public Fraction CommonFactors_old(Oper o)
-    //{
-    //    Scribe.Info($"\t\tCommon factors of {this}[{Factors()}] and {o}[{o.Factors()}]...");
-    //    if (Like(o))
-    //        if (this is Fraction)
-    //            return (Fraction)Copy();
-    //        else if (o is Fraction)
-    //            return (Fraction)o.Copy();
-    //        else
-    //            return new Fraction(Copy());
-    //    OperLike ol = new();
-    //    Fraction facs0 = Factors();
-    //    Fraction facs1 = o.Factors();
-    //    List<Oper> basesPos = new();
-    //    List<Oper> basesNeg = new();
-    //
-    //    //Scribe.Info($"\t\tGot factors: {facs0} and {facs1}...");
-    //
-    //    
-    //    /* Get positive and negative factors from the passed Oper o */
-    //    foreach (Oper p in facs1.Numerator)
-    //    {
-    //        if (p is not ExpLog ptrl)
-    //            throw Scribe.Issue("Fac was not ptrl");
-    //        //Scribe.Info($"\t\t\tGot positive base {ptrl.posArgs[0]} from fac {ptrl}");
-    //        basesPos.Add(ptrl.posArgs[0]);
-    //    }
-    //    foreach (Oper p in facs1.Denominator)
-    //    {
-    //        if (p is not ExpLog ptrl)
-    //            throw Scribe.Issue("Fac was not ptrl");
-    //        //Scribe.Info($"\t\t\tGot negative base {ptrl.posArgs[0]} from fac {ptrl}");
-    //        basesNeg.Add(ptrl.posArgs[0]);
-    //    }
-    //
-    //    Fraction commonFactors = new();
-    //    /* Find positive common factors */
-    //    foreach (Oper facPos in facs0.Numerator)
-    //    {
-    //        // TODO: type forms should be able to handle this
-    //        if (facPos is not ExpLog)
-    //            throw Scribe.Issue($"Factor {facPos} is not a PowTowRootLog!");
-    //        if (basesPos.Contains(facPos.posArgs[0], ol))
-    //        {
-    //            Oper A = facPos.posArgs[1];
-    //            Oper B = o.Degree(facPos.posArgs[0]);
-    //            Oper ABsign = new Funcs.Sign(A.Mult(B)); //AB.ReduceOuter();
-    //            // common factors of x^A and x^B are: Max(AB.sign*A, AB.sign*B) - AB.sign*|A - B|
-    //            Oper commonFactorExponent = new Funcs.Max(ABsign.Mult(A), ABsign.Mult(B)).Subtract(ABsign.Mult(new Funcs.Abs(A.Subtract(B))));
-    //            ExpLog commonFactor;
-    //            if (commonFactorExponent.IsDetermined)
-    //                commonFactor = facPos.posArgs[0].Pow(commonFactorExponent.Sol());
-    //            else
-    //                commonFactor = facPos.posArgs[0].Pow(commonFactorExponent);
-    //            commonFactors.Numerator.Add(commonFactor);
-    //        }
-    //    }
-    //    /* Find positive common factors */
-    //    foreach (Oper facNeg in facs0.Denominator)
-    //    {
-    //        if (facNeg is not ExpLog)
-    //            throw Scribe.Issue($"Factor {facNeg} is not a PowTowRootLog!");
-    //        if (basesNeg.Contains(facNeg.posArgs[0], ol))
-    //        {
-    //            Oper A = facNeg.posArgs[1];
-    //            Oper B = new Funcs.Abs(o.Degree(facNeg.posArgs[0]));
-    //            Oper ABsign = new Funcs.Sign(A.Mult(B)); //AB.ReduceOuter();
-    //            Oper commonFactorExponent = new Funcs.Max(ABsign.Mult(A), ABsign.Mult(B)).Subtract(ABsign.Mult(new Funcs.Abs(A.Subtract(B))));
-    //            ExpLog commonFactor;
-    //            if (commonFactorExponent.IsDetermined)
-    //                commonFactor = facNeg.posArgs[0].Pow(commonFactorExponent.Sol());
-    //            else
-    //                commonFactor = facNeg.posArgs[0].Pow(commonFactorExponent);
-    //            commonFactors.Denominator.Add(commonFactor);
-    //        }
-    //    }
-    //    
-    //
-    //    if (commonFactors.Numerator.Count == 0)
-    //        commonFactors.Numerator.Add(new Variable(1));
-    //    
-    //    //commonFactors.Simplify();
-    //    Scribe.Info($"\tGot cfs {commonFactors}");
-    //
-    //    return commonFactors;
-    //}
 
     public static bool operator <(Oper o0, Oper o1)
     {
@@ -415,42 +320,6 @@ public abstract partial class Oper : IFunction
         {
             ord += n.Ord();
         }
-        //foreach (Oper p in posArgs)
-        //{
-        //    ord += typeHeaders[p.GetType()].pos;
-        //    ord += p.AllArgs.Count.ToString();
-        //    totalHeaders += p.AllArgs.Count;
-        //    if (p is Variable v)
-        //    {
-        //        string leafOrd;
-        //        if (v.Found)
-        //            leafOrd = $"#{v}#";
-        //        else
-        //            leafOrd = $"${v.Name}$";
-        //        totalLeaves += leafOrd.Length;
-        //        ord += leafOrd;
-        //    }
-        //    else
-        //        ord += p.Ord();
-        //}
-        //foreach (Oper n in negArgs)
-        //{
-        //    ord += typeHeaders[n.GetType()].neg;
-        //    ord += n.AllArgs.Count.ToString();
-        //    totalHeaders += n.AllArgs.Count;
-        //    if (n is Variable v)
-        //    {
-        //        string leafOrd;
-        //        if (v.Found)
-        //            leafOrd = $"#{v}#";
-        //        else
-        //            leafOrd = $"${v.Name}$";
-        //        totalLeaves += leafOrd.Length;
-        //        ord += leafOrd;
-        //    }
-        //    else
-        //        ord += n.Ord();
-        //}
         if (this is Variable u)
         {
             if (u.Found)
