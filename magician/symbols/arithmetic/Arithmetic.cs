@@ -24,32 +24,23 @@ public abstract class Arithmetic : Invertable
         List<Oper> negDetermined = negArgs.Where(o => o.IsDetermined).ToList();
         posArgs.RemoveAll(o => o.IsDetermined);
         negArgs.RemoveAll(o => o.IsDetermined);
-        double posMag = New(posDetermined, new List<Oper> { }).Sol().Value.Get();
-        double negMag = New(negDetermined, new List<Oper> { }).Sol().Value.Get();
-        //Scribe.Info<List<Oper>, Oper>(posDetermined);
-        //Scribe.Info<List<Oper>, Oper>(negDetermined);
-        //Scribe.Info($"posmag: {posMag}");
-        //Scribe.Info($"negmag: {negMag}");
-        Variable consts;
-        if (posMag >= negMag)
-        {
-            consts = New(posDetermined, negDetermined).Sol();
-            posArgs.Add(consts);
-        }
-        else
-        {
-            consts = New(negDetermined, posDetermined).Sol();
-            negArgs.Add(consts);
-        }
+
+        Variable p = New(posDetermined, new List<Oper>{}).Sol();
+        Variable n = New(negDetermined, new List<Oper>{}).Sol();
+        posArgs.Add(p);
+        if (n.Value.Magnitude() != Identity)
+            negArgs.Add(n);
 
         // Remove unnecessary arguments
         if (Identity is null)
             return;
         DropIdentities();
-        MakeExplicit();
+        if (posArgs.Count == 0)
+            posArgs.Add(new Variable((int)Identity));
     }
     internal void Combine(Variable? axis)
     {
+        //Scribe.Info($"Combinin' {this}...");
         if (AllArgs.Count < 2)
             return;
         if (axis == null)
@@ -57,7 +48,7 @@ public abstract class Arithmetic : Invertable
             if (AssociatedVars.Count > 0)
                 axis = AssociatedVars[0];
             else
-                axis = new Variable(0);
+                axis = Variable.Undefined;
         }
         List<Oper> finalPosArgs = new();
         List<Oper> finalNegArgs = new();
@@ -88,6 +79,7 @@ public abstract class Arithmetic : Invertable
                     AB.Reduce(2);
                     AB = LegacyForm.Shed(AB);
 
+                    //Scribe.Info($"\tA, B: {A}, {B}, AB: {AB}");
                     bool aPositive = flaggedHandshake.Item3;
                     bool bPositive = flaggedHandshake.Item4;
                     bool positive = !(aPositive ^ bPositive);
@@ -95,11 +87,10 @@ public abstract class Arithmetic : Invertable
                     if (termsFoundHandshake.Contains(i) || termsFoundHandshake.Contains(j))
                         continue;
 
-                    //Scribe.Info($"\t\tA, B, AB: {A}, {B}, {AB}");
+                    //Scribe.Info($"\t\tA, B, AB: {A}, {B}, {AB}, {aPositive}, {bPositive}");
                     //AB.ReduceAll();
                     
                     Oper combined = Handshake(axis, A, B, AB, aPositive, bPositive);
-                    
                     //Scribe.Info($"\t\tCombined: {combined}");
 
                     if ((positive || aPositive) && (aPositive || bPositive))
@@ -121,11 +112,12 @@ public abstract class Arithmetic : Invertable
         posArgs.AddRange(finalPosArgs);
         negArgs.Clear();
         negArgs.AddRange(finalNegArgs);
+        //Scribe.Info($"Now: {this}");
     }
     internal override void SimplifyOuter(Variable? axis = null)
     {
         Combine(axis);
-        Reduce(3);
+        Reduce(2);
     }
 
     public override Oper Inverse(Oper axis, Oper? opp=null)
