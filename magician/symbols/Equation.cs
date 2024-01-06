@@ -182,8 +182,12 @@ public class Equation : IRelation
                     case MatchPairs.SOLVED:
                         Oper solvedLeft = LAYERS.LEFT.Get(0, 0).Copy();
                         Oper solvedRight = LAYERS.RIGHT.Get(0, 0).Copy();
-                        solvedLeft.ReduceOuter(); solvedRight.ReduceOuter();
-                        solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
+                        solvedLeft.Reduce(); solvedRight.Reduce();
+                        //solvedLeft.Simplify(); solvedRight.Simplify();
+                        //solvedLeft.SimplifyMax(); solvedRight.SimplifyMax();
+                        //solvedLeft = LegacyForm.Canonical(solvedLeft); solvedRight = LegacyForm.Canonical(solvedRight);
+                        //solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
+                        solvedEq = solvedLeft.AssociatedVars.Contains(v) ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
                         Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions:\n{solvedEq}");
                         SOLVED = true;
                         break;
