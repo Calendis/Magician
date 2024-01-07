@@ -1,18 +1,16 @@
-using Magician.Symbols;
-
 namespace Magician.Core;
 
-public interface IVal : IDimensional
+public interface IVal : IDimensional<double>
 {
-    public double[] All { get; }
-    int IDimensional.Dims => All.Length;
-    public double Get(int i = 0) => All[i];
+    abstract List<double> IDimensional<double>.Values {get;}
+    int IDimensional<double>.Dims => Values.Count;
+    public double Get(int i = 0) => Values[i];
     public void Set(params double[] vs);
     public void Set(IVal iv)
     {
         for (int i = 0; i < Dims; i++)
         {
-            All[i] = iv.All[i];
+            Values[i] = iv.Values[i];
         }
     }
     public bool EqValue(IVal other)
@@ -23,37 +21,42 @@ public interface IVal : IDimensional
             else
                 return false;
         for (int i = 0; i < Dims; i++)
-            if (All[i] != other.All[i])
+            if (Values[i] != other.Values[i])
                 return false;
         return true;
     }
-    public double Magnitude()
+    double IDimensional<double>.Magnitude
     {
-        double total = 0;
-        foreach (double x in All)
+        get
         {
-            total += x * x;
+            double total = 0;
+            foreach (double x in Values)
+            {
+                total += x * x;
+            }
+            return Math.Sqrt(total);
         }
-        return Math.Sqrt(total);
     }
 
     public IVal Delta(params double[] vs)
     {
-        Set(this + new Number(vs));
+        Set(this + new Num(vs));
         return this;
     }
 
     public IVal Trim()
     {
+        if (Values is null)
+            return this;
         bool nz = false;
-        foreach (double d in All)
+        foreach (double d in Values)
             if (d != 0)
             {
                 nz = true;
                 break;
             }
         if (!nz)
-            return new Number(0);
+            return new Num(0);
         if (Dims < 2)
             return this;
         int toTrim = 0;
@@ -65,48 +68,49 @@ public interface IVal : IDimensional
             else
                 break;
         }
-        return new Number(All.SkipLast(toTrim).ToArray());
+        return new Num(Values.SkipLast(toTrim).ToArray());
     }
 
     public static bool operator <(IVal iv0, IVal iv1)
     {
         if (iv0.Dims * iv1.Dims == 1)
             return iv0.Get() < iv1.Get();
-        return iv0.Magnitude() < iv1.Magnitude();
+        return iv0.Magnitude < iv1.Magnitude;
     }
     public static bool operator >(IVal iv0, IVal iv1)
     {
         return !(iv0 < iv1);
     }
 
-    public static IVal operator +(IVal i, IVal v)
-    {
-        return new Number(i.All.Zip(v.All, (a, b) => a + b).ToArray());
-    }
-    public static IVal operator -(IVal i, IVal v)
-    {
-        return new Number(i.All.Zip(v.All, (a, b) => a - b).ToArray());
-    }
     public static IVal operator +(IVal i, double x)
     {
-        double[] newAll = i.All.ToArray();
+        double[] newAll = i.Values.ToArray();
         newAll[0] += x;
-        return new Number(newAll);
+        return new Num(newAll);
     }
     public static IVal operator -(IVal i, double x)
     {
-        double[] newAll = i.All.ToArray();
+        double[] newAll = i.Values.ToArray();
         newAll[0] -= x;
-        return new Number(newAll);
+        return new Num(newAll);
     }
     // Multiplication supported for one or two dimensions
     public static IVal operator *(IVal i, double x)
     {
-        return new Number(i.All.Select(k => k*x).ToArray());
+        return new Num(i.Values.Select(k => k * x).ToArray());
     }
     public static IVal operator /(IVal i, double x)
     {
-        return new Number(i.All.Select(k => k/x).ToArray());
+        return new Num(i.Values.Select(k => k / x).ToArray());
+    }
+    
+    public static IVal operator +(IVal i, IVal v)
+    {
+        return new Num(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+    }
+    public static IVal operator -(IVal i, IVal v)
+    {
+        return new Num(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
     }
     public static IVal operator *(IVal i, IVal v)
     {
@@ -114,7 +118,7 @@ public interface IVal : IDimensional
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new Number(a*c - b*c, a*d + b*c);
+        return new Num(a * c - b * c, a * d + b * c);
     }
     public static IVal operator /(IVal i, IVal v)
     {
@@ -122,41 +126,50 @@ public interface IVal : IDimensional
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new Number((a*c + b*d)/(c*c + d*d), (b*c - a*d)/(c*c + d*d));
+        return new Num((a * c + b * d) / (c * c + d * d), (b * c - a * d) / (c * c + d * d));
     }
 
-    public static IVal Exp(IVal i, IVal v)
+    public static IVec Exp(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Number(Math.Pow(i.Get(), v.Get()));
+            return new Vec(Math.Pow(i.Get(), v.Get()));
+        int yu, yi; yu = i.Trim().Dims; yi = v.Trim().Dims;
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
     public static IVal Log(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Number(Math.Log(i.Get(), v.Get()));
+            return new Num(Math.Log(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex logarithms");
     }
 
     // TODO: remove this method, as Number is now public
     public static IVal FromLiteral(double x)
     {
-        return new Number(x);
+        return new Num(x);
     }
 }
 
-public class Number : IVal
+public class Num : IVal
 {
-    private double[] vals;
-    public Number(params double[] ds)
+    private List<double> vals;
+    List<double> IDimensional<double>.Values => vals;
+    public Num(params double[] ds)
     {
-        vals = ds.ToArray();
+        vals = ds.ToList();
     }
-
-    double[] IVal.All => vals;
+    public Num(IVal iv)
+    {
+        vals = iv.Values.ToList();
+    }
 
     void IVal.Set(params double[] vs)
     {
-        vals = vs.ToArray();
+        vals = vs.ToList();
+    }
+
+    void IDimensional<double>.Normalize()
+    {
+        throw Scribe.Issue("Implement IVal normalize");
     }
 }

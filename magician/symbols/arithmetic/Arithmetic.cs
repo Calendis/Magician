@@ -28,7 +28,7 @@ public abstract class Arithmetic : Invertable
         Variable p = New(posDetermined, new List<Oper>{}).Sol();
         Variable n = New(negDetermined, new List<Oper>{}).Sol();
         posArgs.Add(p);
-        if (n.Value.Magnitude() != Identity)
+        if (n.Value.Magnitude != Identity)
             negArgs.Add(n);
 
         // Remove unnecessary arguments

@@ -416,7 +416,7 @@ public class SimpleAlgebraCases
     }
 }
 
-public class SimpleAlgebraCases2
+public class IntermediateAlgebraCases
 {
     [Test]
     public void MultiplyTwoAndTen()

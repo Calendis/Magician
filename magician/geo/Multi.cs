@@ -422,14 +422,14 @@ public class Multi : Vec3, ICollection<Multi>
      */
     public void Forward(double amount)
     {
-        Vec newPos = this + ((IMultival)Heading) * amount;
+        Vec newPos = new(this + (IVec)Heading * amount);
         x.Set(newPos.x);
         y.Set(newPos.y);
         z.Set(newPos.z);
     }
     public void Strafe(double amount)
     {
-        Vec newPos = ((IMultival)this) + ((IMultival)Heading.YawPitchRotated(-Math.PI / 2, 0)) * amount;
+        Vec newPos = new(this + (IVec)Heading.YawPitchRotated(-Math.PI / 2, 0) * amount);
         x.Set(newPos.x);
         y.Set(newPos.y);
         z.Set(newPos.z);
@@ -730,7 +730,7 @@ public class Multi : Vec3, ICollection<Multi>
             );
 
             // These two vectors define the camera
-            Vec3 targV = (Ref.Perspective + (IMultival)Ref.Perspective.Heading).ToVec3();
+            Vec3 targV = new Vec((IVec)Ref.Perspective + Ref.Perspective.Heading).ToVec3();
             Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
 
             // Matrix magic

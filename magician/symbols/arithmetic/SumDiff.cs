@@ -11,7 +11,7 @@ public class SumDiff : Arithmetic
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b) { }
     public override Variable Sol()
     {
-        IVal total = new Number(0);
+        IVar total = new Var(0);
         foreach (Oper o in posArgs)
             if (o is Variable v)
                 total += v.Sol();
@@ -22,7 +22,10 @@ public class SumDiff : Arithmetic
                 total -= v.Sol();
             else
                 total -= o.Sol();
-        return new Variable(total);
+        if (total.IsVector)
+            return new Variable((IVec)total);
+        else
+            return new Variable((IVal)total);
     }
 
     public override SumDiff New(IEnumerable<Oper> a, IEnumerable<Oper> b)

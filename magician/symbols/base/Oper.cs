@@ -132,7 +132,7 @@ public abstract partial class Oper : IRelation
         return s;
     }
 
-    IMultival IRelation.Evaluate(params double[] args)
+    IVec IRelation.Evaluate(params double[] args)
     {
         return new Vec(Evaluate(args));
     }

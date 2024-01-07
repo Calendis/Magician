@@ -1,69 +1,77 @@
 namespace Magician.Core;
 
-public interface IMultival
+public interface IVec : IDimensional<IVal>
 {
-    public IVal[] Values { get; }
-    public int Dims { get => Values.Select(v => v.Dims).Sum(); }
+    abstract List<IVal> IDimensional<IVal>.Values { get; }
+    int IDimensional<IVal>.Dims { get => Values.Select(v => v.Dims).Sum(); }
 
     public Symbols.Variable ToVariable()
     {
         List<double> vs = new();
         foreach (IVal iv in Values)
         {
-            vs.AddRange(iv.All);
+            vs.AddRange(iv.Values);
         }
         return new Symbols.Variable(vs.ToArray());
     }
 
-    public static Vec operator +(IMultival i, IMultival v)
+    public static IVec operator +(IVec i, IVec v)
     {
-        return new(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+        return new Vec(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
     }
-    public static Vec operator -(IMultival i, IMultival v)
+    public static IVec operator -(IVec i, IVec v)
     {
-        return new(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+        return new Vec(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+    }
+    public static IVec operator *(IVec i, IVal x)
+    {
+        return new Vec(i.Values.Select(k => k * x).ToArray());
+    }
+    public static IVec operator /(IVec i, IVal x)
+    {
+        return new Vec(i.Values.Select(k => k / x).ToArray());
     }
 
-    public static IMultival operator *(IMultival i, double x)
+    public static IVec operator *(IVec i, double x)
     {
         return new Vec(i.Values.Select(k => k * x).ToArray());
     }
-    public static IMultival operator /(IMultival i, double x)
+    public static IVec operator /(IVec i, double x)
     {
         return new Vec(i.Values.Select(k => k / x).ToArray());
     }
-    public static IMultival operator *(IMultival i, IVal x)
+
+    public static IVec operator +(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k * x).ToArray());
+        return new Vec(i.Values.Select(k => k + x).ToArray());
     }
-    public static IMultival operator /(IMultival i, IVal x)
+    public static IVec operator -(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k / x).ToArray());
+        return new Vec(i.Values.Select(k => k - x).ToArray());
     }
 }
 
-public class Vec : IMultival
+public class Vec : IVec
 {
-    protected IVal[] vecArgs;
-    IVal[] IMultival.Values => vecArgs;
-
-    // Flatten to value
-    //double[] IVal.All => vecArgs.Aggregate(new List<double>(), (l, n) => l = l.Concat(n.All).ToList()).ToArray();
+    protected List<IVal> vecArgs = new();
+    List<IVal> IDimensional<IVal>.Values => vecArgs;
 
     // TODO: avoid this dumb-ass pattern
-    int Dims => ((IMultival)this).Dims;
     public Vec(params double[] vals)
     {
 
-        vecArgs = new Number[vals.Length];
         for (int i = 0; i < vals.Length; i++)
         {
-            vecArgs[i] = new Number(vals[i]);
+            vecArgs.Add(new Num(vals[i]));
         }
     }
     public Vec(params IVal[] qs)
     {
-        vecArgs = qs;
+        vecArgs = qs.ToList();
+    }
+    public Vec(IVec v)
+    {
+        vecArgs = v.Values.ToList();
     }
 
     public IVal x
@@ -88,7 +96,7 @@ public class Vec : IMultival
         get
         {
             double m = 0;
-            for (int i = 0; i < Dims; i++)
+            for (int i = 0; i < ((IVec)this).Dims; i++)
             {
                 m += Math.Pow(vecArgs[i].Get(), 2);
             }
@@ -133,7 +141,7 @@ public class Vec : IMultival
     // TODO: clarify this
     public Geo.Vec3 ToVec3()
     {
-        if (Dims != 3)
+        if (((IVec)this).Dims != 3)
             throw Scribe.Error($"Could not convert {this} to Vec3");
         if (x.Dims == 3)
             return new(x.Get(0), x.Get(1), x.Get(2));

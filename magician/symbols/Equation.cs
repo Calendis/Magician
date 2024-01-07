@@ -471,7 +471,7 @@ public class Equation : IRelation
         return $"{LHS} {fulcrumString} {RHS}";
     }
 
-    IMultival IRelation.Evaluate(params double[] args)
+    IVec IRelation.Evaluate(params double[] args)
     {
         throw new NotImplementedException();
     }

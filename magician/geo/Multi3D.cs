@@ -1,5 +1,3 @@
-using System;
-
 namespace Magician.Geo;
 // While it's possible to build a 3D Multi out of 2D Multis manually, this approach is impractical.
 // The way a 2D Multi is drawn is inherent to the position of its constituent Multis, meaning each

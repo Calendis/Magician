@@ -29,7 +29,7 @@ public class Abs : Oper
 
     public override Variable Sol()
     {
-        return new Variable(((IVal)AllArgs[0].Sol()).Magnitude());
+        return new Variable(((IVal)AllArgs[0].Sol()).Magnitude);
     }
 
     public override string ToString()

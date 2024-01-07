@@ -13,7 +13,7 @@ public class Fraction : Arithmetic
 
     public override Variable Sol()
     {
-        IVal quo = new Number(1);
+        IVal quo = new Num(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
                 quo *= v.Sol();

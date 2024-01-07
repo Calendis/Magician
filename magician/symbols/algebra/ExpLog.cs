@@ -57,7 +57,6 @@ public class ExpLog : Invertable
             pos = posArgs[0].Sol();
         else if (posArgs.Count == 2)
             pos = new(IVal.Exp(sol0, posArgs[1].Sol()));
-        //pos = new Variable(Math.Pow(sol0.Val, posArgs[1].Solution().Val));
         else
             pos = new ExpLog(new List<Oper> { sol0, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
 
@@ -72,7 +71,6 @@ public class ExpLog : Invertable
             return new(IVal.Log(
                 new ExpLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Sol(), negArgs[^1].Sol()
             ));
-            //return new(Math.Log( new PowTowRootLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Sol().Val, negArgs[^1].Sol().Val));
         }
     }
 
@@ -126,27 +124,9 @@ public class ExpLog : Invertable
             posArgs.Add(combined);
         }
 
-        // Remove trailing ones from negArgs
-        //while (negArgs.Count > 0 && negArgs[^1] is Variable v && v.Found && v.Value.Get() == 1)
-        //{
-        //    throw Scribe.Issue("this should no longer occur");
-        //    negArgs.RemoveAt(negArgs.Count - 1);
-        //}
         if (posArgs.Count == 0)
             throw Scribe.Issue("reduction should not destroy the tower!");
     }
-
-    //public override PowTowRootLog Mult(Oper o)
-    //{
-    //    if (o is PowTowRootLog)
-    //    {
-    //        if (posArgs[0].Like(o.posArgs[0]))
-    //        {
-    //            return new PowTowRootLog(new List<Oper> {posArgs[0]}, new List<Oper> {});
-    //        }
-    //    }
-    //    //return base.Pow(o);
-    //}
 
     public override string ToString()
     {

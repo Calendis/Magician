@@ -9,7 +9,7 @@ public class Brush : ParamMap
 
     public Multi Paint(double t, Multi m)
     {
-        IMultival pos = Evaluate(t);
+        IVec pos = Evaluate(t);
         if (t > 0)
         {
             return m.Copy().To(pos.ToVariable()).Tagged($"{pos}paint");

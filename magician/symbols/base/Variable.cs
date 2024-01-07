@@ -1,65 +1,105 @@
 namespace Magician.Symbols;
-using Magician.Core;
+using Core;
 
-public class Variable : Invertable, IVal
+public class Variable : Invertable, IVar
 {
-    bool found = false;
-    protected double[] qs;
-    double[] IVal.All { get => qs; }
-    int IDimensional.Dims => qs is null ? 0 : qs.Length;
+    protected List<double> qs;
+    protected List<IVal> ivals;
+    List<double> IDimensional<double>.Values { get => qs; }
+    List<IVal> IDimensional<IVal>.Values { get => ivals; }
+    bool found;
+    public bool Found => found;
+    int IDimensional<double>.Dims => qs is null ? 0 : qs.Count;
+    public bool IsVector => ivals.Count > 0 && ((IVec)this).Dims > 1;
+    public IVal Value => (IVal)this;
+    public IVec Vector => (IVec)this;
+    public double Magnitude
+    {
+        get
+        {
+            if (IsVector)
+            {
+                //Scribe.Info($"vector magnitude");
+                return new Vec(ivals.ToArray()).Magnitude;
+            }
+            else
+            {
+                //Scribe.Info($"value magnitude");
+                return ((IVal)new Num(qs.ToArray())).Magnitude;
+            }
+        }
+    }
+    // Creating an unsolved variable
+    public Variable(string n) : base(n) {qs ??= new(); ivals ??= new();}
+    public Variable(string n, params double[] v) : base(n)
+    {
+        qs = new();
+        Set(v);
+        ivals ??= new();
+        //Vector = false;
+    }
+    public Variable(params double[] v) : this($"constant({v})", v) { }
+    public Variable(IVal iv) : this(iv.Values.ToArray()) { }
+    public Variable(string n, params IVal[] ivs) : base(n)
+    {
+        ivals = ivs.ToList();
+        Set(ivs);
+        qs ??= new(); ivals ??= new();
+        //Vector = true;
+    }
+    public Variable(params IVal[] ivs) : this($"vector({ivs})", ivs) { }
+    public Variable(IVec iv) : this(iv.Values.ToArray()) { }
+
     double IVal.Get(int i)
     {
         return qs[i];
     }
     void IVal.Set(params double[] vs)
     {
-        if (qs is not null && vs.Length != Value.Dims)
+        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
             throw Scribe.Error("Mismatch");
-        qs = vs.ToArray();
+        qs = vs.ToList();
     }
     public void Set(params double[] vs)
     {
         ((IVal)this).Set(vs);
         found = true;
+        //Vector = false;
+    }
+    public void Set(params IVal[] ivs)
+    {
+        ivals = ivs.ToList();
+        found = true;
+        //Vector = true;
     }
     public void Reset()
     {
         found = false;
     }
-    public bool Found
-    {
-        get => found;
-    }
 
     public void Pad(int d)
     {
         double[] newAll = new double[d];
-        for (int i = 0; i < qs.Length; i++)
+        for (int i = 0; i < qs.Count; i++)
         {
             newAll[i] = qs[i];
         }
-        qs = newAll;
+        qs = newAll.ToList();
     }
 
-    public override void ReduceOuter()
+    public void Normalize()
     {
-        // do nothing
+        double m = ((IDimensional<double>)this).Magnitude;
+        for (int i = 0; i < qs.Count; i++)
+        {
+            qs[i] /= m;
+        }
     }
+
+    public override void ReduceOuter() { }
 
     // Inverting a variable with no operation (other than the variable itself) does NOTHING
     public override Oper Inverse(Oper axis, Oper? opp = null) { return this; }
-
-    // Creating an unsolved variable
-    public Variable(string n) : base(n) {/* trivialAssociative = true; */}
-    public Variable(string n, params double[] v) : base(n)
-    {
-        qs = new double[v.Length];
-        Set(v);
-        //Val = v;
-        //trivialAssociative = true;
-    }
-    public Variable(params double[] v) : this($"constant({v})", v) { }
-    public Variable(IVal iv) : this(iv.All) {}
 
     public override Variable Copy()
     {
@@ -67,14 +107,14 @@ public class Variable : Invertable, IVal
         if (!found)
             return this;
         // Knowns actually get copied
-        return new Variable(qs);
+        return new Variable(qs.ToArray());
     }
     public override string ToString()
     {
         if (!found)
             return name;
         IVal trim = Value.Trim();
-        return trim.Dims < 2 ? $"{Value.Get()}" : $"({Value.All.Aggregate("", (d, n) => $"{d+n},").TrimEnd(',')})";
+        return trim.Dims < 2 ? $"{Value.Get()}" : $"({Value.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
     }
 
@@ -91,11 +131,10 @@ public class Variable : Invertable, IVal
 
     public override Variable Sol()
     {
-        return new Variable(qs);
+        return new Variable(qs.ToArray());
         // TODO: test this
         //return this;
     }
-    public IVal Value => (IVal)this;
 
     public override Oper Degree(Oper v)
     {

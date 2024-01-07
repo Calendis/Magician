@@ -4,28 +4,27 @@ using Magician.Geo;
 using Magician.Symbols;
 using static Magician.Geo.Create;
 
-public interface IRelation : IDimensional
+public interface IRelation
 {
-    public IMultival Evaluate(params double[] args);
-    public IMultival Evaluate(IVal args) => Evaluate(args.All);
+    public IVec Evaluate(params double[] args);
+    public IVec Evaluate(IVal args) => Evaluate(args.Values.ToArray());
     public int Ins { get; protected set; }
     public int Outs {get {return 0;}}
-    int IDimensional.Dims => Ins + Outs;
 }
 public interface IFunction : IRelation
 {
     public new IVal Evaluate(params double[] args);
-    public new IVal Evaluate(IVal args) => Evaluate(args.All);
-    IMultival IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).All);
-    IMultival IRelation.Evaluate(IVal args) => new Vec(Evaluate(args.All));
+    public new IVal Evaluate(IVal args) => Evaluate(args.Values.ToArray());
+    IVec IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).Values.ToArray());
+    IVec IRelation.Evaluate(IVal args) => new Vec(Evaluate(args.Values.ToArray()));
     int IRelation.Outs { get { return 1; } }
 }
 public interface IParametric : IRelation
 {
     int IRelation.Ins { get { return 1; } set { } }
-    public IMultival Evaluate(double x);
-    IMultival IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
-    IMultival IRelation.Evaluate(IVal args) => Evaluate(args.Get());
+    public IVec Evaluate(double x);
+    IVec IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
+    IVec IRelation.Evaluate(IVal args) => Evaluate(args.Get());
 }
 public interface IMap : IFunction
 {
@@ -191,7 +190,7 @@ public class ParamMap : IParametric
     }
     //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
     public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, IVal>>(im => im.Evaluate).ToArray()) { }
-    public IMultival Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
+    public IVec Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public Multi Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
@@ -204,18 +203,19 @@ public class ParamMap : IParametric
         double dt = paramRange.Res;
         for (double t = start; t < end; t += dt)
         {
-            IMultival out0 = ((IParametric)this).Evaluate(t);
-            IMultival out1 = ((IParametric)this).Evaluate(t + dt);
+            IVec out0 = ((IParametric)this).Evaluate(t);
+            IVec out1 = ((IParametric)this).Evaluate(t + dt);
             double[] pos0 = { 0, 0, 0 };
             double[] pos1 = { 0, 0, 0 };
-            IMultival[] ous = new[] { out0, out1 };
+            IVec[] ous = new[] { out0, out1 };
             double[][] poss = new[] { pos0, pos1 };
             int counter = 0;
+            
             int innerCounter;
             foreach (Vec ou in ous)
             {
                 innerCounter = 0;
-                foreach (double d in ((IVal)ou).All)
+                foreach (double d in ((IVal)ou).Values)
                 {
                     poss[counter][innerCounter] = d;
                     innerCounter++;
