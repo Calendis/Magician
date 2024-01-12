@@ -159,8 +159,13 @@ public interface IVal : IDimensional<double>
         {
             if (i.Get() < 0 && v.Get() != (int)v.Get())
             {
-                double re = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Math.Cos(Math.PI*v.Get());
-                double im = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Math.Sin(Math.PI*v.Get());
+                double re = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Symbols.Numeric.Funcs.Cos(Math.PI*v.Get());
+                double im = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Symbols.Numeric.Funcs.Sin(Math.PI*v.Get());
+                if (re != 0 && im != 0)
+                {
+                    Scribe.Info($"real is {re}");
+                    Scribe.Info($"parts are {Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))}, {Symbols.Numeric.Funcs.Cos(Math.PI*v.Get())}");
+                }
                 return new Var(re, im);
             }
             else

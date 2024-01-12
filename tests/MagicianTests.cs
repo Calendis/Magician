@@ -907,6 +907,7 @@ public class ComplexAndMultivalued
     {
         Variable v = Val(-1).Root(Val(2)).Sol();
         Scribe.Info(v);
+        Assert.That(v.Like(new Variable(0, 1)));
     }
 }
 
