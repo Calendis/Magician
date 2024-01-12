@@ -101,7 +101,7 @@ public class Equation : IRelation
                 }
                 else if (!(deg > minDegree))
                 {
-                    if (deg.Sol().Value.Get() == 0)
+                    if (deg.Sol().Value().Magnitude == 0)
                         Scribe.Warn($"deg was 0");
                     minDegree = deg;
                     chosenSolveVar = uk;

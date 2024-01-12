@@ -11,9 +11,10 @@ public class Variable : Invertable, IVar
     bool found;
     public bool Found => found;
     int IDimensional<double>.Dims => qs is null ? 0 : qs.Count;
-    //public bool IsVector => ivals.Count > 0 && ((IVec)this).Dims > 1;
-    public IVal Value => (IVal)this;
-    public IVec Vector => (IVec)this;
+    // wow, this makes perfect sense! just make sure T is double or IVal
+    public IDimensional<T> Value<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1D ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
+    public IVal Value() => (IVal)Value<double>();
+    public IVar Var => (IVar)this;
     public double Magnitude
     {
         get
@@ -66,7 +67,7 @@ public class Variable : Invertable, IVar
     // This seems like an antipattern -- consider another way
     void IDimensional<double>.Set(params double[] vs)
     {
-        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
+        if (qs is not null && qs.Count > 0 && vs.Length != Value().Dims)
             throw Scribe.Error("Mismatch");
         qs ??= new();
         qs.Clear();
@@ -74,7 +75,7 @@ public class Variable : Invertable, IVar
     }
     void IDimensional<IVal>.Set(params IVal[] vs)
     {
-        if (ivals is not null && ivals.Count > 0 && vs.Length != Value.Dims)
+        if (ivals is not null && ivals.Count > 0 && vs.Length != Value().Dims)
             throw Scribe.Error("Mismatch");
         ivals ??= new();
         ivals.Clear();
@@ -162,7 +163,7 @@ public class Variable : Invertable, IVar
         if (Found && o.IsConstant)
         {
             //return new Variable(Val + o.Solution().Val);
-            AssertLengthMatch(o.Sol());
+            //AssertLengthMatch(o.Sol());
             return new Variable((IVal)this + o.Sol());
         }
         return base.Add(o);
@@ -171,7 +172,7 @@ public class Variable : Invertable, IVar
     {
         if (Found && o.IsConstant)
         {
-            AssertLengthMatch(o.Sol());
+            //AssertLengthMatch(o.Sol());
             return new Variable((IVal)this - o.Sol());
         }
         return base.Subtract(o);
@@ -180,7 +181,7 @@ public class Variable : Invertable, IVar
     {
         if (Found && o.IsConstant)
         {
-            AssertLengthMatch(o.Sol());
+            //AssertLengthMatch(o.Sol());
             return new Variable(((IVal)this) * o.Sol());
         }
         return base.Mult(o);
@@ -191,7 +192,7 @@ public class Variable : Invertable, IVar
         //    return Copy();
         if (Found && o.IsConstant)
         {
-            AssertLengthMatch(o.Sol());
+            //AssertLengthMatch(o.Sol());
             return new Variable(((IVal)this) / o.Sol());
         }
         return base.Divide(o);
@@ -202,11 +203,11 @@ public class Variable : Invertable, IVar
     //    throw Scribe.Issue($"Noooo don't do this");
     //}
 
-    internal void AssertLengthMatch(IVal other)
-    {
-        if (Value.Trim().Dims != other.Trim().Dims)
-            throw Scribe.Error($"Length of {Value.Trim()} ({Value.Trim().Dims}) did not match length of {other.Trim()} ({other.Trim().Dims})");
-    }
+    //internal void AssertLengthMatch(IVal other)
+    //{
+    //    if (Value().Trim().Dims != other.Trim().Dims)
+    //        throw Scribe.Error($"Length of {Value().Trim()} ({Value().Trim().Dims}) did not match length of {other.Trim()} ({other.Trim().Dims})");
+    //}
 
     public static readonly Variable Undefined = new("undefined");
 

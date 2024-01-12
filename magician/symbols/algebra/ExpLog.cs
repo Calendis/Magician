@@ -4,7 +4,7 @@ using Core;
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
 public class ExpLog : Invertable
 {
-    protected override int? Identity => 1;
+    protected new int Identity => 1;
 
     public ExpLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("explog", posArgs, negArgs)
     {
@@ -82,7 +82,7 @@ public class ExpLog : Invertable
             int? varIdx = null;
             for (int i = 0; i < posArgs.Count; i++)
             {
-                if (posArgs[i].IsConstant && posArgs[i].Sol().Value.Get() == Identity)
+                if (posArgs[i].IsConstant && posArgs[i].Sol().Value().EqValue(Identity))
                 {
                     varIdx = i;
                     break;
@@ -95,7 +95,7 @@ public class ExpLog : Invertable
             varIdx = null;
             for (int i = 0; i < posArgs.Count; i++)
             {
-                if (posArgs[i].IsConstant && posArgs[i].Sol().Value.Get() == 0)
+                if (posArgs[i].IsConstant && posArgs[i].Sol().Value().EqValue(0))
                 {
                     varIdx = i;
                     break;

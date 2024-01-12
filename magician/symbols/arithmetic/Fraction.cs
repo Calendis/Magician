@@ -4,7 +4,7 @@ using Core;
 // Fraction objects represent multiplication and division operations with any number of arguments
 public class Fraction : Arithmetic
 {
-    protected override int? Identity { get => 1; }
+    protected override int Identity => 1;
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b) { }
     public Fraction(params Oper[] ops) : base("fraction", ops) { }
 
@@ -66,13 +66,13 @@ public class Fraction : Arithmetic
         ABbar.Reduce(2);
 
         Oper combined;
-        if (A is Variable av && av.Found && av.Value.Get() == 1)
+        if (A is Variable av && av.Found && av.Value().EqValue(1))
             combined = B;
-        else if (B is Variable bv && bv.Found && bv.Value.Get() == 1)
+        else if (B is Variable bv && bv.Found && bv.Value().EqValue(1))
             combined = A;
         else if (
-            (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Value.Trim().Dims == 1 && abv.Value.Get() == 1) ||
-            (AB.IsDetermined && AB.Sol().Value.Trim().Dims == 1 && AB.Sol().Value.Get() == 1)
+            (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Value().Trim().Dims == 1 && abv.Value().EqValue(1)) ||
+            (AB.IsDetermined && AB.Sol().Value().Trim().Dims == 1 && AB.Sol().Value().EqValue(1))
         )
         {
             if (aPositive && bPositive)

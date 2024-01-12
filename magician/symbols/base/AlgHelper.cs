@@ -3,48 +3,6 @@ namespace Magician.Symbols;
 /* Class for additional algebraic functionality for Oper */
 public abstract partial class Oper
 {
-    // Flagged grouped handshakes, flagged grouped opers, pos/neg filtered args
-    //public abstract void Combine(Variable axis);
-    internal (List<List<(int, int, bool, bool)>>, List<List<(Oper, bool)>>) GrpFlagHshakes(Variable axis)
-    {
-
-        List<(Oper, bool)> argsContainingAxis = new();
-        List<(Oper, bool)> argsNotContainingAxis = new();
-        List<List<(int, int, bool, bool)>> groupedHandshakes = new() { new() { }, new() { } };
-
-        // Group the Opers into terms containing the axis, and terms not containing the axis
-        int posLimit = posArgs.Count;
-        for (int i = 0; i < AllArgs.Count; i++)
-        {
-            Oper o = AllArgs[i];
-            if (o.AssociatedVars.Contains(axis) || (o is Variable v && v == axis))
-                argsContainingAxis.Add((o, i < posLimit));
-            else
-                argsNotContainingAxis.Add((o, i < posLimit));
-        }
-        int c = 0;
-        foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>> { argsNotContainingAxis, argsContainingAxis })
-        {
-            if (Identity is null)
-                throw Scribe.Issue($"TODO: support this case");
-            if (flaggedArgs.Count % 2 != 0)
-                flaggedArgs.Add((new Variable((int)Identity), true));
-            for (int i = 0; i < flaggedArgs.Count; i++)
-                for (int j = i + 1; j < flaggedArgs.Count; j++)
-                    groupedHandshakes[c].Add((i, j, flaggedArgs[i].parity, flaggedArgs[j].parity));
-            c++;
-        }
-
-        return (groupedHandshakes, new List<List<(Oper, bool)>>
-            { argsNotContainingAxis, argsContainingAxis });
-    }
-    internal void DropIdentities()
-    {
-        if (posArgs.Count > 1)
-            posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.Get() == Identity)).ToList();
-        if (negArgs.Count > 0)
-            negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.Get() == Identity)).ToList();
-    }
     internal void MakeExplicit(int? i=null)
     {
         if (posArgs.Count > 0)

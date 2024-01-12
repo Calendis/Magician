@@ -247,7 +247,7 @@ public abstract partial class Oper : IRelation
         {
             if (o1.IsDetermined)
             {
-                return o0.Sol().Value < o1.Sol().Value;
+                return o0.Sol().Value() < o1.Sol().Value();
             }
             else
                 return true;
@@ -263,7 +263,7 @@ public abstract partial class Oper : IRelation
         if (o0.IsDetermined)
         {
             if (o1.IsDetermined)
-                return o0.Sol().Value > o1.Sol().Value;
+                return o0.Sol().Value() > o1.Sol().Value();
             else
                 return true;
         }

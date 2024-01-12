@@ -25,6 +25,7 @@ public interface IVal : IDimensional<double>
                 return false;
         return true;
     }
+    public bool EqValue(double d) => EqValue(new Val(d));
     double IDimensional<double>.Magnitude
     {
         get
@@ -103,13 +104,39 @@ public interface IVal : IDimensional<double>
     {
         return new Val(i.Values.Select(k => k / x).ToArray());
     }
-    
+
     public static IVal operator +(IVal i, IVal v)
     {
+        // Pad if dimensions do not match
+        if (i.Dims < v.Dims)
+        {
+            int diff = v.Dims - i.Dims;
+            double[] padding = new double[diff];
+            i.Set(i.Values.Concat(padding).ToArray());
+        }
+        else if (v.Dims < i.Dims)
+        {
+            int diff = i.Dims - v.Dims;
+            double[] padding = new double[diff];
+            v.Set(i.Values.Concat(padding).ToArray());
+        }
         return new Val(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
     }
     public static IVal operator -(IVal i, IVal v)
     {
+        // Pad if dimensions do not match
+        if (i.Dims < v.Dims)
+        {
+            int diff = v.Dims - i.Dims;
+            double[] padding = new double[diff];
+            i.Set(i.Values.Concat(padding).ToArray());
+        }
+        else if (v.Dims < i.Dims)
+        {
+            int diff = i.Dims - v.Dims;
+            double[] padding = new double[diff];
+            v.Set(i.Values.Concat(padding).ToArray());
+        }
         return new Val(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
     }
     public static IVal operator *(IVal i, IVal v)
@@ -118,8 +145,8 @@ public interface IVal : IDimensional<double>
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        double re = a*c - b*d;
-        double im = a*d + b*c;
+        double re = a * c - b * d;
+        double im = a * d + b * c;
         if (im == 0)
             return new Val(re);
         return new Val(re, im);

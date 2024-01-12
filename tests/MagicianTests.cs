@@ -8,121 +8,6 @@ using NUnit.Framework;
 public class SimpleAlgebraCases
 {
     [Test]
-    public void StableReduce()
-    {
-        SumDiff sd = new(
-            new List<Oper>{
-                Var("x"),
-                Var("z"),
-                new Fraction(Var("z"), Val(1), Var("y")),
-                Var("x"),
-                new Fraction(Val(3.3), Val(1), Var("z")),
-                new Fraction(Var("x"), Val(1), Var("y")),
-                new Fraction(Var("x"), Val(1), Var("z")),
-                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
-            },
-            new List<Oper> { }
-        );
-        // Reduce a bunch times initially
-        for (int i = 0; i < 10; i++)
-            sd.ReduceOuter();
-
-        for (int i = 0; i < 10; i++)
-        {
-            Oper c = sd.Copy();
-            sd.ReduceOuter();
-            Assert.That(sd.Like(c));
-        }
-
-    }
-
-    [Test]
-    public void StableSimplify()
-    {
-        SumDiff sd = new(
-            new List<Oper>{
-                Var("x"),
-                Var("z"),
-                new Fraction(Var("z"), Val(1), Var("y")),
-                Var("x"),
-                new Fraction(Val(3.3), Val(1), Var("z")),
-                new Fraction(Var("x"), Val(1), Var("y")),
-                new Fraction(Var("x"), Val(1), Var("z")),
-                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
-            },
-            new List<Oper> { }
-        );
-        // Reduce a bunch times initially
-        sd.SimplifyMax();
-
-        for (int i = 0; i < 10; i++)
-        {
-            Oper c = sd.Copy();
-            c.Commute();
-            sd.SimplifyMax();
-            sd.Commute();
-            Scribe.Info($"sd {sd} vs. c {c}");
-            Assert.Multiple(() =>
-            {
-                Assert.That(sd.Like(c));
-                Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
-            });
-        }
-    }
-    [Test]
-    public void SdStableSimplify()
-    {
-        Oper o0 = new SumDiff(Val(-1));
-        o0.Simplify();
-        Scribe.Info($"{o0.Name} {o0}");
-        Assert.That(o0.Like(new SumDiff(Val(-1))));
-
-        Oper o1 = new SumDiff(new SumDiff(Val(0)), Val(1));
-        Scribe.Info(o1);
-        o1.Simplify();
-        Scribe.Info(o1);
-        Assert.That(o1.Like(new SumDiff(Val(-1))));
-    }
-    [Test]
-    public void PatchedStableCanonical()
-    {
-        Oper o0 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Val(0)}, new List<Oper>{Val(4)}), Val(3)}, new List<Oper>{});
-        Scribe.Info(o0);
-        Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
-        Oper o0Canon = LegacyForm.Canonical(o0);
-        Scribe.Info(o0Canon);
-        Assert.That(o0Canon.Like(Val(-12)));
-
-        Oper o2 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Var("y")}, new List<Oper>{Val(3)}), Val(8)}, new List<Oper>{});
-        Scribe.Info($"{o2.Name} {o2}");
-        Oper o2canon = LegacyForm.Canonical(o2);
-        Scribe.Info($"{o2canon.Name} {o2canon}");
-        double x1 = o2.Evaluate(4.5).Get();
-        double x2 = o2canon.Evaluate(4.5).Get();
-        Scribe.Info($"{x1} vs. {x2}");
-
-        Var("y").Set(4.5);
-        Scribe.Info($"{o2}: {o2.Sol()} vs. {o2canon}: {o2canon.Sol()}");
-
-        Assert.That(x1, Is.EqualTo(x2));
-    }
-    [Test]
-    public void PatchedSimplify()
-    {
-        Oper o0 = new Fraction(new List<Oper>{new SumDiff(Val(1), Val(3)), Val(4)}, new List<Oper>{});
-        Scribe.Info($"{o0} = {o0.Sol()}");
-        o0.Simplify();
-        Scribe.Info(o0);
-        Assert.That(o0.Like(new Fraction(Val(-8))));
-
-        Oper o1 = new SumDiff(new Fraction(Val(0)), Val(1));
-        Scribe.Info($"{o1} = {o1.Sol()}");
-        o1.Simplify();
-        Scribe.Info(o1);
-        Assert.That(o1.Like(new SumDiff(Val(-1))));
-    }
-
-    [Test]
     public void Subsumption()
     {
         Oper o0 = new Abs(new Max(new Fraction(new Abs(new SumDiff(new Abs(Val(4096)))))));
@@ -359,6 +244,121 @@ public class SimpleAlgebraCases
     }
 
     [Test]
+    public void StableReduce()
+    {
+        SumDiff sd = new(
+            new List<Oper>{
+                Var("x"),
+                Var("z"),
+                new Fraction(Var("z"), Val(1), Var("y")),
+                Var("x"),
+                new Fraction(Val(3.3), Val(1), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("z")),
+                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+            },
+            new List<Oper> { }
+        );
+        // Reduce a bunch times initially
+        for (int i = 0; i < 10; i++)
+            sd.ReduceOuter();
+
+        for (int i = 0; i < 10; i++)
+        {
+            Oper c = sd.Copy();
+            sd.ReduceOuter();
+            Assert.That(sd.Like(c));
+        }
+
+    }
+
+    [Test]
+    public void StableSimplify()
+    {
+        SumDiff sd = new(
+            new List<Oper>{
+                Var("x"),
+                Var("z"),
+                new Fraction(Var("z"), Val(1), Var("y")),
+                Var("x"),
+                new Fraction(Val(3.3), Val(1), Var("z")),
+                new Fraction(Var("x"), Val(1), Var("y")),
+                new Fraction(Var("x"), Val(1), Var("z")),
+                new Fraction(Val(0.4), Val(1), Var("x"), Val(1), Var("y"), Val(1), Var("z"))
+            },
+            new List<Oper> { }
+        );
+        // Reduce a bunch times initially
+        sd.SimplifyMax();
+
+        for (int i = 0; i < 10; i++)
+        {
+            Oper c = sd.Copy();
+            c.Commute();
+            sd.SimplifyMax();
+            sd.Commute();
+            Scribe.Info($"sd {sd} vs. c {c}");
+            Assert.Multiple(() =>
+            {
+                Assert.That(sd.Like(c));
+                Assert.That(sd.Ord(), Is.EqualTo(c.Ord()));
+            });
+        }
+    }
+    [Test]
+    public void SdStableSimplify()
+    {
+        Oper o0 = new SumDiff(Val(-1));
+        o0.Simplify();
+        Scribe.Info($"{o0.Name} {o0}");
+        Assert.That(o0.Like(new SumDiff(Val(-1))));
+
+        Oper o1 = new SumDiff(new SumDiff(Val(0)), Val(1));
+        Scribe.Info(o1);
+        o1.Simplify();
+        Scribe.Info(o1);
+        Assert.That(o1.Like(new SumDiff(Val(-1))));
+    }
+    [Test]
+    public void PatchedStableCanonical()
+    {
+        Oper o0 = new Fraction(new List<Oper> { new SumDiff(new List<Oper> { Val(0), Val(0) }, new List<Oper> { Val(4) }), Val(3) }, new List<Oper> { });
+        Scribe.Info(o0);
+        Assert.That(o0.Sol().Value().Get(), Is.EqualTo(-12));
+        Oper o0Canon = LegacyForm.Canonical(o0);
+        Scribe.Info(o0Canon);
+        Assert.That(o0Canon.Like(Val(-12)));
+
+        Oper o2 = new Fraction(new List<Oper> { new SumDiff(new List<Oper> { Val(0), Var("y") }, new List<Oper> { Val(3) }), Val(8) }, new List<Oper> { });
+        Scribe.Info($"{o2.Name} {o2}");
+        Oper o2canon = LegacyForm.Canonical(o2);
+        Scribe.Info($"{o2canon.Name} {o2canon}");
+        double x1 = o2.Evaluate(4.5).Get();
+        double x2 = o2canon.Evaluate(4.5).Get();
+        Scribe.Info($"{x1} vs. {x2}");
+
+        Var("y").Set(4.5);
+        Scribe.Info($"{o2}: {o2.Sol()} vs. {o2canon}: {o2canon.Sol()}");
+
+        Assert.That(x1, Is.EqualTo(x2));
+    }
+    [Test]
+    public void PatchedSimplify()
+    {
+        Oper o0 = new Fraction(new List<Oper> { new SumDiff(Val(1), Val(3)), Val(4) }, new List<Oper> { });
+        Scribe.Info($"{o0} = {o0.Sol()}");
+        o0.Simplify();
+        Scribe.Info(o0);
+        Assert.That(o0.Like(new Fraction(Val(-8))));
+
+        Oper o1 = new SumDiff(new Fraction(Val(0)), Val(1));
+        Scribe.Info($"{o1} = {o1.Sol()}");
+        o1.Simplify();
+        Scribe.Info(o1);
+        Assert.That(o1.Like(new SumDiff(Val(-1))));
+    }
+
+    [Test]
     public void XSquared()
     {
         Fraction xsq = new(new List<Oper> { Var("x"), Var("x") }, new List<Oper> { });
@@ -420,7 +420,7 @@ public class IntermediateAlgebraCases
     {
         Oper twoTimesTen = new Fraction(Val(2), Val(1), Val(10));
         Variable result = twoTimesTen.Sol();
-        Assert.That(result.Value.Get(), Is.EqualTo(20));
+        Assert.That(result.Value().Get(), Is.EqualTo(20));
     }
 
     [Test]
@@ -430,9 +430,9 @@ public class IntermediateAlgebraCases
             new List<Oper> { new SumDiff(Val(2)), new SumDiff(Val(1), Val(2), new SumDiff(Val(3)), Val(4)), Val(1), new SumDiff(Val(3)) },
             new List<Oper> { Val(5), new SumDiff(Val(1), new SumDiff(Val(5), new SumDiff(Val(3)))) }
         );
-        Assert.That(sd.Sol().Value.Get(), Is.EqualTo(0));
+        Assert.That(sd.Sol().Value().Get(), Is.EqualTo(0));
         sd.Associate();
-        Assert.That(sd.Sol().Value.Get(), Is.EqualTo(0));
+        Assert.That(sd.Sol().Value().Get(), Is.EqualTo(0));
     }
 
     [Test]
@@ -587,7 +587,7 @@ public class IntermediateAlgebraCases
         Var("x").Set(20.13535);
         Var("y").Set(0.13585);
         Var("z").Set(-0.27164);
-        double sol0 = sd.Sol().Value.Get();
+        double sol0 = sd.Sol().Value().Get();
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
@@ -595,7 +595,7 @@ public class IntermediateAlgebraCases
         Var("x").Set(20.13535);
         Var("y").Set(0.13585);
         Var("z").Set(-0.27164);
-        double sol1 = sd.Sol().Value.Get();
+        double sol1 = sd.Sol().Value().Get();
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();

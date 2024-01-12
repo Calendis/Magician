@@ -116,7 +116,7 @@ public class FactorMap
             Oper exp = factors[f];
             if (exp.IsDetermined)
             {
-                IVal x = exp.Sol().Value.Trim();
+                IVal x = exp.Sol().Value().Trim();
                 if (x.Dims == 1)
                 {
                     if (x.Get() < 0)

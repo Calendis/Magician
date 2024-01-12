@@ -3,8 +3,8 @@ namespace Magician.Core;
 
 public interface IVar : IVal, IVec
 {
-    public bool IsVector => Values<IVal>().Count > 0;
-    public bool IsScalar => Values<double>().Count > 0;
+    public bool IsVector => Values<IVal>() is not null && Values<IVal>().Count > 0;
+    public bool IsScalar => Values<double>() is not null && Values<double>().Count > 0;
     public bool Is1D => Values<IVal>().Count == 1;
     public new List<T> Values<T>() => ((IDimensional<T>)this).Values;
     public new int Dims
