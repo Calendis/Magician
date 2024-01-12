@@ -48,28 +48,38 @@ public class ExpLog : Invertable
         if (posArgs.Count == 0)
             return new Variable(1);
 
-        Variable sol0 = posArgs[0].Sol();
-        Variable pos;
-        //Variable neg;
+        Variable ptBase = posArgs[0].Sol();
+        Variable powTow;
         if (posArgs.Count == 0)
-            pos = new Variable(1);
+            powTow = new Variable(1);
         else if (posArgs.Count == 1)
-            pos = posArgs[0].Sol();
+            powTow = posArgs[0].Sol();
         else if (posArgs.Count == 2)
-            pos = new(IVal.Exp(sol0, posArgs[1].Sol()));
+        {
+            bool simpleBase = ptBase.Var.IsScalar || (ptBase.Var.IsVector && ptBase.Var.Is1D);
+            bool simpleExponent = posArgs[1].Sol().Var.IsScalar || (posArgs[1].Sol().Var.IsVector && posArgs[1].Sol().Var.Is1D);
+            if (!simpleBase)
+                throw Scribe.Error($"Could not exponentiate vector {ptBase}");
+            if (!simpleExponent)
+                throw Scribe.Error($"Could not raise {ptBase} to vector power {posArgs[1]}");
+
+            if (posArgs[1].Sol().Value() is Rational && posArgs[1].Sol().Value().Get() != (int)posArgs[1].Sol().Value().Get())
+                throw Scribe.Issue($"TODO: support multivalued exponents");
+            powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()).ToIVal());
+        }
         else
-            pos = new ExpLog(new List<Oper> { sol0, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
+            powTow = new ExpLog(new List<Oper> { ptBase, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
 
         if (negArgs.Count == 0)
-            return pos;
+            return powTow;
         else if (negArgs.Count == 1)
         {
-            return new(IVal.Log(pos, negArgs[0].Sol()));
+            return new(IVal.Log(powTow, negArgs[0].Sol()));
         }
         else
         {
             return new(IVal.Log(
-                new ExpLog(new List<Oper> { pos }, negArgs.SkipLast(1)).Sol(), negArgs[^1].Sol()
+                new ExpLog(new List<Oper> { powTow }, negArgs.SkipLast(1)).Sol(), negArgs[^1].Sol()
             ));
         }
     }

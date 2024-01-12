@@ -2,17 +2,6 @@ namespace Magician.Core;
 
 public interface IVal : IDimensional<double>
 {
-    //abstract List<double> IDimensional<double>.Values {get;}
-    //int IDimensional<double>.Dims => Values.Count;
-    //public double Get(int i = 0) => Values[i];
-    //public void Set(params double[] vs);
-    //public void Set(IVal iv)
-    //{
-    //    for (int i = 0; i < Dims; i++)
-    //    {
-    //        Values[i] = iv.Values[i];
-    //    }
-    //}
     public bool EqValue(IVal other)
     {
         if (Dims != other.Dims)
@@ -164,10 +153,10 @@ public interface IVal : IDimensional<double>
         return new Val(re, im);
     }
 
-    public static IVec Exp(IVal i, IVal v)
+    public static IVar Exp(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Vec(Math.Pow(i.Get(), v.Get()));
+            return new Var(Math.Pow(i.Get(), v.Get()));
         int yu, yi; yu = i.Trim().Dims; yi = v.Trim().Dims;
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
@@ -187,7 +176,7 @@ public interface IVal : IDimensional<double>
 
 public class Val : IVal
 {
-    private List<double> vals;
+    private readonly List<double> vals;
     List<double> IDimensional<double>.Values => vals;
     public Val(params double[] ds)
     {
@@ -200,11 +189,6 @@ public class Val : IVal
         vals = iv.Values.ToList();
     }
 
-    //void IDimensional<double>.Set(params double[] vs)
-    //{
-    //    vals = vs.ToList();
-    //}
-
     void IDimensional<double>.Normalize()
     {
         throw Scribe.Issue("Implement IVal normalize");
@@ -213,5 +197,19 @@ public class Val : IVal
     public override string ToString()
     {
         return Scribe.Expand<List<double>, double>(vals);
+    }
+}
+
+public class Rational : IVal
+{
+    int num;
+    int denom;
+    List<double> IDimensional<double>.Values => Crunch.Values;
+    public IVal Crunch => new Val((double)num / denom);
+
+    // TODO: arithmetic operatrors for Rational
+    public void Normalize()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -5,8 +5,8 @@ public class Variable : Invertable, IVar
 {
     protected List<double> qs;
     protected List<IVal> ivals;
-    List<double> IDimensional<double>.Values { get => qs; }
-    List<IVal> IDimensional<IVal>.Values { get => ivals; }
+    List<double> IDimensional<double>.Values => qs;
+    List<IVal> IDimensional<IVal>.Values => ivals;
 
     bool found;
     public bool Found => found;
@@ -35,11 +35,11 @@ public class Variable : Invertable, IVar
     public Variable(string n) : base(n) { qs ??= new(); ivals ??= new(); }
     public Variable(string n, params double[] v) : base(n)
     {
+        if (v.Length == 0)
+            throw Scribe.Error("Cannot create empty Variable scalar");
         qs = new();
         Set(v);
         ivals ??= new();
-        if (v.Length == 0)
-            throw Scribe.Error("Cannot create empty Variable scalar");
     }
     public Variable(params double[] v) : this($"constant({v})", v) { }
     public Variable(IVal iv) : this(iv.Values.ToArray()) { }

@@ -3,17 +3,6 @@ namespace Magician.Symbols;
 /* Class for additional algebraic functionality for Oper */
 public abstract partial class Oper
 {
-    internal void MakeExplicit(int? i=null)
-    {
-        if (posArgs.Count > 0)
-            return;
-        if (Identity is null && i is null)
-            throw Scribe.Error($"Could not make explicit {this}");
-        i ??= Identity;
-        if (posArgs.Count == 0 && this is not Variable)
-            posArgs.Add(New(new List<Oper> { Notate.Val((int)i!) }, new List<Oper> { }));
-    }
-
     internal (Dictionary<string, Oper>, Dictionary<string, int>) ArgBalance()
     {
         Dictionary<string, Oper> selectedOpers = new();
