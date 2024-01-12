@@ -282,7 +282,22 @@ public abstract partial class Oper : IRelation
         if (this is Variable v && o is Variable u)
         {
             if (v.Found && u.Found)
-                return ((IVal)v).EqValue(u);
+            {
+                IVar ivV = (IVar)v; IVar ivU = (IVar)u;
+
+                if ((ivV.Is1D && ivU.Is1D) || (ivV.IsScalar && ivU.Is1D) || (ivV.Is1D && ivU.IsScalar))
+                    return new Variable(ivV.ToIVal()).Like(new Variable(ivU.ToIVal()));
+                else if (ivV.IsScalar && ivU.IsScalar)
+                    return ((IVal)ivV).EqValue((IVal)ivU);
+                else if (ivV.IsVector && ivU.IsVector)
+                {
+                    if (ivV.Dims != ivU.Dims)
+                        return false;
+                    for (int i = 0; i < ivV.Dims; i++)
+                        if (!ivV.Get(i).EqValue(ivU.Get(i)))
+                            return false;
+                }
+            }
             else
                 return v == u;
         }
@@ -318,11 +333,11 @@ public abstract partial class Oper : IRelation
         ord += posArgs.Count.ToString();
         ord += typeHeaders[GetType()].neg;
         ord += negArgs.Count.ToString();
-        foreach(Oper p in posArgs)
+        foreach (Oper p in posArgs)
         {
             ord += p.Ord();
         }
-        foreach(Oper n in negArgs)
+        foreach (Oper n in negArgs)
         {
             ord += n.Ord();
         }

@@ -84,14 +84,14 @@ public class SimpleAlgebraCases
         Assert.That(o1.Like(new SumDiff(Val(-1))));
     }
     [Test]
-    public void BrokenStableCanonical()
+    public void PatchedStableCanonical()
     {
-        //Oper o0 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Val(0)}, new List<Oper>{Val(4)}), Val(3)}, new List<Oper>{});
-        //Scribe.Info(o0);
-        //Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
-        //Oper o0Canon = LegacyForm.Canonical(o0);
-        //Scribe.Info(o0Canon);
-        //Assert.That(o0Canon.Like(Val(-12)));
+        Oper o0 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Val(0)}, new List<Oper>{Val(4)}), Val(3)}, new List<Oper>{});
+        Scribe.Info(o0);
+        Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
+        Oper o0Canon = LegacyForm.Canonical(o0);
+        Scribe.Info(o0Canon);
+        Assert.That(o0Canon.Like(Val(-12)));
 
         Oper o2 = new Fraction(new List<Oper>{new SumDiff(new List<Oper>{Val(0), Var("y")}, new List<Oper>{Val(3)}), Val(8)}, new List<Oper>{});
         Scribe.Info($"{o2.Name} {o2}");
@@ -107,7 +107,7 @@ public class SimpleAlgebraCases
         Assert.That(x1, Is.EqualTo(x2));
     }
     [Test]
-    public void BrokenSimplify()
+    public void PatchedSimplify()
     {
         Oper o0 = new Fraction(new List<Oper>{new SumDiff(Val(1), Val(3)), Val(4)}, new List<Oper>{});
         Scribe.Info($"{o0} = {o0.Sol()}");
@@ -378,9 +378,6 @@ public class SimpleAlgebraCases
         Fraction xxsqWorking = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
         xxsqWorking.Commute();
         xxsqWorking.Simplify();
-
-        Scribe.Warn(Var("x").CommonFactors(Var("x").Pow(Val(2))));
-        Scribe.Warn(Var("x").Pow(Val(2).CommonFactors(Var("x"))));
 
         Scribe.Info($"Got {xxsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xxsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));

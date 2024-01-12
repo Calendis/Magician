@@ -2,8 +2,8 @@ namespace Magician.Core;
 
 public interface IVec : IDimensional<IVal>
 {
-    abstract List<IVal> IDimensional<IVal>.Values { get; }
-    int IDimensional<IVal>.Dims { get => Values.Select(v => v.Dims).Sum(); }
+    //abstract List<IVal> IDimensional<IVal>.Values { get; }
+    //int IDimensional<IVal>.Dims { get => Values.Select(v => v.Dims).Sum(); }
 
     public Symbols.Variable ToVariable()
     {
@@ -56,17 +56,19 @@ public class Vec : IVec
     protected List<IVal> vecArgs = new();
     List<IVal> IDimensional<IVal>.Values => vecArgs;
 
-    // TODO: avoid this dumb-ass pattern
     public Vec(params double[] vals)
     {
-
+        if (vals.Length == 0)
+            throw Scribe.Error("Cannot create empty Vec");
         for (int i = 0; i < vals.Length; i++)
         {
-            vecArgs.Add(new Num(vals[i]));
+            vecArgs.Add(new Val(vals[i]));
         }
     }
     public Vec(params IVal[] qs)
     {
+        if (qs.Length == 0)
+            throw Scribe.Error("Cannot create empty Vec");
         vecArgs = qs.ToList();
     }
     public Vec(IVec v)

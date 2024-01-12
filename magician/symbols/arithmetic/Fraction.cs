@@ -13,10 +13,10 @@ public class Fraction : Arithmetic
 
     public override Variable Sol()
     {
-        IVal quo = new Num(1);
+        IVar quo = new Var(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                quo *= v.Sol();
+                quo *= (IVar)v.Sol();
             else
                 quo *= o.Sol();
         foreach (Oper o in negArgs)
@@ -24,7 +24,10 @@ public class Fraction : Arithmetic
                 quo /= v.Sol();
             else
                 quo /= o.Sol();
-        return new Variable(quo);
+        if (quo.IsVector)
+            return new Variable(quo.ToIVec());
+        else
+            return new Variable(quo.ToIVal());
     }
 
     public override Fraction New(IEnumerable<Oper> a, IEnumerable<Oper> b)

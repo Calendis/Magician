@@ -3,24 +3,25 @@ namespace Magician.Core;
 
 public interface IVar : IVal, IVec
 {
-    public abstract bool IsVector {get;}
-    public IDimensional<T> Get<T>(int i)
+    public bool IsVector => Values<IVal>().Count > 0;
+    public bool IsScalar => Values<double>().Count > 0;
+    public bool Is1D => Values<IVal>().Count == 1;
+    public new List<T> Values<T>() => ((IDimensional<T>)this).Values;
+    public new int Dims
     {
-        if (typeof(T).GetType() == typeof(double))
+        get
         {
             if (IsVector)
-                throw Scribe.Error($"{this} is a vector");
-            return (IDimensional<T>)new Num(((IVal)this).Values.ToArray());
+                return Values<IVal>().Count;
+            return Values<double>().Count;
         }
-        else if (typeof(T).GetType() == typeof(IVal))
-        {
-            if (!IsVector)
-                throw Scribe.Error($"{this} is not a vector");
-            return (IDimensional<T>)new Vec(((IVec)this).Values.ToArray());
-        }
-        throw Scribe.Error($"Invalid get type {typeof(T)} for {this}");
     }
-
+    public new IVal Get(int i = 0)
+    {
+        if (IsVector)
+            return Values<IVal>()[i];
+        return new Val(Values<double>()[i]);
+    }
     public static IVar operator +(IVar i, IVar v)
     {
         if (i.IsVector)
@@ -45,75 +46,112 @@ public interface IVar : IVal, IVec
         else
             return     new Var((i.ToIVal() - v.ToIVal()).Values.ToArray());
     }
-
-    public IVal ToIVal()
+    public static IVar operator *(IVar i, IVar v)
     {
-        if (IsVector)
-            throw Scribe.Error($"Could not take vector {this} as value");
-        if (((IDimensional<IVal>)this).Values.Count == 1 && ((IDimensional<IVal>)this).Dims == 1)
-            return new Num(((IDimensional<IVal>)this).Values[0]);
+        if (i.Is1D && v.Is1D)
+            return new Var(i.ToIVal() * v.ToIVal());
+        else if (i.Is1D)
+            return new Var(i.ToIVal() * v);
+        else if (v.Is1D)
+            return new Var(v.ToIVal() * i);
+        
+        if (i.IsVector)
+            if (v.IsVector)
+                throw Scribe.Error($"Could not multiply vectors {i} and {v}");  // TODO: maybe use geometric (Clifford) algebra to do this
+            else
+                return new Var(i.Values<IVal>().Select(iv => iv * v.ToIVal()).ToArray());
+        else if (v.IsVector)
+            return     new Var(v.Values<IVal>().Select(iv => iv * i.ToIVal()).ToArray());
         else
-            return new Num(((IDimensional<double>)this).Values.ToArray());
+            return     new Var((i.ToIVal() * v.ToIVal()).Values.ToArray());
     }
-    public IVec ToIVec()
+    public static IVar operator /(IVar i, IVar v)
+    {
+        if (i.IsVector)
+            if (v.IsVector)
+                throw Scribe.Error($"Could not divide vectors {i} and {v}");  // maybe use geometric (Clifford) algebra to do this
+            else
+                return new Var(i.Values<IVal>().Select(iv => iv / v.ToIVal()).ToArray());
+        else if (v.IsVector)
+            return     new Var(v.Values<IVal>().Select(iv => iv / i.ToIVal()).ToArray());
+        else
+            return     new Var((i.ToIVal() / v.ToIVal()).Values.ToArray());
+    }
+
+    IVal ToIVal()
+    {
+        if (IsVector && !Is1D)
+            throw Scribe.Error($"Could not take vector {this} as value");
+        else if (IsVector)
+            return new Val(((IDimensional<IVal>)this).Values[0]);
+        else
+            return new Val(((IDimensional<double>)this).Values.ToArray());
+    }
+    IVec ToIVec()
     {
         if (!IsVector)
             throw Scribe.Error($"Could not take value {this} as vector. Conversion can be done manually");
         return (IVec)this;
     }
-    
-    //public static IVar operator -(IVal i, IVal v)
-    //{
-    //    return ((IVar)new Num(i.IDArgs.Zip(v.IDArgs, (a, b) => a - b).ToArray()));
-    //}
-    //public static IVar operator +(IVal i, double x)
-    //{
-    //    double[] newAll = i.IDArgs.ToArray();
-    //    newAll[0] += x;
-    //    return new Num(newAll);
-    //}
-    //public static IVar operator -(IVal i, double x)
-    //{
-    //    double[] newAll = i.IDArgs.ToArray();
-    //    newAll[0] -= x;
-    //    return new Num(newAll);
-    //}
 }
 
 public class Var : IVar
 {
-    public bool IsVector {get; set;}
-    public double Magnitude => IsVector ? new Vec(((IDimensional<IVal>)this).Values.ToArray()).Magnitude : ((IVal)new Num(((IDimensional<double>)this).Values.ToArray())).Magnitude;
-    List<IVal> vec;
-    List<double> val;
+    // This again. I guess it's not that bad
+    public bool IsVector => ((IVar)this).IsVector;
+    bool IVar.IsVector => vec.Count > 0;
+    public double Magnitude => IsVector ? new Vec(((IDimensional<IVal>)this).Values.ToArray()).Magnitude : ((IVal)new Val(((IDimensional<double>)this).Values.ToArray())).Magnitude;
+    readonly List<IVal> vec;
+    readonly List<double> val;
     List<IVal> IDimensional<IVal>.Values => vec;
     List<double> IDimensional<double>.Values => val;
 
     public Var(params double[] ds)
     {
-        IsVector = false;
+        if (ds.Length == 0)
+            throw Scribe.Error("Cannot create empty Var scalar");
+        //IsVector = false;
         val = ds.ToList();
         vec = new();
     }
     public Var(params IVal[] ivs)
     {
-        IsVector = true;
+        if (ivs.Length == 0)
+            throw Scribe.Error("Cannot create empty Var vector");
+        //IsVector = true;
         vec = ivs.ToList();
         val = new();
     }
 
-    public void Set(params double[] vs)
-    {
-        throw new NotImplementedException();
-    }
+    // TODO: these
+    //public void Set(params double[] vs)
+    //{
+    //    val = vs.ToList();
+    //}
 
     void IDimensional<double>.Normalize()
     {
-        throw new NotImplementedException();
+        ((IVal)this).Normalize();
     }
 
     void IDimensional<IVal>.Normalize()
     {
-        throw new NotImplementedException();
+        ((IVec)this).Normalize();
+    }
+
+    public override string ToString()
+    {
+        if (IsVector)
+            return $"Var vec {Scribe.Expand<List<IVal>, IVal>(vec)}";
+        else
+            return $"Var scalar {Scribe.Expand<List<double>, double>(val)}";
+    }
+}
+
+public class Multival : Var
+{
+    public Multival(params IVal[] vs) : base(vs)
+    {
+        //
     }
 }

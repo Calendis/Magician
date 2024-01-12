@@ -2,17 +2,17 @@ namespace Magician.Core;
 
 public interface IVal : IDimensional<double>
 {
-    abstract List<double> IDimensional<double>.Values {get;}
-    int IDimensional<double>.Dims => Values.Count;
-    public double Get(int i = 0) => Values[i];
-    public void Set(params double[] vs);
-    public void Set(IVal iv)
-    {
-        for (int i = 0; i < Dims; i++)
-        {
-            Values[i] = iv.Values[i];
-        }
-    }
+    //abstract List<double> IDimensional<double>.Values {get;}
+    //int IDimensional<double>.Dims => Values.Count;
+    //public double Get(int i = 0) => Values[i];
+    //public void Set(params double[] vs);
+    //public void Set(IVal iv)
+    //{
+    //    for (int i = 0; i < Dims; i++)
+    //    {
+    //        Values[i] = iv.Values[i];
+    //    }
+    //}
     public bool EqValue(IVal other)
     {
         if (Dims != other.Dims)
@@ -40,7 +40,7 @@ public interface IVal : IDimensional<double>
 
     public IVal Delta(params double[] vs)
     {
-        Set(this + new Num(vs));
+        Set(this + new Val(vs));
         return this;
     }
 
@@ -56,7 +56,7 @@ public interface IVal : IDimensional<double>
                 break;
             }
         if (!nz)
-            return new Num(0);
+            return new Val(0);
         if (Dims < 2)
             return this;
         int toTrim = 0;
@@ -68,7 +68,7 @@ public interface IVal : IDimensional<double>
             else
                 break;
         }
-        return new Num(Values.SkipLast(toTrim).ToArray());
+        return new Val(Values.SkipLast(toTrim).ToArray());
     }
 
     public static bool operator <(IVal iv0, IVal iv1)
@@ -86,31 +86,31 @@ public interface IVal : IDimensional<double>
     {
         double[] newAll = i.Values.ToArray();
         newAll[0] += x;
-        return new Num(newAll);
+        return new Val(newAll);
     }
     public static IVal operator -(IVal i, double x)
     {
         double[] newAll = i.Values.ToArray();
         newAll[0] -= x;
-        return new Num(newAll);
+        return new Val(newAll);
     }
     // Multiplication supported for one or two dimensions
     public static IVal operator *(IVal i, double x)
     {
-        return new Num(i.Values.Select(k => k * x).ToArray());
+        return new Val(i.Values.Select(k => k * x).ToArray());
     }
     public static IVal operator /(IVal i, double x)
     {
-        return new Num(i.Values.Select(k => k / x).ToArray());
+        return new Val(i.Values.Select(k => k / x).ToArray());
     }
     
     public static IVal operator +(IVal i, IVal v)
     {
-        return new Num(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+        return new Val(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
     }
     public static IVal operator -(IVal i, IVal v)
     {
-        return new Num(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+        return new Val(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
     }
     public static IVal operator *(IVal i, IVal v)
     {
@@ -118,7 +118,11 @@ public interface IVal : IDimensional<double>
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new Num(a * c - b * c, a * d + b * c);
+        double re = a*c - b*d;
+        double im = a*d + b*c;
+        if (im == 0)
+            return new Val(re);
+        return new Val(re, im);
     }
     public static IVal operator /(IVal i, IVal v)
     {
@@ -126,7 +130,11 @@ public interface IVal : IDimensional<double>
         double b = i.Dims > 1 ? i.Get(1) : 0;
         double c = v.Get();
         double d = v.Dims > 1 ? v.Get(1) : 0;
-        return new Num((a * c + b * d) / (c * c + d * d), (b * c - a * d) / (c * c + d * d));
+        double re = (a * c + b * d) / (c * c + d * d);
+        double im = (b * c - a * d) / (c * c + d * d);
+        if (im == 0)
+            return new Val(re);
+        return new Val(re, im);
     }
 
     public static IVec Exp(IVal i, IVal v)
@@ -139,37 +147,44 @@ public interface IVal : IDimensional<double>
     public static IVal Log(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Num(Math.Log(i.Get(), v.Get()));
+            return new Val(Math.Log(i.Get(), v.Get()));
         throw Scribe.Issue($"TODO: Support complex logarithms");
     }
 
     // TODO: remove this method, as Number is now public
     public static IVal FromLiteral(double x)
     {
-        return new Num(x);
+        return new Val(x);
     }
 }
 
-public class Num : IVal
+public class Val : IVal
 {
     private List<double> vals;
     List<double> IDimensional<double>.Values => vals;
-    public Num(params double[] ds)
+    public Val(params double[] ds)
     {
+        if (ds.Length == 0)
+            throw Scribe.Error("Cannot create empty num");
         vals = ds.ToList();
     }
-    public Num(IVal iv)
+    public Val(IVal iv)
     {
         vals = iv.Values.ToList();
     }
 
-    void IVal.Set(params double[] vs)
-    {
-        vals = vs.ToList();
-    }
+    //void IDimensional<double>.Set(params double[] vs)
+    //{
+    //    vals = vs.ToList();
+    //}
 
     void IDimensional<double>.Normalize()
     {
         throw Scribe.Issue("Implement IVal normalize");
+    }
+
+    public override string ToString()
+    {
+        return Scribe.Expand<List<double>, double>(vals);
     }
 }

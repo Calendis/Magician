@@ -7,17 +7,18 @@ public class Variable : Invertable, IVar
     protected List<IVal> ivals;
     List<double> IDimensional<double>.Values { get => qs; }
     List<IVal> IDimensional<IVal>.Values { get => ivals; }
+
     bool found;
     public bool Found => found;
     int IDimensional<double>.Dims => qs is null ? 0 : qs.Count;
-    public bool IsVector => ivals.Count > 0 && ((IVec)this).Dims > 1;
+    //public bool IsVector => ivals.Count > 0 && ((IVec)this).Dims > 1;
     public IVal Value => (IVal)this;
     public IVec Vector => (IVec)this;
     public double Magnitude
     {
         get
         {
-            if (IsVector)
+            if (((IVar)this).IsVector)
             {
                 //Scribe.Info($"vector magnitude");
                 return new Vec(ivals.ToArray()).Magnitude;
@@ -25,18 +26,19 @@ public class Variable : Invertable, IVar
             else
             {
                 //Scribe.Info($"value magnitude");
-                return ((IVal)new Num(qs.ToArray())).Magnitude;
+                return ((IVal)new Val(qs.ToArray())).Magnitude;
             }
         }
     }
     // Creating an unsolved variable
-    public Variable(string n) : base(n) {qs ??= new(); ivals ??= new();}
+    public Variable(string n) : base(n) { qs ??= new(); ivals ??= new(); }
     public Variable(string n, params double[] v) : base(n)
     {
         qs = new();
         Set(v);
         ivals ??= new();
-        //Vector = false;
+        if (v.Length == 0)
+            throw Scribe.Error("Cannot create empty Variable scalar");
     }
     public Variable(params double[] v) : this($"constant({v})", v) { }
     public Variable(IVal iv) : this(iv.Values.ToArray()) { }
@@ -45,33 +47,40 @@ public class Variable : Invertable, IVar
         ivals = ivs.ToList();
         Set(ivs);
         qs ??= new(); ivals ??= new();
-        //Vector = true;
+        if (ivs.Length == 0)
+            throw Scribe.Error("Cannot create empty Variable vector");
     }
     public Variable(params IVal[] ivs) : this($"vector({ivs})", ivs) { }
     public Variable(IVec iv) : this(iv.Values.ToArray()) { }
 
-    double IVal.Get(int i)
-    {
-        return qs[i];
-    }
-    void IVal.Set(params double[] vs)
-    {
-        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
-            throw Scribe.Error("Mismatch");
-        qs = vs.ToList();
-    }
     public void Set(params double[] vs)
     {
-        ((IVal)this).Set(vs);
+        ((IDimensional<double>)this).Set(vs);
         found = true;
-        //Vector = false;
     }
     public void Set(params IVal[] ivs)
     {
-        ivals = ivs.ToList();
+        ((IDimensional<IVal>)this).Set(ivs);
         found = true;
-        //Vector = true;
     }
+    // This seems like an antipattern -- consider another way
+    void IDimensional<double>.Set(params double[] vs)
+    {
+        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
+            throw Scribe.Error("Mismatch");
+        qs ??= new();
+        qs.Clear();
+        qs.AddRange(vs);
+    }
+    void IDimensional<IVal>.Set(params IVal[] vs)
+    {
+        if (ivals is not null && ivals.Count > 0 && vs.Length != Value.Dims)
+            throw Scribe.Error("Mismatch");
+        ivals ??= new();
+        ivals.Clear();
+        ivals.AddRange(vs);
+    }
+    
     public void Reset()
     {
         found = false;
@@ -107,14 +116,19 @@ public class Variable : Invertable, IVar
         if (!found)
             return this;
         // Knowns actually get copied
-        return new Variable(qs.ToArray());
+        if (((IVar)this).IsVector)
+            return new(ivals.ToArray());
+        else
+            return new Variable(qs.ToArray());
     }
     public override string ToString()
     {
         if (!found)
             return name;
-        IVal trim = Value.Trim();
-        return trim.Dims < 2 ? $"{Value.Get()}" : $"({Value.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
+        if (((IVar)this).IsVector)
+            return Scribe.Expand<List<IVal>, IVal>(ivals);
+        IVal trim = ((IVar)this).ToIVal().Trim();
+        return trim.Dims < 2 ? $"{trim.Get()}" : $"({trim.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
     }
 
@@ -131,7 +145,7 @@ public class Variable : Invertable, IVar
 
     public override Variable Sol()
     {
-        return new Variable(qs.ToArray());
+        return Copy();
         // TODO: test this
         //return this;
     }
