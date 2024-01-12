@@ -900,6 +900,16 @@ public class AdvancedAlgebraCases
     }
 }
 
+public class ComplexAndMultivalued
+{
+    [Test]
+    public void SquareRootMinus1()
+    {
+        Variable v = Val(-1).Root(Val(2)).Sol();
+        Scribe.Info(v);
+    }
+}
+
 public class Others
 {
     [Test]

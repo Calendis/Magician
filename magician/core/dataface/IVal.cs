@@ -156,7 +156,19 @@ public interface IVal : IDimensional<double>
     public static IVar Exp(IVal i, IVal v)
     {
         if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Var(Math.Pow(i.Get(), v.Get()));
+        {
+            if (i.Get() < 0 && v.Get() != (int)v.Get())
+            {
+                double re = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Math.Cos(Math.PI*v.Get());
+                double im = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Math.Sin(Math.PI*v.Get());
+                return new Var(re, im);
+            }
+            else
+            {
+                return new Var(Math.Pow(i.Get(), v.Get()));
+            }
+        }
+            
         int yu, yi; yu = i.Trim().Dims; yi = v.Trim().Dims;
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
