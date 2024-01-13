@@ -905,9 +905,28 @@ public class ComplexAndMultivalued
     [Test]
     public void SquareRootMinus1()
     {
-        Variable v = Val(-1).Root(Val(2)).Sol();
+        // Principal root (i)
+        Variable v = Val(-1).Pow(Val(0.5)).Sol();
         Scribe.Info(v);
         Assert.That(v.Like(new Variable(0, 1)));
+
+        // All roots (+/-i)
+        v = Val(-1).Root(Val(2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Like(new Variable(0, 1)));
+    }
+    [Test]
+    public void RootsOfTwo()
+    {
+        Variable v0 = Val(2).Pow(new Rational(1, 2)).Sol();
+        Variable v1 = Val(2).Root(new Rational(2)).Sol();
+        Scribe.Info($"{v0}, {v1}");
+    }
+    [Test]
+    public void Rationals()
+    {
+        Fraction f = new(Val(3), Val(4));
+        Variable v = f.Sol();
     }
 }
 
