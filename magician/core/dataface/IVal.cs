@@ -169,16 +169,16 @@ public interface IVal : IDimensional<double>
         return new Val(re, im);
     }
 
-    public static IVar Exp(IVal i, IVal v)
+    public static IVar Exp(IVal z, IVal w)
     {
         // if i and v are both real numbers...
-        if (i.Trim().Dims * v.Trim().Dims == 1)
+        if (z.Trim().Dims * w.Trim().Dims == 1)
         {
             // if i is negative and v is not an integer, the answer is complex
-            if (i.Get() < 0 && v.Get() != (int)v.Get())
+            if (z.Get() < 0 && w.Get() != (int)w.Get())
             {
-                double re = Math.Exp(v.Get() * Math.Log(Math.Abs(i.Get()))) * Symbols.Numeric.Funcs.Cos(Math.PI * v.Get());
-                double im = Math.Exp(v.Get() * Math.Log(Math.Abs(i.Get()))) * Symbols.Numeric.Funcs.Sin(Math.PI * v.Get());
+                double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Symbols.Numeric.Funcs.Cos(Math.PI * w.Get());
+                double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Symbols.Numeric.Funcs.Sin(Math.PI * w.Get());
                 return new Var(re, im);
             }
             else
@@ -186,18 +186,47 @@ public interface IVal : IDimensional<double>
                 // if i is positive or if v is an integer, the answer is real
                 // when v is not an integer, there are multiple solutions
                 // these are found by exponentiating a non-integer Symbols.Rational
-                return new Var(Math.Pow(i.Get(), v.Get()));
+                return new Var(Math.Pow(z.Get(), w.Get()));
             }
         }
+        // real base, complex exponent
+        else if (z.Trim().Dims == 1)
+        {
+            double a = w.Get();
+            double b = w.Get(1);
+            double arg = z.Get() >= 0 ? 0 : Math.PI;
+            double coefficient = Math.Exp(a*Math.Log(Math.Abs(z.Get()))-b*arg);
+            double re = Symbols.Numeric.Funcs.Cos(b*Math.Log(z.Magnitude) + a*arg) * coefficient;
+            double im = Symbols.Numeric.Funcs.Sin(b*Math.Log(z.Magnitude) + a*arg) * coefficient;
+            return new Var(re, im);
+        }
+        // complex base, any exponent
+        else
+        {
+            if (z.Trim().Dims == 1 && z.Get() == 1)
+                return new Var(1);
+            return Exp(new Val(Math.E), w * Ln(z));
+        }
+    }
 
-        throw Scribe.Issue($"TODO: Support complex exponentiation");
-    }
-    public static IVal Log(IVal i, IVal v)
+    public static IVal ExpI(double x) => new Val(Symbols.Numeric.Funcs.Cos(x), Symbols.Numeric.Funcs.Sin(x));
+    public static IVal Log(IVal z, IVal logBase)
     {
-        if (i.Trim().Dims * v.Trim().Dims == 1)
-            return new Val(Math.Log(i.Get(), v.Get()));
-        throw Scribe.Issue($"TODO: Support complex logarithms");
+        if (z.EqValue(logBase))
+            return new Val(1);
+        if (z.Trim().Dims * logBase.Trim().Dims == 1)
+        {
+            if (logBase.Get() < 0)
+                return Ln(z) / Ln(logBase);
+            if (z.Get() < 0)
+                return Log(new Val(Math.Abs(z.Get())), logBase) + new Val(0, Math.PI);
+            return new Val(Math.Log(z.Get(), logBase.Get()));
+        }
+        double a = z.Get();
+        double b = z.Trim().Dims == 1 ? 0 : z.Get(1);
+        return new Val(Math.Log(z.Magnitude), Math.Atan2(b, a));
     }
+    public static IVal Ln(IVal v) => Log(v, new Val(Math.E));
 
     // TODO: remove this method, as Number is now public
     public static IVal FromLiteral(double x)
