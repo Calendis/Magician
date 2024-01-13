@@ -5,6 +5,36 @@ public interface IVec : IDimensional<IVal>
     //abstract List<IVal> IDimensional<IVal>.Values { get; }
     //int IDimensional<IVal>.Dims { get => Values.Select(v => v.Dims).Sum(); }
 
+    double IDimensional<IVal>.Magnitude
+    {
+        get
+        {
+            double m = 0;
+            for (int i = 0; i < ((IVec)this).Dims; i++)
+            {
+                m += Math.Pow(Values[i].Magnitude, 2);
+            }
+            return Math.Sqrt(m);
+        }
+        set
+        {
+            Normalize();
+            foreach (IVal q in Values)
+            {
+                q.Set(q * value);
+            }
+        }
+    }
+
+    void IDimensional<IVal>.Normalize()
+    {
+        double m = Magnitude;
+        foreach (IVal q in Values)
+        {
+            q.Set(q / m);
+        }
+    }
+
     public Symbols.Variable ToVariable()
     {
         List<double> vs = new();
@@ -55,6 +85,7 @@ public class Vec : IVec
 {
     protected List<IVal> vecArgs = new();
     List<IVal> IDimensional<IVal>.Values => vecArgs;
+    //public IVec V => this;
 
     public Vec(params double[] vals)
     {
@@ -76,6 +107,51 @@ public class Vec : IVec
         vecArgs = v.Values.ToList();
     }
 
+    public void Normalize()
+    {
+        ((IDimensional<IVal>)this).Normalize();
+    }
+    public double Magnitude
+    {
+        get
+        {
+            return ((IDimensional<IVal>)this).Magnitude;
+        }
+        set
+        {
+            ((IDimensional<IVal>)this).Magnitude = value;
+        }
+    }
+    double IDimensional<IVal>.Magnitude
+    {
+        get
+        {
+            double m = 0;
+            for (int i = 0; i < ((IVec)this).Dims; i++)
+            {
+                m += Math.Pow(vecArgs[i].Magnitude, 2);
+            }
+            return Math.Sqrt(m);
+        }
+        set
+        {
+            Normalize();
+            foreach (IVal q in vecArgs)
+            {
+                q.Set(q * value);
+            }
+        }
+    }
+
+    void IDimensional<IVal>.Normalize()
+    {
+        double m = Magnitude;
+        foreach (IVal q in vecArgs)
+        {
+            q.Set(q / m);
+        }
+    }
+
     public IVal x
     {
         get => vecArgs[0];
@@ -91,42 +167,6 @@ public class Vec : IVec
     public IVal w
     {
         get => vecArgs[3];
-    }
-
-    public double Magnitude
-    {
-        get
-        {
-            double m = 0;
-            for (int i = 0; i < ((IVec)this).Dims; i++)
-            {
-                m += Math.Pow(vecArgs[i].Get(), 2);
-            }
-            return Math.Sqrt(m);
-        }
-        set
-        {
-            double m = Magnitude;
-            Normalize();
-            foreach (IVal q in vecArgs)
-            {
-                q.Set(q * value);
-            }
-        }
-    }
-
-    //void IVal.Set(params double[] vs)
-    //{
-    //    vecArgs = vs.Select(v => new ValWrapper(v)).ToArray();
-    //}
-
-    public void Normalize()
-    {
-        double m = Magnitude;
-        foreach (IVal q in vecArgs)
-        {
-            q.Set(q / m);
-        }
     }
 
     public override string ToString()

@@ -26,14 +26,15 @@ public interface IVal : IDimensional<double>
             }
             return Math.Sqrt(total);
         }
+        set
+        {
+            Normalize();
+            for (int i = 0; i < Values.Count; i++)
+            {
+                Values[i] *= value;
+            }
+        }
     }
-
-    public IVal Delta(params double[] vs)
-    {
-        Set(this + new Val(vs));
-        return this;
-    }
-
     void IDimensional<double>.Normalize()
     {
         double m = Magnitude;
@@ -41,6 +42,12 @@ public interface IVal : IDimensional<double>
         {
             Values[i] = Values[i] / m;
         }
+    }
+
+    public IVal Delta(params double[] vs)
+    {
+        Set(this + new Val(vs));
+        return this;
     }
 
     public IVal Trim()
@@ -164,26 +171,25 @@ public interface IVal : IDimensional<double>
 
     public static IVar Exp(IVal i, IVal v)
     {
+        // if i and v are both real numbers...
         if (i.Trim().Dims * v.Trim().Dims == 1)
         {
+            // if i is negative and v is not an integer, the answer is complex
             if (i.Get() < 0 && v.Get() != (int)v.Get())
             {
-                double re = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Symbols.Numeric.Funcs.Cos(Math.PI*v.Get());
-                double im = Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))*Symbols.Numeric.Funcs.Sin(Math.PI*v.Get());
-                if (re != 0 && im != 0)
-                {
-                    Scribe.Info($"real is {re}");
-                    Scribe.Info($"parts are {Math.Exp(v.Get()*Math.Log(Math.Abs(i.Get())))}, {Symbols.Numeric.Funcs.Cos(Math.PI*v.Get())}");
-                }
+                double re = Math.Exp(v.Get() * Math.Log(Math.Abs(i.Get()))) * Symbols.Numeric.Funcs.Cos(Math.PI * v.Get());
+                double im = Math.Exp(v.Get() * Math.Log(Math.Abs(i.Get()))) * Symbols.Numeric.Funcs.Sin(Math.PI * v.Get());
                 return new Var(re, im);
             }
             else
             {
+                // if i is positive or if v is an integer, the answer is real
+                // when v is not an integer, there are multiple solutions
+                // these are found by exponentiating a non-integer Symbols.Rational
                 return new Var(Math.Pow(i.Get(), v.Get()));
             }
         }
-            
-        int yu, yi; yu = i.Trim().Dims; yi = v.Trim().Dims;
+
         throw Scribe.Issue($"TODO: Support complex exponentiation");
     }
     public static IVal Log(IVal i, IVal v)
@@ -215,27 +221,54 @@ public class Val : IVal
         vals = iv.Values.ToList();
     }
 
+    // this pattern where I implement the base interface twice is annoying, but it does work
+    public double Magnitude
+    {
+        get
+        {
+            return ((IDimensional<double>)this).Magnitude;
+        }
+        set
+        {
+            ((IDimensional<double>)this).Magnitude = value;
+        }
+    }
+    public void Normalize()
+    {
+        ((IDimensional<double>)this).Normalize();
+    }
+
+    double IDimensional<double>.Magnitude
+    {
+        get
+        {
+            double total = 0;
+            foreach (double x in vals)
+            {
+                total += x * x;
+            }
+            return Math.Sqrt(total);
+        }
+        set
+        {
+            Normalize();
+            for (int i = 0; i < vals.Count; i++)
+            {
+                vals[i] *= value;
+            }
+        }
+    }
+    void IDimensional<double>.Normalize()
+    {
+        double m = Magnitude;
+        for (int i = 0; i < vals.Count; i++)
+        {
+            vals[i] = vals[i] / m;
+        }
+    }
+
     public override string ToString()
     {
         return Scribe.Expand<List<double>, double>(vals);
     }
 }
-
-//public class Rational : IVal
-//{
-//    int num;
-//    int denom;
-//    List<double> IDimensional<double>.Values => Crunch.Values;
-//    public IVal Crunch => new Val((double)num / denom);
-//    public Rational(int n, int d=1)
-//    {
-//        num = n;
-//        denom = d;
-//    }
-//    public void Set(int n, int d)
-//    {
-//        num = n;
-//        denom = d;
-//    }
-//    // TODO: arithmetic operatrors for Rational
-//}
