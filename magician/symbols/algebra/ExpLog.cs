@@ -75,7 +75,7 @@ public class ExpLog : Invertable
 
                 for (int k = 0; k < b; k++)
                 {
-                    IVal solution = new Val(Math.Pow(Math.Pow(ptBase.Var.ToIVal().Get(), a), 1d/exp.Var.ToIVal().Get())) * IVal.Exp(new Val(Math.E), new Val(0, 2*Math.PI*k/exp.Var.ToIVal().Get()));
+                    IVal solution = new Val(Math.Pow(Math.Pow(ptBase.Var.ToIVal().Get(), a), 1d/b)) * IVal.Exp(new Val(Math.E), new Val(0, 2*Math.PI*k/b));
                     solutions.Add(solution);
                 }
 
