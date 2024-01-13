@@ -862,6 +862,7 @@ public class AdvancedAlgebraCases
     }
 
 
+    /* This is my favourite test */
     [Test]
     public void PTRLBig()
     {
@@ -920,13 +921,36 @@ public class ComplexAndMultivalued
     {
         Variable v0 = Val(2).Pow(new Rational(1, 2)).Sol();
         Variable v1 = Val(2).Root(new Rational(2)).Sol();
-        Scribe.Info($"{v0}, {v1}");
+        Variable v2 = Val(2).Pow(Val(0.5)).Sol();
+        Variable v3 = Val(2).Root(Val(2)).Sol();
+        Scribe.Info($"{v0}, {v1}, {v2}, {v3}");
+        Scribe.Info($"{v0 is Multivalue}, {v1 is Multivalue}, {v2 is Multivalue}, {v3 is Multivalue}");
     }
     [Test]
-    public void Rationals()
+    public void ComplexExponents()
     {
-        Fraction f = new(Val(3), Val(4));
-        Variable v = f.Sol();
+        Variable v;
+
+        // 2 ^ (3-8i)
+        v = new Variable(2).Pow(new Variable(3, -8)).Sol();
+        Scribe.Info($"2 ^ (3-8i) = {v}");
+        
+        // (1 + 2i) ^ (3 + 4i)
+        v = new Variable(1, 2).Pow(new Variable(3, 4)).Sol();
+        Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
+
+        // (3 - 4i)^2
+        v = new Variable(3, -4).Pow(Val(2)).Sol();
+        Scribe.Info($"(3 - 4i)^2 = {v}");
+
+        v = new Variable(0, 1);
+        Scribe.Info(v);
+        v = new Variable(0, 1).Mult(new Variable(0, 1)).Sol();
+        Scribe.Info(v);
+        v = new Variable(0, 1).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Sol();
+        Scribe.Info(v);
+        v = new Variable(0, 1).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Sol();
+        Scribe.Info(v);
     }
 }
 
