@@ -56,15 +56,17 @@ public class ExpLog : Invertable
             powTow = posArgs[0].Sol();
         else if (posArgs.Count == 2)
         {
-            bool simpleBase = ptBase.Var.IsScalar || (ptBase.Var.IsVector && ptBase.Var.Is1D);
-            bool simpleExponent = posArgs[1].Sol().Var.IsScalar || (posArgs[1].Sol().Var.IsVector && posArgs[1].Sol().Var.Is1D);
+            bool simpleBase = ptBase.Var.IsScalar || ptBase.Var.Is1DVector;
+            bool simpleExponent = posArgs[1].Sol().Var.IsScalar || posArgs[1].Sol().Var.Is1DVector;
             if (!simpleBase)
                 throw Scribe.Error($"Could not exponentiate vector {ptBase}");
             if (!simpleExponent)
                 throw Scribe.Error($"Could not raise {ptBase} to vector power {posArgs[1]}");
 
-            if (posArgs[1].Sol().Value() is Rational && posArgs[1].Sol().Value().Get() != (int)posArgs[1].Sol().Value().Get())
+            if (posArgs[1].Sol() is Rational && posArgs[1].Sol().Value().Get() != (int)posArgs[1].Sol().Value().Get())
+            {
                 throw Scribe.Issue($"TODO: support multivalued exponents");
+            }
             powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()).ToIVal());
         }
         else
