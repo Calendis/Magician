@@ -1,6 +1,5 @@
-
 namespace Magician.Symbols.Funcs;
-using Magician.Core;
+using Core;
 
 public class Abs : Oper
 {
