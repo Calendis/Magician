@@ -7,28 +7,21 @@ public class Variable : Invertable, IVar
     protected List<IVal> ivals;
     List<double> IDimensional<double>.Values => qs;
     List<IVal> IDimensional<IVal>.Values => ivals;
-
     bool found;
     public bool Found => found;
     int IDimensional<double>.Dims => qs is null ? 0 : qs.Count;
     // wow, this makes perfect sense! just make sure T is double or IVal
-    public IDimensional<T> Value<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1D ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
+    public IDimensional<T> Value<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1DVector ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
     public IVal Value() => (IVal)Value<double>();
     public IVar Var => (IVar)this;
     public double Magnitude
     {
         get
         {
-            if (((IVar)this).IsVector)
-            {
-                //Scribe.Info($"vector magnitude");
+            if (Var.IsVector)
                 return new Vec(ivals.ToArray()).Magnitude;
-            }
             else
-            {
-                //Scribe.Info($"value magnitude");
                 return ((IVal)new Val(qs.ToArray())).Magnitude;
-            }
         }
     }
     // Creating an unsolved variable
@@ -87,15 +80,15 @@ public class Variable : Invertable, IVar
         found = false;
     }
 
-    public void Pad(int d)
-    {
-        double[] newAll = new double[d];
-        for (int i = 0; i < qs.Count; i++)
-        {
-            newAll[i] = qs[i];
-        }
-        qs = newAll.ToList();
-    }
+    //public void Pad(int d)
+    //{
+    //    double[] newAll = new double[d];
+    //    for (int i = 0; i < qs.Count; i++)
+    //    {
+    //        newAll[i] = qs[i];
+    //    }
+    //    qs = newAll.ToList();
+    //}
 
     public void Normalize()
     {
@@ -107,17 +100,14 @@ public class Variable : Invertable, IVar
     }
 
     public override void ReduceOuter() { }
-
-    // Inverting a variable with no operation (other than the variable itself) does NOTHING
     public override Oper Inverse(Oper axis, Oper? opp = null) { return this; }
-
     public override Variable Copy()
     {
         // Unknown variables share an instance
         if (!found)
             return this;
         // Knowns actually get copied
-        if (((IVar)this).IsVector)
+        if (Var.IsVector)
             return new(ivals.ToArray());
         else
             return new Variable(qs.ToArray());
@@ -126,9 +116,9 @@ public class Variable : Invertable, IVar
     {
         if (!found)
             return name;
-        if (((IVar)this).IsVector)
+        if (Var.IsVector)
             return Scribe.Expand<List<IVal>, IVal>(ivals);
-        IVal trim = ((IVar)this).ToIVal().Trim();
+        IVal trim = Var.ToIVal().Trim();
         return trim.Dims < 2 ? $"{trim.Get()}" : $"({trim.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
     }
@@ -136,10 +126,6 @@ public class Variable : Invertable, IVar
     /* This is good design */
     // TODO: fix it
     public override Oper New(IEnumerable<Oper> a, IEnumerable<Oper> b)
-    {
-        throw Scribe.Error("Variables are not newable. Use .Copy if you need a copy");
-    }
-    public static Oper StaticNew(IEnumerable<Oper> a, IEnumerable<Oper> b)
     {
         throw Scribe.Error("Variables are not newable. Use .Copy if you need a copy");
     }
@@ -197,17 +183,6 @@ public class Variable : Invertable, IVar
         }
         return base.Divide(o);
     }
-
-    //public static Variable operator *(IVal i, Variable v)
-    //{
-    //    throw Scribe.Issue($"Noooo don't do this");
-    //}
-
-    //internal void AssertLengthMatch(IVal other)
-    //{
-    //    if (Value().Trim().Dims != other.Trim().Dims)
-    //        throw Scribe.Error($"Length of {Value().Trim()} ({Value().Trim().Dims}) did not match length of {other.Trim()} ({other.Trim().Dims})");
-    //}
 
     public static readonly Variable Undefined = new("undefined");
 
