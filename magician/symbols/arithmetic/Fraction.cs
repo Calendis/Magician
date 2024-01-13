@@ -13,21 +13,35 @@ public class Fraction : Arithmetic
 
     public override Variable Sol()
     {
-        IVar quo = new Var(1);
+        //IVar quo = new Var(1);
+        IVar num = new Var(1);
+        IVar denom = new Var(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                quo *= (IVar)v.Sol();
+                num *= (IVar)v.Sol();
             else
-                quo *= o.Sol();
+                num *= o.Sol();
         foreach (Oper o in negArgs)
             if (o is Variable v)
-                quo /= v.Sol();
+                denom *= v.Sol();
             else
-                quo /= o.Sol();
-        if (quo.IsVector)
-            return new Variable(quo.ToIVec());
+                denom *= o.Sol();
+        
+        if (num.IsVector && denom.IsVector)
+            return new Variable((IVec)num/denom);
+        else if (num.IsVector && denom.IsScalar)
+            return new Variable((IVal)num/denom);
+        else if (num.IsScalar && denom.IsVector)
+            return new Variable((IVal)num/denom);
+        else if (num.IsScalar && denom.IsScalar)
+        {
+            if (num.ToIVal().Get() == (int)num.ToIVal().Get() && denom.ToIVal().Get() == (int)denom.ToIVal().Get())
+                return new Rational((int)num.ToIVal().Get(), (int)denom.ToIVal().Get());
+            else
+                return new Variable((num / denom).ToIVal());
+        }
         else
-            return new Variable(quo.ToIVal());
+            throw Scribe.Issue($"Invalid fraction {num} / {denom}");
     }
 
     public override Fraction New(IEnumerable<Oper> a, IEnumerable<Oper> b)
