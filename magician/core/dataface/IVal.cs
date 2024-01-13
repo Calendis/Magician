@@ -34,6 +34,15 @@ public interface IVal : IDimensional<double>
         return this;
     }
 
+    void IDimensional<double>.Normalize()
+    {
+        double m = Magnitude;
+        for (int i = 0; i < Values.Count; i++)
+        {
+            Values[i] = Values[i] / m;
+        }
+    }
+
     public IVal Trim()
     {
         if (Values is null)
@@ -206,27 +215,27 @@ public class Val : IVal
         vals = iv.Values.ToList();
     }
 
-    void IDimensional<double>.Normalize()
-    {
-        throw Scribe.Issue("Implement IVal normalize");
-    }
-
     public override string ToString()
     {
         return Scribe.Expand<List<double>, double>(vals);
     }
 }
 
-public class Rational : IVal
-{
-    int num;
-    int denom;
-    List<double> IDimensional<double>.Values => Crunch.Values;
-    public IVal Crunch => new Val((double)num / denom);
-
-    // TODO: arithmetic operatrors for Rational
-    public void Normalize()
-    {
-        throw new NotImplementedException();
-    }
-}
+//public class Rational : IVal
+//{
+//    int num;
+//    int denom;
+//    List<double> IDimensional<double>.Values => Crunch.Values;
+//    public IVal Crunch => new Val((double)num / denom);
+//    public Rational(int n, int d=1)
+//    {
+//        num = n;
+//        denom = d;
+//    }
+//    public void Set(int n, int d)
+//    {
+//        num = n;
+//        denom = d;
+//    }
+//    // TODO: arithmetic operatrors for Rational
+//}
