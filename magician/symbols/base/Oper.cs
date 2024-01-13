@@ -95,7 +95,7 @@ public abstract partial class Oper : IRelation
         SimplifyOuter(axis);
     }
     // Perform advanced simplifications in this Oper as much as possible
-    public void SimplifyMax(Variable? axis = null, int bailout = 99)
+    public void SimplifyMax(Variable? axis = null, int bailout = 999)
     {
         int iters = 0;
         Oper prev;
@@ -108,7 +108,7 @@ public abstract partial class Oper : IRelation
             if (++iters >= bailout)
             {
                 Scribe.Warn($"Bailed out after {iters} simplifications");
-                throw Scribe.Error("debug");
+                throw Scribe.Issue("Strict simplify");
                 break;
             }
             //Scribe.Info($"  ...{this} vs. {prev}");
@@ -274,7 +274,10 @@ public abstract partial class Oper : IRelation
     public bool Like(Oper o)
     {
         if (o.GetType() != GetType())
-            return false;
+        {
+            if (o is not Variable || this is not Variable)
+                return false;
+        }
 
         if (AllArgs.Count != o.AllArgs.Count)
             return false;
@@ -283,9 +286,9 @@ public abstract partial class Oper : IRelation
         {
             if (v.Found && u.Found)
             {
-                IVar ivV = (IVar)v; IVar ivU = (IVar)u;
+                IVar ivV = v.Sol().Var; IVar ivU = u.Sol().Var;
 
-                if ((ivV.Is1D && ivU.Is1D) || (ivV.IsScalar && ivU.Is1D) || (ivV.Is1D && ivU.IsScalar))
+                if ((ivV.Is1DVector && ivU.Is1DVector) || (ivV.IsScalar && ivU.Is1DVector) || (ivV.Is1DVector && ivU.IsScalar))
                     return new Variable(ivV.ToIVal()).Like(new Variable(ivU.ToIVal()));
                 else if (ivV.IsScalar && ivU.IsScalar)
                     return ((IVal)ivV).EqValue((IVal)ivU);
@@ -317,12 +320,14 @@ public abstract partial class Oper : IRelation
         Dictionary<Type, (char neg, char pos)> typeHeaders = new()
         {
             {typeof(Variable),  ('v', 'V')},
+            {typeof(Rational),  ('r', 'R')},
+            {typeof(Multivalue),('w', 'W')},
             {typeof(SumDiff),   ('-', '+')},
             {typeof(Fraction),  ('/', '*')},
-            {typeof(ExpLog),  ('R', '^')},
-            {typeof(Funcs.Abs), ('|', '|')},
-            {typeof(Funcs.Min), ('m', 'm')},
-            {typeof(Funcs.Max), ('M', 'M')}
+            {typeof(ExpLog),    ('R', '^')},
+            {typeof(Funcs.Abs), ('-', '|')},
+            {typeof(Funcs.Min), ('-', 'm')},
+            {typeof(Funcs.Max), ('-', 'M')}
         };
         int totalHeaders = 1;
         int totalLeaves = 0;
