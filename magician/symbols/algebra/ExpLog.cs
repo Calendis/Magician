@@ -63,9 +63,23 @@ public class ExpLog : Invertable
             if (!simpleExponent)
                 throw Scribe.Error($"Could not raise {ptBase} to vector power {posArgs[1]}");
 
-            if (posArgs[1].Sol() is Rational && posArgs[1].Sol().Value().Get() != (int)posArgs[1].Sol().Value().Get())
+            Variable exp = posArgs[1].Sol();
+            if (exp is Rational rational && exp.Var.Trim().Dims == 1 && exp.Value().Get() != (int)exp.Value().Get())
             {
-                throw Scribe.Issue($"TODO: support multivalued exponents");
+                if (posArgs[1].Sol().Var.Trim().Dims != 1)
+                    throw Scribe.Error($"Malformed rational exponent {posArgs[1]}");
+                
+                int a = rational.Numerator;
+                int b = rational.Denominator;
+                List<IVal> solutions = new();
+
+                for (int k = 0; k < b; k++)
+                {
+                    IVal solution = new Val(Math.Pow(Math.Pow(ptBase.Var.ToIVal().Get(), a), 1d/exp.Var.ToIVal().Get())) * IVal.Exp(new Val(Math.E), new Val(0, 2*Math.PI*k/exp.Var.ToIVal().Get()));
+                    solutions.Add(solution);
+                }
+
+                return new Multivalue(solutions.ToArray());
             }
             powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()).ToIVal());
         }
