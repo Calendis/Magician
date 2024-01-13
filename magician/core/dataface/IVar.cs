@@ -5,7 +5,7 @@ public interface IVar : IVal, IVec
 {
     public bool IsVector => Values<IVal>() is not null && Values<IVal>().Count > 0;
     public bool IsScalar => Values<double>() is not null && Values<double>().Count > 0;
-    public bool Is1D => Values<IVal>().Count == 1;
+    public bool Is1DVector => Values<IVal>().Count == 1;
     public new List<T> Values<T>() => ((IDimensional<T>)this).Values;
     public new int Dims
     {
@@ -48,11 +48,11 @@ public interface IVar : IVal, IVec
     }
     public static IVar operator *(IVar i, IVar v)
     {
-        if (i.Is1D && v.Is1D)
+        if (i.Is1DVector && v.Is1DVector)
             return new Var(i.ToIVal() * v.ToIVal());
-        else if (i.Is1D)
+        else if (i.Is1DVector)
             return new Var(i.ToIVal() * v);
-        else if (v.Is1D)
+        else if (v.Is1DVector)
             return new Var(v.ToIVal() * i);
         
         if (i.IsVector)
@@ -80,7 +80,7 @@ public interface IVar : IVal, IVec
 
     IVal ToIVal()
     {
-        if (IsVector && !Is1D)
+        if (IsVector && !Is1DVector)
             throw Scribe.Error($"Could not take vector {this} as value");
         else if (IsVector)
             return new Val(((IDimensional<IVal>)this).Values[0]);
@@ -145,13 +145,5 @@ public class Var : IVar
             return $"Var vec {Scribe.Expand<List<IVal>, IVal>(vec)}";
         else
             return $"Var scalar {Scribe.Expand<List<double>, double>(val)}";
-    }
-}
-
-public class Multival : Var
-{
-    public Multival(params IVal[] vs) : base(vs)
-    {
-        //
     }
 }
