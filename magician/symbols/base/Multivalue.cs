@@ -4,7 +4,8 @@ using Core;
 public class Multivalue : Variable
 {
     public IVal Principal => principal;
-    public IVal[] Remaining => remaining;
+    public IVal[] All => new List<IVal>{principal}.Concat(remaining).ToArray();
+    public int Solutions => remaining.Length + 1;
     readonly IVal principal;
     readonly IVal[] remaining;
     public Multivalue(params double[] vs) : this(vs.Select(d => new Val(d)).ToArray()) {}
@@ -15,6 +16,13 @@ public class Multivalue : Variable
             throw Scribe.Error("Cannot create empty multivalue");
         principal = vs[0];
         remaining = vs.Skip(1).ToArray();
+    }
+
+    public override string ToString()
+    {
+        if (Found)
+            return All.Aggregate("", (a, b) => a += $", {b}")[2..];
+        return base.ToString();
     }
     // TODO: arithmetic methods for Multivalues
 }
