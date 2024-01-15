@@ -81,14 +81,14 @@ public class Vec3 : Vec
         return new(rotated.X, rotated.Y, rotated.Z);
     }
 
-    public Multi Render()
+    public Node Render()
     {
-        Multi line = new(
-            new Multi(0, 0, 0),
-            new Multi(x.Get(), y.Get(), z.Get())
+        Node line = new(
+            new Node(0, 0, 0),
+            new Node(x.Get(), y.Get(), z.Get())
         );
         // TODO: draw the arrowhead
-        Multi arrowhead;
+        Node arrowhead;
         return line;
     }
 }

@@ -2,7 +2,7 @@ using Magician.Renderer;
 using Magician.Geo;
 
 namespace Magician.UI;
-public class Paragraph : Multi
+public class Paragraph : Node
 {
     protected string[]? sentences;
     Paragraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? size = null, params string[] ss) : base(x, y, c ?? Data.Col.UIDefault.FG, DrawMode.INVISIBLE)
@@ -15,7 +15,7 @@ public class Paragraph : Multi
             sentences[i] = ss[i];
             size = size ?? Data.Globals.fontSize;
             Text t = new Text(sentences[i], col, (int)size, fontPath);
-            this[$"line{i}"] = new Multi(0, -i * (int)size)
+            this[$"line{i}"] = new Node(0, -i * (int)size)
             .Textured(t.Render())
             .Flagged(DrawMode.INVISIBLE)
             ;
@@ -28,15 +28,15 @@ public class Paragraph : Multi
     protected Paragraph(double x, double y, Color c) : base(x, y, c, DrawMode.INVISIBLE) { }
 
     /* TODO: finish these */
-    public Multi LeftAligned()
+    public Node LeftAligned()
     {
         throw new NotImplementedException("Doesn't work yet");
     }
-    public Multi RightAligned()
+    public Node RightAligned()
     {
         throw new NotImplementedException("Doesn't work yet");
     }
-    public Multi Justified()
+    public Node Justified()
     {
         // Determine maximum width of our lines
         throw new NotImplementedException("Doesn't work yet");
@@ -105,12 +105,12 @@ public class RichParagraph : Paragraph
         int maxSize = sizStack.Peek();
         /* The bool[] represents wasColorChanged, wasSizeChanged */
         Stack<bool[]> deltas = new Stack<bool[]>();
-        Multi phrases = new Multi().Flagged(DrawMode.INVISIBLE);
+        Node phrases = new Node().Flagged(DrawMode.INVISIBLE);
         // Used for justification
         int maxLineWidth = 0;
         for (int row = 0; row < groupedFormats.Count; row++)
         {
-            Multi wordsInLine = new Multi().Flagged(DrawMode.INVISIBLE);
+            Node wordsInLine = new Node().Flagged(DrawMode.INVISIBLE);
             int runningLength = 0;
             for (int column = 0; column < groupedFormats[row].Length; column++)
             {
@@ -181,7 +181,7 @@ public class RichParagraph : Paragraph
                     double lineX = runningLength;
                     double lineY = -row * maxSize - (maxSize - sizStack.Peek());
 
-                    phrases.Add(new Multi(lineX, lineY).Textured(txr));
+                    phrases.Add(new Node(lineX, lineY).Textured(txr));
                     runningLength += txr.Width;
                     maxLineWidth = runningLength > maxLineWidth ? runningLength : maxLineWidth;
                     t.Dispose();
@@ -195,7 +195,7 @@ public class RichParagraph : Paragraph
         int trail = 0;
         for (int i = 0; i < Count; i++)
         {
-            Multi m = this[Count - i - 1];
+            Node m = this[Count - i - 1];
             double dRightMargin = maxLineWidth - m.x.Get() - m.Texture.Width;
             m.Written(dRightMargin - trail);
             trail += m.Texture.Width;

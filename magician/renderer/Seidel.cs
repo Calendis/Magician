@@ -228,17 +228,17 @@ public static class Triangulator
         //vss = vss.Distinct().ToArray();
         //Magician.Scribe.Dump<double[], double>(vss);
         // Construct an appropriate Multi from the given vertices
-        Multi m = new();
+        Geo.Node m = new();
         //double[][] vssCcw = vss.OrderBy(vs => new Magician.Geo.Vec3(vs[0], vs[1], 0).PhaseXY).ToArray();
         foreach (double[]vs in vss)
         {
-            Multi mvs = new(vs[0], vs[1], vs[2]);
+            Geo.Node mvs = new(vs[0], vs[1], vs[2]);
             m.Add(mvs);
         }
         //Magician.Scribe.Info(m);
         return Triangulate(m);
     }
-    public static List<int[]> Triangulate(Multi m)
+    public static List<int[]> Triangulate(Geo.Node m)
     {
         //Magician.Multi m = new Magician.Multi();
         //m = m.Unique();

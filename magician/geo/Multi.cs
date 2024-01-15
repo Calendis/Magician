@@ -19,13 +19,13 @@ public enum DrawMode : short
     OUTERP = 0b1101
 }
 
-/* A Multi is a drawable tree of 3-vectors (more Multis) */
-public class Multi : Vec3, ICollection<Multi>
+/* A Node is a drawable tree of 3-vectors (more Multis) */
+public class Node : Vec3, ICollection<Node>
 {
     // The origin will have a null parent
-    Multi? parent;
-    protected List<Multi> constituents;
-    Dictionary<string, Multi> constituentTags = new Dictionary<string, Multi>();
+    Node? parent;
+    protected List<Node> constituents;
+    Dictionary<string, Node> constituentTags = new Dictionary<string, Node>();
     double pitch = 0; double yaw = 0; double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
@@ -33,7 +33,7 @@ public class Multi : Vec3, ICollection<Multi>
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
     List<Driver> drivers = new();
 
-    public Multi Parent
+    public Node Parent
     {
         get
         {
@@ -47,7 +47,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
     }
 
-    public IReadOnlyList<Multi> Constituents
+    public IReadOnlyList<Node> Constituents
     {
         get => constituents;
     }
@@ -154,7 +154,7 @@ public class Multi : Vec3, ICollection<Multi>
     /* This will cause a memory when using textures.     */
     /* INSTEAD, USE THIS SETTER! It disposes of all      */
     /* textures and handily sets the parent too!         */
-    public Multi this[int i]
+    public Node this[int i]
     {
         get
         {
@@ -175,7 +175,7 @@ public class Multi : Vec3, ICollection<Multi>
             constituents[i] = value.Parented(this);
         }
     }
-    public Multi this[string tag]
+    public Node this[string tag]
     {
         get
         {
@@ -215,7 +215,7 @@ public class Multi : Vec3, ICollection<Multi>
     protected Color col;
 
     // Full constructor
-    public Multi(Multi? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] cs) : base(x, y, z)
+    public Node(Node? parent, double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] cs) : base(x, y, z)
     {
         this.parent = parent ?? Ref.Origin;
         this.x.Set(x);
@@ -225,30 +225,30 @@ public class Multi : Vec3, ICollection<Multi>
         this.col = col ?? new RGBA(0xff00ffd0);
         this.drawMode = dm;
 
-        constituents = new List<Multi> { };
-        foreach (Multi c in cs)
+        constituents = new List<Node> { };
+        foreach (Node c in cs)
         {
             Add(c);
         }
     }
 
     // Create a multi and define its position, colour, and drawing properties
-    public Multi(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(Ref.Origin, x, y, z, col, dm, cs) { }
-    public Multi(double x, double y, Color? col, DrawMode dm = DrawMode.FULL, params Multi[] cs) : this(x, y, 0, col, dm, cs) { }
-    public Multi(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
+    public Node(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Node[] cs) : this(Ref.Origin, x, y, z, col, dm, cs) { }
+    public Node(double x, double y, Color? col, DrawMode dm = DrawMode.FULL, params Node[] cs) : this(x, y, 0, col, dm, cs) { }
+    public Node(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
     // Create a multi from a list of multis
-    public Multi(params Multi[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
-    public Multi(Vec pt3d) : this(pt3d.x.Get(), pt3d.y.Get(), pt3d.z.Get()) { }
+    public Node(params Node[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
+    public Node(Vec pt3d) : this(pt3d.x.Get(), pt3d.y.Get(), pt3d.z.Get()) { }
 
     public Color Col
     {
         get => col;
     }
 
-    public Multi Become(Multi m)
+    public Node Become(Node m)
     {
         Clear();
-        foreach (Multi c in m)
+        foreach (Node c in m)
         {
             Add(c);
         }
@@ -267,59 +267,59 @@ public class Multi : Vec3, ICollection<Multi>
 
 
     /* Colour methods */
-    public Multi Colored(Color c)
+    public Node Colored(Color c)
     {
         col = c;
-        foreach (Multi cst in Constituents)
+        foreach (Node cst in Constituents)
         {
             //cst.col = c;
         }
         return this;
     }
-    public Multi R(double r)
+    public Node R(double r)
     {
         Col.R = r;
         return this;
     }
-    public Multi G(double g)
+    public Node G(double g)
     {
         Col.G = g;
         return this;
     }
-    public Multi B(double b)
+    public Node B(double b)
     {
         Col.B = b;
         return this;
     }
-    public Multi A(double b)
+    public Node A(double b)
     {
         Col.A = b;
         return this;
     }
-    public Multi H(double h)
+    public Node H(double h)
     {
         Col.H = h;
         return this;
     }
-    public Multi S(double s)
+    public Node S(double s)
     {
         Col.S = s;
         return this;
     }
-    public Multi L(double l)
+    public Node L(double l)
     {
         Col.L = l;
         return this;
     }
 
-    public Multi Translated(double xOffset, double yOffset, double zOffset = 0)
+    public Node Translated(double xOffset, double yOffset, double zOffset = 0)
     {
         x.Set(x + xOffset);
         y.Set(y + yOffset);
         z.Set(z + zOffset);
         return this;
     }
-    public Multi To(double x, double y, double? z = null)
+    public Node To(double x, double y, double? z = null)
     {
         this.x.Set(x);
         this.y.Set(y);
@@ -329,7 +329,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
         return this;
     }
-    public Multi To(IVal mv)
+    public Node To(IVal mv)
     {
         if (mv.Dims > 3)
             throw Scribe.Error($"Could not move Multi to {mv}");
@@ -342,7 +342,7 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     /* Rotation methods */
-    public Multi RotatedZ(double theta)
+    public Node RotatedZ(double theta)
     {
         roll = (roll + theta) % (2 * Math.PI);
         return Sub(
@@ -350,7 +350,7 @@ public class Multi : Vec3, ICollection<Multi>
             m.PhaseXY += theta
         );
     }
-    public Multi RotatedY(double theta)
+    public Node RotatedY(double theta)
     {
         yaw = (yaw + theta) % (2 * Math.PI);
         yaw += yaw > 0 ? 0 : 2 * Math.PI;
@@ -359,7 +359,7 @@ public class Multi : Vec3, ICollection<Multi>
             m.PhaseXZ += theta
         );
     }
-    public Multi RotatedX(double theta)
+    public Node RotatedX(double theta)
     {
         pitch = (pitch + theta) % (2 * Math.PI);
         return Sub(
@@ -369,13 +369,13 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     /* Scaling methods */
-    public Multi Scaled(double mag)
+    public Node Scaled(double mag)
     {
         throw Scribe.Issue("TODO: re-implement scaling");
         //return this;
     }
 
-    public static void _Texture(Multi m, Renderer._SDLTexture t)
+    public static void _Texture(Node m, Renderer._SDLTexture t)
     {
         if (m.texture != null)
         {
@@ -388,7 +388,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
         m.texture = t;
     }
-    public Multi Textured(Renderer._SDLTexture t)
+    public Node Textured(Renderer._SDLTexture t)
     {
         _Texture(this, t);
         return this;
@@ -407,7 +407,7 @@ public class Multi : Vec3, ICollection<Multi>
         The driver can either set the valuese or just increment them, operating on either the target Multi or
         its constituents. 
      */
-    public Multi Driven(
+    public Node Driven(
         Func<double, double> f0, Func<double, double> f1, Func<double, double> f2,
         CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
     {
@@ -436,14 +436,14 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     /* Internal state methods */
-    public Multi Written(double d)
+    public Node Written(double d)
     {
         Val = d;
         return this;
     }
 
     // Sets the draw flags
-    public Multi Flagged(DrawMode dm)
+    public Node Flagged(DrawMode dm)
     {
         drawMode = dm;
         return this;
@@ -451,7 +451,7 @@ public class Multi : Vec3, ICollection<Multi>
 
     // Indexes the constituents of a Multi in the internal values of the constituents
     // This is useful because getting the index using IndexOf is too expensive
-    public static void IndexConstituents(Multi m)
+    public static void IndexConstituents(Node m)
     {
         for (int i = 0; i < m.Count; i++)
         {
@@ -460,23 +460,23 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     /* Parenting/tagging methods */
-    public Multi Parented(Multi? m)
+    public Node Parented(Node? m)
     {
         parent = m;
         return this;
     }
 
     // The tag is the name of the Spell. A spell can be referenced via parent[tag]
-    public Multi Tagged(string tag)
+    public Node Tagged(string tag)
     {
         this.tag = tag;
         return this;
     }
 
     // Create a copy of the Multi
-    public virtual Multi Copy()
+    public virtual Node Copy()
     {
-        Multi copy = new Multi(x.Get(), y.Get(), col.Copy(), drawMode);
+        Node copy = new Node(x.Get(), y.Get(), col.Copy(), drawMode);
         // Don't copy the texture, or create reference to it!
         //copy.texture = texture;
 
@@ -499,7 +499,7 @@ public class Multi : Vec3, ICollection<Multi>
         //}
 
         // Copy the constituents
-        foreach (Multi c in this)
+        foreach (Node c in this)
         {
             copy.Add(c.Copy());
         }
@@ -513,23 +513,23 @@ public class Multi : Vec3, ICollection<Multi>
         return copy;
     }
     /* The two paste methods must match!! */
-    public Multi Paste()
+    public Node Paste()
     {
         Parent[$"{tag}_paste{x}{y}"] = Copy();
         return this;
     }
-    public Multi Pasted()
+    public Node Pasted()
     {
         Paste();
         return Parent[$"{tag}_paste{x}{y}"];
     }
 
-    public Multi Unique()
+    public Node Unique()
     {
         List<double> xs = new List<double>();
         List<double> ys = new List<double>();
-        Multi c = new Multi().To(x.Get(), y.Get(), z.Get());
-        foreach (Multi cst in constituents)
+        Node c = new Node().To(x.Get(), y.Get(), z.Get());
+        foreach (Node cst in constituents)
         {
             bool addMe = true;
             // Check for this position
@@ -550,36 +550,36 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     // Inherit the constituents of another multi
-    public Multi FlatAdjoin(Multi m)
+    public Node FlatAdjoin(Node m)
     {
         constituents.AddRange(m.constituents);
         return this;
     }
 
     // Replace a constituent
-    public void AddAt(Multi m, int n)
+    public void AddAt(Node m, int n)
     {
         m.Translated(constituents[n].X, constituents[n].Y);
         constituents[n] = m;
     }
 
     // Add both multis to a new parent Multi
-    public Multi Adjoined(Multi m, double xOffset = 0, double yOffset = 0, double zOffset = 0)
+    public Node Adjoined(Node m, double xOffset = 0, double yOffset = 0, double zOffset = 0)
     {
-        Multi nm = new Multi(xOffset, yOffset, zOffset, col, drawMode);
+        Node nm = new Node(xOffset, yOffset, zOffset, col, drawMode);
         nm.Add(this, m);
         return nm;
     }
 
-    public Multi Sub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
+    public Node Sub(Action<Node> action, Func<double, double>? truth = null, double threshold = 0)
     {
         return Sub((x, _i) => action(x), truth, threshold);
     }
 
-    public Multi Sub(Action<Multi, int> action, Func<double, double>? truth = null, double threshold = 0)
+    public Node Sub(Action<Node, int> action, Func<double, double>? truth = null, double threshold = 0)
     {
         int i = 0;
-        foreach (Multi c in this)
+        foreach (Node c in this)
         {
             int index = i;
             if (truth == null || truth.Invoke(i) > threshold)
@@ -591,16 +591,16 @@ public class Multi : Vec3, ICollection<Multi>
         return this;
     }
 
-    public Multi DeepSub(Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
+    public Node DeepSub(Action<Node> action, Func<double, double>? truth = null, double threshold = 0)
     {
         Sub(action, truth, threshold);
-        foreach (Multi c in this)
+        foreach (Node c in this)
         {
             c.DeepSub(action, truth, threshold);
         }
         return this;
     }
-    public Multi IterSub(int iters, Action<Multi> action, Func<double, double>? truth = null, double threshold = 0)
+    public Node IterSub(int iters, Action<Node> action, Func<double, double>? truth = null, double threshold = 0)
     {
         for (int i = 0; i < iters; i++)
         {
@@ -610,13 +610,13 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     // Wield is a form of recursion where each constituent is replaced with a copy of the given Multi
-    public Multi Wielding(Multi outer)
+    public Node Wielding(Node outer)
     {
         // TODO: re-implement
         //Eject();
         for (int i = 0; i < Count; i++)
         {
-            Multi outerCopy = outer.Copy();
+            Node outerCopy = outer.Copy();
             constituents[i].Become(outerCopy);
         }
 
@@ -624,7 +624,7 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     // Surround is a form of recursion where the Multi is placed in the constituents of a given Multi
-    public Multi Surrounding(Multi inner)
+    public Node Surrounding(Node inner)
     {
         // TODO: re-implement
         //Eject();
@@ -634,7 +634,7 @@ public class Multi : Vec3, ICollection<Multi>
         //return thisSurroundingInner;//.Wielding(this);
     }
 
-    public Multi Recursed()
+    public Node Recursed()
     {
         return Wielding(Copy());
     }
@@ -680,7 +680,7 @@ public class Multi : Vec3, ICollection<Multi>
         get
         {
             int x = Count;
-            foreach (Multi c in this)
+            foreach (Node c in this)
             {
                 x += c.DeepCount;
             }
@@ -887,7 +887,7 @@ public class Multi : Vec3, ICollection<Multi>
         }
 
         // Draw each constituent recursively
-        foreach (Multi m in this)
+        foreach (Node m in this)
         {
             m.Render(xOffset, yOffset, zOffset);
         }
@@ -931,7 +931,7 @@ public class Multi : Vec3, ICollection<Multi>
         string zRel = z.Get().ToString("F1");
         s += $" at ({xRel},{yRel},{zRel})rel, ({xAbs},{yAbs},{zAbs})abs";
 
-        foreach (Multi m in constituents)
+        foreach (Node m in constituents)
         {
             s += "\n";
             for (int i = 0; i <= depth; i++)
@@ -952,9 +952,9 @@ public class Multi : Vec3, ICollection<Multi>
     }
 
     // Interface methods
-    public IEnumerator<Multi> GetEnumerator()
+    public IEnumerator<Node> GetEnumerator()
     {
-        return ((IEnumerable<Multi>)constituents).GetEnumerator();
+        return ((IEnumerable<Node>)constituents).GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -962,7 +962,7 @@ public class Multi : Vec3, ICollection<Multi>
         return ((IEnumerable)constituents).GetEnumerator();
     }
 
-    public void Add(Multi item)
+    public void Add(Node item)
     {
         if (item == this)
         {
@@ -975,15 +975,15 @@ public class Multi : Vec3, ICollection<Multi>
         item.parent = this;
         constituents.Add(item);
     }
-    public Multi Add(params Multi[] items)
+    public Node Add(params Node[] items)
     {
-        foreach (Multi m in items)
+        foreach (Node m in items)
         {
             Add(m);
         }
         return this;
     }
-    public void AddFiltered(Multi m, string filter = "empty paint")
+    public void AddFiltered(Node m, string filter = "empty paint")
     {
         if (m.Tag == filter)
         {
@@ -1000,31 +1000,31 @@ public class Multi : Vec3, ICollection<Multi>
 
     public void Clear()
     {
-        foreach (Multi c in constituents)
+        foreach (Node c in constituents)
         {
             c.DisposeAllTextures();
         }
         constituents.Clear();
     }
 
-    public bool Contains(Multi item)
+    public bool Contains(Node item)
     {
         return constituents.Contains(item);
     }
 
-    public Multi Reversed()
+    public Node Reversed()
     {
         constituents.Reverse();
         return this;
     }
 
     // Some interface method
-    public void CopyTo(Multi[] array, int arrayIndex)
+    public void CopyTo(Node[] array, int arrayIndex)
     {
         constituents.CopyTo(0, array, arrayIndex, Math.Min(array.Length, Count));
     }
 
-    public bool Remove(Multi item)
+    public bool Remove(Node item)
     {
         return constituents.Remove(item);
     }
@@ -1035,7 +1035,7 @@ public class Multi : Vec3, ICollection<Multi>
         {
             texture.Dispose();
         }
-        foreach (Multi m in this)
+        foreach (Node m in this)
         {
             m.DisposeAllTextures();
         }

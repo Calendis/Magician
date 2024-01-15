@@ -50,11 +50,11 @@ public class InverseParamMap : IFunction
     // TODO: is there a non-hack way to do this?? I don't want to just wrap the output like this, but oh well
     public InverseParamMap(Func<double[], double> nonwrapped, int inputs) : this(xs => IVal.FromLiteral(nonwrapped.Invoke(xs)), inputs) { }
 
-    public Multi Plot(params Symbols.PlotOptions[] options)
+    public Node Plot(params Symbols.PlotOptions[] options)
     {
         return Plot(null, options);
     }
-    public Multi Plot(Symbols.AxisSpecifier? outAxis = null, params Symbols.PlotOptions[] options)
+    public Node Plot(Symbols.AxisSpecifier? outAxis = null, params Symbols.PlotOptions[] options)
     {
         if (Ins > 2)
         {
@@ -65,7 +65,7 @@ public class InverseParamMap : IFunction
         List<AxisSpecifier> axes = options.Select(o => o.Axis).ToList();
         bool threeD = solveSpace.Dims >= 2;
         List<int[]> faces = new();
-        Multi plot = new Multi().Flagged(DrawMode.PLOT);
+        Node plot = new Node().Flagged(DrawMode.PLOT);
         do
         {
             // Get arguments from the counter
@@ -131,7 +131,7 @@ public class InverseParamMap : IFunction
             }
 
             //Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
-            Multi point = new(x, y, z);
+            Node point = new(x, y, z);
             point.Colored(new HSLA(hue, sat, ligh, 255));
             plot.Add(point);
         }
@@ -193,11 +193,11 @@ public class ParamMap : IParametric
     public IVec Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
-    public Multi Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
+    public Node Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
     {
         if (Outs > 3)
             throw Scribe.Error($"Cannot plot ParamMap with {Outs} outputs");
-        Multi plot = new Multi().Flagged(DrawMode.PLOT);
+        Node plot = new Node().Flagged(DrawMode.PLOT);
         double start = paramRange.Min;
         double end = paramRange.Max;
         double dt = paramRange.Res;

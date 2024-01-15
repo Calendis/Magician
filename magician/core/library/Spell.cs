@@ -15,7 +15,7 @@ namespace Magician.Library
         public double RandY => RNG.NextDouble() * Globals.winHeight - Globals.winHeight / 2;
 
         // The Origin is the root for a tree of Multis
-        public Multi Origin {get; set;} = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
+        public Node Origin {get; set;} = Create.Point(null, 0, 0, Data.Col.UIDefault.FG)
         .Flagged(DrawMode.INVISIBLE)
         .Tagged("Spell origin")
         ;

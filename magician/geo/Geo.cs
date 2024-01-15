@@ -5,9 +5,9 @@ using Core.Maps;
 public static class Ref
 {
     // Reference to the Origin of the current Spell (see Spellcaster.Load)
-    public static Multi Origin { get; internal set; }
-    public static Multi Perspective { get; }
-    public static Multi Undefined { get; internal set; }
+    public static Node Origin { get; internal set; }
+    public static Node Perspective { get; }
+    public static Node Undefined { get; internal set; }
     //public static List<Multi> AllowedOrphans;
     public static Vec3 DefaultHeading = new(0,0,-1);
     public static double FOV
@@ -17,11 +17,11 @@ public static class Ref
     }
     static Ref()
     {
-        Origin = new Multi().Tagged("Placeholder Origin");
+        Origin = new Node().Tagged("Placeholder Origin");
         // TODO: find out why -399 works here... something to do with FOV
-        Perspective = new Multi(0, 0, -399).Parented(null);
+        Perspective = new Node(0, 0, -399).Parented(null);
         FOV = 90;
-        Undefined = new Multi(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
+        Undefined = new Node(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
 
         //AllowedOrphans = new List<Multi>()
         //    {
@@ -35,19 +35,19 @@ public static class Create
 {
     // Create a point
     /* TODO: remove parent arguement from Create methods */
-    public static Multi Point(Multi? parent, double x, double y, double z, Color? col)
+    public static Node Point(Node? parent, double x, double y, double z, Color? col)
     {
-        return new Multi(parent, x, y, z, col).Flagged(DrawMode.INVISIBLE);
+        return new Node(parent, x, y, z, col).Flagged(DrawMode.INVISIBLE);
     }
-    public static Multi Point(Multi? parent, double x, double y, Color? col)
+    public static Node Point(Node? parent, double x, double y, Color? col)
     {
         return Point(parent, x, y, 0, col);
     }
-    public static Multi Point(double x, double y, double z = 0, Color? col = null)
+    public static Node Point(double x, double y, double z = 0, Color? col = null)
     {
         return Point(Ref.Origin, x, y, z, col).Flagged(DrawMode.INVISIBLE);
     }
-    public static Multi Point(double x, double y, Color col)
+    public static Node Point(double x, double y, Color col)
     {
         return Point(x, y, 0, col);
     }
@@ -57,14 +57,14 @@ public static class Create
             } */
 
     // Create a line
-    public static Multi Line(Multi p1, Multi p2, Color col)
+    public static Node Line(Node p1, Node p2, Color col)
     {
         double x1 = p1.X;
         double y1 = p1.Y;
         double x2 = p2.X;
         double y2 = p2.Y;
 
-        Multi line = new Multi(0, 0, col, DrawMode.PLOT,
+        Node line = new Node(0, 0, col, DrawMode.PLOT,
         Point(x1, y1, col),
         Point(x2, y2, col));
         // Make sure the parents are set correctly
@@ -72,20 +72,20 @@ public static class Create
         line[1].Parented(line);
         return line;
     }
-    public static Multi Line(Multi p1, Multi p2)
+    public static Node Line(Node p1, Node p2)
     {
         return Line(p1, p2, Data.Col.UIDefault.FG);
     }
 
     // TODO: make Rect easier to implement with a Flatten method
     // Rect from 2 points
-    public static Multi Rect(Multi p0, Multi p1)
+    public static Node Rect(Node p0, Node p1)
     {
         return Rect(p0.X, p0.Y, p1.X - p0.X, p1.Y - p0.Y);
     }
-    public static Multi Rect(double x, double y, double width, double height)
+    public static Node Rect(double x, double y, double width, double height)
     {
-        return new Multi(
+        return new Node(
             Point(width, -height),
             //.Textured(
             //    new Renderer.Text("1", new RGBA(0xff0000e0), 20).Render()
@@ -106,10 +106,10 @@ public static class Create
     }
 
     // Create a regular polygon with a position, number of sides, color, and magnitude
-    public static Multi RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
+    public static Node RegularPolygon(double xOffset, double yOffset, Color col, int sides, double magnitude)
     {
         //List<Multi> ps = new List<Multi>();
-        Multi ps = new Multi().Parented(Ref.Origin);
+        Node ps = new Node().Parented(Ref.Origin);
         double angle = 360d / (double)sides;
         for (int i = 0; i < sides; i++)
         {
@@ -122,19 +122,19 @@ public static class Create
         return ps.To(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
 
     }
-    public static Multi RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
+    public static Node RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
     {
         return RegularPolygon(xOffset, yOffset, Data.Col.UIDefault.FG, sides, magnitude);
     }
-    public static Multi RegularPolygon(int sides, double magnitude)
+    public static Node RegularPolygon(int sides, double magnitude)
     {
         return RegularPolygon(0, 0, sides, magnitude);
     }
 
     // Create a star with an inner and outer radius
-    public static Multi Star(double xOffset, double yOffset, Color col, int sides, double innerRadius, double outerRadius)
+    public static Node Star(double xOffset, double yOffset, Color col, int sides, double innerRadius, double outerRadius)
     {
-        Multi ps = new Multi().Parented(Ref.Origin);
+        Node ps = new Node().Parented(Ref.Origin);
         double angle = 360d / (double)sides;
         for (int i = 0; i < sides; i++)
         {
@@ -149,18 +149,18 @@ public static class Create
         return ps.To(xOffset, yOffset).Colored(col).Flagged(DrawMode.INNER);
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
     }
-    public static Multi Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
+    public static Node Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
     {
         return Star(xOffset, yOffset, Data.Col.UIDefault.FG, sides, innerRadius, outerRadius);
     }
-    public static Multi Star(int sides, double innerRadius, double outerRadius)
+    public static Node Star(int sides, double innerRadius, double outerRadius)
     {
         return Star(0, 0, sides, innerRadius, outerRadius);
     }
 
-    public static Multi Along(ParamMap pm, double start, double end, double spacing, Multi template)
+    public static Node Along(ParamMap pm, double start, double end, double spacing, Node template)
     {
-        Multi container = new();
+        Node container = new();
         for (double x = start; x < end; x += spacing)
         {
             List<double> pos = pm.Evaluate(x).Values.Select(ival => ival.Get()).ToList();
@@ -179,7 +179,7 @@ public static class Create
         Multi3D tetra = new Multi3D(x, y, z,
             Create.RegularPolygon(3, radius)
             .Add(
-            new Multi[] { Create.Point(0, 0, radius) }
+            new Node[] { Create.Point(0, 0, radius) }
             ).ToArray())
         .FacesSimplex();
         return tetra;
@@ -201,7 +201,7 @@ public static class Create
 
 public static class Check
 {
-    public static bool PointInPolygon(double x, double y, Multi polygon)
+    public static bool PointInPolygon(double x, double y, Node polygon)
     {
         // Special case for rectangles
         if (IsRectangle(polygon))
@@ -264,7 +264,7 @@ public static class Check
         && y > yRange.Item1 && y < yRange.Item2
         && z > zRange.Item1 && z < zRange.Item2;
     }
-    public static bool PointInRectVolume(Multi p, (double, double) xRange, (double, double) yRange, (double, double) zRange)
+    public static bool PointInRectVolume(Node p, (double, double) xRange, (double, double) yRange, (double, double) zRange)
     {
         return PointInRectVolume(p.X, p.Y, p.Z, xRange, yRange, zRange);
     }
@@ -275,13 +275,13 @@ public static class Check
         return pX >= rX && pX <= maxX && pY >= rY && pY <= maxY;
     }
 
-    public static bool IsRectangle(Multi m, double tolerance = Data.Globals.defaultTol)
+    public static bool IsRectangle(Node m, double tolerance = Data.Globals.defaultTol)
     {
         if (m.Count != 4)
         {
             return false;
         }
-        Multi v0 = m[0];
+        Node v0 = m[0];
 
         // Either the x or the y of the first must match the x or y of the neighbour, within a tolerance
         return (Math.Abs(m[0].X - m[1].X) <= tolerance) ||
@@ -298,11 +298,11 @@ public static class Find
         double dy = y1 - y0;
         return Math.Sqrt(dx * dx + dy * dy);
     }
-    public static double Distance(Multi m0, Multi m1)
+    public static double Distance(Node m0, Node m1)
     {
         return Distance(m0.X, m1.X, m0.Y, m1.Y);
     }
-    public static double Length(Multi m)
+    public static double Length(Node m)
     {
         if (m.Count != 2)
         {

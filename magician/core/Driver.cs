@@ -7,12 +7,12 @@ public class Driver
     public CoordMode CMode;
     public DriverMode DMode;
     public TargetMode TMode;
-    public Multi Target { get; set; }
+    public Node Target { get; set; }
     protected Func<double, IVal> X;
     protected Func<double, IVal> Y;
     protected Func<double, IVal> Z;
 
-    public Driver(Multi m, DirectMap dm1, DirectMap dm2, DirectMap dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT) :
+    public Driver(Node m, DirectMap dm1, DirectMap dm2, DirectMap dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT) :
     this(m, new ParamMap(dm1, dm2, dm3), coordMode, driverMode, targetMode)
     {
         // these aren't actually necessary
@@ -21,7 +21,7 @@ public class Driver
         Z = dm3.Evaluate;
     }
 
-    public Driver(Multi m, ParamMap pm, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT)
+    public Driver(Node m, ParamMap pm, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT)
     {
         if (pm.Outs != 3)
         {
@@ -41,7 +41,7 @@ public class Driver
         if (TMode == TargetMode.SUB)
         {
             TMode = TargetMode.DIRECT;
-            foreach (Multi c in Target)
+            foreach (Node c in Target)
             {
                 Target = c;
                 Drive(t);

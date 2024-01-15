@@ -20,7 +20,7 @@ public class Geos : Spell
 
     public override void PreLoop()
     {
-        Origin["lineToClip"] = new Multi(Geo.Create.Point(-300, 200), Geo.Create.Point(-200, 200)).Colored(HSLA.RandomVisible());
+        Origin["lineToClip"] = new Node(Geo.Create.Point(-300, 200), Geo.Create.Point(-200, 200)).Colored(HSLA.RandomVisible());
         // TODO: re-implement this
         //Origin["lineToClip"].DrivenXY(x => Events.MouseX, y => Events.MouseY);
         //Origin["lineToClip"][1].DrivenPM(p => p + 0.01, m => m);

@@ -1,7 +1,7 @@
 namespace Magician.Geo.Tiles;
 public interface ITiling
 {
-    public abstract Multi Render(double d);
+    public abstract Node Render(double d);
 }
 
 // Using Egyptian fractions, define an edge-to-edge tiling of the plane ...
@@ -33,12 +33,12 @@ public class Hexagonal : ITiling
         height = h;
     }
 
-    public Multi Render(double radius)
+    public Node Render(double radius)
     {
         double hexHeight = radius * Math.Cos(Math.PI / 6);
         double sideLength = radius * Math.Sin(Math.PI / 6);
 
-        Multi hexGrid = new();
+        Node hexGrid = new();
         for (int row = 0; row < height; row++)
         {
             for (int col = 0; col < width; col++)
@@ -47,7 +47,7 @@ public class Hexagonal : ITiling
                 double hexX = row % 2 == 0 ? 2 * col * (radius + sideLength) : 2 * col * (radius + sideLength) + radius + sideLength;
                 double hexY = row * hexHeight;
 
-                Multi hexagon = Geo.Create.RegularPolygon(hexX, hexY, new HSLA(2 * Math.PI * row / height, 1, 1, 120), 6, radius)
+                Node hexagon = Geo.Create.RegularPolygon(hexX, hexY, new HSLA(2 * Math.PI * row / height, 1, 1, 120), 6, radius)
                 ;
                 hexGrid.Add(hexagon);
             }

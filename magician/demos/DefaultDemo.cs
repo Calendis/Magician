@@ -43,8 +43,8 @@ public class DefaultSpell : Spell
 
         );
 
-        Origin["myMulti"] = new Multi().Flagged(DrawMode.INNER);
-        Origin["savMyMulti"] = new Multi().Flagged(DrawMode.INVISIBLE);
+        Origin["myMulti"] = new Node().Flagged(DrawMode.INNER);
+        Origin["savMyMulti"] = new Node().Flagged(DrawMode.INVISIBLE);
         Origin["my star"].Heading = new Vec3(1, 1, -1);
         Origin["my star"].Heading.Normalize();
     }
@@ -60,7 +60,7 @@ public class DefaultSpell : Spell
         Origin["my star"].Update();
         Origin["my star"].Colored(new RGBA(0, (mo!.Evaluate()*255d).Get(), 255, 255));
 
-        Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Multi().Flagged(DrawMode.POINTS)));
+        Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Node().Flagged(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
         {
             Origin["savMyMulti"].RotatedZ(0.03);

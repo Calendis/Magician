@@ -23,7 +23,7 @@ public class SolvedEquation : InverseParamMap
         Ins = ins;
         //map = MapFromIPFunc(Evaluate);
     }
-    public Multi Plot(AxisSpecifier outAxis, params (Variable, PlotOptions)[] varPairedOptions)
+    public Node Plot(AxisSpecifier outAxis, params (Variable, PlotOptions)[] varPairedOptions)
     {
         // Every Unknown not paired with an axis becomes a slider
         List<Variable> pairedUnknowns = varPairedOptions.Select(t => t.Item1).ToList();
@@ -31,7 +31,7 @@ public class SolvedEquation : InverseParamMap
         // The map can temporarily be considered to have fewer inputs
         Ins -= eq.Sliders.Count;
         //Multi plot = new InverseParamMap(solvedSide == 0 ? eq.LHS.Evaluate : eq.RHS.Evaluate, eq.Ins).Plot(varPairedOptions.Select(t => t.Item2).ToArray());
-        Multi plot = base.Plot(outAxis, varPairedOptions.Select(t => t.Item2).ToArray());
+        Node plot = base.Plot(outAxis, varPairedOptions.Select(t => t.Item2).ToArray());
         // Restore the proper number of inputs
         Ins += eq.Sliders.Count;
         eq.Sliders.Clear();

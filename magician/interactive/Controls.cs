@@ -3,7 +3,7 @@ namespace Magician.Interactive;
 using Core.Maps;
 using Geo;
 
-public abstract class Control : Multi
+public abstract class Control : Node
 {
     public Action ControlAction { get; set; }
     protected Control(double x, double y, Action? a = null) : base(x, y)
@@ -15,7 +15,7 @@ public abstract class Control : Multi
 public abstract class InteractiveControl : Control
 {
     protected DirectMap controlSensor;
-    public InteractiveControl(double x, double y, Func<Multi, DirectMap> sensor, Action? a = null) : base(x, y, a)
+    public InteractiveControl(double x, double y, Func<Node, DirectMap> sensor, Action? a = null) : base(x, y, a)
     {
         controlSensor = sensor.Invoke(this);
     }
@@ -65,7 +65,7 @@ public class Button : Clickable
 
 // A menu is a multi whose constituents are all Buttons
 // It's just a convenient way to group buttons together
-public class Menu1D : Multi
+public class Menu1D : Node
 {
     public Menu1D(double x = 0, double y = 0, params Button[] buttons) : base(x, y, Data.Col.UIDefault.FG, DrawMode.INVISIBLE, buttons)
     {

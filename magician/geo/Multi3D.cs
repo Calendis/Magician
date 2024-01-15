@@ -5,14 +5,14 @@ namespace Magician.Geo;
 // -ness makes the 3D Multi extremely impractical to manipulate, so we use a Multi3D instead.
 // Multi3Ds have custom drawing behaviour and do not need to be nested. However, faces must be
 // defined.
-public class Multi3D : Multi
+public class Multi3D : Node
 {
     List<int[]>? faces;
     public List<int[]>? Faces => faces;
     // Full constructor
-    public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Multi[] points) : base(x, y, z, col, dm, points) { }
-    public Multi3D(double x, double y, double z, params Multi[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
-    public Multi3D(Multi m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
+    public Multi3D(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
+    public Multi3D(Node m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
 
     public override void Render(double xOffset, double yOffset, double zOffset)
     {
@@ -22,7 +22,7 @@ public class Multi3D : Multi
         int cc = 0;
         foreach (int[] face in faces)
         {
-            Multi f = new Multi().To(x.Get(), y.Get(), z.Get())
+            Node f = new Node().To(x.Get(), y.Get(), z.Get())
             .Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {

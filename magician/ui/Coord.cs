@@ -4,11 +4,11 @@ using static Geo.Create;
 
 public class RuledAxes
 {
-    Multi axis0;
-    Multi axis1;
-    Multi spacers0;
-    Multi spacers1;
-    Multi gridLines;
+    Node axis0;
+    Node axis1;
+    Node spacers0;
+    Node spacers1;
+    Node gridLines;
 
     int spacerSize = 24;
     int subdivSize = 8;
@@ -31,7 +31,7 @@ public class RuledAxes
             Point(Data.Globals.winWidth / 2 - Geo.Ref.Perspective.X, -Geo.Ref.Perspective.Y)
         );
         // the vertical spacers along that axis
-        spacers0 = new Multi().Flagged(DrawMode.INVISIBLE);
+        spacers0 = new Node().Flagged(DrawMode.INVISIBLE);
 
         // the vertical axis on a 2d graph
         axis1 = Line(
@@ -39,17 +39,17 @@ public class RuledAxes
             Point(-Geo.Ref.Perspective.X, -Data.Globals.winWidth / 2 - Geo.Ref.Perspective.Y)
         );
         // the horizontal spacers along that axis
-        spacers1 = new Multi().Flagged(DrawMode.INVISIBLE);
+        spacers1 = new Node().Flagged(DrawMode.INVISIBLE);
 
         // The grid lines, which will appear behind the spacers
-        gridLines = new Multi().Flagged(DrawMode.INVISIBLE);
+        gridLines = new Node().Flagged(DrawMode.INVISIBLE);
 
         // Add spacers to the horizontal axis
         int horizSpacers = (int)(Data.Globals.winWidth / horizSpacing);
         for (int i = 0; i < horizSpacers; i++)
         {
             Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Data.Globals.winWidth / 2)}", Data.Col.UIDefault.FG, Data.Globals.fontSize);
-            Multi horizSpacer = Line(
+            Node horizSpacer = Line(
                 Point(i * horizSpacing - Data.Globals.winWidth / 2, spacerSize / 2 - Geo.Ref.Perspective.Y),
                 Point(i * horizSpacing - Data.Globals.winWidth / 2, -spacerSize / 2 - Geo.Ref.Perspective.Y)
             );
@@ -65,7 +65,7 @@ public class RuledAxes
             double horizSubdivSpacing = horizSpacing / horizSubdivs;
             for (int j = 0; j < horizSubdivs; j++)
             {
-                Multi horizSubdiv = Line(
+                Node horizSubdiv = Line(
                     Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, subdivSize / 2 - Geo.Ref.Perspective.Y),
                     Point(i * horizSpacing - Data.Globals.winWidth / 2 + j * horizSubdivSpacing, -subdivSize / 2 - Geo.Ref.Perspective.Y)
                 );
@@ -87,7 +87,7 @@ public class RuledAxes
         int vertSpacers = (int)(Data.Globals.winHeight / vertSpacing);
         for (int i = 0; i < vertSpacers; i++)
         {
-            Multi vertSpacer = Line(
+            Node vertSpacer = Line(
                 Point(spacerSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing - Data.Globals.winHeight / 2),
                 Point(-spacerSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing - Data.Globals.winHeight / 2)
             );
@@ -98,7 +98,7 @@ public class RuledAxes
             double vertSubdivSpacing = vertSpacing / vertSubdivs;
             for (int j = 0; j < vertSubdivs; j++)
             {
-                Multi vertSubdiv = Line(
+                Node vertSubdiv = Line(
                     Point(-subdivSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2),
                     Point(subdivSize / 2 - Geo.Ref.Perspective.X, i * vertSpacing + j * vertSubdivSpacing - Data.Globals.winHeight / 2)
                     );
@@ -107,7 +107,7 @@ public class RuledAxes
 
             // Horizontal grid lines
             if (i % 2 != 0) { continue; }
-            Multi l = Line(
+            Node l = Line(
                     Point(-Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
                     Point(Data.Globals.winWidth, i * vertSpacing - Data.Globals.winHeight / 2),
                     Data.Col.UIDefault[1]
@@ -125,10 +125,10 @@ public class RuledAxes
         return new RuledAxes(hSp, hSd, vSp, vSd);
     }
 
-    public Multi Render()
+    public Node Render()
     {
 
-        return new Multi(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).Flagged(DrawMode.INVISIBLE)
+        return new Node(gridLines, axis0.Adjoined(spacers0), axis1.Adjoined(spacers1)).Flagged(DrawMode.INVISIBLE)
         ;
     }
 }

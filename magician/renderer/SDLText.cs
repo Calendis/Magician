@@ -57,7 +57,7 @@ public class Text : IDisposable
         return new _SDLTexture("todo", 80, 80);
     }
 
-    Multi AsMulti()
+    Node AsMulti()
     {
         Scribe.Error("Text as Multi not supported yet");
         throw new Exception();
