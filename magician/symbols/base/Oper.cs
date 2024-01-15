@@ -117,7 +117,7 @@ public abstract partial class Oper : IRelation
     }
 
     // Provide arguments to solve the expression at a point
-    public IVal Evaluate(params double[] args)
+    public Variable Evaluate(params double[] args)
     {
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
         if (associates.Count != args.Length)
@@ -134,7 +134,10 @@ public abstract partial class Oper : IRelation
 
     IVec IRelation.Evaluate(params double[] args)
     {
-        return new Vec(Evaluate(args));
+        IVar iv = Evaluate(args);
+        if (iv.IsScalar)
+            return new Vec(iv.ToIVal());
+        return new Vec(iv.ToIVec());
     }
 
     // Overall degree of the expression
@@ -247,7 +250,7 @@ public abstract partial class Oper : IRelation
         {
             if (o1.IsDetermined)
             {
-                return o0.Sol().Value() < o1.Sol().Value();
+                return o0.Sol().Value < o1.Sol().Value;
             }
             else
                 return true;
@@ -263,7 +266,7 @@ public abstract partial class Oper : IRelation
         if (o0.IsDetermined)
         {
             if (o1.IsDetermined)
-                return o0.Sol().Value() > o1.Sol().Value();
+                return o0.Sol().Value > o1.Sol().Value;
             else
                 return true;
         }
