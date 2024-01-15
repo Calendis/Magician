@@ -132,12 +132,9 @@ public abstract partial class Oper : IRelation
         return s;
     }
 
-    IVec IRelation.Evaluate(params double[] args)
+    IVar IRelation.Evaluate(params double[] args)
     {
-        IVar iv = Evaluate(args);
-        if (iv.IsScalar)
-            return new Vec(iv.ToIVal());
-        return new Vec(iv.ToIVec());
+        return Evaluate(args);
     }
 
     // Overall degree of the expression

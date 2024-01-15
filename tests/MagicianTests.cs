@@ -1009,7 +1009,7 @@ public class ComplexAndMultivalued
                 Assert.That(rootsOfUnity is Multivalue);
                 Multivalue m = (Multivalue)rootsOfUnity;
                 List<Val> roots = Enumerable.Range(0, n).Select(k =>
-                    new Val(Algebra.Numeric.Funcs.Cos(2*Math.PI*k/n), Algebra.Numeric.Funcs.Sin(2*Math.PI*k/n))
+                    new Val(Algebra.Numeric.Trig.Cos(2*Math.PI*k/n), Algebra.Numeric.Trig.Sin(2*Math.PI*k/n))
                 ).ToList();
                 Assert.That(roots, Has.Count.EqualTo(m.All.Length));
                 // compare the kth nth roots of unity to our multivalue

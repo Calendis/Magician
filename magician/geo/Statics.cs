@@ -163,7 +163,7 @@ public static class Create
         Node container = new();
         for (double x = start; x < end; x += spacing)
         {
-            List<double> pos = pm.Evaluate(x).Values.Select(ival => ival.Get()).ToList();
+            List<double> pos = pm.Evaluate(x).Values<double>().Select(d => d).ToList();
             while (pos.Count < 3)
             {
                 pos.Add(0);

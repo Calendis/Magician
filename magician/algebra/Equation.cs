@@ -43,6 +43,10 @@ public class Equation : IRelation
     //{
     //    return Approximate(args);
     //}
+    IVar IRelation.Evaluate(params double[] args)
+    {
+        throw new NotImplementedException();
+    }
 
     internal enum SolveMode
     {
@@ -474,10 +478,7 @@ public class Equation : IRelation
         return $"{LHS} {fulcrumString} {RHS}";
     }
 
-    IVec IRelation.Evaluate(params double[] args)
-    {
-        throw new NotImplementedException();
-    }
+    
 }
 // The fulcrum is the =, >, <, etc.
 public enum Fulcrum

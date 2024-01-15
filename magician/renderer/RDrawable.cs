@@ -18,9 +18,9 @@ public abstract class RDrawable
 
     static RDrawable()
     {
-        if (Renderer.RGlobals.gl is null)
+        if (RGlobals.gl is null)
             throw Scribe.Error("Must create a gl context before creating an RDrawable");
-        gl = Renderer.RGlobals.gl;
+        gl = RGlobals.gl;
     }
 
     public static void DrawAll()

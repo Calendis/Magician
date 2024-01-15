@@ -6,8 +6,8 @@ using static Magician.Geo.Create;
 
 public interface IRelation
 {
-    public IVec Evaluate(params double[] args);
-    public IVec Evaluate(IVal args) => Evaluate(args.Values.ToArray());
+    public IVar Evaluate(params double[] args);
+    public IVar Evaluate(IVal args) => Evaluate(args.Values.ToArray());
     public int Ins { get; protected set; }
     public int Outs {get {return 0;}}
 }
@@ -15,16 +15,16 @@ public interface IFunction : IRelation
 {
     public new IVal Evaluate(params double[] args);
     public new IVal Evaluate(IVal args) => Evaluate(args.Values.ToArray());
-    IVec IRelation.Evaluate(params double[] args) => new Vec(Evaluate(args).Values.ToArray());
-    IVec IRelation.Evaluate(IVal args) => new Vec(Evaluate(args.Values.ToArray()));
+    IVar IRelation.Evaluate(params double[] args) => new Var(Evaluate(args).Values.ToArray());
+    IVar IRelation.Evaluate(IVal args) => new Var(Evaluate(args.Values.ToArray()));
     int IRelation.Outs { get { return 1; } }
 }
 public interface IParametric : IRelation
 {
     int IRelation.Ins { get { return 1; } set { } }
-    public IVec Evaluate(double x);
-    IVec IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
-    IVec IRelation.Evaluate(IVal args) => Evaluate(args.Get());
+    public IVar Evaluate(double x);
+    IVar IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
+    IVar IRelation.Evaluate(IVal args) => Evaluate(args.Get());
 }
 public interface IMap : IFunction
 {
@@ -190,7 +190,7 @@ public class ParamMap : IParametric
     }
     //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
     public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, IVal>>(im => im.Evaluate).ToArray()) { }
-    public IVec Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
+    public IVar Evaluate(double x = 0) => new Var(Maps.Select(f => f.Invoke(x)).ToArray());
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public Node Plot(Algebra.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
