@@ -35,7 +35,7 @@ public class Fraction : Arithmetic
             return new Variable((IVal)num/denom);
         else if (num.IsScalar && denom.IsScalar)
         {
-            if (num.ToIVal().Get() == (int)num.ToIVal().Get() && denom.ToIVal().Get() == (int)denom.ToIVal().Get())
+            if (num.ToIVal().Get() == (int)num.ToIVal().Get() && denom.ToIVal().Get() == (int)denom.ToIVal().Get() && denom.ToIVal().Get() != 0 && !(denom.ToIVal().Get() == 1 && num.ToIVal().Get() == 1))
                 return new Rational((int)num.ToIVal().Get(), (int)denom.ToIVal().Get());
             else
                 return new Variable((num / denom).ToIVal());
@@ -80,13 +80,13 @@ public class Fraction : Arithmetic
         ABbar.Reduce(2);
 
         Oper combined;
-        if (A is Variable av && av.Found && av.Value().EqValue(1))
+        if (A is Variable av && av.Found && av.Value.EqValue(1))
             combined = B;
-        else if (B is Variable bv && bv.Found && bv.Value().EqValue(1))
+        else if (B is Variable bv && bv.Found && bv.Value.EqValue(1))
             combined = A;
         else if (
-            (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Value().Trim().Dims == 1 && abv.Value().EqValue(1)) ||
-            (AB.IsDetermined && AB.Sol().Value().Trim().Dims == 1 && AB.Sol().Value().EqValue(1))
+            (AB.IsUnary && AB.posArgs[0] is Variable abv && abv.Found && abv.Value.Trim().Dims == 1 && abv.Value.EqValue(1)) ||
+            (AB.IsDetermined && AB.Sol().Value.Trim().Dims == 1 && AB.Sol().Value.EqValue(1))
         )
         {
             if (aPositive && bPositive)

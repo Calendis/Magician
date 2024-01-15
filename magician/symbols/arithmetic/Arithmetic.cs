@@ -29,7 +29,7 @@ public abstract class Arithmetic : Invertable
         Variable p = New(posDetermined, new List<Oper> { }).Sol();
         Variable n = New(negDetermined, new List<Oper> { }).Sol();
         posArgs.Add(p);
-        if (!n.Value().EqValue(Identity))
+        if (!n.Value.EqValue(Identity))
             negArgs.Add(n);
 
         DropIdentities();
@@ -154,9 +154,9 @@ public abstract class Arithmetic : Invertable
     internal void DropIdentities()
     {
         if (posArgs.Count > 1)
-            posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value().Trim().Dims == 1 && o.Sol().Value().EqValue(Identity))).ToList();
+            posArgs = posArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.EqValue(Identity))).ToList();
         if (negArgs.Count > 0)
-            negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value().Trim().Dims == 1 && o.Sol().Value().EqValue(Identity))).ToList();
+            negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.EqValue(Identity))).ToList();
     }
     // Flagged grouped handshakes, flagged grouped opers, pos/neg filtered args
     internal (List<List<(int, int, bool, bool)>>, List<List<(Oper, bool)>>) GrpFlagHshakes(Variable axis)

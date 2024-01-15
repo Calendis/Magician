@@ -11,8 +11,11 @@ public class Variable : Invertable, IVar
     public bool Found => found;
     int IDimensional<double>.Dims => qs is null ? 0 : qs.Count;
     // wow, this makes perfect sense! just make sure T is double or IVal
-    public IDimensional<T> Value<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1DVector ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
-    public IVal Value() => (IVal)Value<double>();
+    // Gets the IDimensional<T> from a Variable
+    public IDimensional<T> Dimensional<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1DVector ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
+    // Gets the IVal from a Variable
+    // TODO: make this a property
+    public IVal Value => (IVal)Dimensional<double>();
     public IVar Var => (IVar)this;
     public double Magnitude
     {
@@ -60,7 +63,7 @@ public class Variable : Invertable, IVar
     // This seems like an antipattern -- consider another way
     void IDimensional<double>.Set(params double[] vs)
     {
-        if (qs is not null && qs.Count > 0 && vs.Length != Value().Dims)
+        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
             throw Scribe.Error("Mismatch");
         qs ??= new();
         qs.Clear();
@@ -68,7 +71,7 @@ public class Variable : Invertable, IVar
     }
     void IDimensional<IVal>.Set(params IVal[] vs)
     {
-        if (ivals is not null && ivals.Count > 0 && vs.Length != Value().Dims)
+        if (ivals is not null && ivals.Count > 0 && vs.Length != ivals.Count)
             throw Scribe.Error("Mismatch");
         ivals ??= new();
         ivals.Clear();
@@ -117,9 +120,10 @@ public class Variable : Invertable, IVar
         if (!found)
             return name;
         if (Var.IsVector)
-            return Scribe.Expand<List<IVal>, IVal>(ivals);
-        IVal trim = Var.ToIVal().Trim();
-        return trim.Dims < 2 ? $"{trim.Get()}" : $"({trim.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
+            return "Vector " + Scribe.Expand<List<IVal>, IVal>(ivals);
+        return $"{Value}";
+        //IVal trim = Var.ToIVal().Trim();
+        //return trim.Dims < 2 ? $"{trim.Get()}" : $"({trim.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
     }
 
