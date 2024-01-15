@@ -169,12 +169,12 @@ public interface IVal : IDimensional<double>
         return new Val(re, im);
     }
 
-    public static IVar Exp(IVal z, IVal w)
+    public static IVal Exp(IVal z, IVal w)
     {
-        // if i and v are both real numbers...
+        // if z and w are both real numbers...
         if (z.Trim().Dims * w.Trim().Dims == 1)
         {
-            // if i is negative and v is not an integer, the answer is complex
+            // if z is negative and w is not an integer, the answer is complex
             if (z.Get() < 0 && w.Get() != (int)w.Get())
             {
                 double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Symbols.Numeric.Funcs.Cos(Math.PI * w.Get());
@@ -183,10 +183,8 @@ public interface IVal : IDimensional<double>
             }
             else
             {
-                // if i is positive or if v is an integer, the answer is real
-                // when v is not an integer, there are multiple solutions
-                // these are found by exponentiating a non-integer Symbols.Rational
-                return new Var(Math.Pow(z.Get(), w.Get()));
+                // otherwise, the answer is real
+                return new Val(Math.Pow(z.Get(), w.Get()));
             }
         }
         // real base, complex exponent
@@ -194,17 +192,22 @@ public interface IVal : IDimensional<double>
         {
             double a = w.Get();
             double b = w.Get(1);
-            double arg = z.Get() >= 0 ? 0 : Math.PI;
-            double coefficient = Math.Exp(a*Math.Log(Math.Abs(z.Get()))-b*arg);
-            double re = Symbols.Numeric.Funcs.Cos(b*Math.Log(z.Magnitude) + a*arg) * coefficient;
-            double im = Symbols.Numeric.Funcs.Sin(b*Math.Log(z.Magnitude) + a*arg) * coefficient;
-            return new Var(re, im);
+            double x = z.Get();
+            double coef = Math.Pow(x, a);
+
+            return new Val(coef * Symbols.Numeric.Funcs.Cos(b * Math.Log(x)), coef * Symbols.Numeric.Funcs.Sin(b * Math.Log(x)));
         }
-        // complex base, any exponent
+        // complex base, positive integer exponent
+        else if (z.Trim().Dims != 1 && w.Trim().Dims == 1 && (int)w.Get() == w.Get() && w.Get() >= 1)
+        {
+            return new Val(z * Exp(z, w - new Val(1)));
+        }
+        // TODO: complex base, Gaussian integer exponent
+        // complex base, other exponent
         else
         {
             if (z.Trim().Dims == 1 && z.Get() == 1)
-                return new Var(1);
+                return new Val(1);
             return Exp(new Val(Math.E), w * Ln(z));
         }
     }
@@ -298,6 +301,26 @@ public class Val : IVal
 
     public override string ToString()
     {
+        if (vals.Count == 1)
+            return $"{vals[0]}";
+        if (vals.Count == 2)
+        {
+            if (vals[0] == 0)
+                if (vals[1] == 1)
+                    return "i";
+                else if (vals[1] == -1)
+                    return "-i";
+                else
+                    return $"{vals[1]}i";
+            if (vals[1] == 1)
+                return $"{vals[0]} + i";
+            else
+            {
+                if (vals[1] < 0)
+                    return $"{vals[0]} - {Math.Abs(vals[1])}i";
+                return $"{vals[0]} + {vals[1]}i";
+            }
+        }
         return Scribe.Expand<List<double>, double>(vals);
     }
 }
