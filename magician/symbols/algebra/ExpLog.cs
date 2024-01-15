@@ -63,25 +63,33 @@ public class ExpLog : Invertable
             if (!simpleExponent)
                 throw Scribe.Error($"Could not raise {ptBase} to vector power {posArgs[1]}");
 
-            Variable exp = posArgs[1].Sol();
-            if (exp is Rational rational && exp.Var.Trim().Dims == 1 && exp.Value().Get() != (int)exp.Value().Get())
-            {
-                if (posArgs[1].Sol().Var.Trim().Dims != 1)
-                    throw Scribe.Error($"Malformed rational exponent {posArgs[1]}");
-                
-                int a = rational.Numerator;
-                int b = rational.Denominator;
-                List<IVal> solutions = new();
+            Rational? r = null;
+            if (posArgs[1] is Rational r0)
+                r = r0;
+            else if (posArgs[1].Sol() is Rational r1)
+                r = r1;
 
+            if (r is not null)
+            {
+                int a = r.Numerator;
+                int b = r.Denominator;
+
+                double mag = ptBase.Magnitude;
+                double at2a = ptBase.Value.Get(); double at2b = ptBase.Value.Dims < 2 ? 0 : ptBase.Value.Get(1);
+                double theta = Math.Atan2(at2b, at2a);
+
+                List<IVal> solutions = new();
                 for (int k = 0; k < b; k++)
                 {
-                    IVal solution = new Val(Math.Pow(Math.Pow(ptBase.Var.ToIVal().Get(), a), 1d/b)) * IVal.Exp(new Val(Math.E), new Val(0, 2*Math.PI*k/b));
+                    IVal solution = new Val(Math.Pow(mag, (double)a/b)) * IVal.Exp(new Val(Math.E), new Val(0, (a*theta + 2*k*Math.PI)/b));
+                    //Scribe.Info($"Found solution {solution} to {ptBase}^({a}/{b})");
                     solutions.Add(solution);
                 }
 
                 return new Multivalue(solutions.ToArray());
             }
-            powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()).ToIVal());
+
+            powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()));
         }
         else
             powTow = new ExpLog(new List<Oper> { ptBase, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
@@ -108,20 +116,20 @@ public class ExpLog : Invertable
             int? varIdx = null;
             for (int i = 0; i < posArgs.Count; i++)
             {
-                if (posArgs[i].IsConstant && posArgs[i].Sol().Value().EqValue(Identity))
+                if (posArgs[i].IsConstant && posArgs[i].Sol().Value.EqValue(Identity))
                 {
                     varIdx = i;
                     break;
                 }
             }
             if (varIdx is not null)
-                posArgs = posArgs.Take((int)varIdx+1).ToList();
-            
+                posArgs = posArgs.Take((int)varIdx + 1).ToList();
+
             /* Collapse tower at 0s */
             varIdx = null;
             for (int i = 0; i < posArgs.Count; i++)
             {
-                if (posArgs[i].IsConstant && posArgs[i].Sol().Value().EqValue(0))
+                if (posArgs[i].IsConstant && posArgs[i].Sol().Value.EqValue(0))
                 {
                     varIdx = i;
                     break;
