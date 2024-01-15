@@ -20,7 +20,7 @@ public interface IVar : IVal, IVec
     {
         if (IsVector)
             return Values<IVal>()[i];
-        return new Val(Values<double>()[i]);
+        return new Val(Values<double>().ToArray());
     }
     public static IVar operator +(IVar i, IVar v)
     {
