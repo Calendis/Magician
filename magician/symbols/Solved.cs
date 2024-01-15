@@ -38,7 +38,7 @@ public class SolvedEquation : InverseParamMap
         return plot;
     }
 
-    public new IVal Evaluate(params double[] vals)
+    public new Variable Evaluate(params double[] vals)
     {
         int expectedArgs = eq.Unknowns.Count - eq.Sliders.Count - 1;
         if (vals.Length != expectedArgs)
