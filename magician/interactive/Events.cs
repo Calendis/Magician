@@ -17,11 +17,11 @@ public static class Events
 
     public static double MouseX
     {
-        get => (double)mouse[0] - Data.Globals.winWidth / 2;
+        get => (double)mouse[0] - Runes.Globals.winWidth / 2;
     }
     public static double MouseY
     {
-        get => (double)-mouse[1] + Data.Globals.winHeight / 2;
+        get => (double)-mouse[1] + Runes.Globals.winHeight / 2;
     }
     public static bool Click
     {

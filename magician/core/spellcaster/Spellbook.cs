@@ -2,9 +2,9 @@
     The static Spellcaster is the outer layer of the Magician library. It is responsible for managing
     Spells, which are views of 3D (or 2D) Geometry, represented by Multis
  */
-namespace Magician.Library
+namespace Magician.Core.Caster
 {
-    public static class Spellcaster
+    public static class Spellbook
     {
         static public List<Spell> Spells { get; set; } = new();
         // Index of the cached Spell

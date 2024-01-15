@@ -1,9 +1,9 @@
 namespace Magician.Demos;
 using Core;
 using Core.Maps;
+using Core.Caster;
 using Geo;
 using Interactive;
-using Library;
 
 public class DefaultSpell : Spell
 {
@@ -37,8 +37,8 @@ public class DefaultSpell : Spell
         () =>
         {
             Scribe.Info("Switching Spells...");
-            Spellcaster.Prepare(new Demos.Tests.EqPlotting());
-            Spellcaster.Cast();
+            Spellbook.Prepare(new Demos.Tests.EqPlotting());
+            Spellbook.Cast();
         }
 
         );

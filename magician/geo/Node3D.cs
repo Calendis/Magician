@@ -5,14 +5,14 @@ namespace Magician.Geo;
 // -ness makes the 3D Multi extremely impractical to manipulate, so we use a Multi3D instead.
 // Multi3Ds have custom drawing behaviour and do not need to be nested. However, faces must be
 // defined.
-public class Multi3D : Node
+public class Node3D : Node
 {
     List<int[]>? faces;
     public List<int[]>? Faces => faces;
     // Full constructor
-    public Multi3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
-    public Multi3D(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
-    public Multi3D(Node m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public Node3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
+    public Node3D(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
+    public Node3D(Node m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
 
     public override void Render(double xOffset, double yOffset, double zOffset)
     {
@@ -41,9 +41,9 @@ public class Multi3D : Node
         }
     }
 
-    public override Multi3D Copy()
+    public override Node3D Copy()
     {
-        Multi3D c = new Multi3D(base.Copy());
+        Node3D c = new Node3D(base.Copy());
         c.faces = faces;
         return c;
     }
@@ -54,7 +54,7 @@ public class Multi3D : Node
     }
 
     // Arrange faces in a tetrahedral pattern
-    public Multi3D FacesSimplex()
+    public Node3D FacesSimplex()
     {
         return FacesGrouped(3,
             0, 1, 2,
@@ -64,7 +64,7 @@ public class Multi3D : Node
         );
     }
     // Arrange faces in a cubic pattern
-    public Multi3D FacesCube()
+    public Node3D FacesCube()
     {
         return FacesGrouped(4,
         0, 1, 2, 3,
@@ -76,7 +76,7 @@ public class Multi3D : Node
         );
     }
 
-    public Multi3D FacesGrouped(int faceSize, params int[] fs)
+    public Node3D FacesGrouped(int faceSize, params int[] fs)
     {
         faces = new();
         List<int> currentFace = new();
@@ -92,7 +92,7 @@ public class Multi3D : Node
         return this;
     }
 
-    public Multi3D SetFaces(List<int[]> newFaces)
+    public Node3D SetFaces(List<int[]> newFaces)
     {
         faces = new();
         for (int i = 0; i < newFaces.Count; i++)

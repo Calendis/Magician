@@ -2,7 +2,7 @@ namespace Magician.Demos.Tests;
 using Core.Maps;
 using Geo;
 using Interactive;
-using Library;
+using Core.Caster;
 using Algebra.Symbols;
 using Algebra;
 using static Magician.Algebra.Notate;

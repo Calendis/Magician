@@ -1,8 +1,8 @@
 namespace Magician.Demos.Tests;
+using Core.Maps;
+using Core.Caster;
 using Geo;
 using Interactive;
-using Library;
-using Core.Maps;
 
 
 public class Proto3D : Spell

@@ -235,9 +235,9 @@ public class Node : Vec3, ICollection<Node>
     // Create a multi and define its position, colour, and drawing properties
     public Node(double x, double y, double z, Color? col, DrawMode dm = DrawMode.FULL, params Node[] cs) : this(Ref.Origin, x, y, z, col, dm, cs) { }
     public Node(double x, double y, Color? col, DrawMode dm = DrawMode.FULL, params Node[] cs) : this(x, y, 0, col, dm, cs) { }
-    public Node(double x, double y, double z = 0) : this(x, y, z, Data.Col.UIDefault.FG) { }
+    public Node(double x, double y, double z = 0) : this(x, y, z, Runes.Col.UIDefault.FG) { }
     // Create a multi from a list of multis
-    public Node(params Node[] cs) : this(0, 0, 0, Data.Col.UIDefault.FG, DrawMode.FULL, cs) { }
+    public Node(params Node[] cs) : this(0, 0, 0, Runes.Col.UIDefault.FG, DrawMode.FULL, cs) { }
     public Node(Vec pt3d) : this(pt3d.x.Get(), pt3d.y.Get(), pt3d.z.Get()) { }
 
     public Color Col
@@ -258,11 +258,11 @@ public class Node : Vec3, ICollection<Node>
 
     public double XCartesian(double offset)
     {
-        return Data.Globals.winWidth / 2 + X + offset;
+        return Runes.Globals.winWidth / 2 + X + offset;
     }
     public double YCartesian(double offset)
     {
-        return Data.Globals.winHeight / 2 - Y + offset;
+        return Runes.Globals.winHeight / 2 - Y + offset;
     }
 
 
@@ -741,7 +741,7 @@ public class Node : Vec3, ICollection<Node>
             );
             Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
                 Ref.FOV / 180d * Math.PI,
-                Data.Globals.winWidth / Data.Globals.winHeight,
+                Runes.Globals.winWidth / Runes.Globals.winHeight,
                 0.1, 2000
             );
             Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);

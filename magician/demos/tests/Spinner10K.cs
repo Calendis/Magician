@@ -1,6 +1,6 @@
 namespace Magician.Demos.Tests;
 using Geo;
-using Library;
+using Core.Caster;
 using Core.Maps;
 
 public class Spinner10K : Spell

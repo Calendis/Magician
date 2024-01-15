@@ -1,11 +1,11 @@
+namespace Magician.Demos.Tests;
 using Magician.Geo;
 using Magician.Interactive;
-using Magician.Library;
+using Core.Caster;
 using Magician.Algebra;
 using Magician.Algebra.Symbols;
 using static Magician.Algebra.Notate;
 
-namespace Magician.Demos.Tests;
 
 public class EqPlotting : Spell
 {

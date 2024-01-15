@@ -1,7 +1,7 @@
-using Magician.Library;
-using Magician.Algebra;
-
 namespace Magician.Demos.Tests;
+using Core.Caster;
+using Algebra;
+
 
 public class NDCounterTest : Spell
 {

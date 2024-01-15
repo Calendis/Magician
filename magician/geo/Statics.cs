@@ -74,7 +74,7 @@ public static class Create
     }
     public static Node Line(Node p1, Node p2)
     {
-        return Line(p1, p2, Data.Col.UIDefault.FG);
+        return Line(p1, p2, Runes.Col.UIDefault.FG);
     }
 
     // TODO: make Rect easier to implement with a Flatten method
@@ -115,7 +115,7 @@ public static class Create
         {
             double x = magnitude * Math.Cos(angle * i / 180 * Math.PI);
             double y = magnitude * Math.Sin(angle * i / 180 * Math.PI);
-            ps.Add(Point(ps, x, y, Data.Col.UIDefault.FG));
+            ps.Add(Point(ps, x, y, Runes.Col.UIDefault.FG));
         }
 
         //return new Multi(xOffset, yOffset, col, DrawMode.FULL, ps.ToArray());
@@ -124,7 +124,7 @@ public static class Create
     }
     public static Node RegularPolygon(double xOffset, double yOffset, int sides, double magnitude)
     {
-        return RegularPolygon(xOffset, yOffset, Data.Col.UIDefault.FG, sides, magnitude);
+        return RegularPolygon(xOffset, yOffset, Runes.Col.UIDefault.FG, sides, magnitude);
     }
     public static Node RegularPolygon(int sides, double magnitude)
     {
@@ -151,7 +151,7 @@ public static class Create
     }
     public static Node Star(double xOffset, double yOffset, int sides, double innerRadius, double outerRadius)
     {
-        return Star(xOffset, yOffset, Data.Col.UIDefault.FG, sides, innerRadius, outerRadius);
+        return Star(xOffset, yOffset, Runes.Col.UIDefault.FG, sides, innerRadius, outerRadius);
     }
     public static Node Star(int sides, double innerRadius, double outerRadius)
     {
@@ -174,9 +174,9 @@ public static class Create
     }
 
     /* Create 3D shapes! */
-    public static Multi3D TriPyramid(double x, double y, double z, double radius)
+    public static Node3D TriPyramid(double x, double y, double z, double radius)
     {
-        Multi3D tetra = new Multi3D(x, y, z,
+        Node3D tetra = new Node3D(x, y, z,
             Create.RegularPolygon(3, radius)
             .Add(
             new Node[] { Create.Point(0, 0, radius) }
@@ -185,9 +185,9 @@ public static class Create
         return tetra;
     }
 
-    public static Multi3D Cube(double x, double y, double z, double radius)
+    public static Node3D Cube(double x, double y, double z, double radius)
     {
-        Multi3D cube = new Multi3D(x, y, z,
+        Node3D cube = new Node3D(x, y, z,
         Create.RegularPolygon(4, radius).Add(
             Create.RegularPolygon(4, radius)
                 .Sub(m => m.Translated(0, 0, radius * Math.Sqrt(2)))  // radius is half the diagonal
@@ -275,7 +275,7 @@ public static class Check
         return pX >= rX && pX <= maxX && pY >= rY && pY <= maxY;
     }
 
-    public static bool IsRectangle(Node m, double tolerance = Data.Globals.defaultTol)
+    public static bool IsRectangle(Node m, double tolerance = Runes.Globals.defaultTol)
     {
         if (m.Count != 4)
         {

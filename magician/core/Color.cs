@@ -1,11 +1,9 @@
 /*
 *  Class for storing and manipulating colour data, with RGBA and HSLA support
 */
-
-
-using System.Collections;
-
 namespace Magician;
+using Algebra.Numeric;
+
 
 public abstract class Color
 {
@@ -300,10 +298,10 @@ public class RGBA : Color
     }
     public static RGBA Random(double? red = null, double? green = null, double? blue = null, double? alpha = null)
     {
-        red ??= Data.Rand.RNG.Next(256);
-        green ??= Data.Rand.RNG.Next(256);
-        blue ??= Data.Rand.RNG.Next(256);
-        alpha ??= Data.Rand.RNG.Next(256);
+        red ??= Rand.RNG.Next(256);
+        green ??= Rand.RNG.Next(256);
+        blue ??= Rand.RNG.Next(256);
+        alpha ??= Rand.RNG.Next(256);
         return new RGBA((double)red, (double)green, (double)blue, (double)alpha);
     }
 }
@@ -374,10 +372,10 @@ public class HSLA : Color
 
     public static HSLA Random(double? hue = null, double? saturation = null, double? lightness = null, double? alpha = null)
     {
-        hue ??= Data.Rand.RNG.NextDouble() * 2 * Math.PI;
-        saturation ??= Data.Rand.RNG.NextDouble();
-        lightness ??= Data.Rand.RNG.NextDouble();
-        alpha ??= Data.Rand.RNG.Next(256);
+        hue ??= Rand.RNG.NextDouble() * 2 * Math.PI;
+        saturation ??= Rand.RNG.NextDouble();
+        lightness ??= Rand.RNG.NextDouble();
+        alpha ??= Rand.RNG.Next(256);
         return new HSLA((double)hue, (double)saturation, (double)lightness, (double)alpha);
     }
     public static HSLA RandomVisible()

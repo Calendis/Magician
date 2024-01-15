@@ -140,7 +140,7 @@ public class InverseParamMap : IFunction
         // 3D plot format
         if (threeD)
         {
-            Multi3D plot3d = new(plot);
+            Node3D plot3d = new(plot);
             plot3d.SetFaces(faces);
             return plot3d.Flagged(DrawMode.INNER);
         }

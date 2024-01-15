@@ -1,7 +1,5 @@
-using Magician.Library;
-
 namespace Magician.Demos.Tests;
-
+using Core.Caster;
 public class WavingText : Spell
 {
     public override void Loop()

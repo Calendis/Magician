@@ -1,5 +1,5 @@
 namespace Magician.Demos.Tests;
-using Library;
+using Core.Caster;
 using Geo;
 
 public class Geos : Spell

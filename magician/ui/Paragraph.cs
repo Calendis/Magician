@@ -5,7 +5,7 @@ namespace Magician.UI;
 public class Paragraph : Node
 {
     protected string[]? sentences;
-    Paragraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? size = null, params string[] ss) : base(x, y, c ?? Data.Col.UIDefault.FG, DrawMode.INVISIBLE)
+    Paragraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? size = null, params string[] ss) : base(x, y, c ?? Runes.Col.UIDefault.FG, DrawMode.INVISIBLE)
     {
         sentences = new string[ss.Length];
         // If no path given, use the default
@@ -13,7 +13,7 @@ public class Paragraph : Node
         for (int i = 0; i < ss.Length; i++)
         {
             sentences[i] = ss[i];
-            size = size ?? Data.Globals.fontSize;
+            size = size ?? Runes.Globals.fontSize;
             Text t = new Text(sentences[i], col, (int)size, fontPath);
             this[$"line{i}"] = new Node(0, -i * (int)size)
             .Textured(t.Render())
@@ -57,10 +57,10 @@ public class RichParagraph : Paragraph
     string[] inStr;
     Justification just;
     // Rich paragraph supports inline text formatting using TextFormatSetting and $"string interpolation"
-    RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, Justification just = 0, params string[] inputStr) : base(x, y, c ?? Data.Col.UIDefault.FG)
+    RichParagraph(double x = 0, double y = 0, string fontPath = "", Color? c = null, int? sz = null, Justification just = 0, params string[] inputStr) : base(x, y, c ?? Runes.Col.UIDefault.FG)
     {
         // If no size given, use the default
-        size = sz ?? Data.Globals.fontSize;
+        size = sz ?? Runes.Globals.fontSize;
         inStr = inputStr;
         this.just = just;
 

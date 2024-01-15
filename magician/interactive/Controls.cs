@@ -67,7 +67,7 @@ public class Button : Clickable
 // It's just a convenient way to group buttons together
 public class Menu1D : Node
 {
-    public Menu1D(double x = 0, double y = 0, params Button[] buttons) : base(x, y, Data.Col.UIDefault.FG, DrawMode.INVISIBLE, buttons)
+    public Menu1D(double x = 0, double y = 0, params Button[] buttons) : base(x, y, Runes.Col.UIDefault.FG, DrawMode.INVISIBLE, buttons)
     {
         //
     }

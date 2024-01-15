@@ -10,7 +10,7 @@ public static class RControl
     static IntPtr target;
     public static void Clear()
     {
-        Clear(Data.Col.UIDefault.BG);
+        Clear(Runes.Col.UIDefault.BG);
     }
     public static void Clear(Color c)
     {

@@ -1,9 +1,9 @@
-﻿using static SDL2.SDL;
-using Magician.Library;
-using Magician.Renderer;
+﻿namespace Magician;
+using static Core.Caster.Spellbook;
+using Renderer;
 using Silk.NET.OpenGL;
-
-namespace Magician;
+using static SDL2.SDL;
+using Magician.Core.Caster;
 
 class MagicianSDL
 {
@@ -17,7 +17,7 @@ class MagicianSDL
     static void Main(string[] args)
     {
         /* Startup */
-        Console.WriteLine(Data.App.Title);
+        Console.WriteLine(Runes.App.Title);
         MagicianSDL magicianSDL = new MagicianSDL();
 
         magicianSDL.InitSDL();
@@ -41,8 +41,8 @@ class MagicianSDL
         RDrawable.GenShaders();
 
         // Load a spell
-        Spellcaster.Prepare(new Demos.DefaultSpell());
-        Spellcaster.Cast();
+        Spellbook.Prepare(new Demos.DefaultSpell());
+        Spellbook.Cast();
 
         // Run
         magicianSDL.MainLoop();
@@ -61,7 +61,7 @@ class MagicianSDL
 
         while (!done)
         {
-            Spellcaster.Animate(frames * timeResolution);
+            Spellbook.Animate(frames * timeResolution);
 
             // Event handling
             while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
@@ -75,8 +75,8 @@ class MagicianSDL
                         {
 
                             case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
-                                Data.Globals.winWidth = windowEvent.data1;
-                                Data.Globals.winHeight = windowEvent.data2;
+                                Runes.Globals.winWidth = windowEvent.data1;
+                                Runes.Globals.winHeight = windowEvent.data2;
                                 //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
                                 break;
                         }
@@ -116,10 +116,10 @@ class MagicianSDL
             //if (Renderer.RControl.saveFrame && frames != stopFrame)
             if (frames == 20)
             {
-                float[] pixels = new float[(int)(Data.Globals.winWidth * Data.Globals.winHeight)];
+                float[] pixels = new float[(int)(Runes.Globals.winWidth * Runes.Globals.winHeight)];
                 unsafe
                 {
-                    Scribe.Info(Data.Globals.winWidth * Data.Globals.winHeight);
+                    Scribe.Info(Runes.Globals.winWidth * Runes.Globals.winHeight);
                     
                     //RGlobals.gl.ReadPixels(0, 0, (uint)Data.Globals.winWidth, (uint)Data.Globals.winHeight, GLEnum.Rgb, GLEnum.Float, &pixels);
                     //Scribe.Info<float>(pixels);
@@ -143,7 +143,7 @@ class MagicianSDL
     }
     void CreateWindow()
     {
-        win = SDL_CreateWindow(Data.App.Title, 0, 0, (int)Data.Globals.winWidth, (int)Data.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
+        win = SDL_CreateWindow(Runes.App.Title, 0, 0, (int)Runes.Globals.winWidth, (int)Runes.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
 
         if (win == IntPtr.Zero)
         {
