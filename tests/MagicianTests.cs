@@ -1,8 +1,9 @@
 namespace Magician.Tests;
-using Magician.Symbols;
-using Magician.Symbols.Funcs;
 using Core;
-using static Magician.Symbols.Notate;
+using Algebra;
+using Algebra.Symbols;
+using Algebra.Symbols.Commonfuncs;
+using static Algebra.Notate;
 using NUnit.Framework;
 
 public class SimpleAlgebraCases
@@ -1008,7 +1009,7 @@ public class ComplexAndMultivalued
                 Assert.That(rootsOfUnity is Multivalue);
                 Multivalue m = (Multivalue)rootsOfUnity;
                 List<Val> roots = Enumerable.Range(0, n).Select(k =>
-                    new Val(Symbols.Numeric.Funcs.Cos(2*Math.PI*k/n), Symbols.Numeric.Funcs.Sin(2*Math.PI*k/n))
+                    new Val(Algebra.Numeric.Funcs.Cos(2*Math.PI*k/n), Algebra.Numeric.Funcs.Sin(2*Math.PI*k/n))
                 ).ToList();
                 Assert.That(roots, Has.Count.EqualTo(m.All.Length));
                 // compare the kth nth roots of unity to our multivalue

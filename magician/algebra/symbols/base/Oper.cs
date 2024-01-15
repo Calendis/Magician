@@ -1,7 +1,7 @@
+namespace Magician.Algebra.Symbols;
 using Magician.Core;
 using Magician.Core.Maps;
 
-namespace Magician.Symbols;
 public abstract partial class Oper : IRelation
 {
     // TODO: Maybe put some of these fields/properties behind an interface
@@ -328,9 +328,9 @@ public abstract partial class Oper : IRelation
             {typeof(SumDiff),   ('-', '+')},
             {typeof(Fraction),  ('/', '*')},
             {typeof(ExpLog),    ('R', '^')},
-            {typeof(Funcs.Abs), ('-', '|')},
-            {typeof(Funcs.Min), ('-', 'm')},
-            {typeof(Funcs.Max), ('-', 'M')}
+            {typeof(Commonfuncs.Abs), ('-', '|')},
+            {typeof(Commonfuncs.Min), ('-', 'm')},
+            {typeof(Commonfuncs.Max), ('-', 'M')}
         };
         int totalHeaders = 1;
         int totalLeaves = 0;

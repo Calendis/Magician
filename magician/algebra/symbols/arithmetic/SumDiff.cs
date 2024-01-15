@@ -1,4 +1,4 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra.Symbols;
 using Core;
 
 // SumDiff objects represent addition and subtraction operations with any number of arguments
@@ -47,7 +47,7 @@ public class SumDiff : Arithmetic
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return new Funcs.Abs(maxD.Subtract(minD));
+        return new Commonfuncs.Abs(maxD.Subtract(minD));
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)

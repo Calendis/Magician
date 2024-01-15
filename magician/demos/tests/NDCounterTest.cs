@@ -1,5 +1,5 @@
 using Magician.Library;
-using Magician.Symbols;
+using Magician.Algebra;
 
 namespace Magician.Demos.Tests;
 

@@ -3,8 +3,9 @@ using Core.Maps;
 using Geo;
 using Interactive;
 using Library;
-using Symbols;
-using static Magician.Symbols.Notate;
+using Algebra.Symbols;
+using Algebra;
+using static Magician.Algebra.Notate;
 
 public class MapPlotting : Spell
 {

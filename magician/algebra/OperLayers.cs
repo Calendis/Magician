@@ -1,4 +1,5 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra;
+using Symbols;
 
 internal class OperLayers
 {

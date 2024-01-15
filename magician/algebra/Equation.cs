@@ -1,6 +1,9 @@
-namespace Magician.Symbols;
-using Magician.Core.Maps;
+namespace Magician.Algebra;
+using Symbols;
+using Numeric;
+
 using Magician.Core;
+using Magician.Core.Maps;
 
 // TODO: make equals an Oper, as well as <, >, Onto
 public class Equation : IRelation
@@ -90,7 +93,7 @@ public class Equation : IRelation
             Oper? minDegree = null;
             foreach (Variable uk in Unknowns)
             {
-                Oper deg = new Funcs.Max(new Funcs.Abs(LHS.Degree(uk)), new Funcs.Abs(RHS.Degree(uk)));
+                Oper deg = new Symbols.Commonfuncs.Max(new Symbols.Commonfuncs.Abs(LHS.Degree(uk)), new Symbols.Commonfuncs.Abs(RHS.Degree(uk)));
                 //Scribe.Info($"Unknown: {uk}, Deg: {deg}, Min: {minDegree}, Deg<Min?: {(minDegree == null ? "nullmin" : deg < minDegree)}");
                 //deg = deg.SpecialSimplified();
                 //Scribe.Info($"deg after: {deg}");

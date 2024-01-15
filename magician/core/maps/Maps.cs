@@ -1,7 +1,7 @@
 namespace Magician.Core.Maps;
 
 using Magician.Geo;
-using Magician.Symbols;
+using Magician.Algebra;
 using static Magician.Geo.Create;
 
 public interface IRelation
@@ -50,11 +50,11 @@ public class InverseParamMap : IFunction
     // TODO: is there a non-hack way to do this?? I don't want to just wrap the output like this, but oh well
     public InverseParamMap(Func<double[], double> nonwrapped, int inputs) : this(xs => IVal.FromLiteral(nonwrapped.Invoke(xs)), inputs) { }
 
-    public Node Plot(params Symbols.PlotOptions[] options)
+    public Node Plot(params Algebra.PlotOptions[] options)
     {
         return Plot(null, options);
     }
-    public Node Plot(Symbols.AxisSpecifier? outAxis = null, params Symbols.PlotOptions[] options)
+    public Node Plot(Algebra.AxisSpecifier? outAxis = null, params Algebra.PlotOptions[] options)
     {
         if (Ins > 2)
         {
@@ -193,7 +193,7 @@ public class ParamMap : IParametric
     public IVec Evaluate(double x = 0) => new Vec(Maps.Select(f => f.Invoke(x)).ToArray());
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
-    public Node Plot(Symbols.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
+    public Node Plot(Algebra.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
     {
         if (Outs > 3)
             throw Scribe.Error($"Cannot plot ParamMap with {Outs} outputs");

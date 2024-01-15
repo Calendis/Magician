@@ -1,4 +1,4 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra.Symbols;
 using Core;
 
 public class FactorMap
@@ -98,7 +98,7 @@ public class FactorMap
                 }
             }
 
-            Oper exp = new Funcs.Min(a, b);
+            Oper exp = new Commonfuncs.Min(a, b);
             if (commonFlag > 0)
                 newFactors.Add(fac, exp);
             c++;

@@ -177,8 +177,8 @@ public interface IVal : IDimensional<double>
             // if z is negative and w is not an integer, the answer is complex
             if (z.Get() < 0 && w.Get() != (int)w.Get())
             {
-                double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Symbols.Numeric.Funcs.Cos(Math.PI * w.Get());
-                double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Symbols.Numeric.Funcs.Sin(Math.PI * w.Get());
+                double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Funcs.Cos(Math.PI * w.Get());
+                double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Funcs.Sin(Math.PI * w.Get());
                 return new Var(re, im);
             }
             else
@@ -195,7 +195,7 @@ public interface IVal : IDimensional<double>
             double x = z.Get();
             double coef = Math.Pow(x, a);
 
-            return new Val(coef * Symbols.Numeric.Funcs.Cos(b * Math.Log(x)), coef * Symbols.Numeric.Funcs.Sin(b * Math.Log(x)));
+            return new Val(coef * Algebra.Numeric.Funcs.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Funcs.Sin(b * Math.Log(x)));
         }
         // complex base, positive integer exponent
         else if (z.Trim().Dims != 1 && w.Trim().Dims == 1 && (int)w.Get() == w.Get() && w.Get() >= 1)
@@ -212,7 +212,7 @@ public interface IVal : IDimensional<double>
         }
     }
 
-    public static IVal ExpI(double x) => new Val(Symbols.Numeric.Funcs.Cos(x), Symbols.Numeric.Funcs.Sin(x));
+    public static IVal ExpI(double x) => new Val(Algebra.Numeric.Funcs.Cos(x), Algebra.Numeric.Funcs.Sin(x));
     public static IVal Log(IVal z, IVal logBase)
     {
         if (z.EqValue(logBase))

@@ -1,8 +1,9 @@
 using Magician.Geo;
 using Magician.Interactive;
 using Magician.Library;
-using Magician.Symbols;
-using static Magician.Symbols.Notate;
+using Magician.Algebra;
+using Magician.Algebra.Symbols;
+using static Magician.Algebra.Notate;
 
 namespace Magician.Demos.Tests;
 

@@ -1,4 +1,4 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra.Symbols;
 using Core;
 
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */

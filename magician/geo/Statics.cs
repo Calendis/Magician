@@ -322,26 +322,6 @@ public static class Find
         return OOBVector(v.x.Get(), v.y.Get(), v.z.Get(), xRange, yRange, zRange);
     }
 
-
-    /*
-    public static Multi Intersection(Multi seg0, Multi seg1)
-    {
-        try
-        {
-            return new(Intersection(seg0[0], seg0[1], seg1[0], seg1[1]));
-        }
-        catch (Scribe.Typo)
-        {
-            // if no intersection, return the undefined
-            return Geo.Ref.Undefined;
-        }
-    }
-    public static Vec Intersection(Vec seg0Start, Vec seg0End, Vec seg1Start, Vec seg1End)
-    {
-        //
-    }
-    */
-
 }
 
 public static class Unit
@@ -353,7 +333,6 @@ public static class Unit
         return new Vec(x, y);
     }
 
-    //public static Vec Length = new(1, 0, 0);
 }
 
 

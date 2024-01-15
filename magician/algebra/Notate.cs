@@ -1,4 +1,6 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra;
+using Symbols;
+
 using static MathCache;
 
 public static class Notate

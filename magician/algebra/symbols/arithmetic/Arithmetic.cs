@@ -1,4 +1,4 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra.Symbols;
 
 public abstract class Arithmetic : Invertable
 {

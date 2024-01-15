@@ -1,4 +1,4 @@
-namespace Magician.Symbols.Numeric;
+namespace Magician.Algebra.Numeric;
 
 public static class Funcs
 {

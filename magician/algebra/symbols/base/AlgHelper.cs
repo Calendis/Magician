@@ -1,4 +1,4 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra.Symbols;
 
 /* Class for additional algebraic functionality for Oper */
 public abstract partial class Oper

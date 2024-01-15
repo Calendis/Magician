@@ -1,4 +1,4 @@
-namespace Magician.Symbols.Funcs;
+namespace Magician.Algebra.Symbols.Commonfuncs;
 using Core;
 
 public class Abs : Oper

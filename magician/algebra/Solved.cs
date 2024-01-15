@@ -1,4 +1,5 @@
-namespace Magician.Symbols;
+namespace Magician.Algebra;
+using Symbols;
 using Core;
 using Core.Maps;
 using Geo;
