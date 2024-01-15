@@ -324,7 +324,7 @@ public class SimpleAlgebraCases
     {
         Oper o0 = new Fraction(new List<Oper> { new SumDiff(new List<Oper> { Val(0), Val(0) }, new List<Oper> { Val(4) }), Val(3) }, new List<Oper> { });
         Scribe.Info(o0);
-        Assert.That(o0.Sol().Value().Get(), Is.EqualTo(-12));
+        Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
         Oper o0Canon = LegacyForm.Canonical(o0);
         Scribe.Info(o0Canon);
         Assert.That(o0Canon.Like(Val(-12)));
@@ -333,8 +333,8 @@ public class SimpleAlgebraCases
         Scribe.Info($"{o2.Name} {o2}");
         Oper o2canon = LegacyForm.Canonical(o2);
         Scribe.Info($"{o2canon.Name} {o2canon}");
-        double x1 = o2.Evaluate(4.5).Get();
-        double x2 = o2canon.Evaluate(4.5).Get();
+        double x1 = o2.Evaluate(4.5).Value.Get();
+        double x2 = o2canon.Evaluate(4.5).Value.Get();
         Scribe.Info($"{x1} vs. {x2}");
 
         Var("y").Set(4.5);
@@ -420,7 +420,7 @@ public class IntermediateAlgebraCases
     {
         Oper twoTimesTen = new Fraction(Val(2), Val(1), Val(10));
         Variable result = twoTimesTen.Sol();
-        Assert.That(result.Value().Get(), Is.EqualTo(20));
+        Assert.That(result.Value.Get(), Is.EqualTo(20));
     }
 
     [Test]
@@ -430,9 +430,9 @@ public class IntermediateAlgebraCases
             new List<Oper> { new SumDiff(Val(2)), new SumDiff(Val(1), Val(2), new SumDiff(Val(3)), Val(4)), Val(1), new SumDiff(Val(3)) },
             new List<Oper> { Val(5), new SumDiff(Val(1), new SumDiff(Val(5), new SumDiff(Val(3)))) }
         );
-        Assert.That(sd.Sol().Value().Get(), Is.EqualTo(0));
+        Assert.That(sd.Sol().Value.Get(), Is.EqualTo(0));
         sd.Associate();
-        Assert.That(sd.Sol().Value().Get(), Is.EqualTo(0));
+        Assert.That(sd.Sol().Value.Get(), Is.EqualTo(0));
     }
 
     [Test]
@@ -440,10 +440,12 @@ public class IntermediateAlgebraCases
     {
         SumDiff sd = new(Val(10), Val(6));
         sd.Simplify();
+        Scribe.Info(sd);
         Assert.That(sd.Like(new SumDiff(Val(4))));
 
         ExpLog pt = new(new List<Oper> { Val(2), Val(3) }, new List<Oper> { });
         pt.ReduceOuter();
+        Scribe.Info(pt);
         Assert.That(pt.Like(new ExpLog(Val(8))));
     }
 
@@ -477,8 +479,8 @@ public class IntermediateAlgebraCases
             2
         );
         double one, two;
-        one = solved.Evaluate(10.5, -30).Get();
-        two = manuallySolved.Evaluate(10.5, -30).Get();
+        one = solved.Evaluate(10.5, -30).Value.Get();
+        two = manuallySolved.Evaluate(10.5, -30).Value.Get();
         Scribe.Info($"1,2: {one},{two}");
         Assert.That(one, Is.EqualTo(two));
     }
@@ -527,7 +529,7 @@ public class IntermediateAlgebraCases
         manual.opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
         // Chosen arbitrarily
         double[] args = new[] { 2d, 1 };
-        Assert.That(s.Evaluate(args).Get(), Is.EqualTo(manual.Evaluate(args).Get()));
+        Assert.That(s.Evaluate(args).Value.Get(), Is.EqualTo(manual.Evaluate(args).Value.Get()));
     }
 
     [Test]
@@ -587,7 +589,7 @@ public class IntermediateAlgebraCases
         Var("x").Set(20.13535);
         Var("y").Set(0.13585);
         Var("z").Set(-0.27164);
-        double sol0 = sd.Sol().Value().Get();
+        double sol0 = sd.Sol().Value.Get();
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
@@ -595,7 +597,7 @@ public class IntermediateAlgebraCases
         Var("x").Set(20.13535);
         Var("y").Set(0.13585);
         Var("z").Set(-0.27164);
-        double sol1 = sd.Sol().Value().Get();
+        double sol1 = sd.Sol().Value.Get();
         Var("x").Reset();
         Var("y").Reset();
         Var("z").Reset();
@@ -613,7 +615,7 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("x"), Val(10))
         );
         SolvedEquation s = e.Solved(Var("y"));
-        double res = s.Evaluate(10.5, 2).Get();
+        double res = s.Evaluate(10.5, 2).Value.Get();
         Assert.That(res, Is.EqualTo(-84));
     }
 
@@ -621,35 +623,35 @@ public class IntermediateAlgebraCases
     public void OperAsIFunction()
     {
         Oper decr = new SumDiff(Var("x"), Val(1));
-        Assert.That(decr.Evaluate(0).Get(), Is.EqualTo(-1));
+        Assert.That(decr.Evaluate(0).Value.Get(), Is.EqualTo(-1));
 
         Oper offsetSquares = new SumDiff
         (
             new Fraction(Var("x"), Val(1), Var("x")),
             Var("y")
         );
-        List<IVal> ossNums = Enumerable.Range(0, 5).Select(n => offsetSquares.Evaluate(n + 1, n)).ToList();
+        List<Variable> ossNums = Enumerable.Range(0, 5).Select(n => offsetSquares.Evaluate(n + 1, n)).ToList();
         Assert.Multiple(() =>
         {
-            Assert.That(ossNums[0].Get(), Is.EqualTo(1));
-            Assert.That(ossNums[1].Get(), Is.EqualTo(3));
-            Assert.That(ossNums[2].Get(), Is.EqualTo(7));
-            Assert.That(ossNums[3].Get(), Is.EqualTo(13));
-            Assert.That(ossNums[4].Get(), Is.EqualTo(21));
+            Assert.That(ossNums[0].Value.Get(), Is.EqualTo(1));
+            Assert.That(ossNums[1].Value.Get(), Is.EqualTo(3));
+            Assert.That(ossNums[2].Value.Get(), Is.EqualTo(7));
+            Assert.That(ossNums[3].Value.Get(), Is.EqualTo(13));
+            Assert.That(ossNums[4].Value.Get(), Is.EqualTo(21));
         });
 
         Oper triangleNumbers = new Fraction(
             new List<Oper> { Var("x"), new SumDiff(Var("x"), Val(0), Val(1)) },
             new List<Oper> { Val(2) }
         );
-        List<IVal> triNums = Enumerable.Range(0, 5).Select(n => triangleNumbers.Evaluate(n)).ToList();
+        List<Variable> triNums = Enumerable.Range(0, 5).Select(n => triangleNumbers.Evaluate(n)).ToList();
         Assert.Multiple(() =>
         {
-            Assert.That(triNums[0].Get(), Is.EqualTo(0));
-            Assert.That(triNums[1].Get(), Is.EqualTo(1));
-            Assert.That(triNums[2].Get(), Is.EqualTo(3));
-            Assert.That(triNums[3].Get(), Is.EqualTo(6));
-            Assert.That(triNums[4].Get(), Is.EqualTo(10));
+            Assert.That(triNums[0].Value.Get(), Is.EqualTo(0));
+            Assert.That(triNums[1].Value.Get(), Is.EqualTo(1));
+            Assert.That(triNums[2].Value.Get(), Is.EqualTo(3));
+            Assert.That(triNums[3].Value.Get(), Is.EqualTo(6));
+            Assert.That(triNums[4].Value.Get(), Is.EqualTo(10));
         });
     }
 
@@ -669,7 +671,7 @@ public class IntermediateAlgebraCases
         );
         SolvedEquation s = eq.Solved(Var("y"));
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new SumDiff(new Fraction(Var("x"), Val(3)), Val(0), Var("x")), Var("y"), 1);
-        Assert.That(s.Evaluate(4.31).Get(), Is.EqualTo(manual.Evaluate(4.31).Get()));
+        Assert.That(s.Evaluate(4.31).Value.Get(), Is.EqualTo(manual.Evaluate(4.31).Value.Get()));
     }
     [Test]
     public void SolveParamultipleFracSimp()
@@ -683,7 +685,7 @@ public class IntermediateAlgebraCases
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new Fraction(new SumDiff(Var("x"), new Fraction(Var("x"), Val(1.5)), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4))), Val(2)), Var("y"), 1);
         Scribe.Info($"Need {manual}");
         Scribe.Info($"Got {s}");
-        Assert.That(s.Evaluate(3.1).Get(), Is.EqualTo(manual.Evaluate(3.1).Get()));
+        Assert.That(s.Evaluate(3.1).Value.Get(), Is.EqualTo(manual.Evaluate(3.1).Value.Get()));
     }
     [Test]
     public void SolveParamultiple()
@@ -694,9 +696,9 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new SumDiff(new SumDiff(Var("x"), Var("y")), Val(4)))
         );
         SolvedEquation se = eq.Solved();
-        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
-        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
-        Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
+        Assert.That(se.Evaluate().Value.Get(), Is.EqualTo(-12));
+        Assert.That(se.Evaluate().Value.Get(), Is.EqualTo(-12));
+        Assert.That(se.Evaluate().Value.Get(), Is.EqualTo(-12));
     }
     [Test]
     public void SolveImbalanced()
@@ -707,7 +709,7 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
         SolvedEquation se = eq.Solved(Var("x"));
-        Assert.That(se.Evaluate(99).Get(), Is.EqualTo(125.05263157894736d));
+        Assert.That(se.Evaluate(99).Value.Get(), Is.EqualTo(125.05263157894736d));
     }
     [Test]
     public void SolveImbalanced2()
@@ -718,8 +720,8 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
         SolvedEquation se = eq.Solved();
-        Assert.That(se.Evaluate(1).Get(), Is.EqualTo(-16));
-        Assert.That(se.Evaluate(2).Get(), Is.EqualTo(-8));
+        Assert.That(se.Evaluate(1).Value.Get(), Is.EqualTo(-16));
+        Assert.That(se.Evaluate(2).Value.Get(), Is.EqualTo(-8));
     }
     [Test]
     public void SolveDual()
@@ -730,8 +732,8 @@ public class IntermediateAlgebraCases
             new SumDiff(Val(1), new Fraction(Var("x"), Val(3)))
         );
         SolvedEquation se = eq.Solved();
-        Assert.That(se.Evaluate(2).Get(), Is.EqualTo(1.5));
-        Assert.That(se.Evaluate(4).Get(), Is.EqualTo(0));
+        Assert.That(se.Evaluate(2).Value.Get(), Is.EqualTo(1.5));
+        Assert.That(se.Evaluate(4).Value.Get(), Is.EqualTo(0));
     }
     [Test]
     public void SolveFluid()
@@ -749,7 +751,7 @@ public class IntermediateAlgebraCases
                 new SumDiff(Var("y"), Val(3))
             ),
         Var("x"), 1);
-        Assert.That(s.Evaluate(15).Get(), Is.EqualTo(manual.Evaluate(15).Get()));
+        Assert.That(s.Evaluate(15).Value.Get(), Is.EqualTo(manual.Evaluate(15).Value.Get()));
     }
 }
 
@@ -772,11 +774,11 @@ public class AdvancedAlgebraCases
             Var("x"), 1
         );
         // Make sure basic root functionality is working
-        Assert.That(manual.Evaluate(2.8989).Get(), Is.EqualTo(Math.Sqrt(2.8989)));
+        Assert.That(manual.Evaluate(2.8989).Value.Get(), Is.EqualTo(Math.Sqrt(2.8989)));
 
         // Make sure that the algebra machine can invert exponents/powers correctly
         Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
-        Assert.That(manual.Evaluate(2).Get(), Is.EqualTo(s.Evaluate(2).Get()));
+        Assert.That(manual.Evaluate(2).Value.Get(), Is.EqualTo(s.Evaluate(2).Value.Get()));
     }
     [Test]
     public void LogBase2()
@@ -795,11 +797,11 @@ public class AdvancedAlgebraCases
             Var("x"), 1
         );
         // Make sure basic root functionality is working
-        Assert.That(manual.Evaluate(2.8989).Get(), Is.EqualTo(Math.Log(2.8989, 2)));
+        Assert.That(manual.Evaluate(2.8989).Value.Get(), Is.EqualTo(Math.Log(2.8989, 2)));
 
         // Make sure that the algebra machine can invert exponents/powers correctly
         Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
-        Assert.That(manual.Evaluate(2).Get(), Is.EqualTo(s.Evaluate(2).Get()));
+        Assert.That(manual.Evaluate(2).Value.Get(), Is.EqualTo(s.Evaluate(2).Value.Get()));
     }
 
     [Test]
@@ -807,21 +809,21 @@ public class AdvancedAlgebraCases
     {
         ExpLog log23 = new(new List<Oper> { Var("x") }, new List<Oper> { Val(2), Val(3) });
         Scribe.Info(log23);
-        Assert.That(log23.Evaluate(4096).Get(), Is.EqualTo(Math.Log(12, 3)));
+        Assert.That(log23.Evaluate(4096).Value.Get(), Is.EqualTo(Math.Log(12, 3)));
     }
     [Test]
     public void Root2Then3()
     {
         ExpLog root23 = new(new List<Oper>() { Var("x"), new Fraction(Val(1), Val(2), Val(1), Val(3)) }, new List<Oper> { });
         Scribe.Info(root23);
-        Assert.That(root23.Evaluate(4097).Get(), Is.EqualTo(4.0001627438622904));
+        Assert.That(root23.Evaluate(4097).Value.Get(), Is.EqualTo(4.0001627438622904));
     }
     [Test]
     public void Root3ThenLogBase2()
     {
         ExpLog root3log2 = new(new List<Oper> { Var("x"), Val(1d / 3) }, new List<Oper>() { Val(2) });
         Scribe.Info(root3log2);
-        Assert.That(root3log2.Evaluate(8192).Get(), Is.EqualTo(4.333333333333333333333333333));
+        Assert.That(root3log2.Evaluate(8192).Value.Get(), Is.EqualTo(4.333333333333333333333333333));
     }
 
     [Test]
@@ -835,12 +837,12 @@ public class AdvancedAlgebraCases
         Assert.Multiple(() =>
         {
             // Basic exponenet functionality
-            Assert.That(ptrl.Evaluate(1.2, 1.4, 1.3).Get(), Is.EqualTo(Math.Pow(1.2, Math.Pow(1.3, 1.4))));
+            Assert.That(ptrl.Evaluate(1.2, 1.4, 1.3).Value.Get(), Is.EqualTo(Math.Pow(1.2, Math.Pow(1.3, 1.4))));
 
             // Inverting and solving for exponents
-            Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
-            Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
-            Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
+            Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
+            Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
+            Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
         });
     }
 
@@ -853,12 +855,12 @@ public class AdvancedAlgebraCases
         SolvedEquation sx = eq.Solved(Var("x"));
         SolvedEquation sb = eq.Solved(Var("b"));
         // Basic functionality of logarithms
-        Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
+        Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
 
         // Inverting and solving for nested logarithms
-        Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d / 1.4)));
-        Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.3, Math.Pow(1.2, 1.4))));
-        Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.3, 1d / Math.Pow(1.2, 1.4))));
+        Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d / 1.4)));
+        Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Pow(1.3, Math.Pow(1.2, 1.4))));
+        Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Value.Get(), Is.EqualTo(Math.Pow(1.3, 1d / Math.Pow(1.2, 1.4))));
     }
 
 
@@ -877,7 +879,7 @@ public class AdvancedAlgebraCases
         A = 1.3; B = 1.35; C = 1.4; D = 1.45; E = 1.5;
 
         Assert.That(
-            ptrl.Evaluate(a, A, b, B, c, C, d, D, e, E).Get(), Is.EqualTo(
+            ptrl.Evaluate(a, A, b, B, c, C, d, D, e, E).Value.Get(), Is.EqualTo(
             Math.Log(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), E)
         ));
 
@@ -888,16 +890,16 @@ public class AdvancedAlgebraCases
         SolvedEquation se = eq.Solved(Var("e")); SolvedEquation sE = eq.Solved(Var("E"));
         double y = 2.2;
 
-        Assert.That(sE.Evaluate(a, A, b, B, c, C, d, D, e, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d / y)));
-        Assert.That(sD.Evaluate(a, A, b, B, c, C, d, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), 1d / Math.Pow(E, y))));
-        Assert.That(sC.Evaluate(a, A, b, B, c, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), 1d / Math.Pow(D, Math.Pow(E, y)))));
-        Assert.That(sB.Evaluate(a, A, b, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), 1d / Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))));
-        Assert.That(sA.Evaluate(a, b, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), 1d / Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y)))))));
-        Assert.That(se.Evaluate(a, A, b, B, c, C, d, D, E, y).Get(), Is.EqualTo(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), d)));
-        Assert.That(sd.Evaluate(a, A, b, B, c, C, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), 1d / e)));
-        Assert.That(sc.Evaluate(a, A, b, B, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), 1d / Math.Pow(d, e))));
-        Assert.That(sb.Evaluate(a, A, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d / Math.Pow(c, Math.Pow(d, e)))));
-        Assert.That(sa.Evaluate(A, b, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d / Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
+        Assert.That(sE.Evaluate(a, A, b, B, c, C, d, D, e, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d / y)));
+        Assert.That(sD.Evaluate(a, A, b, B, c, C, d, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), 1d / Math.Pow(E, y))));
+        Assert.That(sC.Evaluate(a, A, b, B, c, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), 1d / Math.Pow(D, Math.Pow(E, y)))));
+        Assert.That(sB.Evaluate(a, A, b, c, C, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), 1d / Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))));
+        Assert.That(sA.Evaluate(a, b, B, c, C, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), 1d / Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y)))))));
+        Assert.That(se.Evaluate(a, A, b, B, c, C, d, D, E, y).Value.Get(), Is.EqualTo(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), d)));
+        Assert.That(sd.Evaluate(a, A, b, B, c, C, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), c), 1d / e)));
+        Assert.That(sc.Evaluate(a, A, b, B, C, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), b), 1d / Math.Pow(d, e))));
+        Assert.That(sb.Evaluate(a, A, B, c, C, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d / Math.Pow(c, Math.Pow(d, e)))));
+        Assert.That(sa.Evaluate(A, b, B, c, C, d, D, e, E, y).Value.Get(), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d / Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
     }
 }
 
@@ -906,25 +908,59 @@ public class ComplexAndMultivalued
     [Test]
     public void SquareRootMinus1()
     {
+        Variable v;
+        
         // Principal root (i)
-        Variable v = Val(-1).Pow(Val(0.5)).Sol();
+        v = Val(-1).Pow(Val(0.5)).Sol();
         Scribe.Info(v);
         Assert.That(v.Like(new Variable(0, 1)));
 
-        // All roots (+/-i)
+        // Both solutions (+/-i)
         v = Val(-1).Root(Val(2)).Sol();
         Scribe.Info(v);
         Assert.That(v.Like(new Variable(0, 1)));
+        Assert.That(((Multivalue)v).All[1].EqValue(new Val(0, -1)));
+
+        // Both solutions (+/-i)
+        v = Val(-1).Root(new Rational(2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Like(new Variable(0, 1)));
+        Assert.That(((Multivalue)v).All[1].EqValue(new Val(0, -1)));
+
+        // Both solutions (+/-i)
+        v = Val(-1).Pow(new Rational(1, 2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Like(new Variable(0, 1)));
+        Assert.That(((Multivalue)v).All[1].EqValue(new Val(0, -1)));
+
     }
     [Test]
-    public void RootsOfTwo()
+    public void SquareRoot2()
     {
-        Variable v0 = Val(2).Pow(new Rational(1, 2)).Sol();
-        Variable v1 = Val(2).Root(new Rational(2)).Sol();
-        Variable v2 = Val(2).Pow(Val(0.5)).Sol();
-        Variable v3 = Val(2).Root(Val(2)).Sol();
-        Scribe.Info($"{v0}, {v1}, {v2}, {v3}");
-        Scribe.Info($"{v0 is Multivalue}, {v1 is Multivalue}, {v2 is Multivalue}, {v3 is Multivalue}");
+        Variable v;
+
+        // Principal root
+        v = Val(2).Pow(Val(0.5)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Value.Get(), Is.EqualTo(Math.Sqrt(2)));
+
+        // Both solutions
+        v = Val(2).Root(Val(2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Value.Get(), Is.EqualTo(Math.Sqrt(2)));
+        Assert.That(((Multivalue)v).All[1].Get(), Is.EqualTo(-Math.Sqrt(2)));
+
+        // Both solutions
+        v = Val(2).Root(new Rational(2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Value.Get(), Is.EqualTo(Math.Sqrt(2)));
+        Assert.That(((Multivalue)v).All[1].Get(), Is.EqualTo(-Math.Sqrt(2)));
+
+        // Both solutions
+        v = Val(2).Pow(new Rational(1, 2)).Sol();
+        Scribe.Info(v);
+        Assert.That(v.Value.Get(), Is.EqualTo(Math.Sqrt(2)));
+        Assert.That(((Multivalue)v).All[1].Get(), Is.EqualTo(-Math.Sqrt(2)));
     }
     [Test]
     public void ComplexExponents()
@@ -933,24 +969,56 @@ public class ComplexAndMultivalued
 
         // 2 ^ (3-8i)
         v = new Variable(2).Pow(new Variable(3, -8)).Sol();
-        Scribe.Info($"2 ^ (3-8i) = {v}");
+        //Scribe.Info($"2 ^ (3-8i) = {v}");
+        Assert.That(v.Value.EqValue(new Val(5.9184829327522435, 5.382523550781771)));
         
         // (1 + 2i) ^ (3 + 4i)
         v = new Variable(1, 2).Pow(new Variable(3, 4)).Sol();
-        Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
+        //Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
+        Assert.That(v.Value.EqValue(new Val(0.129009594074467, 0.03392409290517014)));
 
         // (3 - 4i)^2
-        v = new Variable(3, -4).Pow(Val(2)).Sol();
-        Scribe.Info($"(3 - 4i)^2 = {v}");
+        v = new Variable(3, -4).Pow(Val(5)).Sol();
+        //Scribe.Info($"(3 - 4i)^5 = {v}");
+        Assert.That(v.Value.EqValue(new Val(-237, 3116)));
 
         v = new Variable(0, 1);
-        Scribe.Info(v);
+        Assert.That(v.Value.EqValue(new Val(0, 1)));
         v = new Variable(0, 1).Mult(new Variable(0, 1)).Sol();
-        Scribe.Info(v);
+        Assert.That(v.Value.EqValue(new Val(-1)));
         v = new Variable(0, 1).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Sol();
-        Scribe.Info(v);
+        Assert.That(v.Value.EqValue(new Val(0, -1)));
         v = new Variable(0, 1).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Mult(new Variable(0, 1)).Sol();
-        Scribe.Info(v);
+        Assert.That(v.Value.EqValue(new Val(1)));
+    }
+
+    [Test]
+    public void NthRootsOfUnity()
+    {
+        for (int n = 1; n < 100; n++)
+        {
+            Variable rootsOfUnity = Val(1).Root(Val(n)).Sol();
+            switch (n)
+            {
+                case 1:
+                Assert.That(rootsOfUnity.Value.Get(), Is.EqualTo(1));
+                Assert.That(rootsOfUnity is not Multivalue);
+                break;
+                default:
+                Assert.That(rootsOfUnity is Multivalue);
+                Multivalue m = (Multivalue)rootsOfUnity;
+                List<Val> roots = Enumerable.Range(0, n).Select(k =>
+                    new Val(Symbols.Numeric.Funcs.Cos(2*Math.PI*k/n), Symbols.Numeric.Funcs.Sin(2*Math.PI*k/n))
+                ).ToList();
+                Assert.That(roots, Has.Count.EqualTo(m.All.Length));
+                // compare the kth nth roots of unity to our multivalue
+                for (int k = 0; k < roots.Count; k++)
+                {
+                    Assert.That(m.All[k].EqValue(roots[k]));
+                }
+                break;
+            }
+        }
     }
 }
 
