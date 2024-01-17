@@ -316,6 +316,8 @@ public class Val : IVal
                 return $"{vals[0]} + i";
             else
             {
+                if (vals[1] == 0)
+                    return $"{vals[0]}";
                 if (vals[1] < 0)
                     return $"{vals[0]} - {Math.Abs(vals[1])}i";
                 return $"{vals[0]} + {vals[1]}i";
