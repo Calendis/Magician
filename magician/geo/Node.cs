@@ -733,9 +733,10 @@ public class Node : Vec3, ICollection<Node>
             Vec3 targV = new Vec((IVec)Ref.Perspective + Ref.Perspective.Heading).ToVec3();
             Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
 
+            // TODO: move these out of the loop
             // Matrix magic
             Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
-                new(Geo.Ref.Perspective.X, Geo.Ref.Perspective.Y, Geo.Ref.Perspective.Z),
+                new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
                 new(targV.x.Get(), targV.y.Get(), targV.z.Get()),
                 new(0, 1, 0)
             );
