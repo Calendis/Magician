@@ -38,7 +38,8 @@ public class Variable : Invertable, IVar
         ivals ??= new();
     }
     public Variable(params double[] v) : this($"constant({v})", v) { }
-    public Variable(IVal iv) : this(iv.Values.ToArray()) { }
+    public Variable(IVal iv) : this($"value({iv})", iv.Values.ToArray()) { }
+    public Variable (string n, IVal iv) : this (n, iv.Values.ToArray()) {}
     public Variable(string n, params IVal[] ivs) : base(n)
     {
         ivals = ivs.ToList();
