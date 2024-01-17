@@ -132,7 +132,7 @@ public abstract partial class Oper : IRelation
         return s;
     }
 
-    IVar IRelation.Evaluate(params double[] args)
+    IVal IRelation.Evaluate(params double[] args)
     {
         return Evaluate(args);
     }
@@ -315,7 +315,7 @@ public abstract partial class Oper : IRelation
         return true;
     }
 
-    public virtual string Ord(string? ord = null)
+    public string Ord(string? ord = null)
     {
         Dictionary<Type, (char neg, char pos)> typeHeaders = new()
         {
