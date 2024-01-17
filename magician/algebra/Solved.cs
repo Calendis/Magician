@@ -4,7 +4,7 @@ using Core;
 using Core.Maps;
 using Geo;
 
-public class SolvedEquation : InverseParamMap
+public class SolvedEquation : RelationalMap
 {
     Equation eq;
     Variable solvedVar;
