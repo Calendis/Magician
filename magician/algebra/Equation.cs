@@ -6,7 +6,7 @@ using Magician.Core;
 using Magician.Core.Maps;
 
 // TODO: make equals an Oper, as well as <, >, Onto
-public class Equation : IRelation
+public class Equation// : IRelation
 {
     public List<Variable> Unknowns { get; private set; }  // all unknowns
     public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
@@ -43,10 +43,10 @@ public class Equation : IRelation
     //{
     //    return Approximate(args);
     //}
-    IVar IRelation.Evaluate(params double[] args)
-    {
-        throw new NotImplementedException();
-    }
+    //IVar IRelation.Evaluate(params double[] args)
+    //{
+    //    throw new NotImplementedException();
+    //}
 
     internal enum SolveMode
     {
