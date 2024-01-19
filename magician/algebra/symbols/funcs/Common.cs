@@ -28,7 +28,8 @@ public class Abs : Oper
 
     public override Variable Sol()
     {
-        return new Variable(((IVal)AllArgs[0].Sol()).Magnitude);
+        solution.Set(((IVal)AllArgs[0].Sol()).Magnitude);
+        return solution;
     }
 
     public override string ToString()
@@ -62,11 +63,12 @@ public class Sign : Oper
     {
         IVal result = posArgs[0].Sol();
         if (result.Get() == 0)
-            return new Variable(0);
+            solution.Set(0);
         else if (result.Get() > 0)
-            return new Variable(1);
+            solution.Set(1);
         else
-            return new Variable(-1);
+            solution.Set(-1);
+        return solution;
     }
     public override string ToString()
     {

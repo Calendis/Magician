@@ -44,9 +44,9 @@ public interface IVal : IDimensional<double>
         }
     }
 
-    public IVal Delta(params double[] vs)
+    public IVal Incr(params double[] vs)
     {
-        Set(this + new Val(vs));
+        Set(Add(this, new Val(vs)));
         return this;
     }
 
@@ -88,63 +88,81 @@ public interface IVal : IDimensional<double>
         return !(iv0 < iv1);
     }
 
-    public static IVal operator +(IVal i, double x)
+    public static IVal Add(IVal i, double x, IVal? output = null)
     {
         double[] newAll = i.Values.ToArray();
         newAll[0] += x;
-        return new Val(newAll);
+        if (output is null)
+            return new Val(newAll);
+        output.Set(newAll);
+        return output;
     }
-    public static IVal operator -(IVal i, double x)
+    public static IVal Subtract(IVal i, double x, IVal? output = null)
     {
         double[] newAll = i.Values.ToArray();
         newAll[0] -= x;
-        return new Val(newAll);
+        if (output is null)
+            return new Val(newAll);
+        output.Set(newAll);
+        return output;
     }
     // Multiplication supported for one or two dimensions
-    public static IVal operator *(IVal i, double x)
+    public static IVal Multiply(IVal i, double x, IVal? output = null)
     {
-        return new Val(i.Values.Select(k => k * x).ToArray());
+        if (output is null)
+            return new Val(i.Values.Select(k => k * x).ToArray());
+        output.Set(i.Values.Select(k => k * x));
+        return output;
     }
-    public static IVal operator /(IVal i, double x)
+    public static IVal Divide(IVal i, double x, IVal? output = null)
     {
-        return new Val(i.Values.Select(k => k / x).ToArray());
+        if (output is null)
+            return new Val(i.Values.Select(k => k / x).ToArray());
+        output.Set(i.Values.Select(k => k / x));
+        return output;
     }
 
-    public static IVal operator +(IVal i, IVal v)
+    public static IVal Add(IVal i, IVal v, IVal? output = null)
     {
         // Pad if dimensions do not match
         if (i.Dims < v.Dims)
         {
             int diff = v.Dims - i.Dims;
             double[] padding = new double[diff];
-            i.Set(i.Values.Concat(padding).ToArray());
+            i.Set(i.Values.Concat(padding));
         }
         else if (v.Dims < i.Dims)
         {
             int diff = i.Dims - v.Dims;
             double[] padding = new double[diff];
-            v.Set(i.Values.Concat(padding).ToArray());
+            v.Set(i.Values.Concat(padding));
         }
-        return new Val(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+        if (output is null)
+            return new Val(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+        output.Set(i.Values.Zip(v.Values, (a, b) => a + b));
+        return output;
     }
-    public static IVal operator -(IVal i, IVal v)
+    public static IVal Subtract(IVal i, IVal v, IVal? output = null)
     {
         // Pad if dimensions do not match
         if (i.Dims < v.Dims)
         {
             int diff = v.Dims - i.Dims;
             double[] padding = new double[diff];
-            i.Set(i.Values.Concat(padding).ToArray());
+            i.Set(i.Values.Concat(padding));
         }
         else if (v.Dims < i.Dims)
         {
             int diff = i.Dims - v.Dims;
             double[] padding = new double[diff];
-            v.Set(i.Values.Concat(padding).ToArray());
+            v.Set(i.Values.Concat(padding));
         }
-        return new Val(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+        if (output is null)
+            return new Val(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+        output.Set(i.Values.Zip(v.Values, (a, b) => a - b));
+        return output;
     }
-    public static IVal operator *(IVal i, IVal v)
+    public static IVal Multiply(IVal i, IVal v, IVal? output = null)
     {
         double a = i.Get();
         double b = i.Dims > 1 ? i.Get(1) : 0;
@@ -153,10 +171,19 @@ public interface IVal : IDimensional<double>
         double re = a * c - b * d;
         double im = a * d + b * c;
         if (im == 0)
-            return new Val(re);
-        return new Val(re, im);
+            if (output is null)
+                return new Val(re);
+            else
+            {
+                output.Set(re);
+                return output;
+            }
+        if (output is null)
+            return new Val(re, im);
+        output.Set(re, im);
+        return output;
     }
-    public static IVal operator /(IVal i, IVal v)
+    public static IVal Divide(IVal i, IVal v, IVal? output = null)
     {
         double a = i.Get();
         double b = i.Dims > 1 ? i.Get(1) : 0;
@@ -165,11 +192,20 @@ public interface IVal : IDimensional<double>
         double re = (a * c + b * d) / (c * c + d * d);
         double im = (b * c - a * d) / (c * c + d * d);
         if (im == 0)
-            return new Val(re);
-        return new Val(re, im);
+            if (output is null)
+                return new Val(re);
+            else
+            {
+                output.Set(re);
+                return output;
+            }
+        if (output is null)
+            return new Val(re, im);
+        output.Set(re, im);
+        return output;
     }
 
-    public static IVal Exp(IVal z, IVal w)
+    public static IVal Exp(IVal z, IVal w, IVal? output = null)
     {
         // if z and w are both real numbers...
         if (z.Trim().Dims * w.Trim().Dims == 1)
@@ -179,12 +215,18 @@ public interface IVal : IDimensional<double>
             {
                 double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Trig.Cos(Math.PI * w.Get());
                 double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Trig.Sin(Math.PI * w.Get());
-                return new Var(re, im);
+                if (output is null)
+                    return new Var(re, im);
+                output.Set(re, im);
+                return output;
             }
             else
             {
                 // otherwise, the answer is real
-                return new Val(Math.Pow(z.Get(), w.Get()));
+                if (output is null)
+                    return new Val(Math.Pow(z.Get(), w.Get()));
+                output.Set(Math.Pow(z.Get(), w.Get()));
+                return output;
             }
         }
         // real base, complex exponent
@@ -195,46 +237,92 @@ public interface IVal : IDimensional<double>
             double x = z.Get();
             double coef = Math.Pow(x, a);
 
-            return new Val(coef * Algebra.Numeric.Trig.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Trig.Sin(b * Math.Log(x)));
+            if (output is null)
+                return new Val(coef * Algebra.Numeric.Trig.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Trig.Sin(b * Math.Log(x)));
+            output.Set(coef * Algebra.Numeric.Trig.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Trig.Sin(b * Math.Log(x)));
+            return output;
         }
         // complex base, positive integer exponent
         else if (z.Trim().Dims != 1 && w.Trim().Dims == 1 && (int)w.Get() == w.Get() && w.Get() >= 1)
         {
-            return new Val(z * Exp(z, w - new Val(1)));
+            if (output is null)
+                return new Val(Multiply(z, Exp(z, Subtract(w, Runes.Numbers.Get(1)))));
+            // re-using output is ok as long as the uses are nested on different levels
+            // this case does cause instantiations
+            Multiply(z, Exp(z, Subtract(w, Runes.Numbers.Get(1)), output), output);
+            return output;
         }
         // TODO: complex base, Gaussian integer exponent
         // complex base, other exponent
         else
         {
             if (z.Trim().Dims == 1 && z.Get() == 1)
-                return new Val(1);
-            return Exp(new Val(Math.E), w * Ln(z));
+            {
+                if (output is null)
+                    return new Val(1);
+                else
+                {
+                    output.Set(1);
+                    return output;
+                }
+            }
+            if (output is null)
+                return Exp(Runes.Numbers.e, Multiply(w, Ln(z)));
+
+            // remember, ONE reference per layer is allowed!
+            // if we have a recursive implementation with two uses we either need to instantiate or pass another output
+            output.Set(Exp(Runes.Numbers.e, Multiply(w, Ln(z, output), output), output));
+            return output;
         }
     }
 
-    public static IVal ExpI(double x) => new Val(Algebra.Numeric.Trig.Cos(x), Algebra.Numeric.Trig.Sin(x));
-    public static IVal Log(IVal z, IVal logBase)
+    //public static IVal ExpI(double x) => new Val(Algebra.Numeric.Trig.Cos(x), Algebra.Numeric.Trig.Sin(x));
+    public static IVal Log(IVal z, IVal logBase, IVal? output = null)
     {
         if (z.EqValue(logBase))
             return new Val(1);
         if (z.Trim().Dims * logBase.Trim().Dims == 1)
         {
             if (logBase.Get() < 0)
-                return Ln(z) / Ln(logBase);
+                return Divide(Ln(z, output), Ln(logBase, output), output);
             if (z.Get() < 0)
-                return Log(new Val(Math.Abs(z.Get())), logBase) + new Val(0, Math.PI);
-            return new Val(Math.Log(z.Get(), logBase.Get()));
+            {
+                if (output is null)
+                    return Add(Log(new Val(Math.Abs(z.Get())), logBase), Runes.Numbers.iPi);
+                else
+                {
+                    output.Set(Add(Log(Abs(z, output), logBase, output), Runes.Numbers.iPi, output));
+                    return output;
+                }
+            }
+            if (output is null)
+                return new Val(Math.Log(z.Get(), logBase.Get()));
+            output.Set(Math.Log(z.Get(), logBase.Get()));
+            return output;
         }
         double a = z.Get();
         double b = z.Trim().Dims == 1 ? 0 : z.Get(1);
-        return new Val(Math.Log(z.Magnitude), Math.Atan2(b, a));
+        if (output is null)
+            return new Val(Math.Log(z.Magnitude), Math.Atan2(b, a));
+        output.Set(Math.Log(z.Magnitude), Math.Atan2(b, a));
+        return output;
     }
-    public static IVal Ln(IVal v) => Log(v, new Val(Math.E));
-
-    // TODO: remove this method, as Number is now public
-    public static IVal FromLiteral(double x)
+    public static IVal Ln(IVal v, IVal? output=null) => Log(v, Runes.Numbers.e, output);
+    public static IVal Abs(IVal a, IVal? output = null)
     {
-        return new Val(x);
+        switch (a.Dims)
+        {
+            case 1:
+                if (output is null)
+                    return new Val(Math.Abs(a.Get()));
+                output.Set(Math.Abs(a.Get()));
+                return output;
+            default:
+                if (output is null)
+                    return new Val(a.Magnitude);
+                output.Set(a.Magnitude);
+                return output;
+        }
     }
 }
 
@@ -244,12 +332,14 @@ public class Val : IVal
     List<double> IDimensional<double>.Values => vals;
     public Val(params double[] ds)
     {
+        Scribe.Tick();
         if (ds.Length == 0)
             throw Scribe.Error("Cannot create empty num");
         vals = ds.ToList();
     }
     public Val(IVal iv)
     {
+        Scribe.Tick();
         vals = iv.Values.ToList();
     }
 
@@ -298,6 +388,11 @@ public class Val : IVal
             vals[i] = vals[i] / m;
         }
     }
+
+    //public void Set(params double[] args)
+    //{
+    //    ((IVal)this).Set(args);
+    //}
 
     public override string ToString()
     {

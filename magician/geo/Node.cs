@@ -314,9 +314,9 @@ public class Node : Vec3, ICollection<Node>
 
     public Node Translated(double xOffset, double yOffset, double zOffset = 0)
     {
-        x.Set(x + xOffset);
-        y.Set(y + yOffset);
-        z.Set(z + zOffset);
+        IVal.Add(x, xOffset, x);
+        IVal.Add(y, yOffset, y);
+        IVal.Add(z, zOffset, z);
         return this;
     }
     public Node To(double x, double y, double? z = null)
@@ -411,8 +411,7 @@ public class Node : Vec3, ICollection<Node>
         Func<double, double> f0, Func<double, double> f1, Func<double, double> f2,
         CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
     {
-        ParamMap pm = new(f0, f1, f2);
-        Driver d = new(this, pm, cm, dm, tm);
+        Driver d = new(this, new DirectMap(f0), new DirectMap(f1), new DirectMap(f2), cm, dm, tm);
         drivers.Add(d);
         return this;
     }

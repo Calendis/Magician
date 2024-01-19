@@ -2,7 +2,8 @@ namespace Magician;
 /* Scribe is the logger */
 public static class Scribe
 {
-    //static List<string> Log = new();
+    static int counter = 0;
+    static int total = 0;
     public static void Info(string? s)
     {
         Console.Write($"INFO: {s}\n");
@@ -53,36 +54,29 @@ public static class Scribe
         if (condition)
             Warn(s);
     }
-    public static void Dump<T>(ICollection<T> l)
-    {
-        if (l == null)
-        {
-            Scribe.Warn($"Could not list null");
-            l = new List<T>();
-        }
-        int c = 0;
-        foreach (T o in l)
-        {
-            Console.Write($"{c++}: ");
-            Scribe.Info(o);
-        }
-    }
 
-    public static void Dump<T, U>(ICollection<T> l) where T : ICollection<U>
+    public static void Peek()
     {
-        if (l == null)
-        {
-            Scribe.Warn($"Could not list null");
-            l = new List<T>();
-        }
-        int c = 0;
-        foreach (ICollection<U> o in l)
-        {
-            Console.Write($"{c++} ");
-            Scribe.Info(o);
-        }
+        Info(total);
     }
-
+    public static void Tick()
+    {
+        counter += 1;
+    }
+    public static void Flush()
+    {
+        Info(counter);
+        total += counter;
+        counter = 0;
+    }
+    public static void Dump(bool flush=true)
+    {
+        if (flush)
+            total += counter;
+        counter = 0;
+        Info(total);
+        total = 0;
+    }
 
     /// <summary><exception>
     /// bruhException

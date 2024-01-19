@@ -5,6 +5,8 @@ using Magician.Core.Maps;
 public abstract partial class Oper : IRelation
 {
     // TODO: Maybe put some of these fields/properties behind an interface
+    protected readonly Variable solution;
+    public IVar Cache => solution;
     public string Name => name;
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();
@@ -16,7 +18,7 @@ public abstract partial class Oper : IRelation
     protected bool commutative = false;
     public bool trivialAssociative = true;
     public bool invertible = true;
-
+    protected virtual int? Identity { get; }
     public int Ins { get; set; }
     public bool IsConstant => this is Variable v && v.Found;
     public bool IsDetermined
@@ -54,12 +56,43 @@ public abstract partial class Oper : IRelation
         if (!(this is Variable && new string(name.Take(8).ToArray()) == "constant"))
             AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
         //AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? 1 : v0.Name[0] > v1.Name[0] ? -1 : 0);
+        if (this is not Variable)
+            solution = new("sol", double.NaN);
     }
     // Alternating form ctor. Handy in some cases
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList()) { }
 
-    // Numeric value that has no effect when used as an argument
-    protected virtual int? Identity { get; }
+    // Provide arguments to solve the expression at a point
+    //public Variable Evaluate(params double[] args)
+    //{
+    //    HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
+    //    if (associates.Count != args.Length)
+    //        throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
+    //    
+    //    int counter = 0;
+    //    foreach (Variable a in associates.OrderBy(v => v.Name))
+    //        a.Set(args[counter++]);
+    //    // TODO: this copy probably isn't necessary
+    //    Variable s = Sol().Copy();
+    //    associates.ToList().ForEach(a => a.Reset());
+    //    return s;
+    //}
+
+    public IVal Evaluate(params double[] args)
+    {
+        HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
+        if (associates.Count != args.Length)
+            throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
+
+        int counter = 0;
+        foreach (Variable a in associates.OrderBy(v => v.Name))
+            a.Set(args[counter++]);
+        // TODO: this copy probably isn't necessary
+        Variable s = Sol().Copy();
+        associates.ToList().ForEach(a => a.Reset());
+        return s;
+    }
+
     // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
     public virtual Oper Copy() { return New(posArgs.Select((o, i) => ((Oper)o).Copy()).ToList(), negArgs.Select((o, i) => ((Oper)o).Copy()).ToList()); }
 
@@ -114,27 +147,6 @@ public abstract partial class Oper : IRelation
             //Scribe.Info($"  ...{this} vs. {prev}");
         } while (!Like(prev));
         //Scribe.Info($" done, as {this} is equal to {prev}");
-    }
-
-    // Provide arguments to solve the expression at a point
-    public Variable Evaluate(params double[] args)
-    {
-        HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
-        if (associates.Count != args.Length)
-            throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
-
-        int counter = 0;
-        foreach (Variable a in associates.OrderBy(v => v.Name))
-            a.Set(args[counter++]);
-        // TODO: this copy probably isn't necessary
-        Variable s = Sol().Copy();
-        associates.ToList().ForEach(a => a.Reset());
-        return s;
-    }
-
-    IVal IRelation.Evaluate(params double[] args)
-    {
-        return Evaluate(args);
     }
 
     // Overall degree of the expression
@@ -200,11 +212,11 @@ public abstract partial class Oper : IRelation
     }
 
     /* Customizable symbolic operator methods */
-    public virtual Oper Add(Oper o)
+    public virtual Oper Plus(Oper o)
     {
         return new SumDiff(new List<Oper> { this, o }, new List<Oper> { });
     }
-    public virtual Oper Subtract(Oper o)
+    public virtual Oper Minus(Oper o)
     {
         return new SumDiff(new List<Oper> { this }, new List<Oper> { o });
     }

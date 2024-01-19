@@ -14,16 +14,19 @@ public class Seq : DirectMap
     // Seq from literals
     public Seq(params double[] s) : base(x => 
     {
-        IVal d = IVal.FromLiteral(0);
+        //IVal d = new Val(0);
         try
         {
-            d.Set(s[(int)x]);
+            //d.Set(s[(int)x]);
+            s[(int)x].GetType();
         }
         catch (IndexOutOfRangeException)
         {
-            d.Set(0);
+            //d.Set(0);
+            return 0;
         }
-        return d;
+        //return d.Get();
+        return s[(int)x];
     })
     {
         Length = s.Length;
@@ -31,7 +34,7 @@ public class Seq : DirectMap
         //s.CopyTo(seq, 0);
     }
     // Lazy seq from 1D generator
-    public Seq(DirectMap g) : base(x => g.Evaluate(x))
+    public Seq(DirectMap g) : base(x => g.Evaluate(x).Get())
     {
         generator = g;
     }

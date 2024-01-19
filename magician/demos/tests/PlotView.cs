@@ -44,11 +44,11 @@ public class EqPlotting : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
         {
-            Ref.Perspective.y.Delta(walkSpeed);
+            Ref.Perspective.y.Incr(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT])
         {
-            Ref.Perspective.y.Delta(-walkSpeed);
+            Ref.Perspective.y.Incr(-walkSpeed);
         }
 
         Var("time").Set(0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 3) + 0.1);
@@ -58,6 +58,8 @@ public class EqPlotting : Spell
         );
         // Optionally, reset the variable to an unknown state
         Var("time").Reset();
+
+        Scribe.Flush();
     }
 
     public override void PreLoop()
@@ -77,7 +79,7 @@ public class EqPlotting : Spell
         plotTest3d = new(
         new SumDiff(new ExpLog(new List<Oper>{Var("x"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("z"), Val(2)}, new List<Oper>{})),
             Fulcrum.EQUALS,
-            new Fraction(Var("time"), Val(0.00000135)).Add(Val(30000))
+            new Fraction(Var("time"), Val(0.00000135)).Plus(Val(30000))
         );
         spt3d = plotTest3d.Solved(Var("y"));
         //Scribe.Info(spt3d.Evaluate(300, 300));

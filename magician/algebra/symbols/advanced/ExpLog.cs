@@ -14,6 +14,88 @@ public class ExpLog : Invertable
     }
     public ExpLog(params Oper[] ops) : base("explog", ops) { trivialAssociative = true; }
 
+    //IVal powTow = new Variable(1);
+    Multivalue solMult;
+    IVal[] multOuts;
+    IVal[] param2;
+    public override Variable Sol()
+    {
+        if (posArgs.Count == 0)
+        {
+            solution.Set(1);
+            return solution;
+        }
+        solution.Value.Set(posArgs[0].Sol());
+        
+        if (posArgs.Count == 2)
+        {
+            Rational? r = null;
+            if (posArgs[1] is Rational r0)
+                r = r0;
+            else if (posArgs[1].Sol() is Rational r1)
+                r = r1;
+            // Rational exponent, find all solutions
+            if (r is not null)
+            {
+                int a = r.Numerator;
+                int b = r.Denominator;
+
+                if (multOuts is null || multOuts.Length != b)
+                {
+                    multOuts = new Val[b];
+                    param2 = new Val[b];
+                }
+
+                double mag = solution.Magnitude;
+                double at2a = solution.Value.Get(); double at2b = solution.Value.Dims < 2 ? 0 : solution.Value.Get(1);
+                double theta = Math.Atan2(at2b, at2a);
+
+                List<IVal> solutions = new();
+                for (int k = 0; k < b; k++)
+                {
+                    if (multOuts[k] is null)
+                        multOuts[k] = new Val(double.NaN);
+                    if (param2[k] is null)
+                        param2[k] = new Val(double.NaN);
+                    param2[k].Set(0, (a * theta + 2 * k * Math.PI) / b);
+                    IVal.Multiply(IVal.Exp(Runes.Numbers.e, param2[k], multOuts[k]), Math.Pow(mag, (double)a / b), multOuts[k]);
+                    //Scribe.Info($"Found solution {solution} to {ptBase}^({a}/{b})");
+                    solutions.Add(multOuts[k]);
+                }
+
+                //return new Multivalue(solutions.ToArray());
+                if (solMult is null)
+                    solMult = new(solutions.ToArray());
+                else
+                    solMult.Set(solutions);
+                return solMult;
+            }
+
+            // Real exponent, find principal solution
+            //powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()));
+            IVal.Exp(posArgs[0].Sol(), posArgs[1].Sol(), solution);
+        }
+        else if (posArgs.Count > 2)
+            IVal.Exp(posArgs[0].Sol(), new ExpLog(posArgs.Skip(1).ToList(), new List<Oper>{}).Sol(), solution);
+            //IVal.Exp(new ExpLog(new List<Oper> { posArgs[0].Sol(), new ExpLog(posArgs.Skip(1).ToList(), new List<Oper> { }).Sol() }, new List<Oper> { }).Sol(), solution);
+
+        if (negArgs.Count == 0)
+        {
+            //solution.Value.Set(powTow);
+            return solution;
+        }
+        else if (negArgs.Count == 1)
+        {
+            IVal.Log(solution, negArgs[0].Sol(), solution);
+            return solution;
+        }
+        else
+        {
+            IVal.Log(new ExpLog(new List<Oper> { solution }, negArgs.SkipLast(1).ToList()).Sol(), negArgs[^1].Sol(), solution);
+            return solution;
+        }
+    }
+
     public override Oper Degree(Oper v)
     {
         if (IsDetermined)
@@ -43,70 +125,6 @@ public class ExpLog : Invertable
         return new ExpLog(pa, na);
     }
 
-    public override Variable Sol()
-    {
-        if (posArgs.Count == 0)
-            return new Variable(1);
-
-        Variable ptBase = posArgs[0].Sol();
-        Variable powTow;
-        if (posArgs.Count == 0)
-            powTow = new Variable(1);
-        else if (posArgs.Count == 1)
-            powTow = posArgs[0].Sol();
-        else if (posArgs.Count == 2)
-        {
-            bool simpleBase = ptBase.Var.IsScalar || ptBase.Var.Is1DVector;
-            bool simpleExponent = posArgs[1].Sol().Var.IsScalar || posArgs[1].Sol().Var.Is1DVector;
-            if (!simpleBase)
-                throw Scribe.Error($"Could not exponentiate vector {ptBase}");
-            if (!simpleExponent)
-                throw Scribe.Error($"Could not raise {ptBase} to vector power {posArgs[1]}");
-
-            Rational? r = null;
-            if (posArgs[1] is Rational r0)
-                r = r0;
-            else if (posArgs[1].Sol() is Rational r1)
-                r = r1;
-
-            if (r is not null)
-            {
-                int a = r.Numerator;
-                int b = r.Denominator;
-
-                double mag = ptBase.Magnitude;
-                double at2a = ptBase.Value.Get(); double at2b = ptBase.Value.Dims < 2 ? 0 : ptBase.Value.Get(1);
-                double theta = Math.Atan2(at2b, at2a);
-
-                List<IVal> solutions = new();
-                for (int k = 0; k < b; k++)
-                {
-                    IVal solution = new Val(Math.Pow(mag, (double)a/b)) * IVal.Exp(new Val(Math.E), new Val(0, (a*theta + 2*k*Math.PI)/b));
-                    //Scribe.Info($"Found solution {solution} to {ptBase}^({a}/{b})");
-                    solutions.Add(solution);
-                }
-
-                return new Multivalue(solutions.ToArray());
-            }
-
-            powTow = new(IVal.Exp(ptBase.Var.ToIVal(), posArgs[1].Sol().Var.ToIVal()));
-        }
-        else
-            powTow = new ExpLog(new List<Oper> { ptBase, new ExpLog(posArgs.Skip(1), new List<Oper> { }) }, new List<Oper> { }).Sol();
-
-        if (negArgs.Count == 0)
-            return powTow;
-        else if (negArgs.Count == 1)
-        {
-            return new(IVal.Log(powTow, negArgs[0].Sol()));
-        }
-        else
-        {
-            return new(IVal.Log(
-                new ExpLog(new List<Oper> { powTow }, negArgs.SkipLast(1)).Sol(), negArgs[^1].Sol()
-            ));
-        }
-    }
 
     public override void ReduceOuter()
     {

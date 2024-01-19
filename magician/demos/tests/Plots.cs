@@ -35,7 +35,7 @@ public class MapPlotting : Spell
             (Var("x"), new (AxisSpecifier.X, new(-80, 80, 4)))
         );
 
-        InverseParamMap ipm = new(new Func<double[], double>(vars => -600000d / (vars[0] * vars[0] + vars[1] * vars[1])), 2);
+        InverseParamMap ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
         Origin["plot3"] = ipm.Plot(
             new PlotOptions(AxisSpecifier.X, new(-250, 250, 20)),
             new(AxisSpecifier.Z, new(-250, 250, 20))
@@ -94,11 +94,11 @@ public class MapPlotting : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
         {
-            Ref.Perspective.y.Delta(walkSpeed);
+            Ref.Perspective.y.Incr(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT])
         {
-            Ref.Perspective.y.Delta(-walkSpeed);
+            Ref.Perspective.y.Incr(-walkSpeed);
         }
     }
 }

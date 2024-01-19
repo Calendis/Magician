@@ -15,8 +15,8 @@ public class Variable : Invertable, IVar
     public IDimensional<T> Dimensional<T>() => Var.IsScalar ? (IDimensional<T>)Var.Get() : Var.IsVector ? Var.Is1DVector ? (IDimensional<T>)Var.ToIVal() : (IDimensional<T>)Var.ToIVec() : throw Scribe.Error($"{this} was neither vector nor scalar");
     // Gets the IVal from a Variable
     // TODO: make this a property
-    public IVal Value => (IVal)Dimensional<double>();
-    public IVar Var => (IVar)this;
+    public IVal Value => this;
+    public IVar Var => this;
     public double Magnitude
     {
         get
@@ -34,8 +34,8 @@ public class Variable : Invertable, IVar
         if (v.Length == 0)
             throw Scribe.Error("Cannot create empty Variable scalar");
         qs = new();
-        Set(v);
         ivals ??= new();
+        Set(v);
     }
     public Variable(params double[] v) : this($"constant({v})", v) { }
     public Variable(IVal iv) : this($"value({iv})", iv.Values.ToArray()) { }
@@ -43,7 +43,7 @@ public class Variable : Invertable, IVar
     public Variable(string n, params IVal[] ivs) : base(n)
     {
         ivals = ivs.ToList();
-        Set(ivs);
+        Set(ivs.ToList());
         qs ??= new(); ivals ??= new();
         if (ivs.Length == 0)
             throw Scribe.Error("Cannot create empty Variable vector");
@@ -56,7 +56,15 @@ public class Variable : Invertable, IVar
         ((IDimensional<double>)this).Set(vs);
         found = true;
     }
-    public void Set(params IVal[] ivs)
+    //public void Set(IVal iv)
+    //{
+    //    // TODO: these two shouldn't be necessary...
+    //    qs.Clear();
+    //    qs.AddRange(iv.Values);
+    //    //((IVal)this).Set(iv);
+    //    found = true;
+    //}
+    public virtual void Set(List<IVal> ivs)
     {
         ((IDimensional<IVal>)this).Set(ivs);
         found = true;
@@ -64,8 +72,8 @@ public class Variable : Invertable, IVar
     // This seems like an antipattern -- consider another way
     void IDimensional<double>.Set(params double[] vs)
     {
-        if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
-            throw Scribe.Error("Mismatch");
+        //if (qs is not null && qs.Count > 0 && vs.Length != Value.Dims)
+        //    throw Scribe.Error("Mismatch");
         qs ??= new();
         qs.Clear();
         qs.AddRange(vs);
@@ -122,7 +130,7 @@ public class Variable : Invertable, IVar
             return name;
         if (Var.IsVector)
             return "Vector " + Scribe.Expand<List<IVal>, IVal>(ivals);
-        return $"{Value}";
+        return $"{new Val(this)}";
         //IVal trim = Var.ToIVal().Trim();
         //return trim.Dims < 2 ? $"{trim.Get()}" : $"({trim.Values.Aggregate("", (d, n) => $"{d + n},").TrimEnd(',')})";
         //return found ? qs.Length == 1 ? Value.Get().ToString() : Scribe.Expand<IEnumerable<double>, double>(qs) : name;
@@ -149,31 +157,30 @@ public class Variable : Invertable, IVar
         return new Variable(0);
     }
 
-    public override Oper Add(Oper o)
+    public override Oper Plus(Oper o)
     {
         if (Found && o.IsConstant)
         {
             //return new Variable(Val + o.Solution().Val);
             //AssertLengthMatch(o.Sol());
-            return new Variable((IVal)this + o.Sol());
+            return new Variable(IVal.Add(this, o.Sol()));
         }
-        return base.Add(o);
+        return base.Plus(o);
     }
-    public override Oper Subtract(Oper o)
+    public override Oper Minus(Oper o)
     {
         if (Found && o.IsConstant)
         {
             //AssertLengthMatch(o.Sol());
-            return new Variable((IVal)this - o.Sol());
+            return new Variable(IVal.Subtract(this, o.Sol()));
         }
-        return base.Subtract(o);
+        return base.Minus(o);
     }
     public override Oper Mult(Oper o)
     {
         if (Found && o.IsConstant)
         {
-            //AssertLengthMatch(o.Sol());
-            return new Variable(((IVal)this) * o.Sol());
+            return new Variable(IVal.Multiply(this, o.Sol()));
         }
         return base.Mult(o);
     }
@@ -183,8 +190,7 @@ public class Variable : Invertable, IVar
         //    return Copy();
         if (Found && o.IsConstant)
         {
-            //AssertLengthMatch(o.Sol());
-            return new Variable(((IVal)this) / o.Sol());
+            return new Variable(IVal.Divide(this, o.Sol()));
         }
         return base.Divide(o);
     }

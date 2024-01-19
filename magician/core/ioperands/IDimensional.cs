@@ -12,6 +12,10 @@ public interface IDimensional<T>
         Values.Clear();
         Values.AddRange(vs);
     }
+    public void Set(IEnumerable<T> vs)
+    {
+        Set(vs.ToArray());
+    }
     public void Normalize();
     public double Magnitude {get; set;}
     //public IVal Theta {get;}

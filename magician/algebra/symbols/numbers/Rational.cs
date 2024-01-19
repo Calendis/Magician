@@ -18,5 +18,10 @@ public class Rational : Variable
         denom = j;
         Set((double)i/j);
     }
+
+    public override Rational Copy()
+    {
+        return new(num, denom);
+    }
     // TODO: arithmetic methods for rationals. This will allow for arbitrary-precision calculations
 }

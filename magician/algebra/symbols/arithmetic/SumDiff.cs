@@ -9,23 +9,22 @@ public class SumDiff : Arithmetic
     // TODO: expand Notate and drop support for this constructor
     public SumDiff(params Oper[] ops) : base("sumdiff", ops) { }
     public SumDiff(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("sumdiff", a, b) { }
+    IVal total = new Val(0);
     public override Variable Sol()
     {
-        IVar total = new Var(0);
+        total.Set(0);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                total += v.Sol();
+                IVal.Add(v, total, total);
             else
-                total += o.Sol();
+                IVal.Add(o.Sol(), total, total);
         foreach (Oper o in negArgs)
             if (o is Variable v)
-                total -= v.Sol();
+                IVal.Subtract(total, v, total);
             else
-                total -= o.Sol();
-        if (total.IsVector)
-            return new Variable((IVec)total);
-        else
-            return new Variable((IVal)total);
+                IVal.Subtract(total, o.Sol(), total);
+        solution.Value.Set(total);
+        return solution;
     }
 
     public override SumDiff New(IEnumerable<Oper> a, IEnumerable<Oper> b)
@@ -47,18 +46,18 @@ public class SumDiff : Arithmetic
             minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return new Commonfuncs.Abs(maxD.Subtract(minD));
+        return new Commonfuncs.Abs(maxD.Minus(minD));
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
         Oper ABbar;
         if (!(aPositive ^ bPositive))
-            ABbar = A.Divide(AB).Add(B.Divide(AB));
+            ABbar = A.Divide(AB).Plus(B.Divide(AB));
         else if (aPositive)
-            ABbar = A.Divide(AB).Subtract(B.Divide(AB));
+            ABbar = A.Divide(AB).Minus(B.Divide(AB));
         else if (bPositive)
-            ABbar = B.Divide(AB).Subtract(A.Divide(AB));
+            ABbar = B.Divide(AB).Minus(A.Divide(AB));
         else
             throw Scribe.Issue("haggu!");
 

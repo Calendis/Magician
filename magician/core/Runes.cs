@@ -5,8 +5,8 @@ namespace Magician.Runes;
 
 public static class App
 {
-    static string name = "Magician";
-    static string version = "Alpha 0.1";
+    const string name = "Magician";
+    const string version = "Alpha 0.1";
     public static string Title
     {
         get => name + " " + version;
@@ -21,6 +21,39 @@ public static class Globals
     public const double defaultTol = 1.4210854715202004E-14;
 
 }
+
+public static class Numbers
+{
+    const int howManyNums = 10;
+    const int circleDivisions = 8;
+    public readonly static Core.IVal e = new Core.Val(Math.E);
+    public readonly static Core.IVal Pi = new Core.Val(Math.PI);
+    public readonly static Core.IVal i = new Core.Val(0, 1);
+    public readonly static Core.IVal iPi = new Core.Val(0, Math.PI);
+    readonly static Core.IVal[] nums = new Core.Val[howManyNums];
+    readonly static Core.IVal[] unitCircle = new Core.Val[circleDivisions];
+    static Numbers()
+    {
+        for (int i = 0; i < howManyNums; i++)
+        {
+            nums[i] = new Core.Val(i);
+        }
+        for (int i = 0; i < circleDivisions; i++)
+        {
+            unitCircle[i] = new Core.Val(Algebra.Numeric.Trig.Cos(2*Math.PI/i), Algebra.Numeric.Trig.Sin(2*Math.PI/i));
+        }
+    }
+    public static Core.IVal Get(int i)
+    {
+        return nums[i];
+    }
+    public static Core.IVal Circle8ths(int i)
+    {
+        return unitCircle[i];
+    }
+}
+
+// TODO move these
 
 public static class Col
 {

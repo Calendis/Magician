@@ -58,7 +58,7 @@ public class DefaultSpell : Spell
         Renderer.RControl.Clear();
         Origin["btn"].Update();
         Origin["my star"].Update();
-        Origin["my star"].Colored(new RGBA(0, (mo!.Evaluate()*255d).Get(), 255, 255));
+        Origin["my star"].Colored(new RGBA(0, mo!.Evaluate().Get()*255, 255, 255));
 
         Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Node().Flagged(DrawMode.POINTS)));
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_z])
@@ -104,7 +104,7 @@ public class DefaultSpell : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_k])
         {
-            Ref.Perspective.z.Delta(Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT] ? -spin * 100 : spin * 100);
+            Ref.Perspective.z.Incr(Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT] ? -spin * 100 : spin * 100);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_o])

@@ -10,38 +10,35 @@ public class Fraction : Arithmetic
 
     public List<Oper> Numerator => posArgs;
     public List<Oper> Denominator => negArgs;
+    IVal num = new Val(1);
+    IVal denom = new Val(1);
+    private readonly Rational rationalSolution = new(0, 0);
 
     public override Variable Sol()
     {
         //IVar quo = new Var(1);
-        IVar num = new Var(1);
-        IVar denom = new Var(1);
+        //IVar num = new Var(1);
+        //IVar denom = new Var(1);
+        num.Set(1);
+        denom.Set(1);
         foreach (Oper o in posArgs)
             if (o is Variable v)
-                num *= (IVar)v.Sol();
+                num = IVal.Multiply(v, num, num);
             else
-                num *= o.Sol();
+                num = IVal.Multiply(o.Sol(), num, num);
         foreach (Oper o in negArgs)
             if (o is Variable v)
-                denom *= v.Sol();
+                denom = IVal.Multiply(v, denom, denom);
             else
-                denom *= o.Sol();
-        
-        if (num.IsVector && denom.IsVector)
-            return new Variable((IVec)num/denom);
-        else if (num.IsVector && denom.IsScalar)
-            return new Variable((IVal)num/denom);
-        else if (num.IsScalar && denom.IsVector)
-            return new Variable((IVal)num/denom);
-        else if (num.IsScalar && denom.IsScalar)
+                denom = IVal.Multiply(o.Sol(), denom, denom);
+
+        if (num.Get() == (int)num.Get() && denom.Get() == (int)denom.Get() && denom.Get() != 0 && !(denom.Get() == 1 && num.Get() == 1))
         {
-            if (num.ToIVal().Get() == (int)num.ToIVal().Get() && denom.ToIVal().Get() == (int)denom.ToIVal().Get() && denom.ToIVal().Get() != 0 && !(denom.ToIVal().Get() == 1 && num.ToIVal().Get() == 1))
-                return new Rational((int)num.ToIVal().Get(), (int)denom.ToIVal().Get());
-            else
-                return new Variable((num / denom).ToIVal());
+            rationalSolution.Set((int)num.Get(), (int)denom.Get());
+            return rationalSolution;
         }
-        else
-            throw Scribe.Issue($"Invalid fraction {num} / {denom}");
+        solution.Value.Set(IVal.Divide(num, denom));
+        return solution;
     }
 
     public override Fraction New(IEnumerable<Oper> a, IEnumerable<Oper> b)
@@ -67,14 +64,14 @@ public class Fraction : Arithmetic
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
-    {        
+    {
         Oper ABbar;
         if (!(aPositive ^ bPositive))
-            ABbar = A.Degree(AB).Add(B.Degree(AB));
+            ABbar = A.Degree(AB).Plus(B.Degree(AB));
         else if (aPositive)
-            ABbar = A.Degree(AB).Subtract(B.Degree(AB));
+            ABbar = A.Degree(AB).Minus(B.Degree(AB));
         else if (bPositive)
-            ABbar = B.Degree(AB).Subtract(A.Degree(AB));
+            ABbar = B.Degree(AB).Minus(A.Degree(AB));
         else
             throw Scribe.Issue("haggu!");
         ABbar.Reduce(2);

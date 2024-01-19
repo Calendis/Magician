@@ -50,11 +50,11 @@ public class Proto3D : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
         {
-            Ref.Perspective.y.Delta(walkSpeed);
+            Ref.Perspective.y.Incr(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT])
         {
-            Ref.Perspective.y.Delta(-walkSpeed);
+            Ref.Perspective.y.Incr(-walkSpeed);
         }
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_x])
@@ -72,19 +72,19 @@ public class Proto3D : Spell
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_UP])
         {
-            Origin["cube"].y.Delta(walkSpeed);
+            Origin["cube"].y.Incr(walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_DOWN])
         {
-            Origin["cube"].y.Delta(-walkSpeed);
+            Origin["cube"].y.Incr(-walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LEFT])
         {
-            Origin["cube"].x.Delta(-walkSpeed);
+            Origin["cube"].x.Incr(-walkSpeed);
         }
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_RIGHT])
         {
-            Origin["cube"].x.Delta(walkSpeed);
+            Origin["cube"].x.Incr(walkSpeed);
         }
     }
 

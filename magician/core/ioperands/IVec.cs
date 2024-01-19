@@ -21,7 +21,7 @@ public interface IVec : IDimensional<IVal>
             Normalize();
             foreach (IVal q in Values)
             {
-                q.Set(q * value);
+                q.Set(IVal.Multiply(q, value));
             }
         }
     }
@@ -31,7 +31,7 @@ public interface IVec : IDimensional<IVal>
         double m = Magnitude;
         foreach (IVal q in Values)
         {
-            q.Set(q / m);
+            q.Set(IVal.Divide(q, m));
         }
     }
 
@@ -47,37 +47,37 @@ public interface IVec : IDimensional<IVal>
 
     public static IVec operator +(IVec i, IVec v)
     {
-        return new Vec(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
+        return new Vec(i.Values.Zip(v.Values, (a, b) => IVal.Add(a, b)).ToArray());
     }
     public static IVec operator -(IVec i, IVec v)
     {
-        return new Vec(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
+        return new Vec(i.Values.Zip(v.Values, (a, b) => IVal.Subtract(a, b)).ToArray());
     }
     public static IVec operator *(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k * x).ToArray());
+        return new Vec(i.Values.Select(k => IVal.Multiply(k, x)).ToArray());
     }
     public static IVec operator /(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k / x).ToArray());
+        return new Vec(i.Values.Select(k => IVal.Divide(k, x)).ToArray());
     }
 
     public static IVec operator *(IVec i, double x)
     {
-        return new Vec(i.Values.Select(k => k * x).ToArray());
+        return new Vec(i.Values.Select(k =>IVal.Multiply(k, x)).ToArray());
     }
     public static IVec operator /(IVec i, double x)
     {
-        return new Vec(i.Values.Select(k => k / x).ToArray());
+        return new Vec(i.Values.Select(k => IVal.Divide(k, x)).ToArray());
     }
 
     public static IVec operator +(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k + x).ToArray());
+        return new Vec(i.Values.Select(k => IVal.Add(k, x)).ToArray());
     }
     public static IVec operator -(IVec i, IVal x)
     {
-        return new Vec(i.Values.Select(k => k - x).ToArray());
+        return new Vec(i.Values.Select(k =>IVal.Subtract(k, x)).ToArray());
     }
 }
 
@@ -138,7 +138,7 @@ public class Vec : IVec
             Normalize();
             foreach (IVal q in vecArgs)
             {
-                q.Set(q * value);
+                q.Set(IVal.Multiply(q, value));
             }
         }
     }
@@ -148,7 +148,7 @@ public class Vec : IVec
         double m = Magnitude;
         foreach (IVal q in vecArgs)
         {
-            q.Set(q / m);
+            q.Set(IVal.Divide(q, m));
         }
     }
 

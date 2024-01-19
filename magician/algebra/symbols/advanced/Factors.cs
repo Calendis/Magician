@@ -37,7 +37,7 @@ public class FactorMap
                 if (factors.Keys.Contains(bas, ol))
                 {
                     Oper key = factors.Keys.First(o => o.Like(bas));
-                    factors[key] = factors[key].Add(exp);
+                    factors[key] = factors[key].Plus(exp);
                     //factors[key].Simplify();
                     //Scribe.Info($"  ...got exp {exp}. Adding {bas}^{exp}");
                 }
@@ -50,7 +50,7 @@ public class FactorMap
             else
             {
                 if (factors.Keys.Contains(facSimple, ol))
-                    factors[facSimple] = factors[facSimple].Add(new Variable(1));
+                    factors[facSimple] = factors[facSimple].Plus(new Variable(1));
                 else
                     factors.Add(facSimple, new Variable(1));
             }
@@ -127,7 +127,7 @@ public class FactorMap
                         }
                         else
                         {
-                            negArgs.Add(f.Pow(new Variable(x * -1)));
+                            negArgs.Add(f.Pow(new Variable(IVal.Multiply(x, -1))));
                         }
                     }
                     else if (x.Get() > 0)

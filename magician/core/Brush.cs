@@ -9,10 +9,10 @@ public class Brush : ParamMap
 
     public Node Paint(double t, Node m)
     {
-        IVec pos = Evaluate(t);
+        IVal pos = Evaluate(t);
         if (t > 0)
         {
-            return m.Copy().To(pos.ToVariable()).Tagged($"{pos}paint");
+            return m.Copy().To(pos).Tagged($"{pos}paint");
         }
         return new Node().Tagged("empty paint");
     }
