@@ -7,38 +7,6 @@ using static Magician.Geo.Create;
 public interface IRelation
 {
     IVar Cache { get; }
-    //public IVal Evaluate(params double[] args)
-    //{
-    //    (List<double> vals, List<int> delimiters) = Cache.Flatten();
-    //    if (delimiters.Count == 0)
-    //    {
-    //        Cache.Values<double>().Clear();
-    //        Cache.Values<double>().AddRange(vals);
-    //        return Cache;
-    //    }
-    //    else
-    //    {
-    //        int dlIdx = 0;
-    //        List<double> delimitedArgs = new();
-    //        List<Val> newArgs = new(); ;
-    //        for (int i = 0; i < vals.Count; i++)
-    //        {
-    //            int delim = delimiters[dlIdx];
-    //            if (i != delim)
-    //            {
-    //                delimitedArgs.Add(vals[i]);
-    //            }
-    //            else
-    //            {
-    //                newArgs.Add(new(delimitedArgs.ToArray()));
-    //                delimitedArgs.Clear();
-    //                dlIdx++;
-    //            }
-    //        }
-    //        Cache.Set(newArgs.ToArray());
-    //        return Cache;
-    //    }
-    //}
     public IVal Evaluate(params double[] args);
     public IVal Evaluate(IVal arg) => Evaluate(arg.Values.ToArray());
     public double[] Evaluate(List<double> args) => Evaluate(args.ToArray()).Values.ToArray();
@@ -66,13 +34,13 @@ public interface IMap : IRelation
 
 // Multiple inputs, one output
 // Plottable when the number of inputs is specified
-public class InverseParamMap : IRelation
+public class Relational : IRelation
 {
     private readonly Var vCache = new(0);
     public IVar Cache => vCache;
     Func<double[], double[]> map;
     public int Ins { get; set; }
-    public InverseParamMap(Func<double[], double[]> f, int inputs)
+    public Relational(Func<double[], double[]> f, int inputs)
     {
         Ins = inputs;
         map = f;
@@ -192,7 +160,7 @@ public class InverseParamMap : IRelation
 }
 
 // Parametric equation. One input, multiple outputs
-public class ParamMap : IParametric
+public class Parametric : IParametric
 {
     //public int Params { get; set; }
     private readonly Var vCache = new(0);
@@ -200,14 +168,14 @@ public class ParamMap : IParametric
     public int Outs { get; set; }
     Func<double, double[]> map;
     //public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
-    public ParamMap(Func<double, double[]> m)
+    public Parametric(Func<double, double[]> m)
     {
         // TODO: change the outs
         Outs = 0;
         map = m;
     }
-    public ParamMap(params Func<double, double>[] ns) : this(x => ns.Select(f => f.Invoke(x)).ToArray()) { }
-    public ParamMap(params IMap[] fs) : this(fs.Select<IMap, Func<double, double>>(f => f.Evaluate).ToArray()) { }
+    public Parametric(params Func<double, double>[] ns) : this(x => ns.Select(f => f.Invoke(x)).ToArray()) { }
+    public Parametric(params IMap[] fs) : this(fs.Select<IMap, Func<double, double>>(f => f.Evaluate).ToArray()) { }
     //public double[] Evaluate(List<double> args) => map.Invoke(args[0]);
     //public static Func<double, IVal>[] FromFuncs(params Func<double, double>[] ns)
     //{
@@ -272,13 +240,13 @@ public class ParamMap : IParametric
 
 // One or fewer input, one output
 // Always plottable
-public class DirectMap : IMap
+public class Direct : IMap
 {
-    public readonly static DirectMap Dummy = new(x => 0);
+    public readonly static Direct Dummy = new(x => 0);
     private readonly Var vCache = new(0);
     public IVar Cache => vCache;
     Func<double, double> map;
-    public DirectMap(Func<double, double> f)
+    public Direct(Func<double, double> f)
     {
         map = f;
     }

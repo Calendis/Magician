@@ -3,9 +3,9 @@ using Core;
 using Core.Maps;
 using Geo;
 
-public class Brush : ParamMap
+public class Brush : Parametric
 {
-    public Brush(DirectMap dm0, DirectMap dm1) : base(dm0, dm1) {}
+    public Brush(Direct dm0, Direct dm1) : base(dm0, dm1) {}
 
     public Node Paint(double t, Node m)
     {

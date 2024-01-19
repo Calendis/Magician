@@ -158,7 +158,7 @@ public static class Create
         return Star(0, 0, sides, innerRadius, outerRadius);
     }
 
-    public static Node Along(ParamMap pm, double start, double end, double spacing, Node template)
+    public static Node Along(Parametric pm, double start, double end, double spacing, Node template)
     {
         Node container = new();
         for (double x = start; x < end; x += spacing)

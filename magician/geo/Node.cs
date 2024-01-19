@@ -411,7 +411,7 @@ public class Node : Vec3, ICollection<Node>
         Func<double, double> f0, Func<double, double> f1, Func<double, double> f2,
         CoordMode cm = CoordMode.XYZ, DriverMode dm = DriverMode.SET, TargetMode tm = TargetMode.DIRECT)
     {
-        Driver d = new(this, new DirectMap(f0), new DirectMap(f1), new DirectMap(f2), cm, dm, tm);
+        Driver d = new(this, new Direct(f0), new Direct(f1), new Direct(f2), cm, dm, tm);
         drivers.Add(d);
         return this;
     }

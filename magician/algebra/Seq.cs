@@ -2,11 +2,11 @@ using Magician.Core;
 using Magician.Core.Maps;
 
 namespace Magician.Algebra;
-public class Seq : DirectMap
+public class Seq : Direct
 {
     // If a generator is specified, the sequence can be shifted/extended when necessary
     // If no generator is specifed, the sequence may lose information when shifting/extending
-    DirectMap? generator;
+    Direct? generator;
     //protected double[]? seq;
     public int Length;
     public double Offset { get; set; }
@@ -34,7 +34,7 @@ public class Seq : DirectMap
         //s.CopyTo(seq, 0);
     }
     // Lazy seq from 1D generator
-    public Seq(DirectMap g) : base(x => g.Evaluate(x).Get())
+    public Seq(Direct g) : base(x => g.Evaluate(x).Get())
     {
         generator = g;
     }

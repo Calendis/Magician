@@ -14,8 +14,8 @@ public abstract class Control : Node
 
 public abstract class InteractiveControl : Control
 {
-    protected DirectMap controlSensor;
-    public InteractiveControl(double x, double y, DirectMap sensor, Action? a = null) : base(x, y, a)
+    protected Direct controlSensor;
+    public InteractiveControl(double x, double y, Direct sensor, Action? a = null) : base(x, y, a)
     {
         controlSensor = sensor;
     }
@@ -24,7 +24,7 @@ public abstract class InteractiveControl : Control
 public abstract class Clickable : InteractiveControl
 {
     protected bool hovered = false;
-    protected Clickable(double x, double y, Action? a) : base(x, y, DirectMap.Dummy, a)
+    protected Clickable(double x, double y, Action? a) : base(x, y, Direct.Dummy, a)
     {
         controlSensor = new Sensor.MouseOver(this);
     }

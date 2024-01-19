@@ -12,10 +12,10 @@ public class MapPlotting : Spell
     double walkSpeed = 4;
     public override void PreLoop()
     {
-        Origin["plot1"] = new ParamMap(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
+        Origin["plot1"] = new Parametric(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
             .Plot(new(0, 20 * Math.PI, 0.5), HSLA.RandomVisible(), -300);
 
-        Origin["plot2"] = new ParamMap(t => 60 * Math.Sin(t / 4), t => t+150)
+        Origin["plot2"] = new Parametric(t => 60 * Math.Sin(t / 4), t => t+150)
             .Plot(new(0, 20 * Math.PI, 0.5), HSLA.RandomVisible(), 10);
         
         Equation twoDEqZ = new(
@@ -35,7 +35,7 @@ public class MapPlotting : Spell
             (Var("x"), new (AxisSpecifier.X, new(-80, 80, 4)))
         );
 
-        InverseParamMap ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
+        Relational ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
         Origin["plot3"] = ipm.Plot(
             new PlotOptions(AxisSpecifier.X, new(-250, 250, 20)),
             new(AxisSpecifier.Z, new(-250, 250, 20))

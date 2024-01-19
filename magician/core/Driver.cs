@@ -15,7 +15,7 @@ public class Driver
     IVal yCache = new Val(0);
     IVal zCache = new Val(0);
 
-    public Driver(Node m, DirectMap dm1, DirectMap dm2, DirectMap dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT)
+    public Driver(Node m, Direct dm1, Direct dm2, Direct dm3, CoordMode coordMode = CoordMode.XYZ, DriverMode driverMode = DriverMode.SET, TargetMode targetMode = TargetMode.DIRECT)
     {
         // these aren't actually necessary
         X = dm1.Evaluate;

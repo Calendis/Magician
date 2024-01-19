@@ -8,7 +8,7 @@ using Interactive;
 public class DefaultSpell : Spell
 {
 
-    DirectMap? mo;
+    Direct? mo;
     double spin = 0.014;
     public override void PreLoop()
     {
@@ -49,8 +49,8 @@ public class DefaultSpell : Spell
         Origin["my star"].Heading.Normalize();
     }
     Brush b = new(
-        new DirectMap(x => Events.MouseX),
-        new DirectMap(x => Events.MouseY)
+        new Direct(x => Events.MouseX),
+        new Direct(x => Events.MouseY)
     );
 
     public override void Loop()
