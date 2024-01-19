@@ -7,13 +7,16 @@ namespace Magician.Geo;
 // defined.
 public class NodeMeshed : Node
 {
-    List<int[]>? faces;
-    public List<int[]>? Faces => faces;
+    //List<int[]>? faces;
+    //public List<int[]>? Faces => faces;
     // Full constructor
-    //Mesh faces;
-    public NodeMeshed(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
-    public NodeMeshed(Node m) : this(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
-    public NodeMeshed(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
+    Mesh faces;
+    public NodeMeshed(double x, double y, double z, Mesh mesh, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points)
+    {
+        faces = mesh;
+    }
+    public NodeMeshed(Node m, Mesh mesh) : this(m.x.Get(), m.y.Get(), m.z.Get(), mesh, m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public NodeMeshed(double x, double y, double z, Mesh mesh, params Node[] points) : this(x, y, z, mesh, null, DrawMode.FULL, points) { }
 
     public override void Render(double xOffset, double yOffset, double zOffset)
     {
@@ -21,17 +24,11 @@ public class NodeMeshed : Node
             throw Scribe.Error($"Must define faces of Multi3D {this}");
             
         int cc = 0;
-        foreach (int[] face in faces)
+        foreach (int[] face in faces.Faces)
         {
             Node f = new Node().To(x.Get(), y.Get(), z.Get()).Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {
-                // Hack to stop crashes for plot debugging
-                if (idx >= Count)
-                {
-                    //Scribe.Warn($"{idx} / {Count}");
-                    //continue;
-                }
                 f.Add(constituents[idx]);
                 f.Colored(constituents[idx].Col);
                 // TODO: remove this faux-lighting
@@ -43,77 +40,8 @@ public class NodeMeshed : Node
 
     public override NodeMeshed Copy()
     {
-        NodeMeshed c = new NodeMeshed(base.Copy());
+        NodeMeshed c = new NodeMeshed(base.Copy(), faces);
         c.faces = faces;
         return c;
     }
-
-    // Methods to generate faces
-    public void FacesNearest(int n)
-    {
-    }
-
-    // Arrange faces in a tetrahedral pattern
-    public NodeMeshed FacesSimplex()
-    {
-        return FacesGrouped(3,
-            0, 1, 2,
-            0, 1, 3,
-            1, 2, 3,
-            0, 2, 3
-        );
-    }
-    // Arrange faces in a cubic pattern
-    public NodeMeshed FacesCube()
-    {
-        return FacesGrouped(4,
-        0, 1, 2, 3,
-        4, 5, 6, 7,
-        0, 4, 5, 1,
-        3, 7, 6, 2,
-        1, 5, 6, 2,
-        0, 4, 7, 3
-        );
-    }
-
-    public NodeMeshed FacesGrouped(int faceSize, params int[] fs)
-    {
-        faces = new();
-        List<int> currentFace = new();
-        for (int i = 0; i < fs.Length; i++)
-        {
-            currentFace.Add(fs[i]);
-            if (i % faceSize == faceSize - 1)
-            {
-                faces.Add(currentFace.ToArray());
-                currentFace = new List<int>();
-            }
-        }
-        return this;
-    }
-
-    public NodeMeshed SetFaces(List<int[]> newFaces)
-    {
-        faces = new();
-        for (int i = 0; i < newFaces.Count; i++)
-        {
-            int[] face = newFaces[i];
-            faces.Add(new int[face.Length]);
-            for (int j = 0; j < face.Length; j++)
-            {
-                faces[i][j] = face[j];
-            }
-        }
-        return this;
-    }
-
-    /* public void FacesGrouped(params int[] n)
-    {
-        //
-    }
-
-    public void FacesGrouped(IMap im)
-    {
-        //
-    } */
 }
