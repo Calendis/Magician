@@ -46,7 +46,7 @@ public class ExpLog : Invertable
                     param2 = new Val[b];
                 }
 
-                double mag = solution.Magnitude;
+                double mag = solution.Value.Magnitude;
                 double at2a = solution.Value.Get(); double at2b = solution.Value.Dims < 2 ? 0 : solution.Value.Get(1);
                 double theta = Math.Atan2(at2b, at2a);
 

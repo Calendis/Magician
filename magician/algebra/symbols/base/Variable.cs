@@ -17,16 +17,6 @@ public class Variable : Invertable, IVar
     // TODO: make this a property
     public IVal Value => this;
     public IVar Var => this;
-    public double Magnitude
-    {
-        get
-        {
-            if (Var.IsVector)
-                return Var.ToIVec().Magnitude;
-            else
-                return Var.ToIVal().Magnitude;
-        }
-    }
     // Creating an unsolved variable
     public Variable(string n) : base(n) { qs ??= new(); ivals ??= new(); }
     public Variable(string n, params double[] v) : base(n)
