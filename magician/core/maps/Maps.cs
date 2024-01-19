@@ -274,6 +274,7 @@ public class ParamMap : IParametric
 // Always plottable
 public class DirectMap : IMap
 {
+    public readonly static DirectMap Dummy = new(x => 0);
     private readonly Var vCache = new(0);
     public IVar Cache => vCache;
     Func<double, double> map;

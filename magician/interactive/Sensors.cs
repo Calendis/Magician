@@ -4,15 +4,13 @@ using Geo;
 
 public static class Sensor
 {
-    // TODO: don't return a new directmap every time. completely unnecessary!!
-    //       make mouseover and scrollover classes inheriting directmap instead
-    public static DirectMap MouseOver(Node m)
+    public class MouseOver : DirectMap
     {
-        return new DirectMap(b => Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0);
+        public MouseOver(Node m) : base(b => Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? 1 : 0) {}
     }
 
-    public static DirectMap ScrollOver(Node m)
+    public class ScrollOver : DirectMap
     {
-        return new DirectMap(b => Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? Events.ScrollY : 0);
+        public ScrollOver(Node m) : base(b => Check.PointInPolygon(Events.MouseX, Events.MouseY, m) ? Events.ScrollY : 0) {}
     }
 }

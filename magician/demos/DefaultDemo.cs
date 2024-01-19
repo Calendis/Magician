@@ -30,7 +30,7 @@ public class DefaultSpell : Spell
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER)
         .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.SUB)  // spins the star
         ;
-        mo = Interactive.Sensor.MouseOver(Origin["my star"]);
+        mo = new Interactive.Sensor.MouseOver(Origin["my star"]);
 
         /* Testing area */
         Origin["btn"] = new Interactive.Button(-300, 250, 200, 180,

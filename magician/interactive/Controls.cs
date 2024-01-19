@@ -15,16 +15,19 @@ public abstract class Control : Node
 public abstract class InteractiveControl : Control
 {
     protected DirectMap controlSensor;
-    public InteractiveControl(double x, double y, Func<Node, DirectMap> sensor, Action? a = null) : base(x, y, a)
+    public InteractiveControl(double x, double y, DirectMap sensor, Action? a = null) : base(x, y, a)
     {
-        controlSensor = sensor.Invoke(this);
+        controlSensor = sensor;
     }
 }
 
 public abstract class Clickable : InteractiveControl
 {
     protected bool hovered = false;
-    protected Clickable(double x, double y, Action? a) : base(x, y, Sensor.MouseOver, a) { }
+    protected Clickable(double x, double y, Action? a) : base(x, y, DirectMap.Dummy, a)
+    {
+        controlSensor = new Sensor.MouseOver(this);
+    }
     public override void Update()
     {
         hovered = controlSensor.Evaluate().Get() > 0;
