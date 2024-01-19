@@ -52,10 +52,10 @@ public class Driver
                 break;
             case CoordMode.POLAR:
                 IVal.Add(X.Invoke(t), DMode == DriverMode.SET ? 0 : Target.Magnitude, xCache);
-                IVal.Add(Y.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseXY, yCache);
-                IVal.Add(Z.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseYZ, zCache);
                 Target.Magnitude = xCache.Get();
+                IVal.Add(Y.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseXY, yCache);
                 Target.PhaseXY = yCache.Get();
+                IVal.Add(Z.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseYZ, zCache);
                 Target.PhaseYZ = zCache.Get();
                 break;
             case CoordMode.BRANCHED:

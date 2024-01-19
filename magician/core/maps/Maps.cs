@@ -287,7 +287,7 @@ public class DirectMap : IMap
         Cache.Set(map.Invoke(args[0]));
         return Cache;
     }
-    public IVal Evaluate(double a)
+    public IVal Evaluate(double a=0)
     {
         Cache.Set(map.Invoke(a));
         return Cache;
