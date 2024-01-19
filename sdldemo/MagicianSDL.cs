@@ -41,8 +41,8 @@ class MagicianSDL
         RDrawable.GenShaders();
 
         // Load a spell
-        Spellbook.Prepare(new Demos.DefaultSpell());
-        Spellbook.Cast();
+        Prepare(new Demos.DefaultSpell());
+        Cast();
 
         // Run
         magicianSDL.MainLoop();

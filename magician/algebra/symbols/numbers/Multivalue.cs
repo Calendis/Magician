@@ -8,7 +8,7 @@ public class Multivalue : Variable
     public int Solutions => remaining.Length + 1;
     IVal principal;
     IVal[] remaining;
-    public Multivalue(params double[] vs) : this(vs.Select(d => new Val(d)).ToArray()) {}
+    //public Multivalue(params double[] vs) : this(vs.Select(d => new Val(d)).ToArray()) {}
     public Multivalue(params IVal[] vs) : this("multivalue", vs) {}
     public Multivalue(string n, params IVal[] vs) : base(n, vs[0])
     {

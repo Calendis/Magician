@@ -22,9 +22,9 @@ public class Variable : Invertable, IVar
         get
         {
             if (Var.IsVector)
-                return new Vec(ivals.ToArray()).Magnitude;
+                return Var.ToIVec().Magnitude;
             else
-                return ((IVal)new Val(qs.ToArray())).Magnitude;
+                return Var.ToIVal().Magnitude;
         }
     }
     // Creating an unsolved variable
