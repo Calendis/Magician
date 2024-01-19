@@ -18,11 +18,8 @@ public class SolvedEquation : Relational
         eq = new(chosenRoot, fulc, oppositeRoot);
         chosen = chosenRoot;
         opposite = oppositeRoot;
-        //opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? 1 : v0.Name[0] > v1.Name[0] ? -1 : 0);
         solvedVar = v;
-
         Ins = ins;
-        //map = MapFromIPFunc(Evaluate);
     }
     public Node Plot(AxisSpecifier outAxis, params (Variable, PlotOptions)[] varPairedOptions)
     {
@@ -38,31 +35,6 @@ public class SolvedEquation : Relational
         eq.Sliders.Clear();
         return plot;
     }
-
-    //public new Variable Evaluate(params double[] vals)
-    //{
-    //    int expectedArgs = eq.Unknowns.Count - eq.Sliders.Count - 1;
-    //    if (vals.Length != expectedArgs)
-    //    {
-    //        throw Scribe.Error($"Equation expected {expectedArgs} arguments, got {vals.Length}");
-    //    }
-    //    int counter = 0;
-    //    //List<Variable> unknowns = eq.Unknowns.ToList();
-    //    List<Variable> unknowns = opposite.AssociatedVars.ToList();
-    //    unknowns.Remove(solvedVar);
-    //    unknowns = unknowns.Except(eq.Sliders).ToList();
-    //    // Sort the arguments so you don't get inconsistent behaviour
-    //    unknowns = unknowns.OrderBy(v => v.Name).ToList();
-    //    // Set the values
-    //    //Scribe.Warn($"Got vals: {Scribe.Expand<List<double>, double>(vals.ToList())}, for vars {Scribe.Expand<List<Variable>, Variable>(unknowns)}");
-    //    foreach (Variable x in unknowns)
-    //    {
-    //        x.Set(vals[counter++]);
-    //    }
-    //    Variable result = opposite.Sol();
-    //    unknowns.ForEach(v => v.Reset());
-    //    return result;
-    //}
 
     public override string ToString()
     {
