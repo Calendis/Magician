@@ -50,7 +50,7 @@ public interface IRelation
 public interface IParametric : IRelation
 {
     int IRelation.Ins => 1;
-    //public IVal Evaluate(double x) => Evaluate(new double[] {x});
+    public IVal Evaluate(double x) => Evaluate(new double[] {x});
     IVal IRelation.Evaluate(params double[] args) => Evaluate(args[0]);
     IVal IRelation.Evaluate(IVal args) => Evaluate(args.Get());
 }
@@ -250,7 +250,7 @@ public class ParamMap : IParametric
             int counter = 0;
 
             int innerCounter;
-            foreach (Vec ou in ous)
+            foreach (Var ou in ous)
             {
                 innerCounter = 0;
                 foreach (double d in ((IVal)ou).Values)
