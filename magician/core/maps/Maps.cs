@@ -148,7 +148,7 @@ public class Relational : IRelation
         // 3D plot format
         if (threeD)
         {
-            Node3D plot3d = new(plot);
+            NodeMeshed plot3d = new(plot);
             plot3d.SetFaces(faces);
             return plot3d.Flagged(DrawMode.INNER);
         }

@@ -174,9 +174,9 @@ public static class Create
     }
 
     /* Create 3D shapes! */
-    public static Node3D TriPyramid(double x, double y, double z, double radius)
+    public static NodeMeshed TriPyramid(double x, double y, double z, double radius)
     {
-        Node3D tetra = new Node3D(x, y, z,
+        NodeMeshed tetra = new NodeMeshed(x, y, z,
             Create.RegularPolygon(3, radius)
             .Add(
             new Node[] { Create.Point(0, 0, radius) }
@@ -185,9 +185,9 @@ public static class Create
         return tetra;
     }
 
-    public static Node3D Cube(double x, double y, double z, double radius)
+    public static NodeMeshed Cube(double x, double y, double z, double radius)
     {
-        Node3D cube = new Node3D(x, y, z,
+        NodeMeshed cube = new NodeMeshed(x, y, z,
         Create.RegularPolygon(4, radius).Add(
             Create.RegularPolygon(4, radius)
                 .Sub(m => m.Translated(0, 0, radius * Math.Sqrt(2)))  // radius is half the diagonal

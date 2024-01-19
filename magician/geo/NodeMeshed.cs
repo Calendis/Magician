@@ -5,14 +5,15 @@ namespace Magician.Geo;
 // -ness makes the 3D Multi extremely impractical to manipulate, so we use a Multi3D instead.
 // Multi3Ds have custom drawing behaviour and do not need to be nested. However, faces must be
 // defined.
-public class Node3D : Node
+public class NodeMeshed : Node
 {
     List<int[]>? faces;
     public List<int[]>? Faces => faces;
     // Full constructor
-    public Node3D(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
-    public Node3D(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
-    public Node3D(Node m) : base(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    //Mesh faces;
+    public NodeMeshed(double x, double y, double z, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : base(x, y, z, col, dm, points) { }
+    public NodeMeshed(Node m) : this(m.x.Get(), m.y.Get(), m.z.Get(), m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public NodeMeshed(double x, double y, double z, params Node[] points) : this(x, y, z, null, DrawMode.FULL, points) { }
 
     public override void Render(double xOffset, double yOffset, double zOffset)
     {
@@ -22,8 +23,7 @@ public class Node3D : Node
         int cc = 0;
         foreach (int[] face in faces)
         {
-            Node f = new Node().To(x.Get(), y.Get(), z.Get())
-            .Flagged(drawMode).Tagged($"face{cc}");
+            Node f = new Node().To(x.Get(), y.Get(), z.Get()).Flagged(drawMode).Tagged($"face{cc}");
             foreach (int idx in face)
             {
                 // Hack to stop crashes for plot debugging
@@ -41,9 +41,9 @@ public class Node3D : Node
         }
     }
 
-    public override Node3D Copy()
+    public override NodeMeshed Copy()
     {
-        Node3D c = new Node3D(base.Copy());
+        NodeMeshed c = new NodeMeshed(base.Copy());
         c.faces = faces;
         return c;
     }
@@ -54,7 +54,7 @@ public class Node3D : Node
     }
 
     // Arrange faces in a tetrahedral pattern
-    public Node3D FacesSimplex()
+    public NodeMeshed FacesSimplex()
     {
         return FacesGrouped(3,
             0, 1, 2,
@@ -64,7 +64,7 @@ public class Node3D : Node
         );
     }
     // Arrange faces in a cubic pattern
-    public Node3D FacesCube()
+    public NodeMeshed FacesCube()
     {
         return FacesGrouped(4,
         0, 1, 2, 3,
@@ -76,7 +76,7 @@ public class Node3D : Node
         );
     }
 
-    public Node3D FacesGrouped(int faceSize, params int[] fs)
+    public NodeMeshed FacesGrouped(int faceSize, params int[] fs)
     {
         faces = new();
         List<int> currentFace = new();
@@ -92,7 +92,7 @@ public class Node3D : Node
         return this;
     }
 
-    public Node3D SetFaces(List<int[]> newFaces)
+    public NodeMeshed SetFaces(List<int[]> newFaces)
     {
         faces = new();
         for (int i = 0; i < newFaces.Count; i++)
