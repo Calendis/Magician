@@ -1,4 +1,4 @@
-namespace Magician.Algebra.Numeric;
+namespace Magician.Alg.Numeric;
 
 public static class Trig
 {

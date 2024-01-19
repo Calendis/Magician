@@ -1,7 +1,7 @@
 using Magician.Core;
 using Magician.Core.Maps;
 
-namespace Magician.Algebra;
+namespace Magician.Alg;
 public class Seq : Direct
 {
     // If a generator is specified, the sequence can be shifted/extended when necessary

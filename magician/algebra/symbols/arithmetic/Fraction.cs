@@ -1,4 +1,4 @@
-namespace Magician.Algebra.Symbols;
+namespace Magician.Alg.Symbols;
 using Core;
 
 // Fraction objects represent multiplication and division operations with any number of arguments

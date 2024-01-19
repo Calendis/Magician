@@ -1,4 +1,4 @@
-namespace Magician.Algebra.Symbols;
+namespace Magician.Alg.Symbols;
 using Core;
 
 public class Multivalue : Variable

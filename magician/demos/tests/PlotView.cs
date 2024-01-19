@@ -2,9 +2,9 @@ namespace Magician.Demos.Tests;
 using Magician.Geo;
 using Magician.Interactive;
 using Core.Caster;
-using Magician.Algebra;
-using Magician.Algebra.Symbols;
-using static Magician.Algebra.Notate;
+using Magician.Alg;
+using Magician.Alg.Symbols;
+using static Magician.Alg.Notate;
 
 
 public class EqPlotting : Spell

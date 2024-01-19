@@ -1,5 +1,5 @@
 
-namespace Magician.Algebra.Symbols;
+namespace Magician.Alg.Symbols;
 // TODO: move this stuff to Oper
 public class LegacyForm
 {

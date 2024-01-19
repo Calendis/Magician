@@ -35,14 +35,14 @@ public interface IVec : IDimensional<IVal>
         }
     }
 
-    public Algebra.Symbols.Variable ToVariable()
+    public Alg.Symbols.Variable ToVariable()
     {
         List<double> vs = new();
         foreach (IVal iv in Values)
         {
             vs.AddRange(iv.Values);
         }
-        return new Algebra.Symbols.Variable(vs.ToArray());
+        return new Alg.Symbols.Variable(vs.ToArray());
     }
 
     public static IVec operator +(IVec i, IVec v)

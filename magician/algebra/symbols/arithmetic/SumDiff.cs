@@ -1,4 +1,4 @@
-namespace Magician.Algebra.Symbols;
+namespace Magician.Alg.Symbols;
 using Core;
 
 // SumDiff objects represent addition and subtraction operations with any number of arguments

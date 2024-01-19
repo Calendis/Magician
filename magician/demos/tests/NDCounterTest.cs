@@ -1,6 +1,6 @@
 namespace Magician.Demos.Tests;
 using Core.Caster;
-using Algebra;
+using Alg;
 
 
 public class NDCounterTest : Spell

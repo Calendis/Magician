@@ -2,7 +2,7 @@
 *  Class for storing and manipulating colour data, with RGBA and HSLA support
 */
 namespace Magician;
-using Algebra.Numeric;
+using Alg.Numeric;
 
 
 public abstract class Color

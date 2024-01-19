@@ -3,9 +3,9 @@ using Core.Maps;
 using Geo;
 using Interactive;
 using Core.Caster;
-using Algebra.Symbols;
-using Algebra;
-using static Magician.Algebra.Notate;
+using Alg.Symbols;
+using Alg;
+using static Magician.Alg.Notate;
 
 public class MapPlotting : Spell
 {

@@ -40,7 +40,7 @@ public static class Numbers
         }
         for (int i = 0; i < circleDivisions; i++)
         {
-            unitCircle[i] = new Core.Val(Algebra.Numeric.Trig.Cos(2*Math.PI/i), Algebra.Numeric.Trig.Sin(2*Math.PI/i));
+            unitCircle[i] = new Core.Val(Alg.Numeric.Trig.Cos(2*Math.PI/i), Alg.Numeric.Trig.Sin(2*Math.PI/i));
         }
     }
     public static Core.IVal Get(int i)

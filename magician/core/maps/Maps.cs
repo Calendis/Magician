@@ -1,7 +1,7 @@
 namespace Magician.Core.Maps;
 
 using Magician.Geo;
-using Magician.Algebra;
+using Magician.Alg;
 using static Magician.Geo.Create;
 
 public interface IRelation
@@ -56,11 +56,11 @@ public class Relational : IRelation
         return Cache;
     }
 
-    public Node Plot(params Algebra.PlotOptions[] options)
+    public Node Plot(params Alg.PlotOptions[] options)
     {
         return Plot(null, options);
     }
-    public Node Plot(Algebra.AxisSpecifier? outAxis = null, params Algebra.PlotOptions[] options)
+    public Node Plot(Alg.AxisSpecifier? outAxis = null, params Alg.PlotOptions[] options)
     {
         if (Ins > 2)
         {
@@ -87,10 +87,12 @@ public class Relational : IRelation
             // Determine faces
             bool edgeRow = false;
             bool edgeCol = false;
+
+            // Basic meshing algorithm
             if (threeD)
             {
                 double w = solveSpace.AxisLen(0);
-                double h = solveSpace.AxisLen(1);
+                //double h = solveSpace.AxisLen(1);
                 int n = solveSpace.Val;
                 if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0) - 1))
                 {
@@ -199,7 +201,7 @@ public class Parametric : IParametric
     //}
 
     //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
-    public Node Plot(Algebra.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
+    public Node Plot(Alg.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
     {
         if (Outs > 3)
             throw Scribe.Error($"Cannot plot ParamMap with {Outs} outputs");

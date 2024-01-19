@@ -213,8 +213,8 @@ public interface IVal : IDimensional<double>
             // if z is negative and w is not an integer, the answer is complex
             if (z.Get() < 0 && w.Get() != (int)w.Get())
             {
-                double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Trig.Cos(Math.PI * w.Get());
-                double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Algebra.Numeric.Trig.Sin(Math.PI * w.Get());
+                double re = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Alg.Numeric.Trig.Cos(Math.PI * w.Get());
+                double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Alg.Numeric.Trig.Sin(Math.PI * w.Get());
                 if (output is null)
                     return new Var(re, im);
                 output.Set(re, im);
@@ -238,8 +238,8 @@ public interface IVal : IDimensional<double>
             double coef = Math.Pow(x, a);
 
             if (output is null)
-                return new Val(coef * Algebra.Numeric.Trig.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Trig.Sin(b * Math.Log(x)));
-            output.Set(coef * Algebra.Numeric.Trig.Cos(b * Math.Log(x)), coef * Algebra.Numeric.Trig.Sin(b * Math.Log(x)));
+                return new Val(coef * Alg.Numeric.Trig.Cos(b * Math.Log(x)), coef * Alg.Numeric.Trig.Sin(b * Math.Log(x)));
+            output.Set(coef * Alg.Numeric.Trig.Cos(b * Math.Log(x)), coef * Alg.Numeric.Trig.Sin(b * Math.Log(x)));
             return output;
         }
         // complex base, positive integer exponent

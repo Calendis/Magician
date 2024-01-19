@@ -1,5 +1,5 @@
 
-namespace Magician.Algebra.Symbols;
+namespace Magician.Alg.Symbols;
 
 // TODO: make this an interface
 

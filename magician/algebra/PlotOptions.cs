@@ -1,4 +1,4 @@
-namespace Magician.Algebra;
+namespace Magician.Alg;
 
 public struct PlotOptions
 {
