@@ -70,7 +70,7 @@ public class Relational : IRelation
         NDCounter solveSpace = new(options.Select(o => o.Range).ToArray());
         List<AxisSpecifier> axes = options.Select(o => o.Axis).ToList();
         bool threeD = solveSpace.Dims >= 2;
-        List<int[]> faces = new();
+        //List<int[]> faces = new();
         Node plot = new Node().Flagged(DrawMode.PLOT);
         do
         {
@@ -82,31 +82,6 @@ public class Relational : IRelation
                 inVals[i] = solveSpace.Get(i);
             }
             outVal = Evaluate(inVals);
-            //Scribe.Info($"{inVals[0]}, {inVals[1]} => {outVal}");
-
-            // Determine faces
-            bool edgeRow = false;
-            bool edgeCol = false;
-
-            // Basic meshing algorithm
-            if (threeD)
-            {
-                double w = solveSpace.AxisLen(0);
-                //double h = solveSpace.AxisLen(1);
-                int n = solveSpace.Val;
-                if (solveSpace.Positional[0] >= Math.Ceiling(solveSpace.AxisLen(0) - 1))
-                {
-                    edgeCol = true;
-                }
-                if (n >= solveSpace.Max - w)
-                {
-                    edgeRow = true;
-                }
-                if (!edgeCol && !edgeRow && n + Math.Ceiling(w) + 1 < solveSpace.Max)
-                {
-                    faces.Add(new int[] { (int)Math.Ceiling(w) + n + 1, (int)Math.Ceiling(w) + n, n, n + 1 });
-                }
-            }
 
             // Put the x, y, and z values in an array in that order
             double[] argsByAxis = new double[3];
@@ -148,17 +123,13 @@ public class Relational : IRelation
         // 3D plot format
         if (threeD)
         {
-            NodeMeshed plot3d = new(plot);
-            plot3d.SetFaces(faces);
+            NodeMeshed plot3d = new(plot, Mesh.Square((int)solveSpace.AxisLen(0), (int)solveSpace.Max));
+            //plot3d.SetFaces(faces);
             return plot3d.Flagged(DrawMode.INNER);
         }
         // 2D plot
         return plot;
     }
-    //public static Func<double[], double[]> MapFromIPFunc(Func<double[], double> f)
-    //{
-    //    return xs => new double[] { f.Invoke(xs) };
-    //}
 }
 
 // Parametric equation. One input, multiple outputs
@@ -178,29 +149,12 @@ public class Parametric : IParametric
     }
     public Parametric(params Func<double, double>[] ns) : this(x => ns.Select(f => f.Invoke(x)).ToArray()) { }
     public Parametric(params IMap[] fs) : this(fs.Select<IMap, Func<double, double>>(f => f.Evaluate).ToArray()) { }
-    //public double[] Evaluate(List<double> args) => map.Invoke(args[0]);
-    //public static Func<double, IVal>[] FromFuncs(params Func<double, double>[] ns)
-    //{
-    //    List<Func<double, IVal>> wrapped = new();
-    //    foreach (Func<double, double> nw in ns)
-    //    {
-    //        wrapped.Add(x => new Val(nw.Invoke(x)));
-    //        /* Scribe.Tick(); */
-    //    }
-    //    return wrapped.ToArray();
-    //}
-    //public ParamMap(params DirectMap[] fs) : base(xs => fs.Select(m => m.Evaluate(xs[0])).ToArray())
     public IVal Evaluate(double x = 0)
     {
         Cache.Set(map.Invoke(x));
         return Cache;
     }
-    //public double[] Evaluate(List<double> args)
-    //{
-    //    return map.Invoke(args[0]);
-    //}
 
-    //public override Multi Plot(double x, double y, double z, double start, double end, double dt, Color c)
     public Node Plot(Alg.Range paramRange, Color c, double x = 0, double y = 0, double z = 0)
     {
         if (Outs > 3)
@@ -263,9 +217,4 @@ public class Direct : IMap
         Cache.Set(map.Invoke(a));
         return Cache;
     }
-    //public DirectMap(Func<double, double> f) : this(x => new Val(f.Invoke(x))) {/* Scribe.Tick(); */}
-    //public IVal Evaluate(double x = 0)
-    //{
-    //    return map.Invoke(x);
-    //}
 }
