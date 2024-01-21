@@ -41,9 +41,9 @@ public static class Renderer
 
 public static class Render
 {
-    public static void Polygon(double[][] vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols=null, Node? cache=null)
+    public static void Polygon(double[][] vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, Node? cache = null)
     {
-        cols ??= Enumerable.Range(0,vertices.Length).Select(n => Runes.Col.UIDefault.FG).ToList();
+        cols ??= Enumerable.Range(0, vertices.Length).Select(n => Runes.Col.UIDefault.FG).ToList();
         // Draw points
         if ((drawMode & DrawMode.POINTS) > 0)
         {
@@ -142,19 +142,22 @@ public static class Render
         //
     }
 
-    public static List<double[]> Project(IEnumerable<Core.Vec> n, double xOffset, double yOffset, double zOffset, Node? camera=null)
+    public static List<double[]> Project(IEnumerable<Core.Vec> n, double xOffset, double yOffset, double zOffset, Node? camera = null)
     {
         List<double[]> projectedVerts = new();// double[n.Count][];
         // These two vectors define the camera
         camera ??= Ref.Perspective;
-        Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
-        Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
+        //Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
+        //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
+        double targX = camera.X + camera.Heading.x.Get();
+        double targY = camera.Y + camera.Heading.y.Get();
+        double targZ = camera.Z + camera.Heading.z.Get();
 
         // TODO: move these out of the loop
         // Matrix magic
         Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
             new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
-            new(targV.x.Get(), targV.y.Get(), targV.z.Get()),
+            new(targX, targY, targZ),
             new(0, 1, 0)
         );
         Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
@@ -166,9 +169,9 @@ public static class Render
         foreach (Core.Vec v in n)
         {
             Vector3D<double> worldCoords = new(
-                v.x.Get()+xOffset,
-                v.y.Get()+yOffset,
-                v.z.Get()+zOffset
+                v.x.Get() + xOffset,
+                v.y.Get() + yOffset,
+                v.z.Get() + zOffset
             );
             Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
             Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
@@ -183,8 +186,8 @@ public static class Render
             });
         }
         return projectedVerts;
-    }    
-    public static List<double[]> Cull(Node n, double xOffset, double yOffset, double zOffset, List<double[]> vertices, int[]? face=null)
+    }
+    public static List<double[]> Cull(Node n, double xOffset, double yOffset, double zOffset, List<double[]> vertices, int[]? face = null)
     {
         List<double[]> clippedVerts = new();
         // Camera-axis culling
@@ -195,18 +198,19 @@ public static class Render
             // It is considered OOB when it is not in front of the camera along the axis parallel to the camera
             bool zInBounds;
 
-            Vec3 absPos;
+            Vector3D<double> absPos;
             if (face is not null)
-                absPos = new(n[face[counter]].x.Get()+xOffset+n.x.Get(), n[face[counter]].y.Get()+yOffset+n.y.Get(), n[face[counter]].z.Get()+zOffset+n.z.Get());
+                absPos = new(n[face[counter]].x.Get() + xOffset + n.x.Get(), n[face[counter]].y.Get() + yOffset + n.y.Get(), n[face[counter]].z.Get() + zOffset + n.z.Get());
             else
-                absPos = new(n[counter].x.Get()+xOffset+n.x.Get(), n[counter].y.Get()+yOffset+n.y.Get(), n[counter].z.Get()+zOffset+n.z.Get());
+                absPos = new(n[counter].x.Get() + xOffset + n.x.Get(), n[counter].y.Get() + yOffset + n.y.Get(), n[counter].z.Get() + zOffset + n.z.Get());
 
 
-            Vec3 camPos = Ref.Perspective;
+            Vector3D<double> camPos = new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z);
             // Rotate so that we can compare straight along the axis using a >=
-            absPos = absPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            camPos = camPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            zInBounds = absPos.z.Get() - camPos.z.Get() >= 0;
+            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(Ref.Perspective.yaw, -Ref.Perspective.pitch, 0);
+            absPos = Vector3D.Transform(absPos, rotMat);
+            camPos = Vector3D.Transform(camPos, rotMat);
+            zInBounds = absPos.Z - camPos.Z >= 0;
 
             if (zInBounds)
             {
