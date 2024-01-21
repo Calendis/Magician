@@ -45,8 +45,6 @@ public class DefaultSpell : Spell
 
         Origin["myMulti"] = new Node().Flagged(DrawMode.INNER);
         Origin["savMyMulti"] = new Node().Flagged(DrawMode.INVISIBLE);
-        Origin["my star"].Heading = new Vec3(1, 1, -1);
-        Origin["my star"].Heading.Normalize();
     }
     Brush b = new(
         new Direct(x => Events.MouseX),
