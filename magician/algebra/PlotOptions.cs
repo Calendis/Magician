@@ -1,5 +1,6 @@
 namespace Magician.Alg;
 
+// TODO: delete this
 public struct PlotOptions
 {
     AxisSpecifier axis;

@@ -10,7 +10,7 @@ using Silk.NET.Maths;
 //using Silk.NET.SDL;
 using static SDL2.SDL;
 
-namespace Magician.Renderer;
+namespace Magician.Paint;
 public unsafe class SdlContext : IGLContext
 {
     //private readonly Sdl _sdl;

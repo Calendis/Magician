@@ -4,7 +4,7 @@ public class WavingText : Spell
 {
     public override void Loop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
         // TODO: re-implement text
         //Origin["parametric"] = new ParamMap(
         //    x => 180 * Math.Cos(x / 3) + 10 * Math.Sin(Time / 2),
@@ -15,6 +15,6 @@ public class WavingText : Spell
 
     public override void PreLoop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
     }
 }

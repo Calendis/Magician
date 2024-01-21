@@ -1,7 +1,7 @@
 using static SDL2.SDL;
 
 // Wrapper around an SDL texture
-namespace Magician.Renderer;
+namespace Magician.Paint;
 
 public class _SDLTexture : IDisposable
 {

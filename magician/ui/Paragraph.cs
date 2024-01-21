@@ -1,4 +1,4 @@
-using Magician.Renderer;
+using Magician.Paint;
 using Magician.Geo;
 
 namespace Magician.UI;

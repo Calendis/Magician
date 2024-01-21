@@ -1,4 +1,4 @@
-namespace Magician.Renderer;
+namespace Magician.Paint;
 using Geo;
 
 using static SDL2.SDL;

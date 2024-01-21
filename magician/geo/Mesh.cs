@@ -65,4 +65,5 @@ public class Mesh
         }
         return new(faces);
     }
+    public static Mesh Rect(int w, int h) => Square(w, w*h);
 }

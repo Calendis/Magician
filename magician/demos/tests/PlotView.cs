@@ -15,7 +15,7 @@ public class EqPlotting : Spell
     SolvedEquation spt3d;
     public override void Loop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
 
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
         {
@@ -59,7 +59,7 @@ public class EqPlotting : Spell
         // Optionally, reset the variable to an unknown state
         Var("time").Reset();
 
-        //Scribe.Flush();
+        Scribe.Flush();
     }
 
     public override void PreLoop()

@@ -48,7 +48,7 @@ public class RuledAxes
         int horizSpacers = (int)(Runes.Globals.winWidth / horizSpacing);
         for (int i = 0; i < horizSpacers; i++)
         {
-            Renderer.Text tx = new Renderer.Text($"{(int)(i * hSp - Runes.Globals.winWidth / 2)}", Runes.Col.UIDefault.FG, Runes.Globals.fontSize);
+            Paint.Text tx = new Paint.Text($"{(int)(i * hSp - Runes.Globals.winWidth / 2)}", Runes.Col.UIDefault.FG, Runes.Globals.fontSize);
             Node horizSpacer = Line(
                 Point(i * horizSpacing - Runes.Globals.winWidth / 2, spacerSize / 2 - Geo.Ref.Perspective.Y),
                 Point(i * horizSpacing - Runes.Globals.winWidth / 2, -spacerSize / 2 - Geo.Ref.Perspective.Y)

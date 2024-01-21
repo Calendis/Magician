@@ -11,7 +11,7 @@ public class Proto3D : Spell
     double walkSpeed = 4.0;
     public override void Loop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
         Origin["2"].RotatedZ(-0.009);
         Origin["tetra"].RotatedX(-0.0025);
         Origin["tetra"].RotatedY(-0.003);

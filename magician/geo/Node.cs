@@ -1,7 +1,7 @@
 namespace Magician.Geo;
 using Core;
 using Core.Maps;
-using Renderer;
+using Paint;
 
 using System.Collections;
 using Silk.NET.Maths;
@@ -26,10 +26,10 @@ public class Node : Vec3, ICollection<Node>
     Node? parent;
     protected List<Node> constituents;
     Dictionary<string, Node> constituentTags = new Dictionary<string, Node>();
-    double pitch = 0; double yaw = 0; double roll = 0;
+    public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
-    List<RDrawable> drawables = new List<RDrawable>();
+    public List<RDrawable> drawables = new List<RDrawable>();
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
     List<Driver> drivers = new();
 
@@ -59,10 +59,6 @@ public class Node : Vec3, ICollection<Node>
     /*
     *  Positional Properties
     */
-    public Vec3 Abs
-    {
-        get => new Vec3(X, Y, Z);
-    }
     public Vec3 Heading
     {
         get => Geo.Ref.DefaultHeading.YawPitchRotated(-yaw, pitch);
@@ -171,7 +167,7 @@ public class Node : Vec3, ICollection<Node>
                 throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
             }
             constituents[i].DisposeAllTextures();
-            RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
+            Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             constituents[i] = value.Parented(this);
         }
     }
@@ -198,7 +194,7 @@ public class Node : Vec3, ICollection<Node>
 
             // Destroy the old Multi, and tag the new one with the same tag
             constituentTags[tag].DisposeAllTextures();
-            RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
+            Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             Remove(constituentTags[tag]);
             constituentTags[tag] = value;
             Add(value);
@@ -375,7 +371,7 @@ public class Node : Vec3, ICollection<Node>
         //return this;
     }
 
-    public static void _Texture(Node m, Renderer._SDLTexture t)
+    public static void _Texture(Node m, Paint._SDLTexture t)
     {
         if (m.texture != null)
         {
@@ -388,7 +384,7 @@ public class Node : Vec3, ICollection<Node>
         }
         m.texture = t;
     }
-    public Node Textured(Renderer._SDLTexture t)
+    public Node Textured(Paint._SDLTexture t)
     {
         _Texture(this, t);
         return this;
@@ -705,209 +701,30 @@ public class Node : Vec3, ICollection<Node>
             return;
         }
 
-        double r = col.R;
-        double g = col.G;
-        double b = col.B;
-        double a = col.A;
-
         // Get a projection of each constituent point
-        double[][] unclippedVerts = new double[Count][];
-        for (int i = 0; i < Count; i++)
-        {
-            // we don't need these for anything
-            //Vector3D<double> modelCoords = new(
-            //    this[i].x.Evaluate(),
-            //    this[i].y.Evaluate(),
-            //    this[i].z.Evaluate()
-            //);
-
-            // The absolute position of the multi
-            Vector3D<double> worldCoords = new(
-                this[i].X,
-                this[i].Y,
-                this[i].Z
-            );
-
-            // These two vectors define the camera
-            Vec3 targV = new Vec((IVec)Ref.Perspective + Ref.Perspective.Heading).ToVec3();
-            Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
-
-            // TODO: move these out of the loop
-            // Matrix magic
-            Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
-                new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
-                new(targV.x.Get(), targV.y.Get(), targV.z.Get()),
-                new(0, 1, 0)
-            );
-            Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
-                Ref.FOV / 180d * Math.PI,
-                Runes.Globals.winWidth / Runes.Globals.winHeight,
-                0.1, 2000
-            );
-            Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
-            Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
-
-            // Format the projected vertices for GLSL
-            unclippedVerts[i] = new double[]
-            {
-                final.X/-final.Z,
-                final.Y/-final.Z,
-                -final.Z,
-                1+0*final.W
-            };
-        }
-
-        List<double[]> clippedVerts = new();
-        int counter = 0;
-        double avgX = 0;
-        double avgY = 0;
-        foreach (double[] v in unclippedVerts)
-        {
-            // Check to see if the constituent's z-coordinate is out-of-bounds
-            // It is considered OOB when it is not in front of the camera along the axis parallel to the camera
-            bool zInBounds;
-            Vec3 absPos = this[counter++].Abs;
-            Vec3 camPos = Ref.Perspective;
-            // Rotate so that we can compare straight along the axis using a >=
-            absPos = absPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            camPos = camPos.YawPitchRotated(Ref.Perspective.yaw, -Ref.Perspective.pitch);
-            zInBounds = absPos.z.Get() - camPos.z.Get() >= 0;
-
-            if (zInBounds)
-            {
-                clippedVerts.Add(v);
-                avgX += v[0];
-                avgY += v[1];
-            }
-            else
-            {
-                // Seems to work fine without calculating clipping intersections, so do nothing
-            }
-        }
-
+        List<double[]> projectedVerts = Paint.Render.Project(this, xOffset+x.Get(), yOffset+y.Get(), zOffset+z.Get());
+        List<double[]> clippedVerts = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
         // The vertices are GLSL-ready
-        double[][] projectedVerts = clippedVerts.ToArray();
+        Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
 
-        // Draw points
-        if ((drawMode & DrawMode.POINTS) > 0)
-        {
-            int numPoints = projectedVerts.Length;
-            RPoint[] rPointArray = new RPoint[numPoints];
-            RPoints rPoints;
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                rPointArray[i] = new RPoint(projectedVerts[i][0], projectedVerts[i][1], projectedVerts[i][2],
-                    constituents[i].Col.R, constituents[i].Col.G, constituents[i].Col.B, 255);
-            }
-            rPoints = new(rPointArray);
-            drawables.Add(rPoints);
-            RDrawable.drawables.Add(rPoints);
-        }
-
-        // Draw lines
-        if ((drawMode & DrawMode.PLOT) > 0)
-        {
-            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && Count >= 3;
-            int numLines = projectedVerts.Length - (connected ? 0 : 1);
-            if (numLines < 1)
-                return;
-
-            RLine[] rLineArray = new RLine[numLines];
-            RLines rLines;
-
-            for (int i = 0; i < projectedVerts.Length - 1; i++)
-            {
-                double x0 = projectedVerts[i][0]; double x1 = projectedVerts[i + 1][0];
-                double y0 = projectedVerts[i][1]; double y1 = projectedVerts[i + 1][1];
-                double z0 = projectedVerts[i][2]; double z1 = projectedVerts[i + 1][2];
-                rLineArray[i] = new RLine(x0, y0, z0, x1, y1, z1, constituents[i].Col.R, constituents[i].Col.G, constituents[i].Col.B, constituents[i].Col.A);
-            }
-            // If the Multi is a closed shape, connect the first and last constituent with a line
-            if (connected)
-            {
-                double[] pLast = projectedVerts[projectedVerts.Length - 1];
-                double[] pFirst = projectedVerts[0];
-
-                double subr = this[Count - 1].Col.R;
-                double subg = this[Count - 1].Col.G;
-                double subb = this[Count - 1].Col.B;
-                double suba = this[Count - 1].Col.A;
-
-                rLineArray[^1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
-            }
-            rLines = new(rLineArray);
-            drawables.Add(rLines);
-            RDrawable.drawables.Add(rLines);
-        }
-
-        // If the flag is set, and there are at least 3 constituents, fill the shape
-        if (((drawMode & DrawMode.INNER) > 0) && Count >= 3)
-        {
-            List<int> ect = EarCut.Triangulate(projectedVerts);
-            if (ect.Count % 3 != 0)
-            {
-                throw Scribe.Issue("Triangulator broke");
-            }
-            List<int[]> triVertexIndices = new();
-            for (int i = 0; i < ect.Count; i += 3)
-            {
-                triVertexIndices.Add(new int[] { ect[i], ect[i + 1], ect[i + 2] });
-            }
-
-            int numTriangles = triVertexIndices.Count;
-            RTriangle[] rTriArray = new RTriangle[numTriangles];
-            RTriangles rTris;
-
-            for (int i = 0; i < numTriangles; i++)
-            {
-                int[] vertexIndices = triVertexIndices[i];
-                int tri0 = vertexIndices[0];
-                int tri1 = vertexIndices[1];
-                int tri2 = vertexIndices[2];
-
-                RTriangle rTri = new(
-                    projectedVerts[tri0][0], projectedVerts[tri0][1], projectedVerts[tri0][2],
-                    projectedVerts[tri1][0], projectedVerts[tri1][1], projectedVerts[tri1][2],
-                    projectedVerts[tri2][0], projectedVerts[tri2][1], projectedVerts[tri2][2],
-                    Col.R, Col.G, Col.B, Col.A
-                );
-                rTriArray[i] = rTri;
-            }
-
-            rTris = new RTriangles(rTriArray);
-            drawables.Add(rTris);
-            RDrawable.drawables.Add(rTris);
-        }
-
-        // If not null, draw the texture
-        if (texture != null)
-        {
-            texture.Draw(XCartesian(xOffset), YCartesian(yOffset));
-        }
+        texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
 
         // Draw each constituent recursively
         foreach (Node m in this)
         {
-            m.Render(xOffset, yOffset, zOffset);
+            m.Render(xOffset+x.Get(), yOffset+y.Get(), zOffset+z.Get());
         }
     }
 
     string Title()
     {
         string s = "";
-        switch (Count)
+        s += Count switch
         {
-            case (0):
-                s += "Empty Multi";
-                break;
-            case (1):
-                s += "Multi";
-                break;
-            default:
-                s += $"{Count}-Multi";
-                break;
-        }
+            0 => "Empty Node",
+            1 => "Node",
+            _ => $"{Count}-Node",
+        };
         if (Tag != "")
         {
             s += $" \"{Tag}\"";

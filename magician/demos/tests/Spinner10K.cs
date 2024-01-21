@@ -17,7 +17,7 @@ public class Spinner10K : Spell
 
     public override void Loop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
         //Scribe.Info(Origin);
     }
 }

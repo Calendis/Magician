@@ -55,7 +55,7 @@ public class DefaultSpell : Spell
 
     public override void Loop()
     {
-        Renderer.RControl.Clear();
+        Paint.Renderer.Clear();
         Origin["btn"].Update();
         Origin["my star"].Update();
         Origin["my star"].Colored(new RGBA(0, mo!.Evaluate().Get()*255, 255, 255));

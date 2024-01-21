@@ -1,5 +1,5 @@
 #pragma warning disable
-namespace Magician.Renderer;
+namespace Magician.Paint;
 public static class EarCut
 {
     public static List<int> Triangulate(double[][] vertices)

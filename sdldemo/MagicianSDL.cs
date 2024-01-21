@@ -1,9 +1,9 @@
 ﻿namespace Magician;
+using Paint;
+using Core.Caster;
 using static Core.Caster.Spellbook;
-using Renderer;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
-using Magician.Core.Caster;
 
 class MagicianSDL
 {
@@ -22,23 +22,24 @@ class MagicianSDL
 
         magicianSDL.InitSDL();
         magicianSDL.CreateWindow();
-        //magicianSDL.CreateRenderer();
         SDL2.SDL_ttf.TTF_Init();
-        Renderer.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
+        Paint.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
         // Create a Silk.Net context
-        Renderer.RGlobals.sdlContext = new(win, null,
+        Renderer.SDL = new(win, null,
             (SDL_GLattr.SDL_GL_CONTEXT_MAJOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_MINOR_VERSION, 3),
             (SDL_GLattr.SDL_GL_CONTEXT_PROFILE_MASK, (int)SDL_GLprofile.SDL_GL_CONTEXT_PROFILE_CORE)
         );
-        Renderer.RGlobals.sdlContext.MakeCurrent();
-        Renderer.RGlobals.gl = new GL(Renderer.RGlobals.sdlContext);
-        Renderer.RGlobals.gl.Enable(Silk.NET.OpenGL.GLEnum.DepthTest);
+        Renderer.SDL.MakeCurrent();
+        Renderer.GL = new GL(Renderer.SDL);
+        Renderer.GL.Enable(GLEnum.DepthTest);
+        Renderer.Display = true;
+        Renderer.Render = true;
 
         // Generate shaders
         // TODO: move this
-        RDrawable.GenShaders();
+        Shaders.Generate();
 
         // Load a spell
         Prepare(new Demos.DefaultSpell());
@@ -98,19 +99,15 @@ class MagicianSDL
     // Renders each frame to a texture and displays the texture
     void Render()
     {
-        if (Renderer.RControl.doRender)
+        if (Renderer.Render)
         {
-            // Options
-            //SDL_SetRenderDrawBlendMode(SDLGlobals.renderer, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-            //SDL_SetTextureBlendMode(SDLGlobals.renderedTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
-
             // gl won't be null here, and if it is, it's not my fault
-            RGlobals.gl!.Clear((uint)(Silk.NET.OpenGL.GLEnum.ColorBufferBit | Silk.NET.OpenGL.GLEnum.DepthBufferBit));
+            Renderer.GL.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
 
             // Draw objects
             Geo.Ref.Origin.Render(0, 0, 0);
-            Renderer.RDrawable.DrawAll();
-            Renderer.RDrawable.drawables.Clear();
+            Renderer.DrawAll();
+            Renderer.Drawables.Clear();
 
             // SAVE FRAME TO IMAGE
             //if (Renderer.RControl.saveFrame && frames != stopFrame)
@@ -120,16 +117,15 @@ class MagicianSDL
                 unsafe
                 {
                     Scribe.Info(Runes.Globals.winWidth * Runes.Globals.winHeight);
-                    
+
                     //RGlobals.gl.ReadPixels(0, 0, (uint)Data.Globals.winWidth, (uint)Data.Globals.winHeight, GLEnum.Rgb, GLEnum.Float, &pixels);
                     //Scribe.Info<float>(pixels);
                 }
             }
-
-            if (Renderer.RControl.display)
-            {
-                SDL_GL_SwapWindow(win);
-            }
+        }
+        if (Renderer.Display)
+        {
+            SDL_GL_SwapWindow(win);
         }
         frames++;
     }
