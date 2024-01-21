@@ -59,13 +59,19 @@ public class Node : Vec3, ICollection<Node>
     /*
     *  Positional Properties
     */
-    public Vec3 Heading
+    public Vector3D<double> Heading
     {
-        get => Geo.Ref.DefaultHeading.YawPitchRotated(-yaw, pitch);
+        get
+        {
+            //Geo.Ref.DefaultHeading.YawPitchRotated(-yaw, pitch);
+            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-yaw, pitch, 0);
+            Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), rotMat);
+            return rotated;
+        }
         set
         {
-            pitch = -Math.Asin(-value.y.Get());
-            yaw = -Math.Atan2(value.x.Get(), value.z.Get());
+            pitch = -Math.Asin(-value.Y);
+            yaw = -Math.Atan2(value.X, value.Z);
         }
     }
     double RecursX
@@ -102,7 +108,7 @@ public class Node : Vec3, ICollection<Node>
         get
         {
             if (parent is null)
-                return Heading.x.Get();
+                return Heading.X;
             return x.Get() + Parent.RecursHeadingX;
         }
     }
@@ -111,7 +117,7 @@ public class Node : Vec3, ICollection<Node>
         get
         {
             if (parent is null)
-                return Heading.y.Get();
+                return Heading.Y;
             return y.Get() + Parent.RecursHeadingY;
         }
     }
@@ -120,7 +126,7 @@ public class Node : Vec3, ICollection<Node>
         get
         {
             if (parent is null)
-                return Heading.z.Get();
+                return Heading.Z;
             return z.Get() + Parent.RecursHeadingZ;
         }
     }
@@ -234,7 +240,6 @@ public class Node : Vec3, ICollection<Node>
     public Node(double x, double y, double z = 0) : this(x, y, z, Runes.Col.UIDefault.FG) { }
     // Create a multi from a list of multis
     public Node(params Node[] cs) : this(0, 0, 0, Runes.Col.UIDefault.FG, DrawMode.FULL, cs) { }
-    public Node(Vec pt3d) : this(pt3d.x.Get(), pt3d.y.Get(), pt3d.z.Get()) { }
 
     public Color Col
     {
@@ -417,17 +422,23 @@ public class Node : Vec3, ICollection<Node>
      */
     public void Forward(double amount)
     {
-        Vec newPos = new(this + (IVec)Heading * amount);
-        x.Set(newPos.x);
-        y.Set(newPos.y);
-        z.Set(newPos.z);
+        double newX = x.Get() + Heading.X*amount;
+        double newY = y.Get() + Heading.Y*amount;
+        double newZ = z.Get() + Heading.Z*amount;
+        x.Set(newX);
+        y.Set(newY);
+        z.Set(newZ);
     }
     public void Strafe(double amount)
     {
-        Vec newPos = new(this + (IVec)Heading.YawPitchRotated(-Math.PI / 2, 0) * amount);
-        x.Set(newPos.x);
-        y.Set(newPos.y);
-        z.Set(newPos.z);
+        Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-Math.PI/2, 0, 0);
+        Vector3D<double> rotated = Vector3D.Transform(Heading, rotMat);
+        double newX = x.Get() + rotated.X*amount;
+        double newY = y.Get() + rotated.Y*amount;
+        double newZ = z.Get() + rotated.Z*amount;
+        x.Set(newX);
+        y.Set(newY);
+        z.Set(newZ);
     }
 
     /* Internal state methods */
@@ -500,9 +511,7 @@ public class Node : Vec3, ICollection<Node>
         }
 
         // headings, internalval, tempx, tempy
-        copy.Heading.x.Set(Heading.x);
-        copy.Heading.y.Set(Heading.y);
-        copy.Heading.z.Set(Heading.z);
+        copy.Heading = Heading;
         copy.Val = Val;
 
         return copy;
@@ -702,7 +711,7 @@ public class Node : Vec3, ICollection<Node>
         }
 
         // Get a projection of each constituent point
-        List<double[]> projectedVerts = Paint.Render.Project(this, xOffset+x.Get(), yOffset+y.Get(), zOffset+z.Get());
+        List<double[]> projectedVerts = Paint.Render.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
         List<double[]> clippedVerts = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
         // The vertices are GLSL-ready
         Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
@@ -712,7 +721,7 @@ public class Node : Vec3, ICollection<Node>
         // Draw each constituent recursively
         foreach (Node m in this)
         {
-            m.Render(xOffset+x.Get(), yOffset+y.Get(), zOffset+z.Get());
+            m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
         }
     }
 

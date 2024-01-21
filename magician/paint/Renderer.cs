@@ -149,9 +149,9 @@ public static class Render
         camera ??= Ref.Perspective;
         //Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
         //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
-        double targX = camera.X + camera.Heading.x.Get();
-        double targY = camera.Y + camera.Heading.y.Get();
-        double targZ = camera.Z + camera.Heading.z.Get();
+        double targX = camera.X + camera.Heading.X;
+        double targY = camera.Y + camera.Heading.Y;
+        double targZ = camera.Z + camera.Heading.Z;
 
         // TODO: move these out of the loop
         // Matrix magic

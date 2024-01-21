@@ -6,13 +6,6 @@ using Silk.NET.Maths;
 public class Vec3 : Vec
 {
     public Vec3(double x, double y, double z) : base(x, y, z) { }
-    public Vec3(double[] xyz) : base(xyz)
-    {
-        if (xyz.Length != 3)
-        {
-            throw Scribe.Error($"Cannot store {xyz.Length} values in 3-vector");
-        }
-    }
 
     /* Measured phase */
     public virtual double PhaseXY
@@ -72,13 +65,6 @@ public class Vec3 : Vec
     public double XZDist
     {
         get => Math.Sqrt(x.Get() * x.Get() + z.Get() * z.Get());
-    }
-
-    public Vec3 YawPitchRotated(double yaw, double pitch)
-    {
-        Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, 0);
-        Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(x.Get(), y.Get(), z.Get()), rotMat);
-        return new(rotated.X, rotated.Y, rotated.Z);
     }
 
     public Node Render()
