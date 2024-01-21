@@ -33,17 +33,6 @@ public class NodeMeshed : Node
             List<double[]> culled = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projected, face);
             List<Color> cols = face.Select(i => this[i].Col).ToList();
             Paint.Render.Polygon(culled.ToArray(), drawMode, cols, this);
-            
-            // Old slow rendering method
-            //Node f = new Node().To(x.Get(), y.Get(), z.Get()).Flagged(DrawMode.OUTER);
-            //foreach (int idx in face)
-            //{
-            //    f.Add(this[idx]);
-            //    f.Colored(this[idx].Col);
-            //    // TODO: remove this faux-lighting
-            //    f.Col.L = 1-(((float)idx)/4000);
-            //}
-            //f.Render(xOffset, yOffset, zOffset);
         }
     }
 
