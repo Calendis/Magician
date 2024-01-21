@@ -89,6 +89,7 @@ public class Vec : IVec
 
     public Vec(params double[] vals)
     {
+        //Scribe.Tick();
         if (vals.Length == 0)
             throw Scribe.Error("Cannot create empty Vec");
         for (int i = 0; i < vals.Length; i++)
