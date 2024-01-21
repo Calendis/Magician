@@ -338,14 +338,13 @@ public class Val : IVal
     List<double> IDimensional<double>.Values => vals;
     public Val(params double[] ds)
     {
-        Scribe.Tick();
         if (ds.Length == 0)
             throw Scribe.Error("Cannot create empty num");
         vals = ds.ToList();
+        Scribe.Tick();
     }
     public Val(IVal iv)
     {
-        Scribe.Tick();
         vals = iv.Values.ToList();
     }
 
