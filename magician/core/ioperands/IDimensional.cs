@@ -6,7 +6,13 @@ public interface IDimensional<T>
     public int Dims => Values.Count;
     public List<T> Values { get; }
     public T Get(int i = 0) => Values[i];
-    public void Set(IDimensional<T> other) => Set(other.Values.ToArray());
+    public void Set(IDimensional<T> other)
+    {
+        for (int i = 0; i < other.Values.Count; i++)
+        {
+            Set(i, other.Get(i));
+        }
+    }
     public void Set(params T[] vs)
     {
         Values.Clear();
@@ -15,6 +21,15 @@ public interface IDimensional<T>
     public void Set(IEnumerable<T> vs)
     {
         Set(vs.ToArray());
+    }
+    public void Set(int i, T val)
+    {
+        if (i < Dims)
+            Values[i] = val;
+        else if (val is double d && d != 0)
+            Values.Add(val);
+        else if (val is IVal f && f.Magnitude != 0)
+            Values.Add(val);
     }
     public void Normalize();
     public double Magnitude {get; set;}

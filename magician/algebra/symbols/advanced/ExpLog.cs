@@ -14,7 +14,7 @@ public class ExpLog : Invertable
     }
     public ExpLog(params Oper[] ops) : base("explog", ops) { trivialAssociative = true; }
 
-    //IVal powTow = new Variable(1);
+    IVal powTow = new Variable(1);
     Multivalue solMult;
     IVal[] multOuts;
     IVal[] param2;
@@ -26,7 +26,7 @@ public class ExpLog : Invertable
             return solution;
         }
         solution.Value.Set(posArgs[0].Sol());
-        
+
         if (posArgs.Count == 2)
         {
             Rational? r = null;
@@ -57,7 +57,7 @@ public class ExpLog : Invertable
                         multOuts[k] = new Val(double.NaN);
                     if (param2[k] is null)
                         param2[k] = new Val(double.NaN);
-                    param2[k].Set(0, (a * theta + 2 * k * Math.PI) / b);
+                    param2[k].Set(0d, (a * theta + 2 * k * Math.PI) / b);
                     IVal.Multiply(IVal.Exp(Runes.Numbers.e, param2[k], multOuts[k]), Math.Pow(mag, (double)a / b), multOuts[k]);
                     //Scribe.Info($"Found solution {solution} to {ptBase}^({a}/{b})");
                     solutions.Add(multOuts[k]);
@@ -76,12 +76,14 @@ public class ExpLog : Invertable
             IVal.Exp(posArgs[0].Sol(), posArgs[1].Sol(), solution);
         }
         else if (posArgs.Count > 2)
-            IVal.Exp(posArgs[0].Sol(), new ExpLog(posArgs.Skip(1).ToList(), new List<Oper>{}).Sol(), solution);
-            //IVal.Exp(new ExpLog(new List<Oper> { posArgs[0].Sol(), new ExpLog(posArgs.Skip(1).ToList(), new List<Oper> { }).Sol() }, new List<Oper> { }).Sol(), solution);
+        {
+            powTow.Set(posArgs[^1].Sol());
+            for (int i = 0; i < posArgs.Count - 1; i++) { IVal.Exp(posArgs[^(i + 2)].Sol(), powTow, powTow); }
+            solution.Value.Set(powTow);
+        }
 
         if (negArgs.Count == 0)
         {
-            //solution.Value.Set(powTow);
             return solution;
         }
         else if (negArgs.Count == 1)
@@ -91,7 +93,7 @@ public class ExpLog : Invertable
         }
         else
         {
-            IVal.Log(new ExpLog(new List<Oper> { solution }, negArgs.SkipLast(1).ToList()).Sol(), negArgs[^1].Sol(), solution);
+            for (int i = 0; i < negArgs.Count; i++) { IVal.Log(solution, negArgs[i].Sol(), solution); }
             return solution;
         }
     }

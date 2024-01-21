@@ -1,9 +1,9 @@
 namespace Magician.Tests;
 using Core;
-using Algebra;
-using Algebra.Symbols;
-using Algebra.Symbols.Commonfuncs;
-using static Algebra.Notate;
+using Alg;
+using Alg.Symbols;
+using Alg.Symbols.Commonfuncs;
+using static Alg.Notate;
 using NUnit.Framework;
 
 public class SimpleAlgebraCases
@@ -983,7 +983,7 @@ public class ComplexAndMultivalued
         
         // (1 + 2i) ^ (3 + 4i)
         v = new Variable(1, 2).Pow(new Variable(3, 4)).Sol();
-        //Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
+        Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
         Assert.That(v.Value.EqValue(new Val(0.129009594074467, 0.03392409290517014)));
 
         // (3 - 4i)^2
@@ -1017,7 +1017,7 @@ public class ComplexAndMultivalued
                 Assert.That(rootsOfUnity is Multivalue);
                 Multivalue m = (Multivalue)rootsOfUnity;
                 List<Val> roots = Enumerable.Range(0, n).Select(k =>
-                    new Val(Algebra.Numeric.Trig.Cos(2*Math.PI*k/n), Algebra.Numeric.Trig.Sin(2*Math.PI*k/n))
+                    new Val(Alg.Numeric.Trig.Cos(2*Math.PI*k/n), Alg.Numeric.Trig.Sin(2*Math.PI*k/n))
                 ).ToList();
                 Assert.That(roots, Has.Count.EqualTo(m.All.Length));
                 // compare the kth nth roots of unity to our multivalue

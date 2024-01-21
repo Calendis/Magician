@@ -90,8 +90,8 @@ public interface IVal : IDimensional<double>
 
     public static IVal Add(IVal i, double x, IVal? output = null)
     {
-        double[] newAll = i.Values.ToArray();
-        newAll[0] += x;
+        double newAll = i.Values[0];
+        newAll += x;
         if (output is null)
             return new Val(newAll);
         output.Set(newAll);
@@ -99,8 +99,8 @@ public interface IVal : IDimensional<double>
     }
     public static IVal Subtract(IVal i, double x, IVal? output = null)
     {
-        double[] newAll = i.Values.ToArray();
-        newAll[0] -= x;
+        double newAll = i.Values[0];
+        newAll -= x;
         if (output is null)
             return new Val(newAll);
         output.Set(newAll);
@@ -111,14 +111,14 @@ public interface IVal : IDimensional<double>
     {
         if (output is null)
             return new Val(i.Values.Select(k => k * x).ToArray());
-        output.Set(i.Values.Select(k => k * x));
+        for (int n = 0; n < i.Dims; n++) { output.Set(n, x * output.Get(n)); }
         return output;
     }
     public static IVal Divide(IVal i, double x, IVal? output = null)
     {
         if (output is null)
             return new Val(i.Values.Select(k => k / x).ToArray());
-        output.Set(i.Values.Select(k => k / x));
+        for (int n = 0; n < i.Dims; n++) { output.Set(n, x / output.Get(n)); }
         return output;
     }
 
@@ -139,7 +139,7 @@ public interface IVal : IDimensional<double>
         }
         if (output is null)
             return new Val(i.Values.Zip(v.Values, (a, b) => a + b).ToArray());
-        output.Set(i.Values.Zip(v.Values, (a, b) => a + b));
+        for (int n = 0; n < i.Dims; n++) { output.Set(n, i.Get(n) + v.Get(n)); }
         return output;
     }
     public static IVal Subtract(IVal i, IVal v, IVal? output = null)
@@ -159,7 +159,7 @@ public interface IVal : IDimensional<double>
         }
         if (output is null)
             return new Val(i.Values.Zip(v.Values, (a, b) => a - b).ToArray());
-        output.Set(i.Values.Zip(v.Values, (a, b) => a - b));
+        for (int n = 0; n < i.Dims; n++) { output.Set(n, i.Get(n) - v.Get(n)); }
         return output;
     }
     public static IVal Multiply(IVal i, IVal v, IVal? output = null)
@@ -180,7 +180,9 @@ public interface IVal : IDimensional<double>
             }
         if (output is null)
             return new Val(re, im);
-        output.Set(re, im);
+        //output.Set(re, im);
+        output.Set(0, re);
+        output.Set(1, im);
         return output;
     }
     public static IVal Divide(IVal i, IVal v, IVal? output = null)
@@ -201,7 +203,9 @@ public interface IVal : IDimensional<double>
             }
         if (output is null)
             return new Val(re, im);
-        output.Set(re, im);
+        //output.Set(re, im);
+        output.Set(0, re);
+        output.Set(1, im);
         return output;
     }
 
@@ -217,7 +221,8 @@ public interface IVal : IDimensional<double>
                 double im = Math.Exp(w.Get() * Math.Log(Math.Abs(z.Get()))) * Alg.Numeric.Trig.Sin(Math.PI * w.Get());
                 if (output is null)
                     return new Var(re, im);
-                output.Set(re, im);
+                output.Set(0, re);
+                output.Set(1, im);
                 return output;
             }
             else
@@ -225,7 +230,7 @@ public interface IVal : IDimensional<double>
                 // otherwise, the answer is real
                 if (output is null)
                     return new Val(Math.Pow(z.Get(), w.Get()));
-                output.Set(Math.Pow(z.Get(), w.Get()));
+                output.Set(0, Math.Pow(z.Get(), w.Get()));
                 return output;
             }
         }
@@ -239,7 +244,8 @@ public interface IVal : IDimensional<double>
 
             if (output is null)
                 return new Val(coef * Alg.Numeric.Trig.Cos(b * Math.Log(x)), coef * Alg.Numeric.Trig.Sin(b * Math.Log(x)));
-            output.Set(coef * Alg.Numeric.Trig.Cos(b * Math.Log(x)), coef * Alg.Numeric.Trig.Sin(b * Math.Log(x)));
+            output.Set(0, coef * Alg.Numeric.Trig.Cos(b * Math.Log(x)));
+            output.Set(1, coef * Alg.Numeric.Trig.Sin(b * Math.Log(x)));
             return output;
         }
         // complex base, positive integer exponent
@@ -307,7 +313,7 @@ public interface IVal : IDimensional<double>
         output.Set(Math.Log(z.Magnitude), Math.Atan2(b, a));
         return output;
     }
-    public static IVal Ln(IVal v, IVal? output=null) => Log(v, Runes.Numbers.e, output);
+    public static IVal Ln(IVal v, IVal? output = null) => Log(v, Runes.Numbers.e, output);
     public static IVal Abs(IVal a, IVal? output = null)
     {
         switch (a.Dims)
