@@ -25,6 +25,7 @@ public class Node : Vec3, ICollection<Node>
     // The origin will have a null parent
     Node? parent;
     protected List<Node> constituents;
+    protected Mesh? faces;
     readonly Dictionary<string, Node> constituentTags = new();
     public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
@@ -241,6 +242,11 @@ public class Node : Vec3, ICollection<Node>
     // Create a multi from a list of multis
     public Node(params Node[] cs) : this(0, 0, 0, Runes.Col.UIDefault.FG, DrawMode.FULL, cs) { }
 
+    /* Meshed constructors */
+    public Node(double x, double y, double z, Mesh? mesh = null, Color? col = null, DrawMode dm = DrawMode.FULL, params Node[] points) : this(x, y, z, col, dm, points) { faces = mesh; }
+    public Node(Node m, Mesh mesh) : this(m.x.Get(), m.y.Get(), m.z.Get(), mesh, m.Col, m.DrawFlags, m.Constituents.ToArray()) { }
+    public Node(double x, double y, double z, Mesh mesh, params Node[] points) : this(x, y, z, mesh, null, DrawMode.FULL, points) { }
+
     public Color Col
     {
         get => col;
@@ -422,20 +428,20 @@ public class Node : Vec3, ICollection<Node>
      */
     public void Forward(double amount)
     {
-        double newX = x.Get() + Heading.X*amount;
-        double newY = y.Get() + Heading.Y*amount;
-        double newZ = z.Get() + Heading.Z*amount;
+        double newX = x.Get() + Heading.X * amount;
+        double newY = y.Get() + Heading.Y * amount;
+        double newZ = z.Get() + Heading.Z * amount;
         x.Set(newX);
         y.Set(newY);
         z.Set(newZ);
     }
     public void Strafe(double amount)
     {
-        Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-Math.PI/2, 0, 0);
+        Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-Math.PI / 2, 0, 0);
         Vector3D<double> rotated = Vector3D.Transform(Heading, rotMat);
-        double newX = x.Get() + rotated.X*amount;
-        double newY = y.Get() + rotated.Y*amount;
-        double newZ = z.Get() + rotated.Z*amount;
+        double newX = x.Get() + rotated.X * amount;
+        double newY = y.Get() + rotated.Y * amount;
+        double newZ = z.Get() + rotated.Z * amount;
         x.Set(newX);
         y.Set(newY);
         z.Set(newZ);
@@ -483,6 +489,8 @@ public class Node : Vec3, ICollection<Node>
     public virtual Node Copy()
     {
         Node copy = new Node(x.Get(), y.Get(), col.Copy(), drawMode);
+        if (faces is not null)
+            copy.faces = new Mesh(faces.Faces);
         // Don't copy the texture, or create reference to it!
         //copy.texture = texture;
 
@@ -710,18 +718,31 @@ public class Node : Vec3, ICollection<Node>
             return;
         }
 
-        // Get a projection of each constituent point
-        List<double[]> projectedVerts = Paint.Render.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-        List<double[]> clippedVerts = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
-        // The vertices are GLSL-ready
-        Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
-
-        texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
-
-        // Draw each constituent recursively
-        foreach (Node m in this)
+        if (faces is null)
         {
-            m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            // Get a projection of each constituent point
+            List<double[]> projectedVerts = Paint.Render.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            List<double[]> clippedVerts = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
+            // The vertices are GLSL-ready
+            Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
+
+            texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
+
+            // Draw each constituent recursively
+            foreach (Node m in this)
+            {
+                m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            }
+        }
+        else
+        {
+            foreach (int[] face in faces.Faces)
+            {
+                List<double[]> projected = Paint.Render.Project(face.Select(i => this[i]), xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+                List<double[]> culled = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projected, face);
+                List<Color> cols = face.Select(i => this[i].Col).ToList();
+                Paint.Render.Polygon(culled.ToArray(), drawMode, cols, this);
+            }
         }
     }
 

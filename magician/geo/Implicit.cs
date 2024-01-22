@@ -2,7 +2,7 @@ namespace Magician.Geo;
 using Core.Maps;
 using Magician.Core;
 
-public class Implicit : NodeMeshed, IRelation
+public class Implicit : Node, IRelation
 {
     double[] range;
     double[] resolution;
@@ -16,6 +16,7 @@ public class Implicit : NodeMeshed, IRelation
         resolution = rangeResolutionPairs.Select(t => t.Item2).ToArray();
         CreateMesh();
     }
+    public Implicit(IRelation r, double x, double y, double z, double scale, double reso, params double[] ranges) : this(r, x, y, z, scale, ranges.Select(r => (r, reso)).ToArray()) {}
 
     public IVar Cache => relation.Cache;
 

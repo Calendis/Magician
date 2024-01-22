@@ -5,7 +5,7 @@ using Alg.Symbols;
 using Magician.Geo;
 using Magician.Alg;
 
-public class ImplicitGeometry : Spell
+public class ImplicitGeom : Spell
 {
     public override void PreLoop()
     {
