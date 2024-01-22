@@ -59,7 +59,7 @@ public class EqPlotting : Spell
         // Optionally, reset the variable to an unknown state
         Var("time").Reset();
 
-        Scribe.Flush();
+        //Scribe.Flush();
     }
 
     public override void PreLoop()
