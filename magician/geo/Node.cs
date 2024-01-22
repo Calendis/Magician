@@ -25,11 +25,11 @@ public class Node : Vec3, ICollection<Node>
     // The origin will have a null parent
     Node? parent;
     protected List<Node> constituents;
-    Dictionary<string, Node> constituentTags = new Dictionary<string, Node>();
+    readonly Dictionary<string, Node> constituentTags = new();
     public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
-    public List<RDrawable> drawables = new List<RDrawable>();
+    public List<RDrawable> drawables = new();
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
     List<Driver> drivers = new();
 
