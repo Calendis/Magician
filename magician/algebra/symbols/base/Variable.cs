@@ -135,9 +135,7 @@ public class Variable : Invertable, IVar
 
     public override Variable Sol()
     {
-        return Copy();
-        // TODO: test this
-        //return this;
+        return this;
     }
 
     public override Oper Degree(Oper v)
