@@ -10,7 +10,7 @@ public class Mesh
             Scribe.Error($"Indivisible Mesh! {idcs.Length} is not divisible by {spacing}");
         if (idcs.Length / spacing < 3)
             Scribe.Error($"Not enough points in mesh! Need {3 * spacing - idcs.Length} more");
-        
+
         faces = new();
         List<int> currentFace = new();
         for (int i = 0; i < idcs.Length; i++)
@@ -65,5 +65,5 @@ public class Mesh
         }
         return new(faces);
     }
-    public static Mesh Rect(int w, int h) => Square(w, w*h);
+    //public static Mesh Square(int w, int h) => Square(w, w * h);
 }
