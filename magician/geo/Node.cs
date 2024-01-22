@@ -279,7 +279,7 @@ public class Node : Vec3, ICollection<Node>
         col = c;
         foreach (Node cst in Constituents)
         {
-            //cst.col = c;
+            cst.col = c;
         }
         return this;
     }
