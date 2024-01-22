@@ -341,7 +341,7 @@ public class Val : IVal
         if (ds.Length == 0)
             throw Scribe.Error("Cannot create empty num");
         vals = ds.ToList();
-        Scribe.Tick();
+        //Scribe.Tick();
     }
     public Val(IVal iv)
     {

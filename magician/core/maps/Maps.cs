@@ -115,6 +115,7 @@ public class Relational : IRelation
 
             //Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
             Node point = new(x, y, z);
+            //Scribe.Tick();
             point.Colored(new HSLA(hue, sat, ligh, 255));
             plot.Add(point);
         }
@@ -124,6 +125,7 @@ public class Relational : IRelation
         if (threeD)
         {
             NodeMeshed plot3d = new(plot, Mesh.Square((int)solveSpace.AxisLen(0), (int)solveSpace.Max));
+            //Scribe.Tick();
             //plot3d.SetFaces(faces);
             return plot3d.Flagged(DrawMode.INNER);
         }
