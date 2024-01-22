@@ -36,6 +36,7 @@ class MagicianSDL
         Renderer.GL.Enable(GLEnum.DepthTest);
         Renderer.Display = true;
         Renderer.Render = true;
+        //Renderer.SDL.SwapInterval(0);
 
         // Generate shaders
         // TODO: move this
