@@ -17,44 +17,19 @@ public class EqPlotting : Spell
     {
         Paint.Renderer.Clear();
 
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w])
-        {
-            Ref.Perspective.Forward(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a])
-        {
-            Ref.Perspective.Strafe(-walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s])
-        {
-            Ref.Perspective.Forward(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d])
-        {
-            Ref.Perspective.Strafe(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j])
-        {
-            Ref.Perspective.RotatedY(0.05);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l])
-        {
-            Ref.Perspective.RotatedY(-0.05);
-        }
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w]){Ref.Perspective.Forward(-walkSpeed);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a]){Ref.Perspective.Strafe(-walkSpeed);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s]){Ref.Perspective.Forward(walkSpeed);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d]){Ref.Perspective.Strafe(walkSpeed);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j]){Ref.Perspective.RotatedY(0.05);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l]){Ref.Perspective.RotatedY(-0.05);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE]){Ref.Perspective.y.Incr(walkSpeed);}
+        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT]){Ref.Perspective.y.Incr(-walkSpeed);}
 
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE])
-        {
-            Ref.Perspective.y.Incr(walkSpeed);
-        }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT])
-        {
-            Ref.Perspective.y.Incr(-walkSpeed);
-        }
-
-        Var("time").Set(0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 3) + 0.1);
+        Var("time").Set(0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 2) + 0.5);
         Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
-            (Var("x"), new(AxisSpecifier.X, new(-300, 300, 20))),
-            (Var("z"), new(AxisSpecifier.Z, new(-300, 300, 20)))
+            (Var("x"), new(AxisSpecifier.X, new(-200, 200, 20))),
+            (Var("z"), new(AxisSpecifier.Z, new(-200, 200, 20)))
         );
         // Optionally, reset the variable to an unknown state
         Var("time").Reset();
@@ -79,8 +54,13 @@ public class EqPlotting : Spell
         plotTest3d = new(
         new SumDiff(new ExpLog(new List<Oper>{Var("x"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("z"), Val(2)}, new List<Oper>{})),
             Fulcrum.EQUALS,
-            new Fraction(Var("time"), Val(0.00000135)).Plus(Val(30000))
+            new Fraction(Var("time").Divide(Val(4)), Val(0.00000135)).Plus(Val(68000))
         );
+        //plotTest3d = new(
+        //    new SumDiff(),
+        //    Fulcrum.EQUALS,
+        //    new Fraction()
+        //);
         spt3d = plotTest3d.Solved(Var("y"));
         //Scribe.Info(spt3d.Evaluate(300, 300));
     }
