@@ -55,9 +55,9 @@ internal class RPoints : RDrawable
 
     public override void Draw()
     {
-        uint vao = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
         Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Points, 0, (uint)vertices!.Length);
-        Shaders.Post(vao);
+        Shaders.Post(vao, vbo);
     }
 }
 
@@ -112,9 +112,9 @@ internal class RLines : RDrawable
 
     public override unsafe void Draw()
     {
-        uint vao = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
         Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Lines, 0, (uint)vertices!.Length);
-        Shaders.Post(vao);
+        Shaders.Post(vao, vbo);
     }
 }
 
@@ -180,8 +180,8 @@ internal class RTriangles : RDrawable
 
     public override unsafe void Draw()
     {
-        uint vao = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[]{posLength, colLength});
         Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vertices!.Length);
-        Shaders.Post(vao);
+        Shaders.Post(vao, vbo);
     }
 }
