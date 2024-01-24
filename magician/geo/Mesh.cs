@@ -4,29 +4,31 @@ public class Mesh
 {
     List<int[]> faces;
     public List<int[]> Faces => faces;
-    public Mesh(int spacing, params int[] idcs)
+    
+    public Mesh(List<int[]> fs)
     {
-        if (idcs.Length % spacing != 0)
-            Scribe.Error($"Indivisible Mesh! {idcs.Length} is not divisible by {spacing}");
-        if (idcs.Length / spacing < 3)
-            Scribe.Error($"Not enough points in mesh! Need {3 * spacing - idcs.Length} more");
+        faces = new();
+        faces.AddRange(fs);
+    }
+    // Create a mesh from a flat list of indices, and the num of points per face
+    public Mesh(int pointsPerFace, params int[] idcs)
+    {
+        if (idcs.Length % pointsPerFace != 0)
+            Scribe.Error($"Indivisible Mesh! {idcs.Length} is not divisible by {pointsPerFace}");
+        if (idcs.Length / pointsPerFace < 3)
+            Scribe.Error($"Not enough points in mesh! Need {3 * pointsPerFace - idcs.Length} more");
 
         faces = new();
         List<int> currentFace = new();
         for (int i = 0; i < idcs.Length; i++)
         {
             currentFace.Add(idcs[i]);
-            if (i % spacing == spacing - 1)
+            if (i % pointsPerFace == pointsPerFace - 1)
             {
                 faces.Add(currentFace.ToArray());
                 currentFace = new List<int>();
             }
         }
-    }
-    public Mesh(List<int[]> fs)
-    {
-        faces = new();
-        faces.AddRange(fs);
     }
 
     public readonly static Mesh Cubic = new(4,
@@ -43,7 +45,7 @@ public class Mesh
             1, 2, 3,
             0, 2, 3
     );
-    public static Mesh Square(int w, int area)
+    public static Mesh Square(int w, int area, int offset=0)
     {
         List<int[]> faces = new();
         for (int n = 0; n < area; n++)
@@ -60,7 +62,7 @@ public class Mesh
             }
             if (!edgeCol && !edgeRow && n + w + 1 < area)
             {
-                faces.Add(new int[] { w + n + 1, w + n, n, n + 1 });
+                faces.Add(new int[] { w + n + 1 + offset, w + n + offset, n + offset, n + 1 + offset });
             }
         }
         return new(faces);
