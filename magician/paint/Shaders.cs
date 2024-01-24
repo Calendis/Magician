@@ -65,7 +65,7 @@ public static class Shaders
     }
 
     // Common code called before gl.DrawArrays
-    internal static unsafe uint Prepare(float[] vs, int[] dataLens)
+    internal static unsafe (uint, uint) Prepare(float[] vs, int[] dataLens)
     {
         Scribe.WarnIf(dataLens.Length < 2, "incomplete data in PrepareDraw");
         Scribe.WarnIf(dataLens.Length > 2, "unsupported data in PrepareDraw");  // TODO: support more shader data!
@@ -92,15 +92,16 @@ public static class Shaders
         Renderer.GL.EnableVertexAttribArray(1);
         Renderer.GL.EnableVertexAttribArray(0);
         //gl.BindFragDataLocation()
-        return vao;
+        return (vao, vbo);
     }
 
-    internal static void Post(uint vao)
+    internal static void Post(uint vao, uint vbo)
     {
         // End stuff
         Renderer.GL.DeleteVertexArray(vao);
         Renderer.GL.BindVertexArray(0);
         Renderer.GL.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ArrayBuffer, 0);
         Renderer.GL.BindBuffer(Silk.NET.OpenGL.BufferTargetARB.ElementArrayBuffer, 0);
+        Renderer.GL.DeleteBuffer(vbo);
     }
 }
