@@ -63,10 +63,10 @@ class MagicianSDL
 
         while (!done)
         {
-            Spellbook.Animate(frames * timeResolution);
+            Animate(frames * timeResolution);
 
             // Event handling
-            while (SDL_PollEvent(out SDL_Event sdlEvent) != 0 ? true : false)
+            while (SDL_PollEvent(out SDL_Event sdlEvent) != 0)
             {
                 Interactive.Events.Process(sdlEvent);
                 switch (sdlEvent.type)
@@ -112,17 +112,6 @@ class MagicianSDL
 
             // SAVE FRAME TO IMAGE
             //if (Renderer.RControl.saveFrame && frames != stopFrame)
-            if (frames == 20)
-            {
-                float[] pixels = new float[(int)(Runes.Globals.winWidth * Runes.Globals.winHeight)];
-                unsafe
-                {
-                    Scribe.Info(Runes.Globals.winWidth * Runes.Globals.winHeight);
-
-                    //RGlobals.gl.ReadPixels(0, 0, (uint)Data.Globals.winWidth, (uint)Data.Globals.winHeight, GLEnum.Rgb, GLEnum.Float, &pixels);
-                    //Scribe.Info<float>(pixels);
-                }
-            }
         }
         if (Renderer.Display)
         {
