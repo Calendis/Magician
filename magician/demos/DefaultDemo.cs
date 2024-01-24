@@ -37,7 +37,7 @@ public class DefaultSpell : Spell
         () =>
         {
             Scribe.Info("Switching Spells...");
-            Spellbook.Prepare(new Demos.Tests.EqPlotting());
+            Spellbook.Prepare(new Demos.Tests.ImplicitGeom());
             Spellbook.Cast();
         }
 
