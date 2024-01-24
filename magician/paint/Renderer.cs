@@ -57,7 +57,7 @@ public static class Render
                     cols[i].R, cols[i].G, cols[i].B, cols[i].A);
             }
             rPoints = new(rPointArray);
-            cache?.drawables.Add(rPoints);
+            //cache?.drawables.Add(rPoints);
             Renderer.Drawables.Add(rPoints);
         }
 
@@ -93,7 +93,7 @@ public static class Render
                 rLineArray[^1] = new RLine(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
             }
             rLines = new(rLineArray);
-            cache?.drawables.Add(rLines);
+            //cache?.drawables.Add(rLines);
             Renderer.Drawables.Add(rLines);
         }
 
@@ -132,7 +132,7 @@ public static class Render
             }
 
             rTris = new RTriangles(rTriArray);
-            cache?.drawables.Add(rTris);
+            //cache?.drawables.Add(rTris);
             Renderer.Drawables.Add(rTris);
         }
     }
