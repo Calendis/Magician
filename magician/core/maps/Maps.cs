@@ -75,8 +75,8 @@ public class Relational : IRelation
         do
         {
             // Get arguments from the counter
-            double[] inVals = new double[Ins];
             IVal outVal;
+            double[] inVals = new double[Ins];
             for (int i = 0; i < Ins; i++)
             {
                 inVals[i] = solveSpace.Get(i);
@@ -106,7 +106,7 @@ public class Relational : IRelation
             double ligh = 1;
 
             //hue = 4 * solveSpace.Positional[1] / solveSpace.AxisLen(1) - solveSpace.Positional[0] / solveSpace.AxisLen(0);
-            hue = Math.Abs(y) / 100;
+            hue = Math.Abs(y) / 1000;
             if (double.IsNaN(y) || double.IsInfinity(y))
             {
                 hue = 0;
@@ -116,6 +116,7 @@ public class Relational : IRelation
             //Multi point = new(argsByAxis[0], argsByAxis[1], argsByAxis[2]);
             Node point = new(x, y, z);
             //Scribe.Tick();
+            //point.Colored(new HSLA(hue, sat, ligh, 255));
             point.Colored(new HSLA(hue, sat, ligh, 255));
             plot.Add(point);
         }
