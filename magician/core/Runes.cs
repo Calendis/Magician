@@ -40,7 +40,7 @@ public static class Numbers
         }
         for (int i = 0; i < circleDivisions; i++)
         {
-            unitCircle[i] = new Core.Val(Alg.Numeric.Trig.Cos(2*Math.PI/i), Alg.Numeric.Trig.Sin(2*Math.PI/i));
+            unitCircle[i] = new Core.Val(Alg.Numeric.Trig.Cos(2 * Math.PI / i), Alg.Numeric.Trig.Sin(2 * Math.PI / i));
         }
     }
     public static Core.IVal Get(int i)
@@ -57,7 +57,7 @@ public static class Numbers
 
 public static class Col
 {
-    public static Palette UITurquoise = new Palette(
+    public readonly static Palette UITurquoise = new(
         new RGBA(0x000d0dff),
         new RGBA(0x002626ff),
         new RGBA(0x005151ff),
@@ -65,7 +65,7 @@ public static class Col
         new RGBA(0xffffffff)
     );
 
-    public static Palette UIBlue = new Palette(
+    public readonly static Palette UIBlue = new(
         new RGBA(0x000000ff),
         new RGBA(0x000c27ff),
         new RGBA(0x00174bff),
@@ -73,7 +73,7 @@ public static class Col
         new RGBA(0xffffffff)
     );
 
-    public static Palette UIRed = new Palette(
+    public readonly static Palette UIRed = new(
         new RGBA(0x300e17ff),
         new RGBA(0x5e0018ff),
         new RGBA(0x861431ff),
@@ -81,7 +81,7 @@ public static class Col
         new RGBA(0xffffffff)
     );
 
-    public static Palette UIGreen = new Palette(
+    public readonly static Palette UIGreen = new(
         new RGBA(0x000c00ff),
         new RGBA(0x004d00ff),
         new RGBA(0x007100ff),
@@ -89,4 +89,12 @@ public static class Col
         new RGBA(0xffffffff)
     );
     public static Palette UIDefault = UITurquoise;
+
+    public static Palette PurpleJan21 = new(
+        new RGBA(0xDC78E5FF),
+        new RGBA(0xBA65C2FF),
+        new RGBA(0x935099FF),
+        new RGBA(0x6C3A70FF),
+        new RGBA(0x452547FF)
+    );
 }
