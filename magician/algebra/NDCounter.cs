@@ -24,7 +24,9 @@ public class NDCounter
     {
         Dims = ranges.Length;
         ress = new double[Dims];
-        mins = new double[Dims]; maxs = new double[Dims]; vals = new int[Dims];
+        mins = new double[Dims];
+        maxs = new double[Dims];
+        vals = new int[Dims];
 
         int i = 0;
         foreach (Range t in ranges)
@@ -35,6 +37,22 @@ public class NDCounter
             ress[i] = t.Res;
             counterMax *= (maxs[i] - mins[i]) / ress[i];
             i++;
+        }
+        counterMax = (int)counterMax;
+    }
+
+    public NDCounter((double, double)[] ranges, double[] resos)
+    {
+        if (ranges.Length != resos.Length)
+            throw Scribe.Error($"Number of ranges and resolutions must be equal, but got {ranges.Length} ranges and {resos.Length} resolutions");
+        Dims = ranges.Length;
+        ress = resos.ToArray();
+        mins = ranges.Select(r => r.Item1).ToArray();
+        maxs = ranges.Select(r => r.Item2).ToArray();
+        vals = new int[Dims];
+        for (int i = 0; i < Dims; i++)
+        {
+            counterMax *= (maxs[i] - mins[i]) / ress[i];
         }
         counterMax = (int)counterMax;
     }
