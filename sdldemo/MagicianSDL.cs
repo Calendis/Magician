@@ -4,6 +4,7 @@ using Core.Caster;
 using static Core.Caster.Spellbook;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
+using Silk.NET.Maths;
 
 class MagicianSDL
 {
@@ -79,6 +80,7 @@ class MagicianSDL
                             case SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED:
                                 Runes.Globals.winWidth = windowEvent.data1;
                                 Runes.Globals.winHeight = windowEvent.data2;
+                                Renderer.GL.Viewport(new Vector2D<int>((int)Runes.Globals.winWidth, (int)Runes.Globals.winHeight));
                                 //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
                                 break;
                         }
