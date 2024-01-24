@@ -231,6 +231,7 @@ public interface IVal : IDimensional<double>
                 if (output is null)
                     return new Val(Math.Pow(z.Get(), w.Get()));
                 output.Set(0, Math.Pow(z.Get(), w.Get()));
+                output.Set(1, 0);
                 return output;
             }
         }
