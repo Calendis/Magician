@@ -70,7 +70,7 @@ public class Implicit : Node, IRelation
         // consist of multiple disjoint sections, we need to sort them into separate mesh groups
         do
         {
-            double[] inVals = new double[Math.Min(2,Ins)];
+            double[] inVals = new double[Math.Min(2, Ins)];
             //for (int i = 0; i < Ins; i++)
             for (int i = 0; i < range.Length; i++)
             {
@@ -176,10 +176,13 @@ public class Implicit : Node, IRelation
                 {
                     double colX = outVal.Get();
                     double colY = outVal.Dims < 2 ? 0 : outVal.Get(1);
-                    colX /= 100;
-                    colY /= 100;
+
+                    colX /= Math.Pow(range[axes[2]].Item2, 1.2);
+                    colY /= Math.Pow(range[axes[2]].Item2, 1.2);
+                    colX /= Math.Pow(resolution[axes[2]], 1.2);
+                    colY /= Math.Pow(resolution[axes[2]], 1.2);
                     double theta = outVal.Trim().Dims == 1 ? colX : Math.Atan2(colY, colX); ;
-                    
+
                     if (double.IsNaN(theta) || !double.IsFinite(theta))
                         theta = outVal.Magnitude;
                     hsla[0] = theta;
