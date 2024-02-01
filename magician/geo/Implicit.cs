@@ -11,7 +11,7 @@ public class Implicit : Node, IRelation
     protected (double, double)[] range;
     protected double[] resolution;
     protected IRelation relation;
-    public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : base(x, y, z)
+    public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, int domain = 2, Sampling? sampling = null, params (double, double, double)[] rangeResos) : base(x, y, z)
     {
         relation = r;
         if (rangeResos.Length != Ins)
@@ -19,11 +19,11 @@ public class Implicit : Node, IRelation
         range = rangeResos.Select(t => (t.Item1, t.Item2)).ToArray();
         resolution = rangeResos.Select(t => t.Item3).ToArray();
         // For easier control over this, you may use a Symbolic
-        GenNodesAndMesh(inScale, outScale, 1, -1, defaultAxes);
+        GenNodesAndMesh(inScale, outScale, domain, -1, defaultAxes, sampling);
     }
-    public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, double reso, params (double, double)[] ranges) : this(r, x, y, z, inScale, outScale, ranges.Select(r => (r.Item1, r.Item2, reso)).ToArray()) { }
+    public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, double reso, int domain = 2, params (double, double)[] ranges) : this(r, x, y, z, inScale, outScale, domain, null, ranges.Select(r => (r.Item1, r.Item2, reso)).ToArray()) { }
 
-    public IVar Cache => relation.Cache;
+    public IVal Cache => relation.Cache;
 
     public int Ins => relation.Ins;
 
@@ -31,10 +31,12 @@ public class Implicit : Node, IRelation
     // maxOuts=1 will only generate real solutions
     // maxOuts=2 will include complex solutions
     // maxouts>2 allows for additional non-arithmetic data to be passed to the generator
-    public void GenNodesAndMesh(double inScale, double outScale, int maxOuts, int maxSolutions, int[] axes, Func<double[], Color>? colGen = null)
+    public void GenNodesAndMesh(double inScale, double outScale, int maxOuts, int maxSolutions, int[] axes, Sampling? sampling=null, Func<double[], Color>? colGen = null)
     {
         NDCounter solveSpace = new(range, resolution);
         List<(Mesh.Region, double[], IVal)> flatRegArgs = new();
+        Mesh.Region last = Mesh.Region.BORDER;
+        double lastRow = 0;
 
         // Get all the values out of the function. Because the function may be multivalued, have holes, or 
         // consist of multiple disjoint sections, we need to sort them into separate mesh groups
@@ -46,26 +48,26 @@ public class Implicit : Node, IRelation
                 inVals[i] = solveSpace.Get(i);
             }
             IVal outVal = EvalCopy(inVals);
-        
-            if (outVal.Trim().Dims > maxOuts || double.IsNaN(outVal.Magnitude) || double.IsInfinity(outVal.Magnitude))
+
+            if (sampling is not null)
+            {
+                IVal tr = sampling.Evaluate(inVals[0]/(range[0].Item2-range[0].Item1), inVals[1]);
+                if (tr.Dims < 2)
+                    tr.Push(0);
+                inVals = tr.Values.ToArray();
+                outVal = EvalCopy(inVals);
+            }
+
+            if (outVal.Trim().Dims > maxOuts && outVal.Dims > 1 && Math.Abs(outVal.Get(1)) < 0.001)
+                outVal.Set(1, 0);
+                
+            if ((outVal.Trim().Dims > maxOuts) || double.IsNaN(outVal.Magnitude) || double.IsInfinity(outVal.Magnitude))
                 flatRegArgs.Add((Mesh.Region.BORDER, inVals, outVal));
             else
                 flatRegArgs.Add((Mesh.Region.UNEXPLORED, inVals, outVal));
+            last = flatRegArgs[^1].Item1;
+            lastRow = inVals[1];
         } while (!solveSpace.Increment());
-        //while (!solveSpace.Increment())
-        //{
-        //    double[] inVals = new double[Ins];
-        //    for (int i = 0; i < Ins; i++)
-        //    {
-        //        inVals[i] = solveSpace.Get(i);
-        //    }
-        //    IVal outVal = EvalCopy(inVals);
-        //
-        //    if (outVal.Trim().Dims > maxOuts || double.IsNaN(outVal.Magnitude) || double.IsInfinity(outVal.Magnitude))
-        //        flatRegArgs.Add((Mesh.Region.BORDER, inVals, outVal));
-        //    else
-        //        flatRegArgs.Add((Mesh.Region.UNEXPLORED, inVals, outVal));
-        //}
 
         int width = (int)((range[0].Item2 - range[0].Item1) / resolution[0]);
         // Use flood fill to divide the world into regions
@@ -75,8 +77,8 @@ public class Implicit : Node, IRelation
         for (int i = 0; i < flatRegions.Count; i++)
             flatRegArgs[i] = (flatRegions[i], flatRegArgs[i].Item2, flatRegArgs[i].Item3);
         // Format the data rectangularly
-        (Mesh.Region, double[], IVal)[,] regionsArgs = new (Mesh.Region, double[], IVal)[flatRegions.Count/width, width];
-        Mesh.Region[,] regions = new Mesh.Region[flatRegions.Count/width, width];
+        (Mesh.Region, double[], IVal)[,] regionsArgs = new (Mesh.Region, double[], IVal)[flatRegions.Count / width, width];
+        Mesh.Region[,] regions = new Mesh.Region[flatRegions.Count / width, width];
         for (int i = 0; i < flatRegions.Count / width; i++)
             for (int j = 0; j < width; j++)
             {
@@ -85,10 +87,10 @@ public class Implicit : Node, IRelation
             }
 
         List<Mesh> branchMeshes = new();
-        List<List<(double[], IVal)>> preMeshes = new(); 
+        List<List<(double[], IVal)>> preMeshes = new();
         List<List<(int, int)>> branchIdcs = new();
         // Create pre-meshes to account for multiple solutions
-        for (int i = 0; i < flatRegions.Count/width; i++)
+        for (int i = 0; i < flatRegions.Count / width; i++)
         {
             for (int j = 0; j < width; j++)
             {
@@ -132,8 +134,7 @@ public class Implicit : Node, IRelation
                 // Default colouring
                 if (true || colourData.Count == 0)
                 {
-                    double theta = outVal.Trim().Dims == 1 ? outVal.Get() < 0 ? Math.PI : 0 : Math.Atan2(outVal.Get(1), outVal.Get());
-                    theta = outVal.Magnitude;
+                    double theta = outVal.Trim().Dims == 1 ? outVal.Magnitude : Math.Atan2(outVal.Get(1), outVal.Get()); ;
                     if (double.IsNaN(theta) || !double.IsFinite(theta))
                         theta = outVal.Trim().Dims == 1 ? outVal.Get() < 0 ? Math.PI : 0 : Math.Atan2(outVal.Get(1), outVal.Get());
                     hsla[0] = theta;
@@ -167,14 +168,14 @@ public class Implicit : Node, IRelation
     }
 }
 
-public class Symbolic : Implicit
-{
-    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : base(o, x, y, z, inScale, outScale, rangeResos)
-    {
-        Scribe.Info($"relation is Oper? {relation is Oper}");
-    }
-    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, double reso, params (double, double)[] ranges) : base(o, x, y, z, inScale, outScale, reso, ranges)
-    {
-        Scribe.Info($"relation is Oper? {relation is Oper} (ctor 2)");
-    }
-}
+//public class Symbolic : Implicit
+//{
+//    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : base(o, x, y, z, inScale, outScale, rangeResos)
+//    {
+//        Scribe.Info($"relation is Oper? {relation is Oper}");
+//    }
+//    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, double reso, params (double, double)[] ranges) : base(o, x, y, z, inScale, outScale, reso, ranges)
+//    {
+//        Scribe.Info($"relation is Oper? {relation is Oper} (ctor 2)");
+//    }
+//}
