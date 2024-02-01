@@ -49,6 +49,9 @@ public class EqPlotting : Spell
 
         spt3d = plotTest3d.Solved(Var("y"));
         Var("time").Set(1);
+        Oper o2 = Val(25).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
+
         Origin["pt3d"] = new Implicit(spt3d, 0, 0, 0, 1, 200, 2, (-19, 20, 1), (-19, 20, 1)).Flagged(DrawMode.INNER);
+        Origin["mySphere"] = new Implicit(o2, 500, 1250, 2000, 160, 160, 1, Sampling.Spiral, (-5, 5, 0.2), (-5, 5, 0.2)).Flagged(DrawMode.OUTER);
     }
 }
