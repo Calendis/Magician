@@ -12,11 +12,9 @@ public class MapPlotting : Spell
     double walkSpeed = 4;
     public override void PreLoop()
     {
-        Origin["plot1"] = new Parametric(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5))
-            .Plot(new(0, 20 * Math.PI, 0.5), HSLA.RandomVisible(), -300);
-
-        Origin["plot2"] = new Parametric(t => 60 * Math.Sin(t / 4), t => t+150)
-            .Plot(new(0, 20 * Math.PI, 0.5), HSLA.RandomVisible(), 10);
+        Origin["plot1"] = new Implicit(new Parametric(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5)), 0, 0, -200, 20, 5, (-10d, 10d, 0.2)).Flagged(DrawMode.PLOT);
+        Origin["plot2"] = new Implicit(new Parametric(t => 60 * Math.Sin(t / 4), t => t+150), 0, 0, 0, 20, 5, (0d, 20*Math.PI, 0.5)).Flagged(DrawMode.PLOT);
+            
         
         Equation twoDEqZ = new(
             Var("y"),
@@ -28,36 +26,26 @@ public class MapPlotting : Spell
             Fulcrum.EQUALS,
             Var("x")
         );
-        Origin["paraZ"] = twoDEqZ.Solved().Plot(AxisSpecifier.Y,
-            (Var("z"),new (AxisSpecifier.Z, new(-80, 80, 4)))
-        );
-        Origin["linX"] = twoDEqX.Solved().Plot(AxisSpecifier.Y,
-            (Var("x"), new (AxisSpecifier.X, new(-80, 80, 4)))
-        );
+        Origin["paraZ"] = new Implicit(twoDEqZ.Solved(), 0, 0, 200, 3, 3, (-80, 80, 4)).Flagged(DrawMode.PLOT);
+        Origin["linX"] = new Implicit(twoDEqX.Solved(), 0, 9, 400, 1, 1, (-80, 80, 4)).Flagged(DrawMode.PLOT);
+        
 
         Relational ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
-        Origin["plot3"] = ipm.Plot(
-            new PlotOptions(AxisSpecifier.X, new(-250, 250, 20)),
-            new(AxisSpecifier.Z, new(-250, 250, 20))
-        ).To(0, 0, 600);
+        Origin["plot3"] = new Implicit(ipm, 0, 0, 600, 2, 2, (-250, 250, 20), (-250, 250, 20));
 
         Equation ipmCompare = new(
             Var("y"),
             Fulcrum.EQUALS,
             new Fraction(Val(-600000),
                 new SumDiff(
-                    new Fraction(new SumDiff(Var("x"), Val(600)), Val(1), new SumDiff(Var("x"), Val(600))),
+                    Var("x").Pow(Val(2)),
                     Val(0),
-                    new Fraction(new SumDiff(Var("z"), Val(600)), Val(1), new SumDiff(Var("z"), Val(600)))
+                    Var("z").Pow(Val(2))
                 )
             )
         );
-
         SolvedEquation s = ipmCompare.Solved();
-        Origin["plot4b"] = s.Plot(AxisSpecifier.Y,
-            (Var("x"), new(AxisSpecifier.X, new(-250+600, 250+600, 20))),
-            (Var("z"), new(AxisSpecifier.Z, new(-250+600, 250+600, 20)))
-        );
+        Origin["plot4"] = new Implicit(s, 0, 0, 1800, 2, 2, (-250, 250, 20), (-250, 250, 20));
     }
 
     public override void Loop()

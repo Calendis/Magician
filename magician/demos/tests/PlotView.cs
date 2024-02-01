@@ -26,42 +26,29 @@ public class EqPlotting : Spell
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE]){Ref.Perspective.y.Incr(walkSpeed);}
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT]){Ref.Perspective.y.Incr(-walkSpeed);}
 
-        Var("time").Set(0.2 * Math.Sin(Time / 3)*Math.Sin(Time / 2) + 0.5);
-        Origin["pt3d"] = spt3d.Plot(AxisSpecifier.Y,
-            (Var("x"), new(AxisSpecifier.X, new(-200, 200, 20))),
-            (Var("z"), new(AxisSpecifier.Z, new(-200, 200, 20)))
-        );
-        // Optionally, reset the variable to an unknown state
-        Var("time").Reset();
+        Var("time").Set(2.8 * Math.Sin(Time / 3)*Math.Sin(Time / 2) + 0.5);
+        ((Implicit)Origin["pt3d"]).Refresh();
 
         //Scribe.Flush();
     }
 
     public override void PreLoop()
     {
-        Equation plotTest3d = new(
+        plotTest3d = new(
             new Fraction(
                 Var("y"),
                 Var("time")),
             Fulcrum.EQUALS,
             new Fraction(
                 new SumDiff(
-                    new Fraction(Var("x"), Val(230), Var("x")),
-                    new Fraction(Var("z"), Val(230), Var("z"))
+                    new Fraction(Var("x"), Val(1), Var("x")),
+                    new Fraction(Var("z"), Val(1), Var("z"))
                 )
             )
         );
-        plotTest3d = new(
-        new SumDiff(new ExpLog(new List<Oper>{Var("x"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{}), Val(0), new ExpLog(new List<Oper>{Var("z"), Val(2)}, new List<Oper>{})),
-            Fulcrum.EQUALS,
-            new Fraction(Var("time").Divide(Val(4)), Val(0.00000135)).Plus(Val(68000))
-        );
-        //plotTest3d = new(
-        //    new SumDiff(),
-        //    Fulcrum.EQUALS,
-        //    new Fraction()
-        //);
+
         spt3d = plotTest3d.Solved(Var("y"));
-        //Scribe.Info(spt3d.Evaluate(300, 300));
+        Var("time").Set(1);
+        Origin["pt3d"] = new Implicit(spt3d, 0, 0, 0, 1, 200, 2, (-19, 20, 1), (-19, 20, 1)).Flagged(DrawMode.INNER);
     }
 }
