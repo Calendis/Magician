@@ -15,13 +15,15 @@ public class ImplicitGeom : Spell
 
         // Expressions we want to render
         //Oper o1 = Var("x").Plus(Var("z").Pow(Val(2))).Root(Val(2));
-        Oper o2 = Val(36).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
+        Oper o2 = Val(25).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
         // Create geometry from expressions
         //Geo.Implicit geo1 = new(o1, -100, -200, 0, 30, 30, (-7, 7, 0.5), (-7, 7, 0.5));
-        Geo.Implicit geo2 = new(o2, 0, 0, 600, 160, 160, (-6, 6.25, 0.25), (-6, 6.25, 0.25));
+        Geo.Implicit geo2 = new(o2, -900, 0, 600, 160, 160, 1, Sampling.Spiral, (-5, 5, 0.25), (-5, 5, 0.25));
+        Geo.Implicit geo3 = new(o2, 900, 0, 600, 160, 160, 1, null, (-5, 5, 0.25), (-5, 5, 0.25));
         // Add our geometry to the scene
         //Origin["myGeo1"] = geo1.Flagged(DrawMode.OUTER);
         Origin["myGeo2"] = geo2.Flagged(DrawMode.OUTER);
+        Origin["myGeo3"] = geo3.Flagged(DrawMode.OUTER);
 
     }
     public override void Loop()
