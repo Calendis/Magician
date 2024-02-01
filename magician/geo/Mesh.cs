@@ -1,8 +1,9 @@
 namespace Magician.Geo;
 
+// TODO make Mesh a struct
 public class Mesh
 {
-    List<int[]> faces;
+    readonly List<int[]> faces;
     public List<int[]> Faces => faces;
 
     public Mesh(List<int[]> fs)
