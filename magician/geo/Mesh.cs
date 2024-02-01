@@ -4,7 +4,7 @@ public class Mesh
 {
     List<int[]> faces;
     public List<int[]> Faces => faces;
-    
+
     public Mesh(List<int[]> fs)
     {
         faces = new();
@@ -45,27 +45,93 @@ public class Mesh
             1, 2, 3,
             0, 2, 3
     );
-    public static Mesh Square(int w, int area, int offset=0)
+    // Jagged rectangular sequential meshing
+    // TODO: cannot use single iteration variable because the modulus falls out of sync with multiple widths
+    public static Mesh Jagged(List<(int, int)> idcs, Region[,] map, int offset = 0)
+    {
+        List<int[]> faces = new();
+        int height = map.GetLength(0);
+        int width = map.GetLength(1);
+        foreach ((int y, int x) idx in idcs)
+        {
+            // detect edges
+            if (idx.x >= width - 1)
+                continue;
+            if (idx.y >= height - 1)
+                continue;
+
+            // mesh if local region matches nearby
+            Region local = map[idx.y, idx.x];
+            if (local == Region.BORDER)
+                continue;
+            Region east =      map[idx.y,   idx.x+1];
+            Region south =     map[idx.y+1, idx.x];
+            Region southEast = map[idx.y+1, idx.x+1];
+            if (east != local || south != local || southEast != local)
+                continue;
+            int localIdx =     idx.y*width + idx.x;
+            int eastIdx =      idx.y*width + idx.x + 1;
+            int southIdx =     (idx.y+1)*width + idx.x;
+            int southEastIdx = (idx.y+1)*width + idx.x + 1;
+            faces.Add(new int[]{southEastIdx+offset, eastIdx+offset, localIdx+offset, southIdx+offset});
+        }
+        return new(faces);
+    }
+    public static Mesh Rect(int w, int area, int offset = 0)
     {
         List<int[]> faces = new();
         for (int n = 0; n < area; n++)
         {
-            bool edgeRow = false;
-            bool edgeCol = false;
             if (n % w >= w - 1)
-            {
-                edgeCol = true;
-            }
+                continue;
             if (n >= area - w)
-            {
-                edgeRow = true;
-            }
-            if (!edgeCol && !edgeRow && n + w + 1 < area)
-            {
+                continue;
+            if (n + w + 1 < area)
                 faces.Add(new int[] { w + n + 1 + offset, w + n + offset, n + offset, n + 1 + offset });
-            }
         }
         return new(faces);
     }
-    //public static Mesh Square(int w, int h) => Square(w, w * h);
+
+    public enum Region
+    {
+        BORDER = -1,
+        UNEXPLORED = 0
+    }
+
+    static void FloodFill(List<Region> regions, int width, int x0, int y0, int paint)
+    {
+        int height = regions.Count / width;
+        Stack<(int, int)> positions = new();
+        positions.Push((x0, y0));
+
+        while (positions.Count > 0)
+        {
+            (int x, int y) = positions.Pop();
+            int idx = Math.Abs(y * width + x);
+            if (x < 0 || y < 0 || x > width - 1 || y > height - 1 || regions[idx] != Region.UNEXPLORED)
+                continue;
+            regions[idx] = (Region)paint;
+            positions.Push((x + 1, y));
+            positions.Push((x - 1, y));
+            positions.Push((x, y + 1));
+            positions.Push((x, y - 1));
+        }
+    }
+    // Use flood fill to divide the world into regions
+    public static int DivideRegions(List<Region> world, int width)
+    {
+        int row = -1;
+        int numRegions = 0;
+        for (int i = 0; i < world.Count; i++)
+        {
+            if (i % width == 0)
+                row++;
+
+            if (world[i] == Region.UNEXPLORED)
+            {
+                FloodFill(world, width, i, row, ++numRegions);
+            }
+        }
+        return numRegions;
+    }
 }
