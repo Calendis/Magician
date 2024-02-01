@@ -31,6 +31,14 @@ public interface IDimensional<T>
         else if (val is IVal f && f.Magnitude != 0)
             Values.Add(val);
     }
+    public void Push(params T[] vals)
+    {
+        Values.AddRange(vals);
+    }
+    public void Push(IDimensional<T> val)
+    {
+        Push(val.Values.ToArray());
+    }
     public void Normalize();
     public double Magnitude {get; set;}
     //public IVal Theta {get;}
