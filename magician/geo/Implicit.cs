@@ -19,7 +19,7 @@ public class Implicit : Node, IRelation
         range = rangeResos.Select(t => (t.Item1, t.Item2)).ToArray();
         resolution = rangeResos.Select(t => t.Item3).ToArray();
         // For easier control over this, you may use a Symbolic
-        GenNodesAndMesh(inScale, outScale, 2, -1, defaultAxes);
+        GenNodesAndMesh(inScale, outScale, 1, -1, defaultAxes);
     }
     public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, double reso, params (double, double)[] ranges) : this(r, x, y, z, inScale, outScale, ranges.Select(r => (r.Item1, r.Item2, reso)).ToArray()) { }
 
