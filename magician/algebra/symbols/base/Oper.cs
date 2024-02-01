@@ -6,7 +6,7 @@ public abstract partial class Oper : IRelation
 {
     // TODO: Maybe put some of these fields/properties behind an interface
     protected readonly Variable solution;
-    public IVar Cache => solution;
+    public IVal Cache => solution;
     public string Name => name;
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();

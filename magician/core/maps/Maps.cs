@@ -4,9 +4,13 @@ using Magician.Geo;
 using Magician.Alg;
 using static Magician.Geo.Create;
 
+
+/* TODO: remove all plotting code from Maps */
+
 public interface IRelation
 {
-    IVar Cache { get; }
+    // TODO: make this an IVal
+    IVal Cache { get; }
     public IVal Evaluate(params double[] args);
     public IVal Evaluate(IVal arg) => Evaluate(arg.Values.ToArray());
     public double[] Evaluate(List<double> args) => Evaluate(args.ToArray()).Values.ToArray();
@@ -32,12 +36,12 @@ public interface IMap : IRelation
 }
 
 
-// Multiple inputs, one output
+// Multiple inputs, multiple outputs
 // Plottable when the number of inputs is specified
 public class Relational : IRelation
 {
-    private readonly Var vCache = new(0);
-    public IVar Cache => vCache;
+    protected readonly Val vCache = new(0);
+    public IVal Cache => vCache;
     Func<double[], double[]> map;
     public int Ins { get; set; }
     public Relational(Func<double[], double[]> f, int inputs)
@@ -45,6 +49,7 @@ public class Relational : IRelation
         Ins = inputs;
         map = f;
     }
+    public Relational(Func<double[], IVal> f, int inputs) : this(xs => f.Invoke(xs).Values.ToArray(), inputs) {}
 
     //public double[] Evaluate(List<double> args)
     //{
@@ -139,8 +144,8 @@ public class Relational : IRelation
 public class Parametric : IParametric
 {
     //public int Params { get; set; }
-    private readonly Var vCache = new(0);
-    public IVar Cache => vCache;
+    private readonly Val vCache = new(0);
+    public IVal Cache => vCache;
     public int Outs { get; set; }
     Func<double, double[]> map;
     //public ParamMap(params Func<double, double>[] fs) : base(xs => fs.Select(m => m.Invoke(xs[0])).ToArray())
@@ -202,8 +207,8 @@ public class Parametric : IParametric
 public class Direct : IMap
 {
     public readonly static Direct Dummy = new(x => 0);
-    private readonly Var vCache = new(0);
-    public IVar Cache => vCache;
+    private readonly Val vCache = new(0);
+    public IVal Cache => vCache;
     Func<double, double> map;
     public Direct(Func<double, double> f)
     {
