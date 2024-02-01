@@ -30,7 +30,7 @@ public class Node : Vec3, ICollection<Node>
     public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
-    public List<RDrawable> drawables = new();
+    //public List<RDrawable> drawables = new();
     bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
     List<Driver> drivers = new();
 
@@ -174,7 +174,7 @@ public class Node : Vec3, ICollection<Node>
                 throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
             }
             constituents[i].DisposeAllTextures();
-            Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
+            //Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             constituents[i] = value.Parented(this);
         }
     }
@@ -201,7 +201,7 @@ public class Node : Vec3, ICollection<Node>
 
             // Destroy the old Multi, and tag the new one with the same tag
             constituentTags[tag].DisposeAllTextures();
-            Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
+            //Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             Remove(constituentTags[tag]);
             constituentTags[tag] = value;
             Add(value);
@@ -721,8 +721,8 @@ public class Node : Vec3, ICollection<Node>
         if (faces is null)
         {
             // Get a projection of each constituent point
-            List<double[]> projectedVerts = Paint.Render.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-            List<double[]> clippedVerts = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
+            List<double[]> projectedVerts = Renderer.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            List<double[]> clippedVerts = Renderer.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
             // The vertices are GLSL-ready
             Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
 
@@ -738,8 +738,8 @@ public class Node : Vec3, ICollection<Node>
         {
             foreach (int[] face in faces.Faces)
             {
-                List<double[]> projected = Paint.Render.Project(face.Select(i => this[i]), xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-                List<double[]> culled = Paint.Render.Cull(this, xOffset, yOffset, zOffset, projected, face);
+                List<double[]> projected = Renderer.Project(face.Select(i => this[i]), xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+                List<double[]> culled = Renderer.Cull(this, xOffset, yOffset, zOffset, projected, face);
                 List<Color> cols = face.Select(i => this[i].Col).ToList();
                 Paint.Render.Polygon(culled.ToArray(), drawMode, cols, this);
             }
