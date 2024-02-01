@@ -254,8 +254,7 @@ public interface IVal : IDimensional<double>
         {
             if (output is null)
                 return new Val(Multiply(z, Exp(z, Subtract(w, Runes.Numbers.Get(1)))));
-            // re-using output is ok as long as the uses are nested on different levels
-            // this case does cause instantiations
+            // TODO: this causes an instantiation. Exp should have two possible outputs
             Multiply(z, Exp(z, Subtract(w, Runes.Numbers.Get(1)), output), output);
             return output;
         }
@@ -282,8 +281,11 @@ public interface IVal : IDimensional<double>
             return output;
         }
     }
+    public static IVal ExpI(IVal z, IVal? output=null)
+    {
+        return Exp(Runes.Numbers.e, Multiply(Runes.Numbers.i, z, output), output);
+    }
 
-    //public static IVal ExpI(double x) => new Val(Algebra.Numeric.Trig.Cos(x), Algebra.Numeric.Trig.Sin(x));
     public static IVal Log(IVal z, IVal logBase, IVal? output = null)
     {
         if (z.EqValue(logBase))
@@ -330,6 +332,19 @@ public interface IVal : IDimensional<double>
                 output.Set(a.Magnitude);
                 return output;
         }
+    }
+    // TODO: these cause twoinstantiations each. Exp should have two possible outputs
+    public static IVal Sin(IVal z, IVal? output=null)
+    {
+        if (output is null)
+            return Divide(Subtract(Exp(Runes.Numbers.e, Multiply(Runes.Numbers.i, z)), Exp(Runes.Numbers.e, Multiply(Multiply(Runes.Numbers.i, -1), z))), Multiply(Runes.Numbers.i, 2));
+        return Divide(Subtract(Exp(Runes.Numbers.e, Multiply(Runes.Numbers.i, z, output)), Exp(Runes.Numbers.e, Multiply(Multiply(Runes.Numbers.i, -1, output), z, output)), output), Multiply(Runes.Numbers.i, 2), output);
+    }
+    public static IVal Cos(IVal z, IVal? output=null)
+    {
+        if (output is null)
+            return Divide(Subtract(Exp(Runes.Numbers.e, Multiply(Runes.Numbers.i, z)), Exp(Runes.Numbers.e, Multiply(Multiply(Runes.Numbers.i, -1), z))), Multiply(Runes.Numbers.i, 2));
+        return Divide(Add(Exp(Runes.Numbers.e, Multiply(Runes.Numbers.i, z, output)), Exp(Runes.Numbers.e, Multiply(Multiply(Runes.Numbers.i, -1, output), z, output)), output), 2, output);
     }
 }
 
