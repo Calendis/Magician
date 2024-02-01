@@ -73,7 +73,7 @@ public class Mesh
             int eastIdx =      idx.y*width + idx.x + 1;
             int southIdx =     (idx.y+1)*width + idx.x;
             int southEastIdx = (idx.y+1)*width + idx.x + 1;
-            faces.Add(new int[]{southEastIdx+offset, eastIdx+offset, localIdx+offset, southIdx+offset});
+            faces.Add(new int[]{localIdx+offset, southIdx+offset, southEastIdx+offset, eastIdx+offset});
         }
         return new(faces);
     }
