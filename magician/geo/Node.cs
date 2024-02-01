@@ -6,6 +6,7 @@ using Paint;
 using System.Collections;
 using Silk.NET.Maths;
 
+[Flags]
 public enum DrawMode : short
 {
     INVISIBLE = 0,
