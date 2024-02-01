@@ -1,15 +1,12 @@
 namespace Magician.Alg;
 using Symbols;
-using Numeric;
 
-using Magician.Core;
-using Magician.Core.Maps;
-
-// TODO: make equals an Oper, as well as <, >, Onto
+// TODO: make equals an Oper, as well as <, >
 public class Equation// : IRelation
 {
     public List<Variable> Unknowns { get; private set; }  // all unknowns
-    public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
+    public List<Variable> Sliders => Unknowns.Where(v => v.Found).ToList();
+    //public List<Variable> Sliders { get; internal set; } = new(); // for unknowns beyond 3
     public Oper LHS { get; private set; }
     public Oper RHS { get; private set; }
     public int Ins { get; set; }
@@ -32,21 +29,9 @@ public class Equation// : IRelation
         }
         OperLayers lhs = new(LHS, Variable.Undefined);
         OperLayers rhs = new(RHS, Variable.Undefined);
-        //Unknowns = LHS.eventuallyContains.Concat(RHS.Arguments).Union(initialIsolates).ToList();
         Unknowns = lhs.GetInfo(0, 0).assocArgs.Concat(rhs.GetInfo(0, 0).assocArgs).Union(initialIsolates).ToList();
-        // Can't do this through the base constructor, unfortunately
-        //map = new Func<double[], double[]>(vals => Approximate(vals));
         Ins = Unknowns.Count - 1;
     }
-
-    //double[] IRelation.Evaluate(params double[] args)
-    //{
-    //    return Approximate(args);
-    //}
-    //IVar IRelation.Evaluate(params double[] args)
-    //{
-    //    throw new NotImplementedException();
-    //}
 
     internal enum SolveMode
     {
@@ -195,7 +180,7 @@ public class Equation// : IRelation
                         //solvedLeft.SimplifyMax(); solvedRight.SimplifyMax();
                         //solvedLeft = LegacyForm.Canonical(solvedLeft); solvedRight = LegacyForm.Canonical(solvedRight);
                         //solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
-                        solvedEq = solvedLeft.AssociatedVars.Contains(v) ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
+                        solvedEq = solvedLeft is Variable sv ? new(sv, Fulcrum.EQUALS, solvedRight) : new((Variable)solvedRight, Fulcrum.EQUALS, solvedLeft);
                         Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions:\n{solvedEq}");
                         SOLVED = true;
                         break;
