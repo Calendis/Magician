@@ -3,10 +3,10 @@ using Core;
 
 public class Multivalue : Variable
 {
-    public IVal Principal => principal;
-    public IVal[] All => new List<IVal>{principal}.Concat(remaining).ToArray();
+    public IVal Principal => Value;
+    public IVal[] All => new List<IVal>{Value}.Concat(remaining).ToArray();
     public int Solutions => remaining.Length + 1;
-    IVal principal;
+    //IVal principal;
     IVal[] remaining;
     //public Multivalue(params double[] vs) : this(vs.Select(d => new Val(d)).ToArray()) {}
     public Multivalue(params IVal[] vs) : this("multivalue", vs) {}
@@ -14,7 +14,7 @@ public class Multivalue : Variable
     {
         if (vs.Length == 0)
             throw Scribe.Error("Cannot create empty multivalue");
-        principal = vs[0];
+        Value.Set(vs[0]);
         remaining = vs.Skip(1).ToArray();
     }
 
@@ -22,7 +22,7 @@ public class Multivalue : Variable
     {
         if (vs.Count == 0)
             throw Scribe.Error("Cannot create empty multivalue");
-        principal = vs[0];
+        Value.Set(vs[0].Values);
         remaining = vs.Skip(1).ToArray();
     }
 
@@ -34,7 +34,7 @@ public class Multivalue : Variable
     public override string ToString()
     {
         if (Found)
-            return All.Aggregate("", (a, b) => a += $", {b}")[2..];
+            return $"{Value.Get()}"+", "+remaining.Aggregate("", (a, b) => a += $", {b}")[2..];
         return base.ToString();
     }
     // TODO: arithmetic methods for Multivalues
