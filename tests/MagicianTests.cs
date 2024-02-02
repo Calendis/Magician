@@ -483,9 +483,7 @@ public class IntermediateAlgebraCases
                     Var("z"),
                     new Fraction(Var("z"), Val(1), Var("z"))
                 )
-            ),
-            Var("y"),
-            2
+            )
         );
         double one, two;
         one = solved.Evaluate(10.5, -30).Get();
@@ -532,10 +530,10 @@ public class IntermediateAlgebraCases
                     },
                     new List<Oper> { }
                 ), Val(-1)
-            ), Var("x"), 2
+            )
         );
-        s.opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
-        manual.opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
+        s.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
+        manual.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
         // Chosen arbitrarily
         double[] args = new[] { 2d, 1 };
         Assert.That(s.Evaluate(args).Get(), Is.EqualTo(manual.Evaluate(args).Get()));
@@ -679,7 +677,7 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)))
         );
         SolvedEquation s = eq.Solved(Var("y"));
-        SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new SumDiff(new Fraction(Var("x"), Val(3)), Val(0), Var("x")), Var("y"), 1);
+        SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new SumDiff(new Fraction(Var("x"), Val(3)), Val(0), Var("x")));
         Assert.That(s.Evaluate(4.31).Get(), Is.EqualTo(manual.Evaluate(4.31).Get()));
     }
     [Test]
@@ -691,7 +689,7 @@ public class IntermediateAlgebraCases
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), Var("x"), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4)), Var("y"))
         );
         SolvedEquation s = eq.Solved(Var("y"));
-        SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new Fraction(new SumDiff(Var("x"), new Fraction(Var("x"), Val(1.5)), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4))), Val(2)), Var("y"), 1);
+        SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new Fraction(new SumDiff(Var("x"), new Fraction(Var("x"), Val(1.5)), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4))), Val(2)));
         Scribe.Info($"Need {manual}");
         Scribe.Info($"Got {s}");
         Assert.That(s.Evaluate(3.1).Get(), Is.EqualTo(manual.Evaluate(3.1).Get()));
@@ -758,8 +756,7 @@ public class IntermediateAlgebraCases
                 Val(15),
                 new SumDiff(new Fraction(Val(3), Val(1), Var("y")), Val(5)),
                 new SumDiff(Var("y"), Val(3))
-            ),
-        Var("x"), 1);
+            ));
         Assert.That(s.Evaluate(15).Get(), Is.EqualTo(manual.Evaluate(15).Get()));
     }
 }
@@ -776,18 +773,18 @@ public class AdvancedAlgebraCases
             parabola
         );
         SolvedEquation s = eq.Solved(Var("x"));
+
         SolvedEquation manual = new(
-            Var("x"),
+            Var("x2"),
             Fulcrum.EQUALS,
-            Var("y").Root(Val(2)),
-            Var("x"), 1
+            Var("y2").Root(Val(2))
         );
         // Make sure basic root functionality is working
         Assert.That(manual.Evaluate(2.8989).Get(), Is.EqualTo(Math.Sqrt(2.8989)));
 
         // Make sure that the algebra machine can invert exponents/powers correctly
-        Scribe.Info($"got {s.Evaluate(2)}, need {manual.Evaluate(2)}");
-        Assert.That(manual.Evaluate(2).Get(), Is.EqualTo(s.Evaluate(2).Get()));
+        Scribe.Info($"got {s}=>{s.Evaluate(2).Get()}, need {manual}=>{manual.Evaluate(2).Get()}");
+        Assert.That(s.Evaluate(2).Get(), Is.EqualTo(manual.Evaluate(2).Get()));
     }
     [Test]
     public void LogBase2()
@@ -802,8 +799,7 @@ public class AdvancedAlgebraCases
         SolvedEquation manual = new(
             Var("x"),
             Fulcrum.EQUALS,
-            Var("y").Log(Val(2)),
-            Var("x"), 1
+            Var("y").Log(Val(2))
         );
         // Make sure basic root functionality is working
         Assert.That(manual.Evaluate(2.8989).Get(), Is.EqualTo(Math.Log(2.8989, 2)));
