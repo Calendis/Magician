@@ -6,17 +6,17 @@ using Paint;
 using System.Collections;
 using Silk.NET.Maths;
 
-
+[Flags]
 public enum DrawMode : short
 {
-    INVISIBLE = 0b0000,
-    PLOT = 0b1000,
-    CONNECTINGLINE = 0b0100,
-    INNER = 0b0010,
-    POINTS = 0b0001,
-    OUTER = 0b1100,
-    FULL = 0b1110,
-    OUTERP = 0b1101
+    INVISIBLE = 0,
+    POINTS = 1 << 0,
+    INNER = 1 << 1,
+    CONNECTINGLINE = 1 << 2,
+    PLOT = 1 << 3,
+    OUTER = DrawMode.PLOT | DrawMode.CONNECTINGLINE,
+    FULL = DrawMode.PLOT | DrawMode.CONNECTINGLINE | DrawMode.INNER,
+    OUTERP = DrawMode.OUTER | DrawMode.POINTS,
 }
 
 /* A Node is a drawable tree of 3-vectors (more Multis) */
