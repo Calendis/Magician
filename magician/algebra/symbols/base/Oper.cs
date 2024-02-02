@@ -19,7 +19,7 @@ public abstract partial class Oper : IRelation
     public bool trivialAssociative = true;
     public bool invertible = true;
     protected virtual int? Identity { get; }
-    public int Ins { get {return AssociatedVars.Count;}}
+    public int Ins { get {return AssociatedVars.Where(v => !v.Found).Count();}}
     public bool IsConstant => this is Variable v && v.Found;
     public bool IsDetermined
     {
