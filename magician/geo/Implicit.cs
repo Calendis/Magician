@@ -177,10 +177,14 @@ public class Implicit : Node, IRelation
                     double colX = outVal.Get();
                     double colY = outVal.Dims < 2 ? 0 : outVal.Get(1);
 
-                    colX /= Math.Pow(range[axes[2]].Item2, 1.2);
-                    colY /= Math.Pow(range[axes[2]].Item2, 1.2);
-                    colX /= Math.Pow(resolution[axes[2]], 1.2);
-                    colY /= Math.Pow(resolution[axes[2]], 1.2);
+                    colX /= range[axes[2]].Item2;
+                    colY /= range[axes[2]].Item2;
+                    colX /= Math.Pow(resolution[axes[2]], 1.1);
+                    colY /= Math.Pow(resolution[axes[2]], 1.1);
+                    colX /= inScale;
+                    colY /= inScale;
+                    colX *= outScale;
+                    colY *= outScale;
                     double theta = outVal.Trim().Dims == 1 ? colX : Math.Atan2(colY, colX); ;
 
                     if (double.IsNaN(theta) || !double.IsFinite(theta))
@@ -212,6 +216,12 @@ public class Implicit : Node, IRelation
             faces = null;
         //faces = Mesh.Regional(regionalArgs, (int)((range[0].Item2 - range[0].Item1) / resolution[0]));
         //Scribe.Info($"Done regional meshing. Faces: {faces.Faces.Count}, Nodes: {Count}");
+    }
+
+    public override void Update()
+    {
+        Refresh();
+        base.Update();
     }
 
     public IVal Evaluate(params double[] args)
