@@ -14,9 +14,7 @@ public class SolvedEquation : IRelation
     public Oper Opposite => eq.RHS;
     public int Ins => eq.Unknowns.Count - eq.Sliders.Count - 1;
     public IVal Cache {get; private set;}
-    int debugCounter = 100;
-
-    public SolvedEquation(Variable chosenRoot, Fulcrum fulc, Oper oppositeRoot)// : base(args => oppositeRoot.Evaluate(args).Values.ToArray(), ins)
+    public SolvedEquation(Variable chosenRoot, Fulcrum fulc, Oper oppositeRoot)
     {
         eq = new(chosenRoot, fulc, oppositeRoot);
         this.chosenRoot = chosenRoot;
