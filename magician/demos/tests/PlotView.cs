@@ -26,32 +26,27 @@ public class EqPlotting : Spell
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE]){Ref.Perspective.y.Incr(walkSpeed);}
         if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT]){Ref.Perspective.y.Incr(-walkSpeed);}
 
-        Var("time").Set(2.8 * Math.Sin(Time / 3)*Math.Sin(Time / 2) + 0.5);
-        ((Implicit)Origin["pt3d"]).Refresh();
+        Var("parameter").Set(0.5*Math.Sin(Time/2));
+        Origin["myPlot"].Update();
 
         //Scribe.Flush();
     }
 
     public override void PreLoop()
     {
-        plotTest3d = new(
-            new Fraction(
-                Var("y"),
-                Var("time")),
-            Fulcrum.EQUALS,
-            new Fraction(
-                new SumDiff(
-                    new Fraction(Var("x"), Val(1), Var("x")),
-                    new Fraction(Var("z"), Val(1), Var("z"))
-                )
-            )
-        );
+        Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
+        Oper sphereRadiusFive = Val(25).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
+        Var("parameter").Set(0);
 
-        spt3d = plotTest3d.Solved(Var("y"));
-        Var("time").Set(1);
-        Oper o2 = Val(25).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
+        Origin["myPlot"] = new Implicit(
+            plot, 0, 0, 1300, 1, 100, 2,
+            (-11, 12, 0.5), (-11, 12, 0.5)
+        ).Flagged(DrawMode.INNER);
 
-        Origin["pt3d"] = new Implicit(spt3d, 0, 0, 0, 1, 200, 2, (-19, 20, 1), (-19, 20, 1)).Flagged(DrawMode.INNER);
-        Origin["mySphere"] = new Implicit(o2, 500, 1250, 2000, 160, 160, 1, Sampling.Spiral, (-5, 5, 0.2), (-5, 5, 0.2)).Flagged(DrawMode.OUTER);
+        Origin["mySphere"] = new Implicit(
+            sphereRadiusFive, 500, 1000, 2000, 160, 160, 1,
+            Sampling.Spiral,
+            (-5, 5, 0.2), (-5, 5, 0.2)
+        ).Flagged(DrawMode.OUTER);
     }
 }
