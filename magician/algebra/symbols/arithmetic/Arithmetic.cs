@@ -73,9 +73,9 @@ public abstract class Arithmetic : Invertable
 
                     A.Reduce(3);
                     B.Reduce(3);
-                    Oper AB = LegacyForm.Shed(A).CommonFactors(LegacyForm.Shed(B));
+                    Oper AB = A.Trim().CommonFactors(B.Trim());
                     AB.Reduce(2);
-                    AB = LegacyForm.Shed(AB);
+                    AB = AB.Trim();
 
                     //Scribe.Info($"\tA, B: {A}, {B}, AB: {AB}");
                     bool aPositive = flaggedHandshake.Item3;
@@ -112,7 +112,7 @@ public abstract class Arithmetic : Invertable
         negArgs.AddRange(finalNegArgs);
         //Scribe.Info($"Now: {this}");
     }
-    internal override void SimplifyOuter(Variable? axis = null)
+    internal override void CombineOuter(Variable? axis = null)
     {
         Combine(axis);
         Reduce(2);

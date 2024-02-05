@@ -11,7 +11,7 @@ public class FactorMap
         {
             Oper fc = factor.Copy();
             //fc.SimplifyMax();
-            Oper facSimple = LegacyForm.Canonical(fc);
+            Oper facSimple = fc.Canonical();
             Oper bas;
             Oper exp;
 
@@ -31,7 +31,7 @@ public class FactorMap
                 {
                     exp = exp.Mult(new ExpLog(bas.posArgs.Skip(1).ToList(), new List<Oper>{}));
                     bas = bas.posArgs[0];
-                    exp.SimplifyMax();
+                    exp.CombineAll();
                 }
                 
                 if (factors.Keys.Contains(bas, ol))

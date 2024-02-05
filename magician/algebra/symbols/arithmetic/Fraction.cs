@@ -56,7 +56,7 @@ public class Fraction : Arithmetic
         if (sd.IsDetermined)
             return sd.Sol();
         sd.ReduceOuter();
-        return LegacyForm.Shed(sd);
+        return sd.Trim();
     }
     public override FactorMap Factors()
     {

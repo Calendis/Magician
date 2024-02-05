@@ -176,10 +176,6 @@ public class Equation// : IRelation
                         Oper solvedLeft = LAYERS.LEFT.Get(0, 0).Copy();
                         Oper solvedRight = LAYERS.RIGHT.Get(0, 0).Copy();
                         solvedLeft.Reduce(); solvedRight.Reduce();
-                        //solvedLeft.Simplify(); solvedRight.Simplify();
-                        //solvedLeft.SimplifyMax(); solvedRight.SimplifyMax();
-                        //solvedLeft = LegacyForm.Canonical(solvedLeft); solvedRight = LegacyForm.Canonical(solvedRight);
-                        //solvedEq = solvedLeft is Variable ? new(solvedLeft, Fulcrum.EQUALS, solvedRight, v, Unknowns.Count - 1) : new(solvedRight, Fulcrum.EQUALS, solvedLeft, v, Unknowns.Count - 1);
                         solvedEq = solvedLeft is Variable sv ? new(sv, Fulcrum.EQUALS, solvedRight) : new((Variable)solvedRight, Fulcrum.EQUALS, solvedLeft);
                         Scribe.Info($"Solved in {TOTAL_CHANGES} operations and {TOTAL_PICKS} picks for {TOTAL_CHANGES + TOTAL_PICKS} total instructions:\n{solvedEq}");
                         SOLVED = true;
@@ -200,11 +196,10 @@ public class Equation// : IRelation
                                 throw Scribe.Issue("not solveable");
                             node = GETLAYER(MOST_DIRECT_SIDE).LiveBranches(node)[0];
                         }
-                        // Evaluate the solve path
+                        // Concat the solve path to the instructions so that it will be evaluated
                         foreach (Oper a in solvePath)
                             PREPAREISOLATE(MOST_DIRECT_SIDE, INSTRUCTION.VAR, a);
                         CURRENT_PICK = (3, 0);
-
                         break;
                     // Solveability knowable. Attempt to create case MatchPairs.SINGLE by simplifying
                     // If a simplification cannot change the form, approximate
@@ -229,12 +224,10 @@ public class Equation// : IRelation
                         }
                         else
                         {
-                            // Evaluate the solve path
                             foreach (Oper a in solvePath)
                                 PREPAREISOLATE(MOST_DIRECT_SIDE, INSTRUCTION.VAR, a);
                             CURRENT_PICK = (4, 2);
                         }
-
                         break;
                     // Create case MatchPairs.MULTIPLE by extracting from the direct side
                     case MatchPairs.PARASINGLE:
@@ -359,7 +352,7 @@ public class Equation// : IRelation
                     newNOpp = ((Invertable)CHOSENROOT[0]).Inverse(INSTRUCTION.AXIS, OPPOSITEROOT[0]);
 
                     // Apply changes
-                    (NEWCHOSEN, NEWOPPOSITE) = (INSTRUCTION.AXIS, LegacyForm.Shed(newNOpp));
+                    (NEWCHOSEN, NEWOPPOSITE) = (INSTRUCTION.AXIS, newNOpp.Trim());
                 }
                 else if (INSTRUCTION.MOD == SolveMode.EXTRACT)
                 {
@@ -369,10 +362,10 @@ public class Equation// : IRelation
                 else if (INSTRUCTION.MOD == SolveMode.SIMPLIFY)
                 {
                     TOTAL_CHANGES++;
-                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).SimplifyOuter(INSTRUCTION.VAR);
+                    GETLAYER(INSTRUCTION.SIDE).Get(0, 0).CombineOuter(INSTRUCTION.VAR);
                     GETLAYER(INSTRUCTION.SIDE).Get(0, 0).Reduce(2);
-                    NEWCHOSEN = LegacyForm.Shed(CHOSENROOT[0]);
-                    NEWOPPOSITE = LegacyForm.Shed(OPPOSITEROOT[0]);
+                    NEWCHOSEN = CHOSENROOT[0].Trim();
+                    NEWOPPOSITE = OPPOSITEROOT[0].Trim();
                 }
 
                 if (NOCHANGE(NEWCHOSEN, NEWOPPOSITE))
@@ -466,11 +459,8 @@ public class Equation// : IRelation
     
 }
 // The fulcrum is the =, >, <, etc.
+// TODO: actually support inequalities
 public enum Fulcrum
 {
     EQUALS, LESSTHAN, GREATERTHAN, LSTHANOREQTO, GRTHANOREQTO
-}
-public enum AxisSpecifier
-{
-    X = 0, Y = 1, Z = 2
 }

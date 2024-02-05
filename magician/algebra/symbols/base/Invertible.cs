@@ -1,6 +1,4 @@
-
 namespace Magician.Alg.Symbols;
-
 // TODO: make this an interface
 
 public abstract class Invertable : Oper

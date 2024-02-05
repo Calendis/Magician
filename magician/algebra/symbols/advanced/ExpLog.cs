@@ -108,13 +108,13 @@ public class ExpLog : Invertable
             if (el.IsDetermined)
                 return el.Sol();
             el.ReduceOuter();
-            return LegacyForm.Shed(el);
+            return el.Trim();
         }
         Fraction fr = new(Log(new Variable(Math.E)), v.Log(new Variable(Math.E)));
         if (fr.IsDetermined)
             return fr.Sol();
         fr.ReduceOuter();
-        return LegacyForm.Shed(fr);
+        return fr.Trim();
     }
 
     public override FactorMap Factors()
@@ -229,7 +229,7 @@ public class ExpLog : Invertable
                 //inverse.negArgs = negArgs.Skip(j+1).ToList();
                 ////Scribe.Info($"inverse c1 {Scribe.Expand<List<Oper>, Oper>(posArgs)}, {Scribe.Expand<List<Oper>, Oper>(negArgs)}");
                 inverse.ReduceOuter();
-                return LegacyForm.Shed(inverse);
+                return inverse.Trim();
             }
             // Add an exponential base to the bottom of the new tower
             //inverse.posArgs = new List<Oper> { negArgs[j] }.Concat(inverse.posArgs).ToList();
@@ -254,6 +254,6 @@ public class ExpLog : Invertable
         }
 
         //throw Scribe.Issue($"no axis {axis.Name} {axis} for inverse {inverse.Name} {inverse}");
-        return LegacyForm.Shed(inverse);
+        return inverse.Trim();
     }
 }

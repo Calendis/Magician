@@ -50,7 +50,7 @@ public abstract partial class Oper : IRelation
                                          // and distribute AssociatedVar information
         */
         OperLayers ol = new(this, Variable.Undefined);
-        // TODO: obfuscate this behind some string constant
+        // TODO: put this behind some string constant
         // This is a hack, but it works. Normally I would check the found property of the Variable, but this is the
         // base ctor, which is called before that property can be set
         if (!(this is Variable && new string(name.Take(8).ToArray()) == "constant"))
@@ -63,21 +63,6 @@ public abstract partial class Oper : IRelation
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList()) { }
 
     // Provide arguments to solve the expression at a point
-    //public Variable Evaluate(params double[] args)
-    //{
-    //    HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
-    //    if (associates.Count != args.Length)
-    //        throw Scribe.Error($"{name} {this} expected {associates.Count} arguments, got {args.Length}");
-    //    
-    //    int counter = 0;
-    //    foreach (Variable a in associates.OrderBy(v => v.Name))
-    //        a.Set(args[counter++]);
-    //    // TODO: this copy probably isn't necessary
-    //    Variable s = Sol().Copy();
-    //    associates.ToList().ForEach(a => a.Reset());
-    //    return s;
-    //}
-
     public IVal Evaluate(params double[] args)
     {
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
@@ -94,7 +79,7 @@ public abstract partial class Oper : IRelation
     }
 
     // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
-    public virtual Oper Copy() { return New(posArgs.Select((o, i) => ((Oper)o).Copy()).ToList(), negArgs.Select((o, i) => ((Oper)o).Copy()).ToList()); }
+    public virtual Oper Copy() { return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList()); }
 
     // Perform basic simplifications on this Oper
     public abstract void ReduceOuter();
@@ -114,21 +99,21 @@ public abstract partial class Oper : IRelation
         ReduceOuter();
     }
     // Perform advanced simplifications on this Oper
-    internal virtual void SimplifyOuter(Variable? axis = null) { ReduceOuter(); }
+    internal virtual void CombineOuter(Variable? axis = null) { ReduceOuter(); }
     // Perform advanced simplifications on this Oper, recursively
-    public void Simplify(Variable? axis = null, int depth = 1)  // TODO: default should be -1
+    public void Combine(Variable? axis = null, int depth = 1)  // TODO: default should be -1
     {
         if (depth == 0)
             return;
 
         foreach (Oper a in AllArgs)
         {
-            a.Simplify(axis, depth - 1);
+            a.Combine(axis, depth - 1);
         }
-        SimplifyOuter(axis);
+        CombineOuter(axis);
     }
     // Perform advanced simplifications in this Oper as much as possible
-    public void SimplifyMax(Variable? axis = null, int bailout = 999)
+    public void CombineAll(Variable? axis = null, int bailout = 999)
     {
         int iters = 0;
         Oper prev;
@@ -136,17 +121,34 @@ public abstract partial class Oper : IRelation
         {
             prev = Copy();
             Reduce();
-            Simplify(axis, -1);
+            Combine(axis, -1);
             Commute();
             if (++iters >= bailout)
             {
-                Scribe.Warn($"Bailed out after {iters} simplifications");
-                throw Scribe.Issue("Strict simplify");
+                Scribe.Warn($"Bailed out after {iters} combinations");
+                throw Scribe.Issue("Strict combine");
                 break;
             }
             //Scribe.Info($"  ...{this} vs. {prev}");
         } while (!Like(prev));
         //Scribe.Info($" done, as {this} is equal to {prev}");
+    }
+
+    // For simplifications that change the parent node type
+    public virtual Oper Simplified() => this;
+    public virtual Oper Canonical()
+    {
+        Oper o = Copy().Simplified();
+        o.Reduce();
+        o.Commute();
+        o.CombineAll();
+        return o.Trim();
+    }
+    public Oper Trim()
+    {
+        if (IsTrivial)
+            return posArgs[0].Trim();
+        return this;
     }
 
     // Overall degree of the expression
@@ -156,7 +158,7 @@ public abstract partial class Oper : IRelation
             return new Variable(0);
         List<Oper> degs = AssociatedVars.Select(av => Degree(av)).ToList();
         Oper result = new SumDiff(degs, new List<Oper> { });
-        result = LegacyForm.Canonical(result);
+        result = result.Canonical();
         if (result.IsDetermined)
             return result.Sol();
         return result;
@@ -167,9 +169,9 @@ public abstract partial class Oper : IRelation
     {
         // Absorb trivial
         for (int i = 0; i < posArgs.Count; i++)
-            posArgs[i] = LegacyForm.Shed(posArgs[i]);
+            posArgs[i] = posArgs[i].Trim();
         for (int i = 0; i < negArgs.Count; i++)
-            negArgs[i] = LegacyForm.Shed(negArgs[i]);
+            negArgs[i] = negArgs[i].Trim();
 
         foreach (Oper o in AllArgs)
             o.Associate(this);

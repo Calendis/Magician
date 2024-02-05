@@ -2,18 +2,16 @@ namespace Magician.Alg;
 using Symbols;
 using Core;
 using Core.Maps;
-using Geo;
 
 public class SolvedEquation : IRelation
 {
-    Equation eq;
-    //public Oper chosen, opposite;
-    public Equation Eq => eq;
-    Variable chosenRoot;
     public Variable Chosen => chosenRoot;
+    public Equation Equation => eq;
     public Oper Opposite => eq.RHS;
     public int Ins => eq.Unknowns.Count - eq.Sliders.Count - 1;
     public IVal Cache {get; private set;}
+    readonly Equation eq;
+    readonly Variable chosenRoot;
     public SolvedEquation(Variable chosenRoot, Fulcrum fulc, Oper oppositeRoot)
     {
         eq = new(chosenRoot, fulc, oppositeRoot);

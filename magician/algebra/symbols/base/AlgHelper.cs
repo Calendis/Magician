@@ -91,6 +91,6 @@ public abstract partial class Oper
             chosenSide.negArgs.Remove(axis);
         else
             throw Scribe.Issue($"Could not extract {axis} from {chosenSide.GetType()} {chosenSide}");
-        return (LegacyForm.Shed(chosenSide), LegacyForm.Shed(chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis })));
+        return (chosenSide.Trim(), chosenSide.New(new List<Oper> { oppositeSide }, new List<Oper> { axis }).Trim());
     }
 }

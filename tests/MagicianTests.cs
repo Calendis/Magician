@@ -39,7 +39,7 @@ public class SimpleAlgebraCases
         SumDiff doubl = new(new List<Oper> { o.Copy(), o.Copy() }, new List<Oper> { });
         SumDiff nothing = new(o.Copy(), o.Copy());
         Scribe.Info(doubl);
-        doubl.Simplify(Var("x"));
+        doubl.Combine(Var("x"));
         Scribe.Info(doubl);
         doubl.Reduce();
         nothing.ReduceOuter();
@@ -47,8 +47,8 @@ public class SimpleAlgebraCases
         Oper doublManual = new Fraction(new List<Oper> { Val(2), o }, new List<Oper> { });
         doublManual.Commute(); doubl.Commute(); doublManual.Associate();
         Scribe.Info($"  Got {doubl.GetType().Name} {doubl}, need {doublManual}");
-        Assert.That(LegacyForm.Shed(doubl).Like(doublManual));
-        Assert.That(LegacyForm.Shed(nothing).Like(Val(0)));
+        Assert.That(doubl.Trim().Like(doublManual));
+        Assert.That(nothing.Trim().Like(Val(0)));
     }
 
     [Test]
@@ -59,8 +59,8 @@ public class SimpleAlgebraCases
         Scribe.Info($"Created f");
         Fraction need = new Fraction(new List<Oper> { Val(3), new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }) }, new List<Oper> { });
 
-        Scribe.Info($"{LegacyForm.Canonical(f)} vs. {LegacyForm.Canonical(need)}");
-        Assert.That(LegacyForm.Canonical(f).Like(LegacyForm.Canonical(need)));
+        Scribe.Info($"{f.Canonical()} vs. {need.Canonical()}");
+        Assert.That(f.Canonical().Like(need.Canonical()));
     }
     [Test]
     public void NextFracSimp()
@@ -68,8 +68,8 @@ public class SimpleAlgebraCases
         Fraction f = new(new List<Oper> { Val(3), Var("x"), new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }) }, new List<Oper> { });
         Fraction need = new(new List<Oper> { Val(3), new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }) }, new List<Oper> { });
 
-        Scribe.Info($"{f} will become {LegacyForm.Canonical(f)}, which should be equal to {need}");
-        Assert.That(LegacyForm.Canonical(f).Like(LegacyForm.Canonical(need)));
+        Scribe.Info($"{f} will become {f.Canonical()}, which should be equal to {need}");
+        Assert.That(f.Canonical().Like(need.Canonical()));
     }
     [Test]
     public void Reciprocals()
@@ -80,9 +80,9 @@ public class SimpleAlgebraCases
         Oper r2a = Val(1).Divide(Var("x").Pow(Val(2)));
         Oper r2b = Val(1).Divide(Var("x").Mult(Var("x")));
         Scribe.Info($"{r0}, {r1a}, {r1b}, {r2a}, {r2b}");
-        r0.Simplify();
-        r1a.Simplify(); r1b.Simplify();
-        r2a.Simplify(); r2b.Simplify();
+        r0.Combine();
+        r1a.Combine(); r1b.Combine();
+        r2a.Combine(); r2b.Combine();
         Scribe.Info($"{r0}, {r1a}, {r1b}, {r2a}, {r2b}");
 
         Assert.That(r0.Like(Val(1).Divide(Var("x"))));
@@ -106,9 +106,9 @@ public class SimpleAlgebraCases
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.SimplifyMax();
+        f.CombineAll();
         f.Commute();
-        need.SimplifyMax();
+        need.CombineAll();
 
         Scribe.Info($"got: {f}, need {need}");
         Assert.That(f.Like(need));
@@ -160,13 +160,13 @@ public class SimpleAlgebraCases
         i0 = Var("x");
         i1 = Val(242141);
         Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
-        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Val(1)));
+        Assert.That(i0.CommonFactors(i1).Trim().Like(Val(1)));
 
         // single x intersection
         i0 = Var("x");
         i1 = Var("x");
         Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
-        Assert.That(LegacyForm.Shed(i0.CommonFactors(i1)).Like(Var("x")));
+        Assert.That(i0.CommonFactors(i1).Trim().Like(Var("x")));
 
         // double x intersection
         i0 = new Fraction(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
@@ -174,7 +174,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(LegacyForm.Shed(cf).Like(Var("x")));
+        Assert.That(cf.Trim().Like(Var("x")));
 
         // sumdiff null intersection
         i0 = new SumDiff(new List<Oper>{
@@ -185,7 +185,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(LegacyForm.Shed(cf).Like(Val(1)));
+        Assert.That(cf.Trim().Like(Val(1)));
 
         // quadratic-x intersection
         i0 = Var("x");
@@ -193,7 +193,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(LegacyForm.Shed(cf).Like(Var("x")));
+        Assert.That(cf.Trim().Like(Var("x")));
 
         // quad-quad intersection
         i0 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
@@ -201,7 +201,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(LegacyForm.Shed(cf).Like(Var("x").Pow(Val(2))));
+        Assert.That(cf.Trim().Like(Var("x").Pow(Val(2))));
 
         // quadratic-1/x intersection
         i0 = new Fraction(Val(1), Var("x"));
@@ -209,7 +209,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+        Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
 
         // alternate quadratic-1/x intersection
         i0 = new ExpLog(new List<Oper> { Var("x"), Val(-1) }, new List<Oper> { });
@@ -217,7 +217,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+        Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
 
         // quad-invquad intersection
         i0 = Val(1).Divide(Var("x").Pow(Val(2)));
@@ -249,7 +249,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(LegacyForm.Shed(cf).Like(Var("x").Pow(new Min(Var("n"), Var("k")))));
+        Assert.That(cf.Trim().Like(Var("x").Pow(new Min(Var("n"), Var("k")))));
     }
 
     [Test]
@@ -298,13 +298,13 @@ public class SimpleAlgebraCases
             new List<Oper> { }
         );
         // Reduce a bunch times initially
-        sd.SimplifyMax();
+        sd.CombineAll();
 
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
             c.Commute();
-            sd.SimplifyMax();
+            sd.CombineAll();
             sd.Commute();
             Scribe.Info($"sd {sd} vs. c {c}");
             Assert.Multiple(() =>
@@ -318,13 +318,13 @@ public class SimpleAlgebraCases
     public void SdStableSimplify()
     {
         Oper o0 = new SumDiff(Val(-1));
-        o0.Simplify();
+        o0.Combine();
         Scribe.Info($"{o0.Name} {o0}");
         Assert.That(o0.Like(new SumDiff(Val(-1))));
 
         Oper o1 = new SumDiff(new SumDiff(Val(0)), Val(1));
         Scribe.Info(o1);
-        o1.Simplify();
+        o1.Combine();
         Scribe.Info(o1);
         Assert.That(o1.Like(new SumDiff(Val(-1))));
     }
@@ -334,13 +334,13 @@ public class SimpleAlgebraCases
         Oper o0 = new Fraction(new List<Oper> { new SumDiff(new List<Oper> { Val(0), Val(0) }, new List<Oper> { Val(4) }), Val(3) }, new List<Oper> { });
         Scribe.Info(o0);
         Assert.That(o0.Sol().Value.Get(), Is.EqualTo(-12));
-        Oper o0Canon = LegacyForm.Canonical(o0);
+        Oper o0Canon = o0.Canonical();
         Scribe.Info(o0Canon);
         Assert.That(o0Canon.Like(Val(-12)));
 
         Oper o2 = new Fraction(new List<Oper> { new SumDiff(new List<Oper> { Val(0), Var("y") }, new List<Oper> { Val(3) }), Val(8) }, new List<Oper> { });
         Scribe.Info($"{o2.Name} {o2}");
-        Oper o2canon = LegacyForm.Canonical(o2);
+        Oper o2canon = o2.Canonical();
         Scribe.Info($"{o2canon.Name} {o2canon}");
         double x1 = o2.Evaluate(4.5).Get();
         double x2 = o2canon.Evaluate(4.5).Get();
@@ -356,13 +356,13 @@ public class SimpleAlgebraCases
     {
         Oper o0 = new Fraction(new List<Oper> { new SumDiff(Val(1), Val(3)), Val(4) }, new List<Oper> { });
         Scribe.Info($"{o0} = {o0.Sol()}");
-        o0.Simplify();
+        o0.Combine();
         Scribe.Info(o0);
         Assert.That(o0.Like(new Fraction(Val(-8))));
 
         Oper o1 = new SumDiff(new Fraction(Val(0)), Val(1));
         Scribe.Info($"{o1} = {o1.Sol()}");
-        o1.Simplify();
+        o1.Combine();
         Scribe.Info(o1);
         Assert.That(o1.Like(new SumDiff(Val(-1))));
     }
@@ -372,7 +372,7 @@ public class SimpleAlgebraCases
     {
         Fraction xsq = new(new List<Oper> { Var("x"), Var("x") }, new List<Oper> { });
         Scribe.Info($"have: {xsq}");
-        xsq.Simplify();
+        xsq.Combine();
         Scribe.Info($"Got {xsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }))}");
         Assert.That(xsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { }))));
     }
@@ -380,13 +380,13 @@ public class SimpleAlgebraCases
     public void XXSquared()
     {
         Fraction xxsq = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
-        Scribe.Info($"have: {xxsq}, {LegacyForm.Canonical(xxsq.Factors().ToFraction())}");
+        Scribe.Info($"have: {xxsq}, {xxsq.Factors().ToFraction().Canonical()}");
         //xxsq.Commute();
-        xxsq.Simplify();
+        xxsq.Combine();
 
         Fraction xxsqWorking = new(new List<Oper> { Var("x"), Var("x").Pow(Val(2)) }, new List<Oper> { });
         xxsqWorking.Commute();
-        xxsqWorking.Simplify();
+        xxsqWorking.Combine();
 
         Scribe.Info($"Got {xxsq}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xxsq.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
@@ -396,7 +396,7 @@ public class SimpleAlgebraCases
     {
         Fraction xcb = new(new List<Oper> { Var("x"), Var("x"), Var("x") }, new List<Oper> { });
         Scribe.Info($"have: {xcb}");
-        xcb.SimplifyMax();
+        xcb.CombineAll();
         Scribe.Info($"Got {xcb}, need {new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))}");
         Assert.That(xcb.Like(new Fraction(new ExpLog(new List<Oper> { Var("x"), Val(3) }, new List<Oper> { }))));
     }
@@ -408,13 +408,13 @@ public class SimpleAlgebraCases
             new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
             new List<Oper> { }
         );
-        need.SimplifyMax();
+        need.CombineAll();
 
         Fraction f = new(
             new List<Oper> { Var("x"), Var("x"), Var("x"), Var("y"), Var("y") },
             new List<Oper> { }
         );
-        f.SimplifyMax();
+        f.CombineAll();
         f.Commute();
 
         Scribe.Info($"got {f} need {need}");
@@ -448,7 +448,7 @@ public class IntermediateAlgebraCases
     public void CombineConstants()
     {
         SumDiff sd = new(Val(10), Val(6));
-        sd.Simplify();
+        sd.Combine();
         Scribe.Info(sd);
         Assert.That(sd.Like(new SumDiff(Val(4))));
 
@@ -1041,5 +1041,24 @@ public class Others
         Assert.That(v0.Ord(), Is.EqualTo(v1.Ord()));
         Assert.That(v0.Ord(), Is.Not.EqualTo(v2.Ord()));
         Assert.That(!v1.Like(v2));
+    }
+}
+
+public class Derivatives
+{
+    [Test]
+    public void Polynomials()
+    {
+        //
+    }
+    [Test]
+    public void Transcendentals()
+    {
+        //
+    }
+    [Test]
+    public void ProductRule()
+    {
+        //
     }
 }
