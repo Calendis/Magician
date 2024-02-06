@@ -5,6 +5,7 @@ using Alg.Symbols;
 using Alg.Symbols.Commonfuncs;
 using static Alg.Notate;
 using NUnit.Framework;
+using Magician.Core.Maps;
 
 public class SimpleAlgebraCases
 {
@@ -471,7 +472,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             Val(4096)
         );
-        SolvedEquation solved = unsolved.Solved();
+        IRelation solved = unsolved.Solved();
         SolvedEquation manuallySolved = new(
             Var("y"),
             Fulcrum.EQUALS,
@@ -512,7 +513,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new Fraction(Val(2), Val(1), Var("y"), Val(1), Var("x"), Val(1), Var("z"))
         );
-        SolvedEquation s = unsolved.Solved(Var("x"));
+        IRelation s = unsolved.Solved(Var("x"));
         SolvedEquation manual = new(
             Var("x"),
             Fulcrum.EQUALS,
@@ -532,8 +533,8 @@ public class IntermediateAlgebraCases
                 ), Val(-1)
             )
         );
-        s.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
-        manual.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
+        //s.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
+        //manual.Opposite.AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? -1 : v0.Name[0] > v1.Name[0] ? 1 : 0);
         // Chosen arbitrarily
         double[] args = new[] { 2d, 1 };
         Assert.That(s.Evaluate(args).Get(), Is.EqualTo(manual.Evaluate(args).Get()));
@@ -621,7 +622,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("x"), Val(10))
         );
-        SolvedEquation s = e.Solved(Var("y"));
+        IRelation s = e.Solved(Var("y"));
         double res = s.Evaluate(10.5, 2).Get();
         Assert.That(res, Is.EqualTo(-84));
     }
@@ -676,7 +677,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)))
         );
-        SolvedEquation s = eq.Solved(Var("y"));
+        IRelation s = eq.Solved(Var("y"));
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new SumDiff(new Fraction(Var("x"), Val(3)), Val(0), Var("x")));
         Assert.That(s.Evaluate(4.31).Get(), Is.EqualTo(manual.Evaluate(4.31).Get()));
     }
@@ -688,7 +689,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), Var("x"), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4)), Var("y"))
         );
-        SolvedEquation s = eq.Solved(Var("y"));
+        IRelation s = eq.Solved(Var("y"));
         SolvedEquation manual = new(Var("y"), Fulcrum.EQUALS, new Fraction(new SumDiff(Var("x"), new Fraction(Var("x"), Val(1.5)), new Fraction(new SumDiff(Var("x"), Val(1)), Val(4))), Val(2)));
         Scribe.Info($"Need {manual}");
         Scribe.Info($"Got {s}");
@@ -702,7 +703,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("y"), new Fraction(Var("x"), Val(3)), new SumDiff(new SumDiff(Var("x"), Var("y")), Val(4)))
         );
-        SolvedEquation se = eq.Solved();
+        IRelation se = eq.Solved();
         Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
         Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
         Assert.That(se.Evaluate().Get(), Is.EqualTo(-12));
@@ -715,7 +716,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
-        SolvedEquation se = eq.Solved(Var("x"));
+        IRelation se = eq.Solved(Var("x"));
         Assert.That(se.Evaluate(99).Get(), Is.EqualTo(125.05263157894736d));
     }
     [Test]
@@ -726,7 +727,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Var("x"), Var("y"), new Fraction(Var("x"), Val(8)))
         );
-        SolvedEquation se = eq.Solved();
+        IRelation se = eq.Solved();
         Assert.That(se.Evaluate(1).Get(), Is.EqualTo(-16));
         Assert.That(se.Evaluate(2).Get(), Is.EqualTo(-8));
     }
@@ -738,7 +739,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Val(1), new Fraction(Var("x"), Val(3)))
         );
-        SolvedEquation se = eq.Solved();
+        IRelation se = eq.Solved();
         Assert.That(se.Evaluate(2).Get(), Is.EqualTo(1.5));
         Assert.That(se.Evaluate(4).Get(), Is.EqualTo(0));
     }
@@ -750,7 +751,7 @@ public class IntermediateAlgebraCases
             Fulcrum.EQUALS,
             new SumDiff(Val(1), new Fraction(Var("x"), Val(3)), new Fraction(Var("x"), Val(5), Var("y")))
         );
-        SolvedEquation s = eq.Solved(Var("x"));
+        IRelation s = eq.Solved(Var("x"));
         SolvedEquation manual = new(Var("x"), Fulcrum.EQUALS,
             new Fraction(
                 Val(15),
@@ -772,7 +773,7 @@ public class AdvancedAlgebraCases
             Fulcrum.EQUALS,
             parabola
         );
-        SolvedEquation s = eq.Solved(Var("x"));
+        IRelation s = eq.Solved(Var("x"));
 
         SolvedEquation manual = new(
             Var("x2"),
@@ -795,7 +796,7 @@ public class AdvancedAlgebraCases
             Fulcrum.EQUALS,
             base2Exp
         );
-        SolvedEquation s = eq.Solved(Var("x"));
+        IRelation s = eq.Solved(Var("x"));
         SolvedEquation manual = new(
             Var("x"),
             Fulcrum.EQUALS,
@@ -836,9 +837,9 @@ public class AdvancedAlgebraCases
     {
         ExpLog ptrl = new(new List<Oper> { Var("a"), Var("x"), Var("b") }, new List<Oper> { });
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        SolvedEquation sa = eq.Solved(Var("a"));
-        SolvedEquation sx = eq.Solved(Var("x"));
-        SolvedEquation sb = eq.Solved(Var("b"));
+        IRelation sa = eq.Solved(Var("a"));
+        IRelation sx = eq.Solved(Var("x"));
+        IRelation sb = eq.Solved(Var("b"));
         Assert.Multiple(() =>
         {
             // Basic exponenet functionality
@@ -856,9 +857,9 @@ public class AdvancedAlgebraCases
     {
         ExpLog ptrl = new(new List<Oper> { Var("x") }, new List<Oper> { Var("b"), Var("a") });
         Equation eq = new(Var("y"), Fulcrum.EQUALS, ptrl);
-        SolvedEquation sa = eq.Solved(Var("a"));
-        SolvedEquation sx = eq.Solved(Var("x"));
-        SolvedEquation sb = eq.Solved(Var("b"));
+        IRelation sa = eq.Solved(Var("a"));
+        IRelation sx = eq.Solved(Var("x"));
+        IRelation sb = eq.Solved(Var("b"));
         // Basic functionality of logarithms
         //Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
 
@@ -888,11 +889,11 @@ public class AdvancedAlgebraCases
             Math.Log(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), E)
         ));
 
-        SolvedEquation sa = eq.Solved(Var("a")); SolvedEquation sA = eq.Solved(Var("A"));
-        SolvedEquation sb = eq.Solved(Var("b")); SolvedEquation sB = eq.Solved(Var("B"));
-        SolvedEquation sc = eq.Solved(Var("c")); SolvedEquation sC = eq.Solved(Var("C"));
-        SolvedEquation sd = eq.Solved(Var("d")); SolvedEquation sD = eq.Solved(Var("D"));
-        SolvedEquation se = eq.Solved(Var("e")); SolvedEquation sE = eq.Solved(Var("E"));
+        IRelation sa = eq.Solved(Var("a")); IRelation sA = eq.Solved(Var("A"));
+        IRelation sb = eq.Solved(Var("b")); IRelation sB = eq.Solved(Var("B"));
+        IRelation sc = eq.Solved(Var("c")); IRelation sC = eq.Solved(Var("C"));
+        IRelation sd = eq.Solved(Var("d")); IRelation sD = eq.Solved(Var("D"));
+        IRelation se = eq.Solved(Var("e")); IRelation sE = eq.Solved(Var("E"));
         double y = 2.2;
 
         Assert.That(sE.Evaluate(a, A, b, B, c, C, d, D, e, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Log(Math.Log(Math.Log(Math.Pow(a, Math.Pow(b, Math.Pow(c, Math.Pow(d, e)))), A), B), C), D), 1d / y)));
@@ -1044,21 +1045,31 @@ public class Others
     }
 }
 
-public class Derivatives
+public class Calculus
 {
     [Test]
-    public void Polynomials()
+    public void DPolynomials()
     {
         //
     }
     [Test]
-    public void Transcendentals()
+    public void DTranscendentals()
     {
         //
     }
     [Test]
-    public void ProductRule()
+    public void DProductRule()
     {
         //
+    }
+    [Test]
+    public void Approximate()
+    {
+        Equation tanglecube = new(
+            Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)),
+            Fulcrum.EQUALS,
+            Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8))
+        );
+        IRelation tcs = tanglecube.Solved();
     }
 }

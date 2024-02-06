@@ -1,4 +1,6 @@
 namespace Magician.Alg;
+
+using Magician.Core.Maps;
 using Symbols;
 
 // TODO: make equals an Oper, as well as <, >
@@ -69,7 +71,7 @@ public class Equation// : IRelation
     }
 
     // Re-arrange and reconstruct the equation in terms of a certain variable
-    public SolvedEquation Solved(Variable? v = null)
+    public IRelation Solved(Variable? v = null)
     {
         SolvedEquation? solvedEq = null;
         Oper lhCopy = LHS.Copy();
@@ -373,6 +375,8 @@ public class Equation// : IRelation
                     if (LAST_PICK == CURRENT_PICK && FUEL < 0)
                     {
                         throw Scribe.Issue($"Failed to solve to equation for {v}");
+                        //Scribe.Warn("Could not solve");
+                        //return new Approx
                     }
                     FUEL--;
                 }
@@ -420,16 +424,6 @@ public class Equation// : IRelation
         LHS = lhCopy;
         RHS = rhCopy;
         return solvedEq;
-    }
-
-    // Approximate a variable that isn't or can't be isolated. Eg. Pow(x, x) = 2
-    public double[] Approximate(double[] vals, Variable v)
-    {
-        throw Scribe.Issue("not implemented");
-    }
-    public double[] Approximate(double[] vals)
-    {
-        return Approximate(vals, Unknowns[0]);
     }
 
     public override string ToString()
