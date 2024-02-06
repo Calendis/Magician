@@ -1,8 +1,8 @@
 namespace Magician.Geo;
-using Magician.Core;
+using Core;
 using Core.Maps;
+using Alg;
 using Alg.Symbols;
-using Magician.Alg;
 
 public class Implicit : Node, IRelation
 {
@@ -33,8 +33,6 @@ public class Implicit : Node, IRelation
         this.outScale = outScale;
         maxSolutions = -1;
         this.axes = axes;
-        // For easier control over this, you may use a Symbolic
-        //GenMesh(inScale, outScale, domain, -1, axes, sampling);
         Refresh();
     }
     public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, int[] axes, Sampling? sampling, params (double, double, double)[] rangeResos) : this(r, x, y, z, inScale, outScale, 2, axes, sampling, rangeResos) { }
@@ -46,20 +44,17 @@ public class Implicit : Node, IRelation
     public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : this(r, x, y, z, inScale, outScale, 2, defaultAxes, null, rangeResos) { }
     public Implicit(IRelation r, double x, double y, double z, double scale, params (double, double, double)[] rangeResos) : this(r, x, y, z, scale, scale, 2, defaultAxes, null, rangeResos) { }
     public Implicit(IRelation r, double x, double y, double z, double inScale, double outScale, int domain, int[] axes, Sampling? sampling, double reso, params (double, double)[] ranges) : this(r, x, y, z, inScale, outScale, domain, axes, sampling, ranges.Select(r => (r.Item1, r.Item2, reso)).ToArray()) { }
-
     public IVal Cache => relation.Cache;
-
     public int Ins => relation.Ins;
-
     // maxOuts limits the number of paramaters of the output scalar
     // maxOuts=1 will only generate real solutions
     // maxOuts=2 will include complex solutions
     // maxouts>2 allows for additional non-arithmetic data to be passed to the generator
     public void Refresh()
     {
-        GenMesh(GetVals(maxOuts, sampling), (int)((range[0].Item2 - range[0].Item1) / resolution[0]));
+        GenMesh(GenRegions(maxOuts, sampling), (int)((range[0].Item2 - range[0].Item1) / resolution[0]));
     }
-    public List<(Mesh.Region, double[], IVal)> GetVals(int maxOuts, Sampling? sampling)
+    public List<(Mesh.Region, double[], IVal)> GenRegions(int maxOuts, Sampling? sampling)
     {
         NDCounter solveSpace = new(range, resolution);
         List<(Mesh.Region, double[], IVal)> flatRegArgs = new();
@@ -148,7 +143,6 @@ public class Implicit : Node, IRelation
             }
         }
 
-        //constituents.Clear();
         int brCounter = 0;
         int ndCounter = 0;
         int c = 0;
@@ -177,15 +171,12 @@ public class Implicit : Node, IRelation
                     double colX = outVal.Get();
                     double colY = outVal.Dims < 2 ? 0 : outVal.Get(1);
 
-                    colX /= range[axes[2]].Item2;
-                    colY /= range[axes[2]].Item2;
-                    colX /= Math.Pow(resolution[axes[2]], 1.1);
-                    colY /= Math.Pow(resolution[axes[2]], 1.1);
-                    colX /= inScale;
-                    colY /= inScale;
-                    colX *= outScale;
-                    colY *= outScale;
-                    double theta = outVal.Trim().Dims == 1 ? colX : Math.Atan2(colY, colX); ;
+                    //colX /= range[axes[2]].Item2;
+                    //colY /= range[axes[2]].Item2;
+                    //colX /= Math.Pow(resolution[axes[2]], 1.1);
+                    //colY /= Math.Pow(resolution[axes[2]], 1.1);
+                    //colY += outScale/1000;
+                    double theta = outVal.Trim().Dims == 1 ? colX : outVal.Magnitude;
 
                     if (double.IsNaN(theta) || !double.IsFinite(theta))
                         theta = outVal.Magnitude;
@@ -204,8 +195,6 @@ public class Implicit : Node, IRelation
                 }
                 ndCounter++;
             }
-            //branchMeshes.Add(Mesh.Rect(width, (int)solveSpace.Max, c));
-            //branchMeshes.Add(Mesh.Jagged(jaggeds[i - 1], walls[i - 1] ?? new(), deltOffsets, c));
             branchMeshes.Add(Mesh.Jagged(branchIdcs[brCounter++], regions, c));
             c = branch.Count;
         }
@@ -214,8 +203,6 @@ public class Implicit : Node, IRelation
         faces = new(branchMeshes.Aggregate(new List<int[]>(), (m, n) => m = m.Concat(n.Faces).ToList()));
         if (faces.Faces.Count == 0)
             faces = null;
-        //faces = Mesh.Regional(regionalArgs, (int)((range[0].Item2 - range[0].Item1) / resolution[0]));
-        //Scribe.Info($"Done regional meshing. Faces: {faces.Faces.Count}, Nodes: {Count}");
     }
 
     public override void Update()
@@ -234,15 +221,3 @@ public class Implicit : Node, IRelation
         return iv is Multivalue mv ? new Multivalue(mv.All.Select(v => new Val(v)).ToArray()) : new Val(iv);
     }
 }
-
-//public class Symbolic : Implicit
-//{
-//    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : base(o, x, y, z, inScale, outScale, rangeResos)
-//    {
-//        Scribe.Info($"relation is Oper? {relation is Oper}");
-//    }
-//    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, double reso, params (double, double)[] ranges) : base(o, x, y, z, inScale, outScale, reso, ranges)
-//    {
-//        Scribe.Info($"relation is Oper? {relation is Oper} (ctor 2)");
-//    }
-//}
