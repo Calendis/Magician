@@ -2,7 +2,7 @@
 namespace Magician.Paint;
 public static class EarCut
 {
-    public static List<int> Triangulate(double[][] vertices)
+    public static List<int> Triangulate(List<double[]> vertices)
     {
         List<double> flattened = new();
         foreach (double[] v in vertices)

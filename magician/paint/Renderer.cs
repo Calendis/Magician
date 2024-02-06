@@ -144,13 +144,13 @@ public static class Renderer
 
 public static class Render
 {
-    public static void Polygon(double[][] vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, Node? cache = null)
+    public static void Polygon(List<double[]> vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, Node? cache = null)
     {
-        cols ??= Enumerable.Range(0, vertices.Length).Select(n => Runes.Col.UIDefault.FG).ToList();
+        cols ??= Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
         // Draw points
         if ((drawMode & DrawMode.POINTS) > 0)
         {
-            int numPoints = vertices.Length;
+            int numPoints = vertices.Count;
             (byte[], float[])[] rPointArray = new (byte[], float[])[numPoints];
             //RPoints rPoints;
 
@@ -167,15 +167,15 @@ public static class Render
         // Draw lines
         if ((drawMode & DrawMode.PLOT) > 0)
         {
-            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && vertices.Length >= 3;
-            int numLines = vertices.Length - (connected ? 0 : 1);
+            bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && vertices.Count >= 3;
+            int numLines = vertices.Count - (connected ? 0 : 1);
             if (numLines < 1)
                 return;
 
             (byte[], float[], float[])[] rLineArray = new (byte[], float[], float[])[numLines];
             //RLines rLines;
 
-            for (int i = 0; i < vertices.Length - 1; i++)
+            for (int i = 0; i < vertices.Count - 1; i++)
             {
                 double x0 = vertices[i][0]; double x1 = vertices[i + 1][0];
                 double y0 = vertices[i][1]; double y1 = vertices[i + 1][1];
@@ -203,7 +203,7 @@ public static class Render
         }
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
-        if (((drawMode & DrawMode.INNER) > 0) && vertices.Length >= 3)
+        if (((drawMode & DrawMode.INNER) > 0) && vertices.Count >= 3)
         {
             List<int> ect = EarCut.Triangulate(vertices);
             if (ect.Count % 3 != 0)

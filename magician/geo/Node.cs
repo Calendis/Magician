@@ -64,7 +64,6 @@ public class Node : Vec3, ICollection<Node>
     {
         get
         {
-            //Geo.Ref.DefaultHeading.YawPitchRotated(-yaw, pitch);
             Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-yaw, pitch, 0);
             Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), rotMat);
             return rotated;
@@ -724,7 +723,7 @@ public class Node : Vec3, ICollection<Node>
             List<double[]> projectedVerts = Renderer.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
             List<double[]> clippedVerts = Renderer.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
             // The vertices are GLSL-ready
-            Paint.Render.Polygon(clippedVerts.ToArray(), drawMode, constituents.Select(c => c.Col).ToList(), this);
+            Paint.Render.Polygon(clippedVerts, drawMode, constituents.Select(c => c.Col).ToList(), this);
 
             texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
 
@@ -741,7 +740,7 @@ public class Node : Vec3, ICollection<Node>
                 List<double[]> projected = Renderer.Project(face.Select(i => this[i]), xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
                 List<double[]> culled = Renderer.Cull(this, xOffset, yOffset, zOffset, projected, face);
                 List<Color> cols = face.Select(i => this[i].Col).ToList();
-                Paint.Render.Polygon(culled.ToArray(), drawMode, cols, this);
+                Paint.Render.Polygon(culled, drawMode, cols, this);
             }
         }
     }
