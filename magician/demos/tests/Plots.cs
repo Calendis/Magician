@@ -26,26 +26,20 @@ public class MapPlotting : Spell
             Fulcrum.EQUALS,
             Var("x")
         );
-        Origin["paraZ"] = new Implicit(twoDEqZ.Solved(), 0, 0, 200, 3, 3, (-80, 80, 4)).Flagged(DrawMode.PLOT);
-        Origin["linX"] = new Implicit(twoDEqX.Solved(), 0, 9, 400, 1, 1, (-80, 80, 4)).Flagged(DrawMode.PLOT);
+        // TODO: add an api for switching the axis
+        Origin["paraZ"] = new Implicit(twoDEqZ.Solved(), 0, 0, 200, 3, 3, (-80, 80, 4)).Flagged(DrawMode.PLOT).Colored(new HSLA(0,1,1,255));
+        //Origin["linX"] = new Implicit(twoDEqX.Solved(), 0, 9, 400, 1, 1, (-80, 80, 4)).Flagged(DrawMode.PLOT);
         
 
-        Relational ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
-        Origin["plot3"] = new Implicit(ipm, 0, 0, 600, 2, 2, (-250, 250, 20), (-250, 250, 20));
-
-        Equation ipmCompare = new(
-            Var("y"),
-            Fulcrum.EQUALS,
-            new Fraction(Val(-600000),
-                new SumDiff(
-                    Var("x").Pow(Val(2)),
-                    Val(0),
-                    Var("z").Pow(Val(2))
-                )
-            )
-        );
-        SolvedEquation s = ipmCompare.Solved();
-        Origin["plot4"] = new Implicit(s, 0, 0, 1800, 2, 2, (-250, 250, 20), (-250, 250, 20));
+        //Relational ipm = new(new Func<double[], double[]>(vars => new double[]{-600000d / (vars[0] * vars[0] + vars[1] * vars[1])}), 2);
+        //Origin["plot3"] = new Implicit(ipm, 0, 0, 600, 2, 2, (-250, 250, 20), (-250, 250, 20));
+        //Origin["plot4"] = new Implicit(new Fraction(Val(-600000),
+        //        new SumDiff(
+        //            Var("x").Pow(Val(2)),
+        //            Val(0),
+        //            Var("z").Pow(Val(2))
+        //        )
+        //), 0, 0, 1800, 2, 2, (-250, 250, 20), (-250, 250, 20));
     }
 
     public override void Loop()
