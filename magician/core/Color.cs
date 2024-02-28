@@ -106,11 +106,7 @@ public abstract class Color
 
     public static double RedFromHSL(double h, double s, double l)
     {
-        if (double.IsNaN(h))
-        {
-            Console.Write(0);
-        }
-        double hh = h % (2 * Math.PI);
+        double hh = double.IsNaN(h) ? 5/3*Math.PI : h % (2 * Math.PI);
         double r;
         double c = l * s;
         double x = c * (1 - Math.Abs((hh / (Math.PI / 3f)) % 2 - 1));
@@ -142,14 +138,14 @@ public abstract class Color
         }
         else
         {
-            throw new InvalidDataException($"Red: invalid phase {h}");
+            throw Scribe.Issue($"Red: invalid phase {h}");
         }
         return r * 255;
     }
 
     public static double GreenFromHSL(double h, double s, double l)
     {
-        double hh = h % (2 * Math.PI);
+        double hh = double.IsNaN(h) ? 5/3*Math.PI : h % (2 * Math.PI);
         double g;
         double c = l * s;
         double x = c * (1 - Math.Abs((hh / (Math.PI / 3f)) % 2 - 1));
@@ -181,14 +177,14 @@ public abstract class Color
         }
         else
         {
-            throw new InvalidDataException($"Green: invalid phase {h}");
+            throw Scribe.Issue($"Green: invalid phase {h}");
         }
         return g * 255;
     }
 
     public static double BlueFromHSL(double h, double s, double l)
     {
-        double hh = h % (2 * Math.PI);
+        double hh = double.IsNaN(h) ? 5/3*Math.PI : h % (2 * Math.PI);
         double b;
         double c = l * s;
         double x = c * (1 - Math.Abs((hh / (Math.PI / 3f)) % 2 - 1));
@@ -220,7 +216,7 @@ public abstract class Color
         }
         else
         {
-            throw new InvalidDataException($"Blue: invalid phase {h}");
+            throw Scribe.Issue($"Blue: invalid phase {h}");
         }
         return b * 255;
     }
