@@ -2,8 +2,11 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
-public class ExpLog : Invertable
+public class ExpLog : Invertable, IDifferentiable
 {
+    public Oper Base => posArgs[0];
+    public Oper Exponent => new ExpLog(posArgs.Skip(1).ToList(), new List<Oper> { });
+    public bool IsLogarithm => negArgs.Count > 0;
     protected new int Identity => 1;
 
     public ExpLog(IEnumerable<Oper> posArgs, IEnumerable<Oper> negArgs) : base("explog", posArgs, negArgs)
@@ -13,6 +16,8 @@ public class ExpLog : Invertable
         trivialAssociative = true;
     }
     public ExpLog(params Oper[] ops) : base("explog", ops) { trivialAssociative = true; }
+    // base-exponent ctor
+    public ExpLog(Oper b, Oper x) : this(new List<Oper> { b, x }, new List<Oper> { }) { }
 
     IVal powTow = new Variable(1);
     Multivalue solMult;
@@ -98,9 +103,10 @@ public class ExpLog : Invertable
         }
     }
 
+    // TODO: move this to Oper
     public override Oper Degree(Oper v)
     {
-        if (IsDetermined)
+        if (IsDetermined || !AssociatedVars.Contains(v))
             return new Variable(0);
         if (negArgs.Count == 0 && v.Like(posArgs[0]))
         {
@@ -126,8 +132,6 @@ public class ExpLog : Invertable
     {
         return new ExpLog(pa, na);
     }
-
-
     public override void ReduceOuter()
     {
         /* Truncate power tower at any 1s */
@@ -173,13 +177,47 @@ public class ExpLog : Invertable
         if (runLen > 0)
         {
             List<Oper> toCombine = posArgs.TakeLast(runLen).ToList();
-            Variable combined = new ExpLog(toCombine, new List<Oper> { }).Sol();
-            posArgs = posArgs.Take(posArgs.Count - runLen).ToList();
-            posArgs.Add(combined);
+            Oper combined = new ExpLog(toCombine, new List<Oper> { });
+            if (combined.IsDetermined)
+            {
+                posArgs = posArgs.Take(posArgs.Count - runLen).ToList();
+                posArgs.Add(combined.Sol());
+            }
         }
 
         if (posArgs.Count == 0)
             throw Scribe.Issue("reduction should not destroy the tower!");
+    }
+
+    public override Oper Simplified()
+    {
+        if (!IsLogarithm)
+        {
+            // TODO: account for 0^0 indeterminacy
+            if (Exponent.IsDetermined)
+            {
+                Variable exp = Exponent.Sol();
+                if (exp.Value.EqValue(0))
+                    return new Variable(1);
+                if (exp.Value.EqValue(1))
+                    return Base.Copy();
+            }
+            if (Base.IsDetermined)
+            {
+                Variable b = Base.Sol();
+                if (b.Value.EqValue(0))
+                    return new Variable(0);
+                if (b.Value.EqValue(1))
+                    return new Variable(1);
+            }
+            return base.Simplified();
+        }
+        else
+        {
+            if (negArgs.Count == 1)
+                return Exponent.Mult(new ExpLog(Base, negArgs[0]));
+            return new ExpLog(new List<Oper> { Exponent.Mult(new ExpLog(Base, negArgs[0])) }, negArgs.Skip(1).ToList());
+        }
     }
 
     public override string ToString()

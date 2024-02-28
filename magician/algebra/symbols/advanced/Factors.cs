@@ -9,9 +9,13 @@ public class FactorMap
         OperLike ol = new();
         foreach (Oper factor in fs)
         {
-            Oper fc = factor.Copy();
-            //fc.SimplifyMax();
-            Oper facSimple = fc.Canonical();
+            Oper fc = factor.Copy().SimplifiedAll();
+            fc.Reduce(2);
+            fc.Combine(null, 2);
+            fc.Reduce(2);
+            fc.Commute();
+            fc.Combine(null, 2);
+            Oper facSimple = fc.Trim();
             Oper bas;
             Oper exp;
 
@@ -98,9 +102,20 @@ public class FactorMap
                 }
             }
 
-            Oper exp = new Commonfuncs.Min(a, b);
+            a.Combine(null, -1); a.Reduce(); a.Commute();
+            b.Combine(null, -1); b.Reduce(); b.Commute();
+            Oper exp = new Commonfuncs.Min(a, b).Canonical();
+            if (a.Like(b))
+                exp = a;
+            if (a < b)
+                exp = a;
+            if (b < a)
+                exp = b;
             if (commonFlag > 0)
-                newFactors.Add(fac, exp);
+                if (!newFactors.ContainsKey(fac))
+                    newFactors.Add(fac, exp);
+                else
+                    newFactors[fac] = exp.Plus(new Variable(1));
             c++;
         }
 

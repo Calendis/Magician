@@ -1,7 +1,7 @@
 namespace Magician.Alg.Symbols;
 using Core;
 
-public class Variable : Invertable, IVar
+public class Variable : Invertable, IVar, IDifferentiable
 {
     protected List<double> qs;
     protected List<IVal> ivals;
@@ -135,6 +135,8 @@ public class Variable : Invertable, IVar
 
     public override Variable Sol()
     {
+        if (!Found)
+            throw Scribe.Error($"Variable {this} was unknown");
         return this;
     }
 
@@ -178,7 +180,7 @@ public class Variable : Invertable, IVar
         //    return Copy();
         if (Found && o.IsConstant)
         {
-            return new Variable(IVal.Divide(this, o.Sol()));
+            return new Fraction(this, o).Sol();
         }
         return base.Divide(o);
     }

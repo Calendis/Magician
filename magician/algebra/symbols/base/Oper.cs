@@ -8,10 +8,20 @@ public abstract partial class Oper : IRelation
     protected readonly Variable solution;
     public IVal Cache => solution;
     public string Name => name;
+    // TODO: make these private or protected and use an indexer
     public List<Oper> posArgs = new();
     public List<Oper> negArgs = new();
     public List<Oper> AllArgs => posArgs.Concat(negArgs).ToList();
     public List<Variable> AssociatedVars = new();
+    public Variable ByName(string n)
+    {
+        foreach (Variable v in AssociatedVars)
+        {
+            if (v.Name == n)
+                return v;
+        }
+        throw Scribe.Error($"Variable {n} was not found in {this}");
+    }
 
     protected readonly string name;
     protected bool associative = false;
@@ -19,7 +29,7 @@ public abstract partial class Oper : IRelation
     public bool trivialAssociative = true;
     public bool invertible = true;
     protected virtual int? Identity { get; }
-    public int Ins { get {return AssociatedVars.Where(v => !v.Found).Count();}}
+    public int Ins { get { return AssociatedVars.Where(v => !v.Found).Count(); } }
     public bool IsConstant => this is Variable v && v.Found;
     public bool IsDetermined
     {
@@ -34,6 +44,7 @@ public abstract partial class Oper : IRelation
     // Create a new Oper of the same type
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
     public abstract Variable Sol();
+    // TODO: does this really need to be Oper v? Variable is probably fine
     public abstract Oper Degree(Oper v);
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
@@ -62,7 +73,7 @@ public abstract partial class Oper : IRelation
     // Alternating form ctor. Handy in some cases
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList()) { }
 
-    // Provide arguments to solve the expression at a point
+    // Provide real-valued arguments to solve the expression at a point
     public IVal Evaluate(params double[] args)
     {
         HashSet<Variable> associates = AssociatedVars.Where(v => !v.Found).ToHashSet();
@@ -76,6 +87,21 @@ public abstract partial class Oper : IRelation
         Variable s = Sol().Copy();
         associates.ToList().ForEach(a => a.Reset());
         return s;
+    }
+    // Evaluate using named arguments
+    public IVal Evaluate(params (string, IVal)[] args)
+    {
+        foreach ((string name, IVal val) in args)
+        {
+            Substitute(name, val);
+        }
+        Variable sol = Sol();
+        AssociatedVars.ForEach(v => v.Reset());
+        return sol;
+    }
+    public void Substitute(string n, IVal val)
+    {
+        ByName(n).Set(val.Values.ToArray());
     }
 
     // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
@@ -125,8 +151,7 @@ public abstract partial class Oper : IRelation
             Commute();
             if (++iters >= bailout)
             {
-                Scribe.Warn($"Bailed out after {iters} combinations");
-                throw Scribe.Issue("Strict combine");
+                Scribe.Warn($"Bailed out after {iters} combinations: {prev} vs {this}");
                 break;
             }
             //Scribe.Info($"  ...{this} vs. {prev}");
@@ -135,13 +160,50 @@ public abstract partial class Oper : IRelation
     }
 
     // For simplifications that change the parent node type
-    public virtual Oper Simplified() => this;
+    public virtual Oper Simplified() => Copy();
+    public Oper SimplifiedAll(int bailout = 99)
+    {
+        if (IsDetermined)
+            return Sol();
+        if (this is Variable)
+            return this;
+
+        int iters = 0;
+        Oper prev = new Variable("sa_placeholder");
+        Oper simp = Simplified();
+        simp.Reduce();
+
+        while (!prev.Like(simp))
+        {
+            if (simp is Variable)
+                return simp;
+            prev = simp.Copy();
+            simp = simp.New(simp.posArgs.Select(a => a.Copy().SimplifiedAll()).ToList(), simp.negArgs.Select(a => a.Copy().SimplifiedAll()).ToList());
+            simp.Reduce();
+            if (++iters >= bailout)
+            {
+                Scribe.Warn($"Bailed out after {iters} simplifications: {simp.Name} {simp} vs {prev.Name} {prev}");
+                break;
+            }
+        }
+        simp.Reduce();
+        return simp;
+
+        /* for (int i = 0; i < posArgs.Count; i++)
+            posArgs[i] = posArgs[i].SimplifiedAll();
+        for (int i = 0; i < negArgs.Count; i++)
+            negArgs[i] = negArgs[i].SimplifiedAll();
+        Oper s = Simplified();
+        return s; */
+
+    }
     public virtual Oper Canonical()
     {
-        Oper o = Copy().Simplified();
-        o.Reduce();
-        o.Commute();
+        Oper o = Copy().SimplifiedAll();
         o.CombineAll();
+        o.Reduce();
+        o = o.SimplifiedAll();
+        o.Commute();
         return o.Trim();
     }
     public Oper Trim()
@@ -158,7 +220,9 @@ public abstract partial class Oper : IRelation
             return new Variable(0);
         List<Oper> degs = AssociatedVars.Select(av => Degree(av)).ToList();
         Oper result = new SumDiff(degs, new List<Oper> { });
-        result = result.Canonical();
+        result.Combine(null, 2);
+        result.Reduce(2);
+        result.Commute();
         if (result.IsDetermined)
             return result.Sol();
         return result;
@@ -226,11 +290,15 @@ public abstract partial class Oper : IRelation
     {
         return new Fraction(new List<Oper> { this, o }, new List<Oper> { });
     }
+    public static SumDiff Mult(Oper o, SumDiff sd)
+    {
+        return new SumDiff(sd.posArgs.Select(a => a.Mult(o.Copy())).ToList(), sd.negArgs.Select(a => a.Mult(o.Copy())).ToList());
+    }
     public virtual Oper Divide(Oper o)
     {
         if (Like(o))
             return new Variable(1);
-        return new Fraction(new List<Oper> { this }, new List<Oper> { o });
+        return new Fraction(this, o);
     }
     public virtual ExpLog Pow(Oper o)
     {
@@ -341,7 +409,8 @@ public abstract partial class Oper : IRelation
             {typeof(ExpLog),    ('R', '^')},
             {typeof(Commonfuncs.Abs), ('-', '|')},
             {typeof(Commonfuncs.Min), ('-', 'm')},
-            {typeof(Commonfuncs.Max), ('-', 'M')}
+            {typeof(Commonfuncs.Max), ('-', 'M')},
+            {typeof(Derivative), ('d', 'd')}
         };
         int totalHeaders = 1;
         int totalLeaves = 0;

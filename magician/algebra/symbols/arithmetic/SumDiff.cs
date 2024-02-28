@@ -2,7 +2,7 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 // SumDiff objects represent addition and subtraction operations with any number of arguments
-public class SumDiff : Arithmetic
+public class SumDiff : Arithmetic, IDifferentiable
 {
     protected override int Identity => 0;
 
@@ -38,15 +38,14 @@ public class SumDiff : Arithmetic
             return new Variable(0);
         if (Like(v))
             return new Variable(1);
-        Oper minD = new Variable(0);
-        Oper maxD = new Variable(1);
+        Oper maxD = new Variable(double.MinValue);
         foreach (Oper o in AllArgs)
         {
             Oper d = o.Degree(v);
-            minD = d < minD ? d : minD;
             maxD = d > maxD ? d : maxD;
         }
-        return new Commonfuncs.Abs(maxD.Minus(minD));
+        //return new Commonfuncs.Abs(maxD.Minus(minD));
+        return maxD;
     }
 
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
@@ -63,9 +62,9 @@ public class SumDiff : Arithmetic
 
         ABbar.Reduce(2);
         Oper combined;
-        if (A is Variable av && av.Found && av.Value.Trim().Dims == 1 && av.Value.EqValue(0))
-            combined = B;
-        else if (B is Variable bv && bv.Found && bv.Value.Trim().Dims == 1 && bv.Value.EqValue(0))
+        if (A is Variable av && av.Found && av.Value.EqValue(0))
+            combined = bPositive ? B : B.Mult(new Variable(-1));
+        else if (B is Variable bv && bv.Found && bv.Value.EqValue(0))
             combined = A;
         else
             combined = AB.Mult(ABbar);

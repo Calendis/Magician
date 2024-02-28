@@ -2,7 +2,7 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 // Fraction objects represent multiplication and division operations with any number of arguments
-public class Fraction : Arithmetic
+public class Fraction : Arithmetic, IDifferentiable
 {
     protected override int Identity => 1;
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b) { }
@@ -13,6 +13,109 @@ public class Fraction : Arithmetic
     IVal num = new Val(1);
     IVal denom = new Val(1);
     private readonly Rational rationalSolution = new(0, 0);
+
+    public override void ReduceOuter()
+    {
+        // Detect 0s in the numerator
+        foreach (Oper a in posArgs)
+        {
+            if (a.IsDetermined && a.Sol().Value.EqValue(0))
+            {
+                posArgs.Clear();
+                negArgs.Clear();
+                posArgs.Add(new Variable(0));
+                AssociatedVars.Clear();
+                break;
+            }
+        }
+        if (IsDetermined)
+        {
+            IVal sv = Sol().Value;
+            bool isInt = true;
+            foreach(double svd in sv.Values)
+                if (svd != (int)svd)
+                    isInt = false;
+            if (isInt)
+            {
+                posArgs.Clear();
+                negArgs.Clear();
+                posArgs.Add(new Variable(sv));
+                return;
+            }
+        }
+        base.ReduceOuter();
+    }
+    internal override void CombineOuter(Variable? axis=null)
+    {
+        base.CombineOuter(axis);
+        BalanceDegree(axis);
+    }
+
+    public void BalanceDegree(Variable? axis=null)
+    {
+        if (axis == null)
+            AssociatedVars.ForEach(v =>
+            {
+                if (posArgs.Count > 1)
+                    BalDeg(posArgs, v);
+                if (negArgs.Count > 1)
+                    BalDeg(negArgs, v);
+            });
+        else
+        {
+            if (posArgs.Count > 1)
+                BalDeg(posArgs, axis);
+            if (negArgs.Count > 1)
+                BalDeg(negArgs, axis);
+        }
+        
+    }
+    static void BalDeg(List<Oper> args, Variable axis)
+    {
+        for (int i = 0; i < args.Count; i++)
+        {
+            Oper arg = args[i];
+
+            if (!arg.IsDetermined && arg.Degree(axis) < new Variable(1))
+            {
+                int idx = FindIdx(args, i, axis);
+                if (idx != -1)
+                {
+                    if (args[i] is SumDiff sd)
+                    {
+                        args[i] = Mult(args[idx], sd);
+                        args[i].Combine(null, 2);
+                        args[i].Reduce(2);
+                    }
+                    else
+                    {
+                        args[i] = arg.Mult(args[idx]);
+                        args[i].ReduceOuter();
+                    }
+                    //args[i].ReduceOuter();
+                    args.RemoveAt(idx);
+                    if (idx < i)
+                        i--;
+                }
+            }
+        }
+        static int FindIdx(List<Oper> args, int idx, Variable axis)
+        {
+            Oper arg = args[idx];
+            for (int i = 0; i < args.Count; i++)
+            {
+                if (i != idx)
+                {
+                    Oper other = args[i];
+                    if (arg.Degree(axis).Plus(other.Degree(axis)).IsDetermined && arg.Degree(axis).Plus(other.Degree(axis)) > new Variable(0))
+                    {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+    }
 
     public override Variable Sol()
     {
@@ -93,7 +196,10 @@ public class Fraction : Arithmetic
             else if (bPositive)
                 combined = B.Divide(A);
             else
+            {
+                //combined = A.Mult(B);
                 combined = new Variable(1).Divide(A.Mult(B));
+            }
         }
 
         else
@@ -108,8 +214,8 @@ public class Fraction : Arithmetic
         if (IsUnary)
             return posArgs[0].Mult(o);
         if (o is Fraction)
-            return new Fraction(posArgs.Concat(o.posArgs), negArgs.Concat(o.negArgs));
-        return (Fraction)base.Mult(o);
+            return new Fraction(posArgs.Concat(o.posArgs).ToList(), negArgs.Concat(o.negArgs).ToList());
+        return base.Mult(o);
     }
 
     public override Oper Divide(Oper o)
@@ -117,7 +223,7 @@ public class Fraction : Arithmetic
         if (IsUnary)
             return posArgs[0].Divide(o);
         if (o is Fraction)
-            return new Fraction(posArgs.Concat(o.negArgs), negArgs.Concat(o.posArgs));
+            return new Fraction(posArgs.Concat(o.negArgs).ToList(), negArgs.Concat(o.posArgs).ToList());
         return (Fraction)base.Divide(o);
     }
 

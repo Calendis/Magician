@@ -89,12 +89,20 @@ public abstract class Arithmetic : Invertable
                     //AB.ReduceAll();
 
                     Oper combined = Handshake(axis, A, B, AB, aPositive, bPositive);
+                    combined.Reduce();
                     //Scribe.Info($"\t\tCombined: {combined}");
 
                     if ((positive || aPositive) && (aPositive || bPositive))
                         finalPosArgs.Add(combined);
                     else
                         finalNegArgs.Add(combined);
+
+                    //if (positive)
+                    //    finalPosArgs.Add(combined);
+                    //else
+                    //{
+                    //    finalNegArgs.Add(combined);
+                    //}
 
                     // We're done for this term, and this also implies a handshake for the pair term
                     termsNeedingHandshake.Remove(i);
@@ -112,7 +120,7 @@ public abstract class Arithmetic : Invertable
         negArgs.AddRange(finalNegArgs);
         //Scribe.Info($"Now: {this}");
     }
-    internal override void CombineOuter(Variable? axis = null)
+    internal override void CombineOuter(Variable? axis=null)
     {
         Combine(axis);
         Reduce(2);
@@ -158,6 +166,77 @@ public abstract class Arithmetic : Invertable
         if (negArgs.Count > 0)
             negArgs = negArgs.Where(o => !(o.IsConstant && ((Variable)o).Value.Trim().Dims == 1 && o.Sol().Value.EqValue(Identity))).ToList();
     }
+
+    internal Dictionary<string, (Oper, int)> ArgBalance()
+    {
+        Dictionary<string, (Oper op, int co)> operCos = new();
+        foreach (Oper o in posArgs)
+        {
+            string ord = o.Ord();
+            if (operCos.ContainsKey(ord))
+            {
+                operCos[ord] = (operCos[ord].op, operCos[ord].co+1);
+            }
+            else
+            {
+                operCos.Add(ord, (o, 1));
+            }
+        }
+        foreach (Oper o in negArgs)
+        {
+            string ord = o.Ord();
+            if (operCos.ContainsKey(ord))
+            {
+                operCos[ord] = (operCos[ord].op, operCos[ord].co-1);
+            }
+            else
+            {
+                operCos.Add(ord, (o, -1));
+            }
+        }
+        return operCos;
+    }
+
+    public void Balance()
+    {
+        Dictionary<string, (Oper op, int co)> operCos = ArgBalance();
+        posArgs.Clear();
+        negArgs.Clear();
+        foreach (string ord in operCos.Keys)
+        {
+            Oper o = operCos[ord].op;
+            int coefficient = operCos[ord].co;
+            if (coefficient == 0)
+            {
+                // Update assoc arg info on reduce
+                if (o is Variable v && !v.Found)
+                {
+                    if (AssociatedVars.Contains(v))
+                        AssociatedVars.Remove(v);
+                }
+            }
+            else if (coefficient > 0)
+            {
+                while (coefficient-- > 0)
+                    posArgs.Add(o.Copy());
+                if (o is Variable v && !v.Found)
+                {
+                    if (!AssociatedVars.Contains(v))
+                        AssociatedVars.Add(v);
+                }
+            }
+            else if (coefficient < 0)
+            {
+                while (coefficient++ < 0)
+                    negArgs.Add(o.Copy());
+                if (o is Variable v && !v.Found)
+                {
+                    if (!AssociatedVars.Contains(v))
+                        AssociatedVars.Add(v);
+                }
+            }
+        }
+    }
     // Flagged grouped handshakes, flagged grouped opers, pos/neg filtered args
     internal (List<List<(int, int, bool, bool)>>, List<List<(Oper, bool)>>) GrpFlagHshakes(Variable axis)
     {
@@ -180,7 +259,7 @@ public abstract class Arithmetic : Invertable
         foreach (List<(Oper, bool parity)> flaggedArgs in new List<List<(Oper, bool)>> { argsNotContainingAxis, argsContainingAxis })
         {
             if (flaggedArgs.Count % 2 != 0)
-                flaggedArgs.Add((new Variable((int)Identity), true));
+                flaggedArgs.Add((new Variable(Identity), true));
             for (int i = 0; i < flaggedArgs.Count; i++)
                 for (int j = i + 1; j < flaggedArgs.Count; j++)
                     groupedHandshakes[c].Add((i, j, flaggedArgs[i].parity, flaggedArgs[j].parity));
