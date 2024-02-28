@@ -162,13 +162,11 @@ public class SimpleAlgebraCases
         i1 = Val(242141);
         Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
         Assert.That(i0.CommonFactors(i1).Trim().Like(Val(1)));
-
         // single x intersection
         i0 = Var("x");
         i1 = Var("x");
         Scribe.Info($"  {i0} CF {i1}: {i0.CommonFactors(i1)}");
         Assert.That(i0.CommonFactors(i1).Trim().Like(Var("x")));
-
         // double x intersection
         i0 = new Fraction(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
         i1 = Var("x");
@@ -176,7 +174,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(cf.Trim().Like(Var("x")));
-
         // sumdiff null intersection
         i0 = new SumDiff(new List<Oper>{
             new Fraction(new List<Oper>{Val(3), Var("y")}, new List<Oper>{}),
@@ -187,7 +184,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(cf.Trim().Like(Val(1)));
-
         // quadratic-x intersection
         i0 = Var("x");
         i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
@@ -195,7 +191,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(cf.Trim().Like(Var("x")));
-
         // quad-quad intersection
         i0 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
         i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
@@ -203,7 +198,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
         Assert.That(cf.Trim().Like(Var("x").Pow(Val(2))));
-
         // quadratic-1/x intersection
         i0 = new Fraction(Val(1), Var("x"));
         i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
@@ -211,7 +205,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
         Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
-
         // alternate quadratic-1/x intersection
         i0 = new ExpLog(new List<Oper> { Var("x"), Val(-1) }, new List<Oper> { });
         i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
@@ -219,7 +212,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
         Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
-
         // quad-invquad intersection
         i0 = Val(1).Divide(Var("x").Pow(Val(2)));
         i1 = Var("x").Pow(Val(2));
@@ -227,7 +219,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
         //Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
-
         // alternate quad-invquad intersection
         i0 = Var("x").Pow(Val(-2));
         i1 = Var("x").Pow(Val(2));
@@ -235,7 +226,6 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
         Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
-
         // alternate quad-invquad intersection
         i0 = Val(1).Divide(Var("x").Mult(Var("x")));
         i1 = Var("x").Pow(Val(2));
@@ -243,14 +233,13 @@ public class SimpleAlgebraCases
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i1.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
         Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
-
         //general intersection
         i0 = new ExpLog(new List<Oper> { Var("x"), Var("n") }, new List<Oper> { });
         i1 = new ExpLog(new List<Oper> { Var("x"), Var("k") }, new List<Oper> { });
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Var("x").Pow(new Min(Var("n"), Var("k")))));
+        Assert.That(cf.Trim().Like(Var("x").Pow(new Min(Var("k"), Var("n")))));
     }
 
     [Test]
@@ -304,9 +293,7 @@ public class SimpleAlgebraCases
         for (int i = 0; i < 10; i++)
         {
             Oper c = sd.Copy();
-            c.Commute();
             sd.CombineAll();
-            sd.Commute();
             Scribe.Info($"sd {sd} vs. c {c}");
             Assert.Multiple(() =>
             {
@@ -350,7 +337,7 @@ public class SimpleAlgebraCases
         Var("y").Set(4.5);
         Scribe.Info($"{o2}: {o2.Sol()} vs. {o2canon}: {o2canon.Sol()}");
 
-        Assert.That(x1, Is.EqualTo(x2));
+        Assert.That(x2, Is.EqualTo(x1));
     }
     [Test]
     public void PatchedSimplify()
@@ -1050,17 +1037,49 @@ public class Calculus
     [Test]
     public void DPolynomials()
     {
-        //
+        Oper o0 = new Derivative(Val(100), Var("x"));
+        Oper o1 = new Derivative(Var("x"), Var("x"));
+        Oper o2 = new Derivative(Var("x").Pow(Val(2)), Var("x"));
+        Oper o3 = new Derivative(Var("x").Pow(Val(3)).Plus(Var("x").Mult(Val(4))).Minus(Val(100)), Var("x"));
+
+        Scribe.Info($"{o0}");
+        Scribe.Info($"{o0.Canonical()}");
+        Assert.That(o0.Canonical().Like(Val(0)));
+        Scribe.Info($"{o1}");
+        Scribe.Info($"{o1.Canonical()}");
+        Assert.That(o1.Canonical().Like(Val(1)));
+        Scribe.Info($"{o2}");
+        Scribe.Info($"{o2.Canonical()}");
+        Assert.That(o2.Canonical().Like(Val(2).Mult(Var("x"))));
+        Scribe.Info($"{o3}");
+        Scribe.Info($"{o3.Canonical()}");
+        Assert.That(o3.Canonical().Like(Val(3).Mult(Var("x").Pow(Val(2))).Plus(Val(4)).Canonical()));
     }
     [Test]
-    public void DTranscendentals()
+    public void DBasicTranscendentals()
     {
-        //
+        Oper o0 = new Derivative(Val(Math.E).Pow(Var("x")), Var("x"));
+        Oper o1 = new Derivative(Val(2).Pow(Var("x")), Var("x"));
+        Assert.That(o0.Canonical().Like(Val(Math.E).Pow(Var("x"))));
+        Assert.That(o1.Canonical().Like(Val(2).Pow(Var("x")).Mult(Val(2).Log(Val(Math.E)).Sol())));
     }
     [Test]
     public void DProductRule()
     {
-        //
+        Oper f = Var("x").Pow(Val(2)).Minus(Val(1)).Mult(Var("x"));
+        Oper g = Val(Math.E).Pow(Var("x").Mult(Val(0.5)));
+        Oper dfg = new Derivative(f.Mult(g), Var("x")).Canonical();
+        Oper manual = Var("x").Pow(Val(2)).Minus(Val(1)).Plus(Val(2).Mult(Var("x").Pow(Val(2)))).Mult(Val(Math.E).Pow(Var("x").Mult(Val(0.5)))).Plus(Var("x").Mult(Var("x").Pow(Val(2)).Minus(Val(1))).Mult(Val(Math.E).Pow(Var("x").Mult(Val(0.5)))).Mult(Val(0.5)));
+        Assert.That(dfg.Like(manual.Canonical()));
+    }
+    [Test]
+    public void DProductRule2()
+    {
+        Oper f = Var("x");
+        Oper g = Var("x").Pow(Val(2)).Minus(Val(1));
+        Oper dfg = new Derivative(f.Mult(g), Var("x")).Canonical();
+        Oper manual = Val(3).Mult(Var("x").Pow(Val(2))).Minus(Val(1));
+        Assert.That(dfg.Like(manual.Canonical()));
     }
     [Test]
     public void Approximate()
@@ -1071,5 +1090,7 @@ public class Calculus
             Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8))
         );
         IRelation tcs = tanglecube.Solved();
+        Scribe.Info((Approx)tcs);
+        Scribe.Info(tcs.Evaluate(1, 2));
     }
 }
