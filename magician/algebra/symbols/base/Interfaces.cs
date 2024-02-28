@@ -1,12 +1,12 @@
 namespace Magician.Alg.Symbols;
-using Core.Maps;
 
 public interface IDifferentiable
 {
-    public IRelation Derivative();
+    // TODO: support Oper axis
+    //public Oper Derivative(Variable axis);
 }
 
-public interface IAnalytic : IDifferentiable
-{
-    public new IAnalytic Derivative();
-}
+//public interface IAnalytic : IDifferentiable
+//{
+//    public IAnalytic Derivative(Variable axis);
+//}
