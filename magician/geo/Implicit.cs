@@ -4,6 +4,7 @@ using Core.Maps;
 using Alg;
 using Alg.Symbols;
 
+// TODO: rename this
 public class Implicit : Node, IRelation
 {
     // represents x, z, y. This means that by default, the y-axis is the output parameter, while x and z are inputs
@@ -126,6 +127,8 @@ public class Implicit : Node, IRelation
         {
             for (int j = 0; j < width; j++)
             {
+                // i, j
+                
                 double[] inVals = regionsArgs[i, j].Item2;
                 IVal outVal = regionsArgs[i, j].Item3;
                 int solutions = 1;
