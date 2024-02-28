@@ -14,7 +14,7 @@ public class Abs : Oper
     {
         if (!(pa.Count() <= 1 && !na.Any()))
         {
-            throw Scribe.Error($"{this.GetType().Name} is a unary Oper");
+            throw Scribe.Error($"{GetType().Name} is a unary Oper");
         }
         return new Abs(pa.ToList()[0]);
     }
@@ -132,12 +132,12 @@ public class Max : Oper
 
 public class Min : Oper
 {
-    public Min(params Oper[] os) : base("max", os, new List<Oper> { })
+    public Min(params Oper[] os) : base("min", os, new List<Oper> { })
     {
         commutative = true;
         associative = true;
     }
-    public Min(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("max", pa.Concat(na), new List<Oper> { })
+    public Min(IEnumerable<Oper> pa, IEnumerable<Oper> na) : base("min", pa.Concat(na), new List<Oper> { })
     {
         commutative = true;
         associative = true;
