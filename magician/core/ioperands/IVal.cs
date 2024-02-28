@@ -118,7 +118,7 @@ public interface IVal : IDimensional<double>
     {
         if (output is null)
             return new Val(i.Values.Select(k => k / x).ToArray());
-        for (int n = 0; n < i.Dims; n++) { output.Set(n, x / output.Get(n)); }
+        for (int n = 0; n < i.Dims; n++) { output.Set(n,  output.Get(n) / x); }
         return output;
     }
 
@@ -259,6 +259,7 @@ public interface IVal : IDimensional<double>
             return output;
         }
         // TODO: complex base, Gaussian integer exponent
+        //
         // complex base, other exponent
         else
         {
