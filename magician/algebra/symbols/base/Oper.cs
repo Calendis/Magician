@@ -49,23 +49,27 @@ public abstract partial class Oper : IRelation
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
+        //if (InstantiationAssociator.TryLock(this))
+        //{
+        //    Scribe.Info($"Locked {Name} {this}");
+        //}
         this.name = name;
         posArgs = posa.ToList();
         negArgs = nega.ToList();
-        /* Eventually we could optimize with something like */
-        /*
-            if (LayerCache.Locked)
-                LayerCache.TryKry(this)  // the key would consist of am ord-address pair
-                return;                  // break out early if we can't get access to the layer cache. the assumption
-                                         // is that a the root constructor will successfully unlock the cache
-                                         // and distribute AssociatedVar information
-        */
-        OperLayers ol = new(this, Variable.Undefined);
-        // TODO: put this behind some string constant
+        // Collect the data
+        //if (InstantiationAssociator.TryUnlock(this))
+        //{
+        //    Scribe.Info($"Unlocked {Name} {this}, collecting data...");
+        //    OperLayers ol = new(this, Variable.Undefined);
+        //}
+        //OperLayers ol = new(this, Variable.Undefined);
         // This is a hack, but it works. Normally I would check the found property of the Variable, but this is the
         // base ctor, which is called before that property can be set
-        if (!(this is Variable && new string(name.Take(8).ToArray()) == "constant"))
+        if (!(this is Variable && (new string(name.Take(8).ToArray()) == "constant") || name == "undefined"))
+        {
+            OperLayers ol = new(this, Variable.Undefined);
             AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
+        }
         //AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? 1 : v0.Name[0] > v1.Name[0] ? -1 : 0);
         if (this is not Variable)
             solution = new("sol", double.NaN);
@@ -99,9 +103,35 @@ public abstract partial class Oper : IRelation
         AssociatedVars.ForEach(v => v.Reset());
         return sol;
     }
+    // Substitute a value into a variable
     public void Substitute(string n, IVal val)
     {
         ByName(n).Set(val.Values.ToArray());
+    }
+    // Substitute one Oper for another
+    public void Substitute(Oper toReplace, Oper sub)
+    {
+        bool didSub = false;
+        for (int i = 0; i < posArgs.Count; i++)
+        {
+            posArgs[i].Substitute(toReplace, sub);
+            if (posArgs[i].Like(toReplace))
+            {
+                didSub = true;
+                posArgs[i] = sub.Copy();
+            }
+        }
+        for (int i = 0; i < negArgs.Count; i++)
+        {
+            negArgs[i].Substitute(toReplace, sub);
+            if (negArgs[i].Like(toReplace))
+            {
+                didSub = true;
+                negArgs[i] = sub.Copy();
+            }
+        }
+        if (didSub)
+            AssociatedVars.AddRange(sub.AssociatedVars);
     }
 
     // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
@@ -138,7 +168,7 @@ public abstract partial class Oper : IRelation
         }
         CombineOuter(axis);
     }
-    // Perform advanced simplifications in this Oper as much as possible
+    // Perform advanced simplifications in this Oper recursively, as much as possible
     public void CombineAll(Variable? axis = null, int bailout = 999)
     {
         int iters = 0;
@@ -355,13 +385,17 @@ public abstract partial class Oper : IRelation
     }
     public bool Like(Oper o)
     {
+        if (o == null)
+            return false;
         if (o.GetType() != GetType())
         {
             if (o is not Variable || this is not Variable)
                 return false;
         }
 
-        if (AllArgs.Count != o.AllArgs.Count)
+        if (posArgs.Count != o.posArgs.Count)
+            return false;
+        if (negArgs.Count != o.negArgs.Count)
             return false;
 
         if (this is Variable v && o is Variable u)
@@ -387,14 +421,29 @@ public abstract partial class Oper : IRelation
                 return v == u;
         }
 
-        List<Oper> args = AllArgs;
-        for (int i = 0; i < AllArgs.Count; i++)
+        for (int i = 0; i < posArgs.Count; i++)
         {
-            if (!((Oper)o.AllArgs[i]).Like(args[i]))
+            if (!((Oper)o.posArgs[i]).Like(posArgs[i]))
+                return false;
+        }
+        for (int i = 0; i < negArgs.Count; i++)
+        {
+            if (!((Oper)o.negArgs[i]).Like(negArgs[i]))
                 return false;
         }
 
         return true;
+    }
+    public int Contains(Oper o)
+    {
+        int c = 0;
+        foreach (Oper arg in AllArgs)
+        {
+            if (arg.Like(o))
+                c++;
+            c += arg.Contains(o);
+        }
+        return c;
     }
 
     public string Ord(string? ord = null)
