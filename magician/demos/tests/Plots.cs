@@ -12,8 +12,8 @@ public class MapPlotting : Spell
     double walkSpeed = 4;
     public override void PreLoop()
     {
-        Origin["plot1"] = new Implicit(new Parametric(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5)), 0, 0, -200, 20, 5, (-10d, 10d, 0.2)).Flagged(DrawMode.PLOT);
-        Origin["plot2"] = new Implicit(new Parametric(t => 60 * Math.Sin(t / 4), t => t+150), 0, 0, 0, 20, 5, (0d, 20*Math.PI, 0.5)).Flagged(DrawMode.PLOT);
+        Origin["plot1"] = new Explicit(new Parametric(t => 60 * Math.Sin(t), t => 60 * Math.Cos(t / 5)), 0, 0, -200, 20, 5, (-10d, 10d, 0.2)).Flagged(DrawMode.PLOT);
+        Origin["plot2"] = new Explicit(new Parametric(t => 60 * Math.Sin(t / 4), t => t+150), 0, 0, 0, 20, 5, (0d, 20*Math.PI, 0.5)).Flagged(DrawMode.PLOT);
             
         
         Equation twoDEqZ = new(
@@ -27,7 +27,7 @@ public class MapPlotting : Spell
             Var("x")
         );
         // TODO: add an api for switching the axis
-        Origin["paraZ"] = new Implicit(twoDEqZ.Solved(), 0, 0, 200, 3, 3, (-80, 80, 4)).Flagged(DrawMode.PLOT).Colored(new HSLA(0,1,1,255));
+        Origin["paraZ"] = new Explicit(twoDEqZ.Solved(), 0, 0, 200, 3, 3, (-80, 80, 4)).Flagged(DrawMode.PLOT).Colored(new HSLA(0,1,1,255));
         //Origin["linX"] = new Implicit(twoDEqX.Solved(), 0, 9, 400, 1, 1, (-80, 80, 4)).Flagged(DrawMode.PLOT);
         
 

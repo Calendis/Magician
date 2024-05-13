@@ -12,6 +12,7 @@ public class SimpleAlgebraCases
     [Test]
     public void Subsumption()
     {
+        Scribe.Info(Variable.Undefined);
         Oper o0 = new Abs(new Max(new Fraction(new Abs(new SumDiff(new Abs(Val(4096)))))));
         Scribe.Info(o0);
         o0.Reduce();
@@ -391,6 +392,7 @@ public class SimpleAlgebraCases
     [Test]
     public void XCubeYsquare()
     {
+        Var("y").Reset();
         Fraction need = new(
             new List<Oper>{new ExpLog(new List<Oper>{Var("x"), Val(3)}, new List<Oper>{}),
             new ExpLog(new List<Oper>{Var("y"), Val(2)}, new List<Oper>{})},
@@ -833,9 +835,9 @@ public class AdvancedAlgebraCases
             Assert.That(ptrl.Evaluate(1.2, 1.4, 1.3).Get(), Is.EqualTo(Math.Pow(1.2, Math.Pow(1.3, 1.4))));
 
             // Inverting and solving for exponents
-            //Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
-            //Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
-            //Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
+            Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.4, Math.Pow(Math.Pow(1.3, 1.2), -1))));
+            Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.4, 1.2), Math.Pow(1.3, -1))));
+            Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.2), 1.3)));
         });
     }
 
@@ -848,12 +850,12 @@ public class AdvancedAlgebraCases
         IRelation sx = eq.Solved(Var("x"));
         IRelation sb = eq.Solved(Var("b"));
         // Basic functionality of logarithms
-        //Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
+        Assert.That(ptrl.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Log(Math.Log(1.4, 1.3), 1.2)));
 
         // Inverting and solving for nested logarithms
-        //Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d / 1.4)));
+        Assert.That(sa.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(Math.Log(1.3, 1.2), 1d / 1.4)));
         Assert.That(sx.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.3, Math.Pow(1.2, 1.4))));
-        //Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.3, 1d / Math.Pow(1.2, 1.4))));
+        Assert.That(sb.Evaluate(1.2, 1.3, 1.4).Get(), Is.EqualTo(Math.Pow(1.3, 1d / Math.Pow(1.2, 1.4))));
     }
 
 
@@ -894,6 +896,35 @@ public class AdvancedAlgebraCases
         Assert.That(sb.Evaluate(a, A, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Log(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), a), 1d / Math.Pow(c, Math.Pow(d, e)))));
         Assert.That(sa.Evaluate(A, b, B, c, C, d, D, e, E, y).Get(), Is.EqualTo(Math.Pow(Math.Pow(A, Math.Pow(B, Math.Pow(C, Math.Pow(D, Math.Pow(E, y))))), 1d / Math.Pow(b, Math.Pow(c, Math.Pow(d, e))))));
     }
+
+    // We may want to solve for some Oper, rather than just a Variable
+    [Test]
+    public void SolveForOpers()
+    {
+        Oper lhs = Var("x").Mult(Val(3)).Pow(Val(2)).Plus(Var("y").Pow(Val(2)));
+        Equation eq = new(
+            lhs, Fulcrum.EQUALS, Val(1)
+        );
+        Equation rearr = eq.Rearranged(lhs.posArgs[0].posArgs[0]);
+        Assert.That(rearr.LHS.Like(Var("x").Mult(Val(3))));
+    }
+
+    [Test]
+    public void PolynomialZeroes()
+    {
+        Oper binom0 = Var("x").Plus(Val(1));
+        Oper binom1 = Var("y").Minus(Val(1));
+        Oper fz = binom0.Mult(binom1);
+        Equation factorZeroes = new(
+            fz, Fulcrum.EQUALS,
+            Val(0)
+        );
+        IRelation s = factorZeroes.Solved(Var("x"));
+        Scribe.Info(s);
+        //Scribe.Info(s.Evaluate());
+        //Scribe.Info(s.Evaluate(1));
+        //Scribe.Info(s.Evaluate(0));
+    }
 }
 
 public class ComplexAndMultivalued
@@ -902,7 +933,7 @@ public class ComplexAndMultivalued
     public void SquareRootMinus1()
     {
         Variable v;
-        
+
         // Principal root (i)
         v = Val(-1).Pow(Val(0.5)).Sol();
         Scribe.Info(v);
@@ -964,7 +995,7 @@ public class ComplexAndMultivalued
         v = new Variable(2).Pow(new Variable(3, -8)).Sol();
         //Scribe.Info($"2 ^ (3-8i) = {v}");
         Assert.That(v.Value.EqValue(new Val(5.9184829327522435, 5.382523550781771)));
-        
+
         // (1 + 2i) ^ (3 + 4i)
         v = new Variable(1, 2).Pow(new Variable(3, 4)).Sol();
         Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
@@ -1015,7 +1046,7 @@ public class ComplexAndMultivalued
     }
 }
 
-public class Others
+public class OrdAndData
 {
     [Test]
     public void IValLikeness()
@@ -1029,6 +1060,13 @@ public class Others
         Assert.That(v0.Ord(), Is.EqualTo(v1.Ord()));
         Assert.That(v0.Ord(), Is.Not.EqualTo(v2.Ord()));
         Assert.That(!v1.Like(v2));
+    }
+    [Test]
+    public void PlusMinusBinomial()
+    {
+        Oper binom0 = Var("x").Plus(Val(1));
+        Oper binom1 = Var("x").Minus(Val(1));
+        Assert.That(!binom0.Like(binom1));
     }
 }
 
@@ -1089,8 +1127,23 @@ public class Calculus
             Fulcrum.EQUALS,
             Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8))
         );
+        // As long as we don't crash, good enough
         IRelation tcs = tanglecube.Solved();
         Scribe.Info((Approx)tcs);
         Scribe.Info(tcs.Evaluate(1, 2));
+    }
+    [Test]
+    public void ImplicitDifferentiation()
+    {
+        // TODO: write assertions
+        //Oper d0 = new Derivative(Var("x"), Var("t"));
+        //Oper d1 = new Derivative(Var("x"), Var("t"), DerivativeKind.IMPLICIT);
+        //Scribe.Info($"{d0}, {d1}");
+        //Scribe.Info($"{d0.Canonical()}, {d1.Canonical()}");
+
+        Oper diffMe = new ExpLog(Var("x"), Val(2));
+        Oper der0 = new Derivative(diffMe, Var("y"), DerivativeKind.IMPLICIT);
+        Oper der1 = new Derivative(diffMe, Var("y"));
+        Scribe.Info($"{der0.Canonical()}, {der1.Canonical()}");
     }
 }

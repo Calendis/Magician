@@ -2,7 +2,7 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 // SumDiff objects represent addition and subtraction operations with any number of arguments
-public class SumDiff : Arithmetic, IDifferentiable
+public class SumDiff : Arithmetic
 {
     protected override int Identity => 0;
 

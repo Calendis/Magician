@@ -93,7 +93,7 @@ public class NDCounter
         //Scribe.List(vals);
         
         Val ++;
-        if (Val >= counterMax)
+        if (Val >= counterMax+1)
         {
             done = true;
             return true;

@@ -8,7 +8,7 @@ public class SolvedEquation : IRelation
     public Variable Chosen => chosenRoot;
     public Equation Equation => eq;
     public Oper Opposite => eq.RHS;
-    public int Ins => eq.Unknowns.Count - eq.Sliders.Count - 1;
+    public int Ins => eq.Unknowns.Count - eq.Constants.Count - 1;
     public IVal Cache {get; private set;}
     readonly Equation eq;
     readonly Variable chosenRoot;
@@ -28,7 +28,7 @@ public class SolvedEquation : IRelation
 
         List<Variable> unknowns = Opposite.AssociatedVars.ToList();
         unknowns.Remove(Chosen);
-        unknowns = unknowns.Except(eq.Sliders).ToList();
+        unknowns = unknowns.Except(eq.Constants).ToList();
         // Sort the arguments so you don't get inconsistent behaviour
         unknowns = unknowns.OrderBy(v => v.Name).ToList();
         // Set the values

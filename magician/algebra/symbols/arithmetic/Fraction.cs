@@ -2,7 +2,7 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 // Fraction objects represent multiplication and division operations with any number of arguments
-public class Fraction : Arithmetic, IDifferentiable
+public class Fraction : Arithmetic
 {
     protected override int Identity => 1;
     public Fraction(IEnumerable<Oper> a, IEnumerable<Oper> b) : base("fraction", a, b) { }
@@ -32,7 +32,7 @@ public class Fraction : Arithmetic, IDifferentiable
         {
             IVal sv = Sol().Value;
             bool isInt = true;
-            foreach(double svd in sv.Values)
+            foreach (double svd in sv.Values)
                 if (svd != (int)svd)
                     isInt = false;
             if (isInt)
@@ -45,77 +45,108 @@ public class Fraction : Arithmetic, IDifferentiable
         }
         base.ReduceOuter();
     }
-    internal override void CombineOuter(Variable? axis=null)
+    internal override void CombineOuter(Variable? axis = null)
     {
         base.CombineOuter(axis);
-        BalanceDegree(axis);
+        //BalanceDegree(axis);
     }
 
-    public void BalanceDegree(Variable? axis=null)
-    {
-        if (axis == null)
-            AssociatedVars.ForEach(v =>
-            {
-                if (posArgs.Count > 1)
-                    BalDeg(posArgs, v);
-                if (negArgs.Count > 1)
-                    BalDeg(negArgs, v);
-            });
-        else
-        {
-            if (posArgs.Count > 1)
-                BalDeg(posArgs, axis);
-            if (negArgs.Count > 1)
-                BalDeg(negArgs, axis);
-        }
-        
-    }
-    static void BalDeg(List<Oper> args, Variable axis)
-    {
-        for (int i = 0; i < args.Count; i++)
-        {
-            Oper arg = args[i];
+    //void BalanceDegree(Variable? axis=null)
+    //{
+    //    List<Oper> toSwaptoNeg = new();
+    //    List<int> toRemFromPos = new();
+    //    List<Oper> toSwaptoPos = new();
+    //    List<int> toRemFromNeg = new();
+    //    for (int i = 0; i < posArgs.Count; i++)
+    //    {
+    //        Oper deg = posArgs[i].Degree();
+    //        if (deg.IsDetermined && deg < new Variable(0))
+    //        {
+    //            toSwaptoNeg.Add(posArgs[i]);
+    //        }
+    //    }
+    //    for (int i = 0; i < negArgs.Count; i++)
+    //    {
+    //        Oper deg = negArgs[i].Degree();
+    //        if (deg.IsDetermined && deg < new Variable(0))
+    //        {
+    //            toSwaptoPos.Add(negArgs[i]);
+    //        }
+    //    }
+    //    foreach (Oper o in toSwaptoNeg)
+    //    {
+    //        posArgs.Remove(o);
+    //        negArgs.Add()
+    //    }
+    //}
 
-            if (!arg.IsDetermined && arg.Degree(axis) < new Variable(1))
-            {
-                int idx = FindIdx(args, i, axis);
-                if (idx != -1)
-                {
-                    if (args[i] is SumDiff sd)
-                    {
-                        args[i] = Mult(args[idx], sd);
-                        args[i].Combine(null, 2);
-                        args[i].Reduce(2);
-                    }
-                    else
-                    {
-                        args[i] = arg.Mult(args[idx]);
-                        args[i].ReduceOuter();
-                    }
-                    //args[i].ReduceOuter();
-                    args.RemoveAt(idx);
-                    if (idx < i)
-                        i--;
-                }
-            }
-        }
-        static int FindIdx(List<Oper> args, int idx, Variable axis)
-        {
-            Oper arg = args[idx];
-            for (int i = 0; i < args.Count; i++)
-            {
-                if (i != idx)
-                {
-                    Oper other = args[i];
-                    if (arg.Degree(axis).Plus(other.Degree(axis)).IsDetermined && arg.Degree(axis).Plus(other.Degree(axis)) > new Variable(0))
-                    {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-    }
+    //public void BalanceDegree(Variable? axis = null)
+    //{
+    //    Scribe.Info($"BalanceDegree: axis is {axis}");
+    //    // If axis is null, balance degree for all variables
+    //    if (axis == null)
+    //    {
+    //        AssociatedVars.ForEach(v =>
+    //        {
+    //            if (posArgs.Count > 1)
+    //                BalDeg(posArgs, v);
+    //            if (negArgs.Count > 1)
+    //                BalDeg(negArgs, v);
+    //        });
+    //    }
+    //    else
+    //    {
+    //        if (posArgs.Count > 1)
+    //            BalDeg(posArgs, axis);
+    //        if (negArgs.Count > 1)
+    //            BalDeg(negArgs, axis);
+    //    }
+    //}
+    //static void BalDeg(List<Oper> args, Variable axis)
+    //{
+    //    for (int i = 0; i < args.Count; i++)
+    //    {
+    //        Oper arg = args[i];
+    //        if (!arg.IsDetermined && arg.Degree(axis) < new Variable(1))
+    //        {
+    //            int idx = FindIdx(args, i, axis);
+    //            if (idx != -1)
+    //            {
+    //                if (args[i] is SumDiff sd)
+    //                {
+    //                    args[i] = Mult(args[idx], sd);
+    //                    args[i].Combine(null, 2);
+    //                    args[i].Reduce(2);
+    //                }
+    //                else
+    //                {
+    //                    args[i] = arg.Mult(args[idx]);
+    //                    args[i].ReduceOuter();
+    //                }
+    //                //args[i].ReduceOuter();
+    //                args.RemoveAt(idx);
+    //                if (idx < i)
+    //                    i--;
+    //            }
+    //        }
+    //    }
+    //    static int FindIdx(List<Oper> args, int idx, Variable axis)
+    //    {
+    //        Oper arg = args[idx];
+    //        for (int i = 0; i < args.Count; i++)
+    //        {
+    //            if (i != idx)
+    //            {
+    //                Oper other = args[i];
+    //                if (arg.Degree(axis).Plus(other.Degree(axis)).IsDetermined && arg.Degree(axis).Plus(other.Degree(axis)) > new Variable(0))
+    //                {
+    //                    return i;
+    //                }
+    //            }
+    //        }
+    //        return -1;
+    //    }
+    //}
 
     public override Variable Sol()
     {

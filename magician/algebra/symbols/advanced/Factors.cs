@@ -53,8 +53,12 @@ public class FactorMap
             }
             else
             {
-                if (factors.Keys.Contains(facSimple, ol))
-                    factors[facSimple] = factors[facSimple].Plus(new Variable(1));
+                Oper? foundKey = factors.Keys.Where(k => k.Like(facSimple)).FirstOrDefault();
+                //if (factors.Keys.Contains(facSimple, ol))
+                if (foundKey is not null)
+                {
+                    factors[foundKey] = factors[foundKey].Plus(new Variable(1));
+                }
                 else
                     factors.Add(facSimple, new Variable(1));
             }

@@ -1,19 +1,23 @@
 namespace Magician.Alg.Symbols;
-
 using System.Collections.Generic;
+
+public enum DerivativeKind
+{
+    PARTIAL,
+    IMPLICIT
+}
 
 public class Derivative : Oper
 {
-    Variable axis;
-    // TODO: make an interface for unary operators like Derivative and Abs
-    // ... well, Derivative might be binary because of the axis
     public Oper Argument => posArgs[0];
-    public Derivative(Oper o, Variable v) : base("derivative", o.Trim())
+    Variable axis;
+    public DerivativeKind dk;
+
+    public Derivative(Oper argument, Variable axis, DerivativeKind dk=DerivativeKind.PARTIAL) : base("derivative", argument)
     {
-        if (Argument is not IDifferentiable)
-            throw Scribe.Error($"{Argument.Name} {Argument} was not differentiable");
-        axis = v;
+        this.axis = axis;
         trivialAssociative = false;
+        this.dk = dk;
     }
     // TODO: support differentiation with respect to an arbitrary Oper
     //public Derivative(Oper o, Oper v) : base("derivative", o)
@@ -23,7 +27,7 @@ public class Derivative : Oper
 
     public override Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na)
     {
-        return new Derivative(pa.ToList()[0], axis);
+        return new Derivative(pa.ToList()[0], axis, dk);
     }
 
     public override void ReduceOuter()
@@ -39,12 +43,19 @@ public class Derivative : Oper
         {
             if (v == axis)
                 return new Variable(1);
-            return new Variable(0);
+            if (dk == DerivativeKind.PARTIAL || v.IsDetermined)
+                return new Variable(0);
+            else
+            {
+                //Scribe.Info("We need to get here");
+                return this;
+            }
+            //else return new Derivative(v, axis, dk);
         }
-        
+
         if (Argument is SumDiff)
         {
-            return new SumDiff(Argument.posArgs.Select(a => new Derivative(a.Copy(), axis)).ToList(), Argument.negArgs.Select(a => new Derivative(a.Copy(), axis)).ToList());
+            return new SumDiff(Argument.posArgs.Select(a => new Derivative(a.Copy(), axis, dk)).ToList(), Argument.negArgs.Select(a => new Derivative(a.Copy(), axis, dk)).ToList());
         }
 
         if (Argument is Fraction frac)
@@ -54,11 +65,11 @@ public class Derivative : Oper
             {
                 f = frac.posArgs[0].Copy();
                 g = new Fraction(frac.posArgs.Skip(1).ToList(), new List<Oper>{}).Copy();
-                return new Derivative(f.Copy(), axis).Mult(g.Copy()).Simplified().Plus(new Derivative(g.Copy(), axis).Mult(f.Copy()).Simplified());
+                return new Derivative(f.Copy(), axis, dk).Mult(g.Copy()).Simplified().Plus(new Derivative(g.Copy(), axis, dk).Mult(f.Copy()).Simplified());
             }
             f = new Fraction(frac.posArgs, new List<Oper>{});
             g = new Fraction(frac.negArgs, new List<Oper>{});
-            return new Fraction(g.Mult(new Derivative(f.Copy(), axis).Simplified()).Minus(f.Mult(new Derivative(g.Copy(), axis).Simplified())), g.Pow(new Variable(2)));
+            return new Fraction(g.Mult(new Derivative(f.Copy(), axis, dk).Simplified()).Minus(f.Mult(new Derivative(g.Copy(), axis, dk).Simplified())), g.Pow(new Variable(2)));
         }
 
         if (Argument is ExpLog expl)
@@ -73,22 +84,33 @@ public class Derivative : Oper
             {
                 if (expl.Exponent.Sol().Value.EqValue(0))
                     return new Variable(0);
-                return expl.Exponent.Sol().Mult(expl.Base.Pow(expl.Exponent.Sol().Minus(new Variable(1))));
+                return expl.Exponent.Sol().Mult(expl.Base.Pow(expl.Exponent.Sol().Minus(new Variable(1)))).Mult(new Derivative(expl.Base.Copy(), axis, dk).Simplified());
             }
             // Exponential
             else if (expl.Base.IsDetermined)
             {
                 if (expl.Base.Sol().Value.EqValue(Math.E))
-                    return new Derivative(expl.Exponent.Copy(), axis).Mult(expl);
-                return expl.Base.Sol().Log(new Variable(Math.E)).Mult(new Derivative(expl.Exponent.Copy(), axis).Mult(expl));
+                    return new Derivative(expl.Exponent.Copy(), axis, dk).Mult(expl);
+                Scribe.Info("got here");
+                return expl.Base.Sol().Log(new Variable(Math.E)).Mult(new Derivative(expl.Exponent.Copy(), axis, dk).Mult(expl))
+                    .Mult(new Derivative(expl.Exponent.Copy(), axis, dk).Simplified());
             }
             // f(x)^g(x)
             else
             {
+                if (dk == DerivativeKind.IMPLICIT)
+                {
+                    throw Scribe.Issue("todo");
+                }
                 Oper f = expl.Base;
                 Oper g = expl.Exponent;
-                return f.Log(new Variable(Math.E)).Mult(g).Exp(new Variable(Math.E)).Mult(new Derivative(f, axis).Mult(g).Divide(f).Plus(new Derivative(g, axis).Mult(f.Log(new Variable(Math.E)))));
+                return f.Log(new Variable(Math.E)).Mult(g).Exp(new Variable(Math.E)).Mult(new Derivative(f, axis, dk).Mult(g).Divide(f).Plus(new Derivative(g, axis, dk).Mult(f.Log(new Variable(Math.E)))));
             }
+        }
+
+        if (Argument is Derivative d)
+        {
+            return new Derivative(d.Simplified(), axis, dk);
         }
         throw Scribe.Issue($"Unsupported derivative on {Argument.Name} {Argument}");
         //return base.Simplified();
@@ -96,8 +118,21 @@ public class Derivative : Oper
 
     public override Variable Sol()
     {
+        Oper s = Simplified();
+        if (s == this)
+        {
+            // TODO: this might be evil
+            throw Scribe.Error("could not get solution here");
+            return Notate.Var(Ord());
+        }
         return Simplified().Sol();
     }
+
+    public override Oper Copy()
+    {
+        return new Derivative(posArgs[0], axis, dk);
+    }
+
     public override Oper Degree(Oper v)
     {
         Oper deg = Argument.Degree();
@@ -112,6 +147,6 @@ public class Derivative : Oper
 
     public override string ToString()
     {
-        return $"d/d{axis} ({Argument})";
+        return dk == DerivativeKind.IMPLICIT && Argument is Variable v && !v.Found ? $"d{Argument}/d{axis}" : $"d/d{axis} ({Argument})";
     }
 }

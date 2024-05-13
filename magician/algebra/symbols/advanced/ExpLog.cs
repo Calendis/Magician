@@ -2,7 +2,7 @@ namespace Magician.Alg.Symbols;
 using Core;
 
 /* Combines powers, exponents, logs, and roots using the form ...logC(logB(logA(a^b^c...)))... */
-public class ExpLog : Invertable, IDifferentiable
+public class ExpLog : Invertable
 {
     public Oper Base => posArgs[0];
     public Oper Exponent => new ExpLog(posArgs.Skip(1).ToList(), new List<Oper> { });
@@ -160,7 +160,7 @@ public class ExpLog : Invertable, IDifferentiable
                 }
             }
             if (varIdx is not null && varIdx > 0)
-                posArgs = posArgs.Take((int)varIdx).ToList();
+                posArgs = posArgs.Take((int)varIdx-1).ToList();
         }
 
         // Combine positive constant terms
@@ -186,7 +186,7 @@ public class ExpLog : Invertable, IDifferentiable
         }
 
         if (posArgs.Count == 0)
-            throw Scribe.Issue("reduction should not destroy the tower!");
+            posArgs.Add(new Variable(1));
     }
 
     public override Oper Simplified()

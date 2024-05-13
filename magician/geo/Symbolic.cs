@@ -1,16 +1,7 @@
-namespace Magician.Geo;
-using Core.Maps;
-using Alg.Symbols;
+/* namespace Magician.Geo;
 
-public class Symbolic : Implicit
+public abstract class Symbolic : Node
 {
-    public Symbolic(Oper o, double x, double y, double z, double inScale, double outScale, params (double, double, double)[] rangeResos) : base(o, x, y, z, inScale, outScale, rangeResos)
-    {
-        Scribe.Info($"relation is Oper? {relation is Oper}");
-    }
-
-    //public static Mesh MeshFromOper(Oper o)
-    //{
-    //    //
-    //}
-}
+    public abstract void GenMesh();
+    public abstract void Refresh();
+} */

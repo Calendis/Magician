@@ -1,7 +1,7 @@
 namespace Magician.Alg.Symbols;
 using Core;
 
-public class Variable : Invertable, IVar, IDifferentiable
+public class Variable : Invertable, IVar
 {
     protected List<double> qs;
     protected List<IVal> ivals;

@@ -18,8 +18,8 @@ public class ImplicitGeom : Spell
         Oper o2 = Val(25).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
         // Create geometry from expressions
         //Geo.Implicit geo1 = new(o1, -100, -200, 0, 30, 30, (-7, 7, 0.5), (-7, 7, 0.5));
-        Geo.Implicit geo2 = new(o2, -900, 0, 600, 160, 160, 1, Sampling.Spiral, (-5, 5, 0.2), (-5, 5, 0.2));
-        Geo.Implicit geo3 = new(o2, 900, 0, 600, 160, 160, 1, (-4.8, 5, 0.2), (-4.8, 5, 0.2));
+        Geo.Explicit geo2 = new(o2, -900, 0, 600, 160, 160, 1, Sampling.Spiral, (-5, 5, 0.2), (-5, 5, 0.2));
+        Geo.Explicit geo3 = new(o2, 900, 0, 600, 160, 160, 1, (-4.8, 5, 0.2), (-4.8, 5, 0.2));
         // Add our geometry to the scene
         //Origin["myGeo1"] = geo1.Flagged(DrawMode.OUTER);
         Origin["myGeo2"] = geo2.Flagged(DrawMode.OUTER);

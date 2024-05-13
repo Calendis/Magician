@@ -34,7 +34,7 @@ public class Multivalue : Variable
     public override string ToString()
     {
         if (Found)
-            return $"{Value.Get()}"+", "+remaining.Aggregate("", (a, b) => a += $", {b}")[2..];
+            return Solutions == 1 ? $"{Value.Get()}" : $"{Value.Get()}"+", "+remaining.Aggregate("", (a, b) => a += $", {b}")[2..];
         return base.ToString();
     }
     // TODO: arithmetic methods for Multivalues

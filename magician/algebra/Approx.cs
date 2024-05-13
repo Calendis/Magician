@@ -100,7 +100,7 @@ public class Approx : IRelation
         guess.Set(initialGuess);
 
         int currIter = 0;
-        double updateThreshold = 0.000001;
+        double updateThreshold = 0.00000001;
         // Iteratively improve the inital guess
         while (currIter < maxIters)
         {

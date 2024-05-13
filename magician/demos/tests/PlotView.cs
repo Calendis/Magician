@@ -42,34 +42,51 @@ public class EqPlotting : Spell
         //    (-2, 2, 0.2), (-2, 2, 0.2)
         //).Flagged(DrawMode.INNER);
 
+        // Implicit torus
         double innerRadius = 5;
         double outerRadius = 4;
         double radius = outerRadius + innerRadius;
         Oper torus = Val(outerRadius).Pow(Val(2)).Minus(Val(innerRadius).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Root(Val(2))).Pow(Val(2))).Root(Val(2));
 
-        Origin["mySphere"] = new Implicit(
-            torus, 500, 100, 500, 40, 40, 2,
-            Sampling.Spiral,
-            (-radius, radius, radius / 20), (-radius, radius, radius / 20)
-        ).Flagged(DrawMode.OUTER);
+        //Origin["myTorus"] = new Explicit(
+        //    torus, 500, 100, 500, 40, 40, 1, Sampling.Spiral,
+        //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
+        //).Flagged(DrawMode.OUTER);
 
-        //Origin["mySphere2"] = new Implicit(
+        //Origin["toothyTorus"] = new Explicit(
         //    torus, 1500, 100, 500, 40, 40, 1,
         //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
         //).Flagged(DrawMode.OUTER);
 
-        // Approximate a tanglecube
-        Equation tanglecube = new(
-            Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)),
-            Fulcrum.EQUALS,
-            Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8))
-        );
-        Core.Maps.IRelation tcs = tanglecube.Solved();
-        Origin["tanglecube"] = new Implicit(
-            tcs, -500, 100, 500, 40, 40, 1,
-            (-4, 4, 0.2), (-4, 4, 0.2)
-        ).Flagged(DrawMode.POINTS);
+        //Oper parabola = Var("x").Pow(Val(2));
+        //Node myGeo = new Explicit(parabola, 0, 0, 0, 1, 1, 0, (-50, 50, 5)).Flagged(DrawMode.PLOT);
+        //Origin["parabola"] = myGeo;
+
+        // torus
+        //Origin["paramTorus"] = new Explicit(
+        //    torus, 500, 100, 500, 40, 40, 1,
+        //    (-radius-1, radius+1, radius/10), (-radius-1, radius+1, radius/10)
+        //).Flagged(DrawMode.OUTER);
+
+        Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
+
+        SignedDistField sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(25)), 0, 0, 0, 40, 40, 1, new int[]{0,2,1}, (-10, 10, 1), (-10, 10, 1), (-10, 10, 1));
+        //SignedDistField sdf = new(sdfTanglecube, 0, 0, 0, 40, 40, 1, new int[]{0,2,1}, (-10, 10, 1), (-10, 10, 1), (-10, 10, 1));
         
+        Origin["sdfTest"] = sdf.Flagged(DrawMode.POINTS);
+
+        // Approximate a tanglecube
+        //Equation tanglecube = new(
+        //    Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)),
+        //    Fulcrum.EQUALS,
+        //    Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8))
+        //);
+        //Core.Maps.IRelation tcs = tanglecube.Solved();
+        //Origin["tanglecube"] = new Explicit(
+        //    tcs, -500, 100, 500, 40, 40, 1,
+        //    (-4, 4, 0.12), (-4, 4, 0.12)
+        //).Flagged(DrawMode.POINTS);
+
         // Approximate a horn
         //Equation horn = new(
         //    Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("x").Pow(Val(2))).Minus(Val(2)).Pow(Val(3)).Minus(Var("x").Pow(Val(2)).Mult(Var("z").Pow(Val(3)))).Minus(Var("y").Pow(Val(2)).Mult(Var("z").Pow(Val(3)))),
@@ -77,11 +94,11 @@ public class EqPlotting : Spell
         //    Val(0)
         //);
         //Core.Maps.IRelation hornRel = horn.Solved();
-        //Origin["horn"] = new Implicit(
+        //Origin["horn"] = new Explicit(
         //    hornRel, -500, 100, 500, 40, 40, 1,
         //    (-4.5, 4.5, 0.125), (-4.5, 4.5, 0.125)
         //).Flagged(DrawMode.POINTS);
-        
+
         // Approximate a simple implicit relation
         //Equation imp = new(
         //        Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(4).Mult(Var("x")).Mult(Var("y")).Mult(Var("z"))).Plus(Val(25)),

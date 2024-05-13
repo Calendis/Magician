@@ -6,13 +6,13 @@ internal class OperLayers
     readonly List<List<Oper>> OpTree = new();
     readonly Dictionary<Oper, OperInfo> OpInfoMap = new();
     //public readonly List<(int, int)> Matches = new();
-    public OperLayers(Oper o, Variable v)
+    public OperLayers(Oper o, Oper v)
     {
         OpTree = new() { new() { o } };
         GatherInfo(o, v);
     }
 
-    void GatherInfo(Oper o, Variable v, int depth = 0, List<Variable>? assocArgs = null, List<List<Oper>>? opTree = null)
+    void GatherInfo(Oper o, Oper v, int depth = 0, List<Variable>? assocArgs = null, List<List<Oper>>? opTree = null)
     {
         opTree ??= OpTree;
         assocArgs ??= new();
@@ -55,7 +55,7 @@ internal class OperLayers
     }
     public List<Oper> LiveBranches(Oper o)
     {
-        return o.AllArgs.Where(a => GetInfo(a).ms != Equation.MatchState.NONE).ToList();
+        return o.AllArgs.Where(a => GetInfo(a).ms != Equation.Match.NONE).ToList();
     }
     public List<Oper> LiveBranches(int n, int k)
     {
@@ -66,19 +66,29 @@ internal class OperLayers
 internal readonly struct OperInfo
 {
     //public readonly Oper deg;
-    public readonly Equation.MatchState ms;
+    public readonly Equation.Match ms;
     public readonly List<Variable> assocArgs;
-    public OperInfo(Oper o, Variable v, IEnumerable<Variable> assocArgs)
+    public OperInfo(Oper o, Oper v, List<Variable> assocArgs)
     {
         //deg = o.Degree(v);
-        this.assocArgs = assocArgs.ToList();
-        int liveBranches = assocArgs.Where(a => { return a == v; }).Count();
-        ms = Equation.MatchState.NONE;
-        if (o is Variable v2 && v2 == v)
-            ms = Equation.MatchState.DIRECT;
+        int liveBranches;
+        
+        if (v is Variable)
+        {
+            this.assocArgs = assocArgs.ToList();
+            liveBranches = assocArgs.Where(a => { return a == v; }).Count();
+        }
+        else
+        {
+            liveBranches = o.Contains(v);
+            //assocArgs = new();
+        }
+        ms = Equation.Match.NONE;
+        if ((o is Variable v2 && v2 == v) || o.Like(v))
+            ms = Equation.Match.DIRECT;
         else if (liveBranches > 1)
-            ms = Equation.MatchState.MULTIPLE;
+            ms = Equation.Match.MULTIPLE;
         else if (liveBranches > 0)
-            ms = Equation.MatchState.SINGLE;
+            ms = Equation.Match.SINGLE;
     }
 }

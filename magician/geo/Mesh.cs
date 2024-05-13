@@ -46,8 +46,6 @@ public class Mesh
             1, 2, 3,
             0, 2, 3
     );
-    // Jagged rectangular sequential meshing
-    // TODO: cannot use single iteration variable because the modulus falls out of sync with multiple widths
     public static Mesh Jagged(List<(int, int)> idcs, Region[,] map, int offset = 0)
     {
         List<int[]> faces = new();
@@ -56,9 +54,9 @@ public class Mesh
         foreach ((int y, int x) idx in idcs)
         {
             // detect edges
-            if (idx.x >= width - 1)
+            if (idx.x + 1 >= width)
                 continue;
-            if (idx.y >= height - 1)
+            if (idx.y + 1 >= height)
                 continue;
 
             // mesh if local region matches nearby
