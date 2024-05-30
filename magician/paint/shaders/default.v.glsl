@@ -4,6 +4,7 @@ layout (location = 0) in vec3 pos;
 layout (location = 1) in vec4 rgba;
 out vec3 pos2;
 out vec4 rgba2;
+uniform mat4 transform;
 
 void main()
 {
