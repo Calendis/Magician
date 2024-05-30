@@ -5,7 +5,7 @@ using Core.Caster;
 using Magician.Alg;
 using Magician.Alg.Symbols;
 using static Magician.Alg.Notate;
-using Silk.NET.OpenGL;
+using Paint;
 
 public class EqPlotting : Spell
 {
@@ -15,7 +15,7 @@ public class EqPlotting : Spell
     SolvedEquation spt3d;
     public override void Loop()
     {
-        Paint.Renderer.Clear();
+        Renderer.Clear();
 
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_W]) { Ref.Perspective.Forward(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_A]) { Ref.Perspective.Strafe(-walkSpeed); }
@@ -25,11 +25,12 @@ public class EqPlotting : Spell
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_L]) { Ref.Perspective.RotatedY(-0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_SPACE]) { Ref.Perspective.y.Incr(walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_LSHIFT]) { Ref.Perspective.y.Incr(-walkSpeed); }
+        // shaders :]
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_I]) { Shaders.Swap(Shaders.Inverse); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_O]) { Shaders.Swap(Shaders.Default); }
 
         //Var("parameter").Set(0.5*Math.Sin(Time/2));
         //Origin["myPlot"].Update();
-
-        //Scribe.Flush();
     }
 
     public override void PreLoop()
