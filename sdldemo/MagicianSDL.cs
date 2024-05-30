@@ -34,14 +34,11 @@ class MagicianSDL
         );
         Renderer.SDL.MakeCurrent();
         Renderer.GL = new GL(Renderer.SDL);
+        Scribe.Info($"OpenGL {Paint.Renderer.GL.GetStringS(GLEnum.Version)}");
         Renderer.GL.Enable(GLEnum.DepthTest);
         Renderer.Display = true;
         Renderer.Render = true;
         //Renderer.SDL.SwapInterval(0);
-
-        // Generate shaders
-        // TODO: move this
-        Shaders.Generate();
 
         // Load a spell
         Prepare(new Demos.DefaultSpell());

@@ -1,67 +1,85 @@
 namespace Magician.Paint;
 
+using System.IO;
+
+public class Shader
+{
+    string vertexPath;
+    string fragmentPath;
+    public string VertexSrc;
+    public string FragmentSrc;
+    public Shader(string name, string root, bool auto=false)
+    {
+        vertexPath = $"{root}/shaders/{name}.v.glsl";
+        fragmentPath = $"{root}/shaders/{name}.f.glsl";
+        bool vExists = File.Exists(vertexPath);
+        bool fExists = File.Exists(fragmentPath);
+        if (!vExists || !fExists)
+        {
+            Scribe.Error($"Shader {name} is missing source file{(!vExists && !fExists ? "s" : "")} {(!vExists ? vertexPath : "")}{(!fExists ? $"{(vExists || fExists ? "" : ", ")}{fragmentPath}" : "")}");
+        }
+        VertexSrc = File.ReadAllText(vertexPath);
+        FragmentSrc = File.ReadAllText(fragmentPath);
+        if (!auto)
+            return;
+        Shaders.Generate(this);
+    }
+}
+
 public static class Shaders
 {
-    public static unsafe void Generate()
+    static Dictionary<Shader, (uint vertex, uint fragment)> shaders = new();
+    static Shaders()
     {
-        // GLSL
-        string vertexShaderSrc = @"
-            #version 330 core
-
-            layout (location = 0) in vec3 pos;
-            layout (location = 1) in vec4 rgba;
-            out vec3 pos2;
-            out vec4 rgba2;
-
-            void main()
-            {
-                gl_Position = vec4(pos, 1.0);
-                pos2 = pos;
-                rgba2 = rgba;
-            }
-        ";
-
-        string fragmentShaderSrc = $@"
-            #version 330 core
-
-            in vec3 pos2;
-            in vec4 rgba2;
-
-            out vec4 out_col;
-
-            void main()
-            {{
-                out_col = vec4(rgba2.x, rgba2.y, rgba2.z, rgba2.w);
-            }}
-        ";
-
-        uint vertexShader = Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader);
-        Renderer.GL.ShaderSource(vertexShader, vertexShaderSrc);
-        Renderer.GL.CompileShader(vertexShader);
-
-        // TODO: make sure vertex shader compiles correctly
-        //
-
-        uint fragmentShader = Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader);
-        Renderer.GL.ShaderSource(fragmentShader, fragmentShaderSrc);
-        Renderer.GL.CompileShader(fragmentShader);
-
-        // TODO: make sure fragment shader compiles correctly
-        //
-
+        new Shader("default", "../magician/paint", true);
+    }
+    public static void Swap(Shader s)
+    {
         uint prog = Renderer.GL.CreateProgram();
-        Renderer.GL.AttachShader(prog, vertexShader);
-        Renderer.GL.AttachShader(prog, fragmentShader);
+        Renderer.GL.AttachShader(prog, shaders[s].vertex);
+        Renderer.GL.AttachShader(prog, shaders[s].fragment);
         Renderer.GL.LinkProgram(prog);
         Renderer.GL.UseProgram(prog);
         // TODO: make sure progam compiles correctly
         //
 
         // Clean shaders
-        Renderer.GL.DetachShader(prog, vertexShader);
-        Renderer.GL.DetachShader(prog, fragmentShader);
-        Renderer.GL.DeleteShader(vertexShader);
-        Renderer.GL.DeleteShader(fragmentShader);
+        Renderer.GL.DetachShader(prog, shaders[s].vertex);
+        Renderer.GL.DetachShader(prog, shaders[s].fragment);
+        Renderer.GL.DeleteShader(shaders[s].vertex);
+        Renderer.GL.DeleteShader(shaders[s].fragment);
+    }
+    public static unsafe void Generate(Shader s)
+    {
+        string vertexShaderSrc = s.VertexSrc;
+        string fragmentShaderSrc = s.FragmentSrc;
+
+        if (!shaders.ContainsKey(s))
+        {
+            shaders.Add(s, (0, 0));
+        }
+
+        shaders[s] = (Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader), shaders[s].fragment);
+        Renderer.GL.ShaderSource(shaders[s].vertex, vertexShaderSrc);
+        Renderer.GL.CompileShader(shaders[s].vertex);
+
+        // TODO: make sure vertex shader compiles correctly
+        //
+
+        shaders[s] = (shaders[s].vertex, Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader));
+        Renderer.GL.ShaderSource(shaders[s].fragment, fragmentShaderSrc);
+        Renderer.GL.CompileShader(shaders[s].fragment);
+
+        // TODO: make sure fragment shader compiles correctly
+        //
+
+        uint prog = Renderer.GL.CreateProgram();
+        Renderer.GL.AttachShader(prog, shaders[s].vertex);
+        Renderer.GL.AttachShader(prog, shaders[s].fragment);
+        Renderer.GL.LinkProgram(prog);
+        Renderer.GL.UseProgram(prog);
+        // TODO: make sure progam compiles correctly
+        //
     }
 
     // Common code called before gl.DrawArrays
