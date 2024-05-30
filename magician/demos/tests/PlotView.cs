@@ -5,7 +5,7 @@ using Core.Caster;
 using Magician.Alg;
 using Magician.Alg.Symbols;
 using static Magician.Alg.Notate;
-
+using Silk.NET.OpenGL;
 
 public class EqPlotting : Spell
 {
@@ -54,7 +54,7 @@ public class EqPlotting : Spell
         //).Flagged(DrawMode.OUTER);
 
         //Origin["toothyTorus"] = new Explicit(
-        //    torus, 1500, 100, 500, 40, 40, 1,
+        //    torus, 1500, 100, 500, 40, 40, 0,
         //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
         //).Flagged(DrawMode.OUTER);
 
@@ -63,10 +63,10 @@ public class EqPlotting : Spell
         //Origin["parabola"] = myGeo;
 
         // torus
-        //Origin["paramTorus"] = new Explicit(
-        //    torus, 500, 100, 500, 40, 40, 1,
-        //    (-radius-1, radius+1, radius/10), (-radius-1, radius+1, radius/10)
-        //).Flagged(DrawMode.OUTER);
+        Origin["paramTorus"] = new Explicit(
+            torus, 500, 100, 500, 40, 40, 1,
+            (-radius-1, radius+1, radius/10), (-radius-1, radius+1, radius/10)
+        ).Flagged(DrawMode.OUTER);
 
         Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
 
