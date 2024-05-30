@@ -113,12 +113,12 @@ public class Explicit : Node
         int ccc = 0;
         foreach (Mesh.Region reg in flatRegions)
         {
-            Console.Write((int)reg+1);
-            if (++ccc == width)
-            {
-                Console.WriteLine("");
-                ccc = 0;
-            }
+            //Console.Write((int)reg+1);
+            //if (++ccc == width)
+            //{
+            //    Console.WriteLine("");
+            //    ccc = 0;
+            //}
         }
         
         

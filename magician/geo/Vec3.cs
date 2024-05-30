@@ -1,11 +1,10 @@
 namespace Magician.Geo;
 using Magician.Core;
 
-using Silk.NET.Maths;
-
 public class Vec3 : Vec
 {
     public Vec3(double x, double y, double z) : base(x, y, z) { }
+    public Vec3((double x, double y, double z) xyz) : base(xyz.x, xyz.y, xyz.z) {}
 
     /* Measured phase */
     public virtual double PhaseXY
@@ -76,5 +75,24 @@ public class Vec3 : Vec
         // TODO: draw the arrowhead
         Node arrowhead;
         return line;
+    }
+
+    // Yeah my vector classes are garbage but I'll rewrite them to be more sane later
+    // Operator overloading in c# also stinks
+    public static Vec3 operator +(Vec3 a, Vec3 b)
+    {
+        return new Vec3(IVal.Add(a.x, b.x).Get(), IVal.Add(a.y, b.y).Get(), IVal.Add(a.z, b.z).Get());
+    }
+    public static Vec3 operator -(Vec3 a, Vec3 b)
+    {
+        return new Vec3(IVal.Subtract(a.x, b.x).Get(), IVal.Subtract(a.y, b.y).Get(), IVal.Subtract(a.z, b.z).Get());
+    }
+    public static Vec3 operator *(Vec3 a, double b)
+    {
+        return new Vec3(IVal.Multiply(a.x, b).Get(), IVal.Multiply(a.y, b).Get(), IVal.Multiply(a.z, b).Get());
+    }
+    public static Vec3 operator /(Vec3 a, double b)
+    {
+        return new Vec3(IVal.Divide(a.x, b).Get(), IVal.Divide(a.y, b).Get(), IVal.Divide(a.z, b).Get());
     }
 }

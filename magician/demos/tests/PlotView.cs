@@ -70,10 +70,10 @@ public class EqPlotting : Spell
 
         Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
 
-        SignedDistField sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(25)), 0, 0, 0, 40, 40, 1, new int[]{0,2,1}, (-10, 10, 1), (-10, 10, 1), (-10, 10, 1));
-        //SignedDistField sdf = new(sdfTanglecube, 0, 0, 0, 40, 40, 1, new int[]{0,2,1}, (-10, 10, 1), (-10, 10, 1), (-10, 10, 1));
+        //Implicit sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(75)), 0, 0, 0, 80, 80, 2, new int[]{0,2,1}, (-20, 20, 1), (-20, 20, 1), (-20, 20, 1));
+        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 20, 1, new int[]{0,2,1}, (-5, 5, 0.7), (-5, 5, 0.7), (-5, 5, 0.7));
         
-        Origin["sdfTest"] = sdf.Flagged(DrawMode.POINTS);
+        Origin["sdfTest"] = sdf.Flagged(DrawMode.INNER);
 
         // Approximate a tanglecube
         //Equation tanglecube = new(
@@ -85,30 +85,6 @@ public class EqPlotting : Spell
         //Origin["tanglecube"] = new Explicit(
         //    tcs, -500, 100, 500, 40, 40, 1,
         //    (-4, 4, 0.12), (-4, 4, 0.12)
-        //).Flagged(DrawMode.POINTS);
-
-        // Approximate a horn
-        //Equation horn = new(
-        //    Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("x").Pow(Val(2))).Minus(Val(2)).Pow(Val(3)).Minus(Var("x").Pow(Val(2)).Mult(Var("z").Pow(Val(3)))).Minus(Var("y").Pow(Val(2)).Mult(Var("z").Pow(Val(3)))),
-        //    Fulcrum.EQUALS,
-        //    Val(0)
-        //);
-        //Core.Maps.IRelation hornRel = horn.Solved();
-        //Origin["horn"] = new Explicit(
-        //    hornRel, -500, 100, 500, 40, 40, 1,
-        //    (-4.5, 4.5, 0.125), (-4.5, 4.5, 0.125)
-        //).Flagged(DrawMode.POINTS);
-
-        // Approximate a simple implicit relation
-        //Equation imp = new(
-        //        Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(4).Mult(Var("x")).Mult(Var("y")).Mult(Var("z"))).Plus(Val(25)),
-        //        Fulcrum.EQUALS,
-        //        Val(0)
-        //);
-        //Core.Maps.IRelation impmap = imp.Solved();
-        //Origin["imp"] = new Implicit(
-        //    impmap, -500, 100, 500, 140, 40, 1,
-        //    (-5, 5, 0.75/10), (-5, 5, 0.75/10)
         //).Flagged(DrawMode.POINTS);
     }
 }
