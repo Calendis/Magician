@@ -36,9 +36,6 @@ public static class Renderer
     }
     public static void DrawAll()
     {
-        //RPoints rPoints = new(points.ToArray());
-        //RLines rLines = new(lines.ToArray());
-        //RTriangles rTris = new(tris.ToArray());
         Draw.Points(points);
         Draw.Lines(lines);
         Draw.Triangles(tris);
