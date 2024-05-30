@@ -17,14 +17,14 @@ public class EqPlotting : Spell
     {
         Paint.Renderer.Clear();
 
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_w]) { Ref.Perspective.Forward(-walkSpeed); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_a]) { Ref.Perspective.Strafe(-walkSpeed); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_s]) { Ref.Perspective.Forward(walkSpeed); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_d]) { Ref.Perspective.Strafe(walkSpeed); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_j]) { Ref.Perspective.RotatedY(0.05); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_l]) { Ref.Perspective.RotatedY(-0.05); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_SPACE]) { Ref.Perspective.y.Incr(walkSpeed); }
-        if (Events.keys[SDL2.SDL.SDL_Keycode.SDLK_LSHIFT]) { Ref.Perspective.y.Incr(-walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_W]) { Ref.Perspective.Forward(-walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_A]) { Ref.Perspective.Strafe(-walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_S]) { Ref.Perspective.Forward(walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_D]) { Ref.Perspective.Strafe(walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_J]) { Ref.Perspective.RotatedY(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_L]) { Ref.Perspective.RotatedY(-0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_SPACE]) { Ref.Perspective.y.Incr(walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_LSHIFT]) { Ref.Perspective.y.Incr(-walkSpeed); }
 
         //Var("parameter").Set(0.5*Math.Sin(Time/2));
         //Origin["myPlot"].Update();

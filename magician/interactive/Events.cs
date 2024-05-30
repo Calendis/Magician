@@ -5,6 +5,7 @@ public static class Events
 {
     // Keymap generated from SDL enum
     public static Dictionary<SDL_Keycode, bool> keys = new Dictionary<SDL_Keycode, bool>();
+    public static Dictionary<SDL_Scancode, bool> scans = new Dictionary<SDL_Scancode, bool>();
 
     // Flags
     static bool getMouse = false;
@@ -45,6 +46,11 @@ public static class Events
         {
             keys.Add(sdlKC, false);
         }
+        SDL_Scancode[] SDLScans = Enum.GetValues<SDL_Scancode>();
+        foreach (SDL_Scancode sdlKC in SDLScans)
+        {
+            scans.Add(sdlKC, false);
+        }
     }
 
     public static void Process(SDL_Event e)
@@ -54,10 +60,12 @@ public static class Events
         {
             case SDL_EventType.SDL_KEYDOWN:
                 keys[e.key.keysym.sym] = true;
+                scans[e.key.keysym.scancode] = true;
                 break;
 
             case SDL_EventType.SDL_KEYUP:
                 keys[e.key.keysym.sym] = false;
+                scans[e.key.keysym.scancode] = false;
                 break;
 
             case SDL_EventType.SDL_MOUSEMOTION:
