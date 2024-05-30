@@ -14,9 +14,9 @@ public enum DrawMode : short
     INNER = 1 << 1,
     CONNECTINGLINE = 1 << 2,
     PLOT = 1 << 3,
-    OUTER = DrawMode.PLOT | DrawMode.CONNECTINGLINE,
-    FULL = DrawMode.PLOT | DrawMode.CONNECTINGLINE | DrawMode.INNER,
-    OUTERP = DrawMode.OUTER | DrawMode.POINTS,
+    OUTER = PLOT | CONNECTINGLINE,
+    FULL = PLOT | CONNECTINGLINE | INNER,
+    OUTERP = OUTER | POINTS,
 }
 
 /* A Node is a drawable tree of 3-vectors (more Multis) */

@@ -3,7 +3,6 @@
 
 /* Modified for Magician for use with SDL2 C# bindings from https://github.com/flibitijibibo/SDL2-CS */
 
-using System;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Loader;
 using Silk.NET.Maths;

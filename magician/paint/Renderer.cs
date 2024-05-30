@@ -57,6 +57,7 @@ public static class Renderer
         }
     }
 
+    // TODO: Projection should be done in the shader
     public static List<double[]> Project(IEnumerable<Core.Vec> n, double xOffset, double yOffset, double zOffset, Node? camera = null)
     {
         List<double[]> projectedVerts = new();// double[n.Count][];
@@ -68,7 +69,6 @@ public static class Renderer
         double targY = camera.Y + camera.Heading.Y;
         double targZ = camera.Z + camera.Heading.Z;
 
-        // TODO: move these out of the loop
         // Matrix magic
         Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
             new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
@@ -272,7 +272,7 @@ public static class Draw
         }
 
         (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
-        Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Points, 0, (uint)vertices!.Length);
+        Renderer.GL.DrawArrays(GLEnum.Points, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
     public static void Lines(List<(byte[] rgba, float[] p0, float[] p1)> lines)
@@ -304,7 +304,7 @@ public static class Draw
         }
 
         (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
-        Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Lines, 0, (uint)vertices!.Length);
+        Renderer.GL.DrawArrays(GLEnum.Lines, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
     public static void Triangles(List<(byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2)> tris)
@@ -345,7 +345,7 @@ public static class Draw
         }
 
         (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
-        Renderer.GL.DrawArrays(Silk.NET.OpenGL.GLEnum.Triangles, 0, (uint)vertices!.Length);
+        Renderer.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
 }
