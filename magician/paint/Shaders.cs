@@ -28,56 +28,51 @@ public class Shader
 
 public static class Shaders
 {
-    static Dictionary<Shader, (uint vertex, uint fragment)> shaders = new();
+    static Dictionary<Shader, (uint vertex, uint fragment, uint prog)> shaders = new();
+    public static Shader Default;
+    public static Shader Inverse;
+    //static uint prog = Renderer.GL.CreateProgram();
     static Shaders()
     {
-        new Shader("default", "../magician/paint", true);
+        Default = new Shader("default", "../magician/paint", true);
+        Inverse = new Shader("inverse", "../magician/paint", true);
+
+        // Set the default shader
+        Swap(Default);
     }
     public static void Swap(Shader s)
     {
-        uint prog = Renderer.GL.CreateProgram();
-        Renderer.GL.AttachShader(prog, shaders[s].vertex);
-        Renderer.GL.AttachShader(prog, shaders[s].fragment);
-        Renderer.GL.LinkProgram(prog);
-        Renderer.GL.UseProgram(prog);
-        // TODO: make sure progam compiles correctly
-        //
-
-        // Clean shaders
-        Renderer.GL.DetachShader(prog, shaders[s].vertex);
-        Renderer.GL.DetachShader(prog, shaders[s].fragment);
-        Renderer.GL.DeleteShader(shaders[s].vertex);
-        Renderer.GL.DeleteShader(shaders[s].fragment);
+        Renderer.GL.UseProgram(shaders[s].prog);
     }
     public static unsafe void Generate(Shader s)
     {
         string vertexShaderSrc = s.VertexSrc;
         string fragmentShaderSrc = s.FragmentSrc;
 
-        if (!shaders.ContainsKey(s))
+        if (shaders.ContainsKey(s))
         {
-            shaders.Add(s, (0, 0));
+            throw Scribe.Error($"Shader {s} already exists");
         }
 
-        shaders[s] = (Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader), shaders[s].fragment);
+        shaders.Add(s, (0, 0, 0));
+        shaders[s] = (Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader), shaders[s].fragment, shaders[s].prog);
         Renderer.GL.ShaderSource(shaders[s].vertex, vertexShaderSrc);
         Renderer.GL.CompileShader(shaders[s].vertex);
 
         // TODO: make sure vertex shader compiles correctly
         //
 
-        shaders[s] = (shaders[s].vertex, Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader));
+        shaders[s] = (shaders[s].vertex, Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader), shaders[s].prog);
         Renderer.GL.ShaderSource(shaders[s].fragment, fragmentShaderSrc);
         Renderer.GL.CompileShader(shaders[s].fragment);
 
         // TODO: make sure fragment shader compiles correctly
         //
 
-        uint prog = Renderer.GL.CreateProgram();
-        Renderer.GL.AttachShader(prog, shaders[s].vertex);
-        Renderer.GL.AttachShader(prog, shaders[s].fragment);
-        Renderer.GL.LinkProgram(prog);
-        Renderer.GL.UseProgram(prog);
+        shaders[s] = (shaders[s].vertex, shaders[s].fragment, Renderer.GL.CreateProgram());
+        Renderer.GL.AttachShader(shaders[s].prog, shaders[s].vertex);
+        Renderer.GL.AttachShader(shaders[s].prog, shaders[s].fragment);
+        Renderer.GL.LinkProgram(shaders[s].prog);
         // TODO: make sure progam compiles correctly
         //
     }
