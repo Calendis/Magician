@@ -77,8 +77,14 @@ public class Vec3 : Vec
         return line;
     }
 
-    // Yeah my vector classes are garbage but I'll rewrite them to be more sane later
-    // Operator overloading in c# also stinks
+    public Vec3 Cross(Vec3 a)
+    {
+        double cX, cY, cZ;
+        cX = y.Get()*a.z.Get()-z.Get()*a.y.Get();
+        cY = z.Get()*a.x.Get()-x.Get()*a.z.Get();
+        cZ = x.Get()*a.y.Get()-y.Get()*a.x.Get();
+        return new(cX, cY, cZ);
+    }
     public static Vec3 operator +(Vec3 a, Vec3 b)
     {
         return new Vec3(IVal.Add(a.x, b.x).Get(), IVal.Add(a.y, b.y).Get(), IVal.Add(a.z, b.z).Get());

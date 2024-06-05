@@ -2,7 +2,6 @@ namespace Magician.Paint;
 using Geo;
 using Silk.NET.OpenGL;
 using Silk.NET.Maths;
-
 public static class Renderer
 {
     static SdlContext? sdlContext;
@@ -10,6 +9,8 @@ public static class Renderer
     static bool saveFrame = false;
     static int saveCount = 0;
     static IntPtr target;
+    static readonly float[] view = new float[16];
+    static readonly float[] proj = new float[16];
     //readonly static List<RDrawable> drawables = new();
 
     //public static List<RDrawable> Drawables => drawables;
@@ -36,6 +37,7 @@ public static class Renderer
     }
     public static void DrawAll()
     {
+        PrepareMatrices();
         Draw.Points(points);
         Draw.Lines(lines);
         Draw.Triangles(tris);
@@ -54,8 +56,68 @@ public static class Renderer
         }
     }
 
-    // TODO: Projection should be done in the shader
-    public static List<double[]> Project(IEnumerable<Core.Vec> n, double xOffset, double yOffset, double zOffset, Node? camera = null)
+    public static unsafe void PrepareMatrices()
+    {
+        Node camera = Ref.Perspective;
+        //Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
+        //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
+        double targX = camera.X + camera.Heading.X;
+        double targY = camera.Y + camera.Heading.Y;
+        double targZ = camera.Z + camera.Heading.Z;
+
+        // Matrix magic
+        Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
+            new((float)Ref.Perspective.X, (float)Ref.Perspective.Y, (float)Ref.Perspective.Z),
+            new((float)targX, (float)targY, (float)targZ),
+            new(0, 1, 0)
+        );
+        Matrix4X4<float> mproj = Matrix4X4.CreatePerspectiveFieldOfView<float>(
+            (float)(Ref.FOV / 180d * Math.PI),
+            (float)(Runes.Globals.winWidth / Runes.Globals.winHeight),
+            0.1f, 2000f
+        );
+
+        // Tested using my own float arrays, but that didn't work either
+        //view[00] = (float)mview.Column1.X; proj[00] = (float)mproj.Column1.X;
+        //view[01] = (float)mview.Column1.Y; proj[01] = (float)mproj.Column1.Y;
+        //view[02] = (float)mview.Column1.Z; proj[02] = (float)mproj.Column1.Z;
+        //view[03] = (float)mview.Column1.W; proj[03] = (float)mproj.Column1.W;
+        //view[04] = (float)mview.Column2.X; proj[04] = (float)mproj.Column2.X;
+        //view[05] = (float)mview.Column2.Y; proj[05] = (float)mproj.Column2.Y;
+        //view[06] = (float)mview.Column2.Z; proj[06] = (float)mproj.Column2.Z;
+        //view[07] = (float)mview.Column2.W; proj[07] = (float)mproj.Column2.W;
+        //view[08] = (float)mview.Column3.X; proj[08] = (float)mproj.Column3.X;
+        //view[09] = (float)mview.Column3.Y; proj[09] = (float)mproj.Column3.Y;
+        //view[10] = (float)mview.Column3.Z; proj[10] = (float)mproj.Column3.Z;
+        //view[11] = (float)mview.Column3.W; proj[11] = (float)mproj.Column3.W;
+        //view[12] = (float)mview.Column4.X; proj[12] = (float)mproj.Column4.X;
+        //view[13] = (float)mview.Column4.Y; proj[13] = (float)mproj.Column4.Y;
+        //view[14] = (float)mview.Column4.Z; proj[14] = (float)mproj.Column4.Z;
+        //view[15] = (float)mview.Column4.W; proj[15] = (float)mproj.Column4.W;
+        //Scribe.Info(@$"
+        //    {Math.Round(view[00],2)}{Math.Round(view[04],2)}{Math.Round(view[08],2)}{Math.Round(view[12],2)} {Math.Round(proj[00],2)}{Math.Round(proj[04],2)}{Math.Round(proj[08],2)}{Math.Round(proj[12],2)}
+        //    {Math.Round(view[01],2)}{Math.Round(view[05],2)}{Math.Round(view[09],2)}{Math.Round(view[13],2)} {Math.Round(proj[01],2)}{Math.Round(proj[05],2)}{Math.Round(proj[09],2)}{Math.Round(proj[13],2)}
+        //    {Math.Round(view[02],2)}{Math.Round(view[06],2)}{Math.Round(view[10],2)}{Math.Round(view[14],2)} {Math.Round(proj[02],2)}{Math.Round(proj[06],2)}{Math.Round(proj[10],2)}{Math.Round(proj[14],2)}
+        //    {Math.Round(view[03],2)}{Math.Round(view[07],2)}{Math.Round(view[11],2)}{Math.Round(view[15],2)} {Math.Round(proj[03],2)}{Math.Round(proj[07],2)}{Math.Round(proj[11],2)}{Math.Round(proj[15],2)}"
+        //);
+
+        int viewLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "view");
+        int projLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "proj");
+        if (viewLoc == -1 || projLoc == -1)
+        {
+            throw Scribe.Issue("Could not find uniforms within shader!");
+        }
+
+        // for custom float arrays
+        //fixed (float* viewPtr = &view[0]){GL.UniformMatrix4(viewLoc, 1, false, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
+        //fixed (float* projPtr = &proj[0]){GL.UniformMatrix4(projLoc, 1, false, projPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
+        //fixed (float* viewPtr = &mview.Row1.X){GL.UniformMatrix4(viewLoc, 1, false, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
+        GL.UniformMatrix4(viewLoc, 1, true, &mview.Row1.X);
+        GL.UniformMatrix4(projLoc, 1, true, &mproj.Row1.X);
+    }
+
+    // Old projection code
+    public static List<double[]> Project(IEnumerable<Core.Vec> theNode, double xOffset, double yOffset, double zOffset, Node? camera = null)
     {
         List<double[]> projectedVerts = new();// double[n.Count][];
         // These two vectors define the camera
@@ -65,7 +127,6 @@ public static class Renderer
         double targX = camera.X + camera.Heading.X;
         double targY = camera.Y + camera.Heading.Y;
         double targZ = camera.Z + camera.Heading.Z;
-
         // Matrix magic
         Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
             new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
@@ -77,17 +138,15 @@ public static class Renderer
             Runes.Globals.winWidth / Runes.Globals.winHeight,
             0.1, 2000
         );
-
-        foreach (Core.Vec v in n)
+        foreach (Core.Vec v in theNode)
         {
             Vector3D<double> worldCoords = new(
                 v.x.Get() + xOffset,
                 v.y.Get() + yOffset,
                 v.z.Get() + zOffset
             );
-            Vector4D<double> intermediate = Vector4D.Transform<double>(worldCoords, view);
-            Vector4D<double> final = Vector4D.Transform<double>(intermediate, projection);
-
+            Vector4D<double> intermediate = Vector4D.Transform(worldCoords, view);
+            Vector4D<double> final = Vector4D.Transform(intermediate, projection);
             // Format the projected vertices for GLSL
             projectedVerts.Add(new double[]
             {
@@ -100,7 +159,7 @@ public static class Renderer
         return projectedVerts;
     }
 
-    public static List<double[]> Cull(Node n, double xOffset, double yOffset, double zOffset, List<double[]> vertices, int[]? face = null)
+    public static List<double[]> Cull_old(Node n, double xOffset, double yOffset, double zOffset, List<double[]> vertices, int[]? face = null)
     {
         List<double[]> clippedVerts = new();
         // Camera-axis culling
@@ -144,7 +203,7 @@ public static class Render
     public static void Polygon(List<double[]> vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, Node? cache = null)
     {
         cols ??= Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
-        // Draw points
+        // Render points
         if ((drawMode & DrawMode.POINTS) > 0)
         {
             int numPoints = vertices.Count;
@@ -161,7 +220,7 @@ public static class Render
             Renderer.Drawables.Add(rPointArray);
         }
 
-        // Draw lines
+        // Render lines and add geometry to array
         if ((drawMode & DrawMode.PLOT) > 0)
         {
             bool connected = (drawMode & DrawMode.CONNECTINGLINE) > 0 && vertices.Count >= 3;

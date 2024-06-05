@@ -43,31 +43,24 @@ public class EqPlotting : Spell
         //    (-2, 2, 0.2), (-2, 2, 0.2)
         //).Flagged(DrawMode.INNER);
 
-        // Implicit torus
-        double innerRadius = 5;
-        double outerRadius = 4;
-        double radius = outerRadius + innerRadius;
-        Oper torus = Val(outerRadius).Pow(Val(2)).Minus(Val(innerRadius).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Root(Val(2))).Pow(Val(2))).Root(Val(2));
-
+        // torus
+        //double innerRadius = 5;
+        //double outerRadius = 4;
+        //double radius = outerRadius + innerRadius;
+        //Oper torus = Val(outerRadius).Pow(Val(2)).Minus(Val(innerRadius).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Root(Val(2))).Pow(Val(2))).Root(Val(2));
+        // torus
+        //Origin["Torus"] = new Explicit(
+        //    torus, 500, 100, 500, 40, 40, 1,
+        //    (-radius-1, radius+1, radius/10), (-radius-1, radius+1, radius/10)
+        //).Flagged(DrawMode.OUTER);
         //Origin["myTorus"] = new Explicit(
         //    torus, 500, 100, 500, 40, 40, 1, Sampling.Spiral,
-        //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
-        //).Flagged(DrawMode.OUTER);
-
-        //Origin["toothyTorus"] = new Explicit(
-        //    torus, 1500, 100, 500, 40, 40, 0,
         //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
         //).Flagged(DrawMode.OUTER);
 
         //Oper parabola = Var("x").Pow(Val(2));
         //Node myGeo = new Explicit(parabola, 0, 0, 0, 1, 1, 0, (-50, 50, 5)).Flagged(DrawMode.PLOT);
         //Origin["parabola"] = myGeo;
-
-        // torus
-        Origin["paramTorus"] = new Explicit(
-            torus, 500, 100, 500, 40, 40, 1,
-            (-radius-1, radius+1, radius/10), (-radius-1, radius+1, radius/10)
-        ).Flagged(DrawMode.OUTER);
 
         Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
 

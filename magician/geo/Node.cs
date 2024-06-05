@@ -424,7 +424,7 @@ public class Node : Vec3, ICollection<Node>
 
     /*
         Movement methods 
-     */
+    */
     public void Forward(double amount)
     {
         double newX = x.Get() + Heading.X * amount;
@@ -447,6 +447,7 @@ public class Node : Vec3, ICollection<Node>
     }
 
     /* Internal state methods */
+    // TODO: get rid of this. It's only used for FOV, which can be stored somewhere else
     public Node Written(double d)
     {
         Val = d;
@@ -461,7 +462,7 @@ public class Node : Vec3, ICollection<Node>
     }
 
     // Indexes the constituents of a Multi in the internal values of the constituents
-    // This is useful because getting the index using IndexOf is too expensive
+    // This is useful because getting the index using IndexOf repeatedly is too expensive
     public static void IndexConstituents(Node m)
     {
         for (int i = 0; i < m.Count; i++)
@@ -471,13 +472,14 @@ public class Node : Vec3, ICollection<Node>
     }
 
     /* Parenting/tagging methods */
+    // TODO: get rid of this method. This can be done with ctor, and with .Add solely
     public Node Parented(Node? m)
     {
         parent = m;
         return this;
     }
 
-    // The tag is the name of the Spell. A spell can be referenced via parent[tag]
+    // The tag is the name of the Node. A node can be referenced via parent[tag]
     public Node Tagged(string tag)
     {
         this.tag = tag;
@@ -717,31 +719,29 @@ public class Node : Vec3, ICollection<Node>
             return;
         }
 
+        List<double[]> vertices = this.Select(n => new double[]{n.x.Get()+xOffset, n.y.Get()+yOffset, n.z.Get()+zOffset}).ToList();
+        // No mesh, treat as a single face
         if (faces is null)
-        {
-            // Get a projection of each constituent point
-            List<double[]> projectedVerts = Renderer.Project(this, xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-            List<double[]> clippedVerts = Renderer.Cull(this, xOffset, yOffset, zOffset, projectedVerts);
-            // The vertices are GLSL-ready
-            Paint.Render.Polygon(clippedVerts, drawMode, constituents.Select(c => c.Col).ToList(), this);
-
+        {            
+            Paint.Render.Polygon(vertices, drawMode, constituents.Select(c => c.Col).ToList(), this);
             texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
-
             // Draw each constituent recursively
             foreach (Node m in this)
             {
                 m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
             }
         }
+        // Meshed node, render each face
         else
         {
             foreach (int[] face in faces.Faces)
             {
-                List<double[]> projected = Renderer.Project(face.Select(i => this[i]), xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-                List<double[]> culled = Renderer.Cull(this, xOffset, yOffset, zOffset, projected, face);
-                List<Color> cols = face.Select(i => this[i].Col).ToList();
-                Paint.Render.Polygon(culled, drawMode, cols, this);
+                Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+xOffset, this[f].y.Get()+yOffset, this[f].z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => this[i].Col).ToList(), this);
             }
+            //foreach (Node m in this)
+            //{
+            //    m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            //}
         }
     }
 

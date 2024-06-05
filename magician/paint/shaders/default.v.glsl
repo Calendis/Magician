@@ -2,13 +2,14 @@
 
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec4 rgba;
-out vec3 pos2;
-out vec4 rgba2;
-uniform mat4 transform;
+
+out vec4 outRgba;
+
+uniform mat4 view;
+uniform mat4 proj;
 
 void main()
 {
-    gl_Position = vec4(pos, 1.0);
-    pos2 = pos;
-    rgba2 = rgba;
+    gl_Position = proj*view*vec4(pos, 1.0);
+    outRgba = rgba;
 }
