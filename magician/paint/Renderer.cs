@@ -111,7 +111,6 @@ public static class Renderer
         // for custom float arrays
         //fixed (float* viewPtr = &view[0]){GL.UniformMatrix4(viewLoc, 1, false, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
         //fixed (float* projPtr = &proj[0]){GL.UniformMatrix4(projLoc, 1, false, projPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
-        //fixed (float* viewPtr = &mview.Row1.X){GL.UniformMatrix4(viewLoc, 1, false, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
         GL.UniformMatrix4(viewLoc, 1, true, &mview.Row1.X);
         GL.UniformMatrix4(projLoc, 1, true, &mproj.Row1.X);
     }
