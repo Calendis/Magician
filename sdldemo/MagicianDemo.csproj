@@ -9,12 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="SDL2">
-        <HintPath>../sdl/SDL2-CS.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="ppy.SDL2-CS" Version="1.0.741-alpha" />
     <ProjectReference Include="../magician/Magician.csproj" />
   </ItemGroup>
 

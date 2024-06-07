@@ -9,9 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="SDL2">
-      <HintPath>sdl/SDL2-CS.dll</HintPath>
-    </Reference>
+    <PackageReference Include="ppy.SDL2-CS" Version="1.0.741-alpha" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
