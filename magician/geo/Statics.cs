@@ -19,7 +19,7 @@ public static class Ref
     {
         Origin = new Node().Tagged("Placeholder Origin");
         // TODO: find out why -399 works here... something to do with FOV
-        Perspective = new Node(0, 0, -399).Parented(null);
+        Perspective = new Node(0, 0, 399).Parented(null);
         FOV = 90;
         Undefined = new Node(double.MaxValue, double.MaxValue, double.MinValue).Tagged("UNDEFINED");
 
