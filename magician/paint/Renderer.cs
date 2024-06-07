@@ -65,40 +65,49 @@ public static class Renderer
         double targY = camera.Y + camera.Heading.Y;
         double targZ = camera.Z + camera.Heading.Z;
 
-        // Matrix magic
         Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
             new((float)Ref.Perspective.X, (float)Ref.Perspective.Y, (float)Ref.Perspective.Z),
             new((float)targX, (float)targY, (float)targZ),
             new(0, 1, 0)
         );
         Matrix4X4<float> mproj = Matrix4X4.CreatePerspectiveFieldOfView<float>(
-            (float)(Ref.FOV / 180d * Math.PI),
+            (float)(Ref.FOV / 180f * Math.PI),
             (float)(Runes.Globals.winWidth / Runes.Globals.winHeight),
             0.1f, 2000f
         );
+        // Test matrices
+        //Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
+        //    new(3f,3f,3f),
+        //    new(0f,0f,0f),
+        //    new(0, 1, 0)
+        //);
+        //Matrix4X4<float> mproj = Matrix4X4.CreatePerspectiveFieldOfView<float>(
+        //    45f / 180f * (float)Math.PI,
+        //    800f/600f,
+        //    0.1f, 100f
+        //);
 
-        // Tested using my own float arrays, but that didn't work either
-        //view[00] = (float)mview.Column1.X; proj[00] = (float)mproj.Column1.X;
-        //view[01] = (float)mview.Column1.Y; proj[01] = (float)mproj.Column1.Y;
-        //view[02] = (float)mview.Column1.Z; proj[02] = (float)mproj.Column1.Z;
-        //view[03] = (float)mview.Column1.W; proj[03] = (float)mproj.Column1.W;
-        //view[04] = (float)mview.Column2.X; proj[04] = (float)mproj.Column2.X;
-        //view[05] = (float)mview.Column2.Y; proj[05] = (float)mproj.Column2.Y;
-        //view[06] = (float)mview.Column2.Z; proj[06] = (float)mproj.Column2.Z;
-        //view[07] = (float)mview.Column2.W; proj[07] = (float)mproj.Column2.W;
-        //view[08] = (float)mview.Column3.X; proj[08] = (float)mproj.Column3.X;
-        //view[09] = (float)mview.Column3.Y; proj[09] = (float)mproj.Column3.Y;
-        //view[10] = (float)mview.Column3.Z; proj[10] = (float)mproj.Column3.Z;
-        //view[11] = (float)mview.Column3.W; proj[11] = (float)mproj.Column3.W;
-        //view[12] = (float)mview.Column4.X; proj[12] = (float)mproj.Column4.X;
-        //view[13] = (float)mview.Column4.Y; proj[13] = (float)mproj.Column4.Y;
-        //view[14] = (float)mview.Column4.Z; proj[14] = (float)mproj.Column4.Z;
-        //view[15] = (float)mview.Column4.W; proj[15] = (float)mproj.Column4.W;
+        //view[00] = mview.Column1.X; proj[00] = mproj.Column1.X;
+        //view[01] = mview.Column1.Y; proj[01] = mproj.Column1.Y;
+        //view[02] = mview.Column1.Z; proj[02] = mproj.Column1.Z;
+        //view[03] = mview.Column1.W; proj[03] = mproj.Column1.W;
+        //view[04] = mview.Column2.X; proj[04] = mproj.Column2.X;
+        //view[05] = mview.Column2.Y; proj[05] = mproj.Column2.Y;
+        //view[06] = mview.Column2.Z; proj[06] = mproj.Column2.Z;
+        //view[07] = mview.Column2.W; proj[07] = mproj.Column2.W;
+        //view[08] = mview.Column3.X; proj[08] = mproj.Column3.X;
+        //view[09] = mview.Column3.Y; proj[09] = mproj.Column3.Y;
+        //view[10] = mview.Column3.Z; proj[10] = mproj.Column3.Z;
+        //view[11] = mview.Column3.W; proj[11] = mproj.Column3.W;
+        //view[12] = mview.Column4.X; proj[12] = mproj.Column4.X;
+        //view[13] = mview.Column4.Y; proj[13] = mproj.Column4.Y;
+        //view[14] = mview.Column4.Z; proj[14] = mproj.Column4.Z;
+        //view[15] = mview.Column4.W; proj[15] = mproj.Column4.W;
         //Scribe.Info(@$"
-        //    {Math.Round(view[00],2)}{Math.Round(view[04],2)}{Math.Round(view[08],2)}{Math.Round(view[12],2)} {Math.Round(proj[00],2)}{Math.Round(proj[04],2)}{Math.Round(proj[08],2)}{Math.Round(proj[12],2)}
-        //    {Math.Round(view[01],2)}{Math.Round(view[05],2)}{Math.Round(view[09],2)}{Math.Round(view[13],2)} {Math.Round(proj[01],2)}{Math.Round(proj[05],2)}{Math.Round(proj[09],2)}{Math.Round(proj[13],2)}
-        //    {Math.Round(view[02],2)}{Math.Round(view[06],2)}{Math.Round(view[10],2)}{Math.Round(view[14],2)} {Math.Round(proj[02],2)}{Math.Round(proj[06],2)}{Math.Round(proj[10],2)}{Math.Round(proj[14],2)}
-        //    {Math.Round(view[03],2)}{Math.Round(view[07],2)}{Math.Round(view[11],2)}{Math.Round(view[15],2)} {Math.Round(proj[03],2)}{Math.Round(proj[07],2)}{Math.Round(proj[11],2)}{Math.Round(proj[15],2)}"
+        //    {Math.Round(view[00],2)} {Math.Round(view[04],2)} {Math.Round(view[08],2)} {Math.Round(view[12],2)},                {Math.Round(proj[00],2)} {Math.Round(proj[04],2)} {Math.Round(proj[08],2)} {Math.Round(proj[12],2)}
+        //    {Math.Round(view[01],2)} {Math.Round(view[05],2)} {Math.Round(view[09],2)} {Math.Round(view[13],2)},                {Math.Round(proj[01],2)} {Math.Round(proj[05],2)} {Math.Round(proj[09],2)} {Math.Round(proj[13],2)}
+        //    {Math.Round(view[02],2)} {Math.Round(view[06],2)} {Math.Round(view[10],2)} {Math.Round(view[14],2)},                {Math.Round(proj[02],2)} {Math.Round(proj[06],2)} {Math.Round(proj[10],2)} {Math.Round(proj[14],2)}
+        //    {Math.Round(view[03],2)} {Math.Round(view[07],2)} {Math.Round(view[11],2)} {Math.Round(view[15],2)},                {Math.Round(proj[03],2)} {Math.Round(proj[07],2)} {Math.Round(proj[11],2)} {Math.Round(proj[15],2)}"
         //);
 
         int viewLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "view");
@@ -109,10 +118,10 @@ public static class Renderer
         }
 
         // for custom float arrays
-        //fixed (float* viewPtr = &view[0]){GL.UniformMatrix4(viewLoc, 1, false, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
-        //fixed (float* projPtr = &proj[0]){GL.UniformMatrix4(projLoc, 1, false, projPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Error($"{GL.GetError()}");}}
-        GL.UniformMatrix4(viewLoc, 1, true, &mview.Row1.X);
-        GL.UniformMatrix4(projLoc, 1, true, &mproj.Row1.X);
+        //fixed (float* viewPtr = &view[0]){GL.UniformMatrix4(viewLoc, 1, true, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Issue($"{GL.GetError()}");}}
+        //fixed (float* projPtr = &proj[0]){GL.UniformMatrix4(projLoc, 1, true,  projPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Issue($"{GL.GetError()}");}}
+        GL.UniformMatrix4(viewLoc, 1, false, &mview.Row1.X);
+        GL.UniformMatrix4(projLoc, 1, false, &mproj.Row1.X);
     }
 
     // Old projection code
@@ -207,15 +216,11 @@ public static class Render
         {
             int numPoints = vertices.Count;
             (byte[], float[])[] rPointArray = new (byte[], float[])[numPoints];
-            //RPoints rPoints;
 
             for (int i = 0; i < numPoints; i++)
             {
-                //rPointArray[i] = new RPoint(vertices[i][0], vertices[i][1], vertices[i][2], cols[i].R, cols[i].G, cols[i].B, cols[i].A);
                 rPointArray[i] = (new byte[] { (byte)cols[i].R, (byte)cols[i].G, (byte)cols[i].B, (byte)cols[i].A }, new float[] { (float)vertices[i][0], (float)vertices[i][1], (float)vertices[i][2] });
             }
-            //rPoints = new(rPointArray);
-            //cache?.drawables.Add(rPoints);
             Renderer.Drawables.Add(rPointArray);
         }
 
@@ -235,7 +240,6 @@ public static class Render
                 double x0 = vertices[i][0]; double x1 = vertices[i + 1][0];
                 double y0 = vertices[i][1]; double y1 = vertices[i + 1][1];
                 double z0 = vertices[i][2]; double z1 = vertices[i + 1][2];
-                //rLineArray[i] = new (byte[], float[], float[])(x0, y0, z0, x1, y1, z1, cols[i].R, cols[i].G, cols[i].B, cols[i].A);
                 rLineArray[i] = (new byte[] { (byte)cols[i].R, (byte)cols[i].G, (byte)cols[i].B, (byte)cols[i].A }, new float[] { (float)x0, (float)y0, (float)z0 }, new float[] { (float)x1, (float)y1, (float)z1 });
             }
             // If the Multi is a closed shape, connect the first and last constituent with a line
@@ -249,11 +253,8 @@ public static class Render
                 double subb = cols[^1].B;
                 double suba = cols[^1].A;
 
-                //rLineArray[^1] = new (byte[], float[], float[])(pLast[0], pLast[1], pLast[2], pFirst[0], pFirst[1], pFirst[2], subr, subb, subg, suba);
                 rLineArray[^1] = (new byte[] { (byte)subr, (byte)subg, (byte)subb, (byte)suba }, new float[] { (float)pLast[0], (float)pLast[1], (float)pLast[2] }, new float[] { (float)pFirst[0], (float)pFirst[1], (float)pFirst[2] });
             }
-            //rLines = new(rLineArray);
-            //cache?.drawables.Add(rLines);
             Renderer.Drawables.Add(rLineArray);
         }
 
@@ -273,7 +274,6 @@ public static class Render
 
             int numTriangles = triVertexIndices.Count;
             (byte[], byte[], byte[], float[], float[], float[])[] rTriArray = new (byte[], byte[], byte[], float[], float[], float[])[numTriangles];
-            //RTriangles rTris;
 
             for (int i = 0; i < numTriangles; i++)
             {
@@ -292,15 +292,8 @@ public static class Render
                 );
             }
 
-            //rTris = new RTriangles(rTriArray);
-            //cache?.drawables.Add(rTris);
             Renderer.Drawables.Add(rTriArray);
         }
-    }
-
-    public static void Body(Geo.Mesh mesh, params IEnumerable<double>[] vertices)
-    {
-        //
     }
 }
 
@@ -318,7 +311,7 @@ public static class Draw
         {
             vertices[dataLength * i + 0] = points[i].pos[0];
             vertices[dataLength * i + 1] = points[i].pos[1];
-            vertices[dataLength * i + 2] = points[i].pos[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 2] = points[i].pos[2];
             // Color
             vertices[dataLength * i + 3] = points[i].rgba[0] / 255f;
             vertices[dataLength * i + 4] = points[i].rgba[1] / 255f;
@@ -339,14 +332,12 @@ public static class Draw
         vertices = new float[numLines * dataLength];
         for (int i = 0; i < numLines; i++)
         {
-            //RLine currentLine = lines[i];
-
             vertices[dataLength * i + 0] = lines[i].p0[0];
             vertices[dataLength * i + 1] = lines[i].p0[1];
-            vertices[dataLength * i + 2] = lines[i].p0[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 2] = lines[i].p0[2];
             vertices[dataLength * i + 7] = lines[i].p1[0];
             vertices[dataLength * i + 8] = lines[i].p1[1];
-            vertices[dataLength * i + 9] = lines[i].p1[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 9] = lines[i].p1[2];
 
             vertices[dataLength * i + 3] = lines[i].rgba[0] / 255f;
             vertices[dataLength * i + 4] = lines[i].rgba[1] / 255f;
@@ -373,15 +364,15 @@ public static class Draw
         {
             vertices[dataLength * i + 0] = tris[i].p0[0];
             vertices[dataLength * i + 1] = tris[i].p0[1];
-            vertices[dataLength * i + 2] = tris[i].p0[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 2] = tris[i].p0[2];
 
             vertices[dataLength * i + 7] = tris[i].p1[0];
             vertices[dataLength * i + 8] = tris[i].p1[1];
-            vertices[dataLength * i + 9] = tris[i].p1[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 9] = tris[i].p1[2];
 
             vertices[dataLength * i + 14] = tris[i].p2[0];
             vertices[dataLength * i + 15] = tris[i].p2[1];
-            vertices[dataLength * i + 16] = tris[i].p2[2] / RDrawData.zFactor;
+            vertices[dataLength * i + 16] = tris[i].p2[2];
 
             vertices[dataLength * i + 3] = tris[i].rgba0[0] / 255f;
             vertices[dataLength * i + 4] = tris[i].rgba0[1] / 255f;
@@ -409,6 +400,5 @@ public static class RDrawData
 {
     internal const int posLength = 3;
     internal const int colLength = 4;
-    internal const float zFactor = 9999;
 
 }

@@ -719,7 +719,7 @@ public class Node : Vec3, ICollection<Node>
             return;
         }
 
-        List<double[]> vertices = this.Select(n => new double[]{n.x.Get()+xOffset, n.y.Get()+yOffset, n.z.Get()+zOffset}).ToList();
+        List<double[]> vertices = this.Select(n => new double[]{n.x.Get()+x.Get()+xOffset, n.y.Get()+y.Get()+yOffset, n.z.Get()+z.Get()+zOffset}).ToList();
         // No mesh, treat as a single face
         if (faces is null)
         {            
@@ -736,7 +736,8 @@ public class Node : Vec3, ICollection<Node>
         {
             foreach (int[] face in faces.Faces)
             {
-                Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+xOffset, this[f].y.Get()+yOffset, this[f].z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => this[i].Col).ToList(), this);
+                //Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+xOffset, this[f].y.Get()+yOffset, this[f].z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => this[i].Col).ToList(), this);
+                Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+x.Get()+xOffset, this[f].y.Get()+y.Get()+yOffset, this[f].z.Get()+z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => (Color)new HSLA((double)i*2/Count, 1, 1, 255)).ToList(), this);
             }
             //foreach (Node m in this)
             //{
