@@ -23,11 +23,11 @@ public class Shader
         }
         if (!vExists)
         {
-            vertexPath = "../magician/paint/shaders/default.v.glsl";
+            vertexPath = "magician/paint/shaders/default.v.glsl";
         }
         if (!fExists)
         {
-            fragmentPath = "../magician/paint/shaders/default.f.glsl";
+            fragmentPath = "magician/paint/shaders/default.f.glsl";
         }
 
         VertexSrc = File.ReadAllText(vertexPath);
@@ -59,14 +59,14 @@ public static class Shaders
     {
         Renderer.GL.BindVertexArray(vao);
         Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        unsafe{Renderer.GL.VertexAttribPointer(0, 3, GLEnum.Float, false, (uint)(3 + 4) * sizeof(float), (void*)0);}
-        unsafe{Renderer.GL.VertexAttribPointer(1, 4, GLEnum.Float, true, (uint)(3 + 4) * sizeof(float), (void*)(3 * sizeof(float)));}
+        unsafe { Renderer.GL.VertexAttribPointer(0, 3, GLEnum.Float, false, (uint)(3 + 4) * sizeof(float), (void*)0); }
+        unsafe { Renderer.GL.VertexAttribPointer(1, 4, GLEnum.Float, true, (uint)(3 + 4) * sizeof(float), (void*)(3 * sizeof(float))); }
         Renderer.GL.EnableVertexAttribArray(1);
         Renderer.GL.EnableVertexAttribArray(0);
 
-        Default = new Shader("default", "../magician/paint", true);
-        Inverse = new Shader("inverse", "../magician/paint", true);
-        Cull = new Shader("cull", "../magician/paint");
+        Default = new Shader("default", "magician/paint", true);
+        Inverse = new Shader("inverse", "magician/paint", true);
+        Cull = new Shader("cull", "magician/paint");
 
         // Compile the cull shader immediately, as it is common
         //cullV = Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader);
