@@ -8,9 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="SDL2">
-      <HintPath>../sdl/SDL2-CS.dll</HintPath>
-    </Reference>
+    <PackageReference Include="ppy.SDL2-CS" Version="1.0.741-alpha" />
     <PackageReference Include="Silk.NET.Core" Version="2.16.0" />
     <PackageReference Include="Silk.NET.Maths" Version="2.16.0" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
