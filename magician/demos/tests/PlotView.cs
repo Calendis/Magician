@@ -66,7 +66,7 @@ public class EqPlotting : Spell
         Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
 
         //Implicit sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(75)), 0, 0, 0, 80, 80, 2, new int[]{0,2,1}, (-20, 20, 1), (-20, 20, 1), (-20, 20, 1));
-        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 20, 1, new int[]{0,2,1}, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
+        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 20, 1, new int[]{0,2,1}, (-5, 5, 0.3), (-5, 5, 0.3), (-5, 5, 0.3));
         
         Origin["sdfTest"] = sdf.Flagged(DrawMode.INNER);
 
