@@ -7,13 +7,6 @@ public static class Renderer
     static SdlContext? sdlContext;
     static GL? gl;
     static bool saveFrame = false;
-    static int saveCount = 0;
-    static IntPtr target;
-    static readonly float[] view = new float[16];
-    static readonly float[] proj = new float[16];
-    //readonly static List<RDrawable> drawables = new();
-
-    //public static List<RDrawable> Drawables => drawables;
     readonly static List<(byte[], float[])> points = new();
     // TODO: support second colour for lines
     readonly static List<(byte[], float[], float[])> lines = new();
@@ -59,7 +52,6 @@ public static class Renderer
     public static unsafe void PrepareMatrices()
     {
         Node camera = Ref.Perspective;
-        //Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
         //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
         double targX = camera.X + camera.Heading.X;
         double targY = camera.Y + camera.Heading.Y;
@@ -75,40 +67,6 @@ public static class Renderer
             (float)(Runes.Globals.winWidth / Runes.Globals.winHeight),
             0.1f, 2000f
         );
-        // Test matrices
-        //Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
-        //    new(3f,3f,3f),
-        //    new(0f,0f,0f),
-        //    new(0, 1, 0)
-        //);
-        //Matrix4X4<float> mproj = Matrix4X4.CreatePerspectiveFieldOfView<float>(
-        //    45f / 180f * (float)Math.PI,
-        //    800f/600f,
-        //    0.1f, 100f
-        //);
-
-        //view[00] = mview.Column1.X; proj[00] = mproj.Column1.X;
-        //view[01] = mview.Column1.Y; proj[01] = mproj.Column1.Y;
-        //view[02] = mview.Column1.Z; proj[02] = mproj.Column1.Z;
-        //view[03] = mview.Column1.W; proj[03] = mproj.Column1.W;
-        //view[04] = mview.Column2.X; proj[04] = mproj.Column2.X;
-        //view[05] = mview.Column2.Y; proj[05] = mproj.Column2.Y;
-        //view[06] = mview.Column2.Z; proj[06] = mproj.Column2.Z;
-        //view[07] = mview.Column2.W; proj[07] = mproj.Column2.W;
-        //view[08] = mview.Column3.X; proj[08] = mproj.Column3.X;
-        //view[09] = mview.Column3.Y; proj[09] = mproj.Column3.Y;
-        //view[10] = mview.Column3.Z; proj[10] = mproj.Column3.Z;
-        //view[11] = mview.Column3.W; proj[11] = mproj.Column3.W;
-        //view[12] = mview.Column4.X; proj[12] = mproj.Column4.X;
-        //view[13] = mview.Column4.Y; proj[13] = mproj.Column4.Y;
-        //view[14] = mview.Column4.Z; proj[14] = mproj.Column4.Z;
-        //view[15] = mview.Column4.W; proj[15] = mproj.Column4.W;
-        //Scribe.Info(@$"
-        //    {Math.Round(view[00],2)} {Math.Round(view[04],2)} {Math.Round(view[08],2)} {Math.Round(view[12],2)},                {Math.Round(proj[00],2)} {Math.Round(proj[04],2)} {Math.Round(proj[08],2)} {Math.Round(proj[12],2)}
-        //    {Math.Round(view[01],2)} {Math.Round(view[05],2)} {Math.Round(view[09],2)} {Math.Round(view[13],2)},                {Math.Round(proj[01],2)} {Math.Round(proj[05],2)} {Math.Round(proj[09],2)} {Math.Round(proj[13],2)}
-        //    {Math.Round(view[02],2)} {Math.Round(view[06],2)} {Math.Round(view[10],2)} {Math.Round(view[14],2)},                {Math.Round(proj[02],2)} {Math.Round(proj[06],2)} {Math.Round(proj[10],2)} {Math.Round(proj[14],2)}
-        //    {Math.Round(view[03],2)} {Math.Round(view[07],2)} {Math.Round(view[11],2)} {Math.Round(view[15],2)},                {Math.Round(proj[03],2)} {Math.Round(proj[07],2)} {Math.Round(proj[11],2)} {Math.Round(proj[15],2)}"
-        //);
 
         int viewLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "view");
         int projLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "proj");
@@ -117,92 +75,8 @@ public static class Renderer
             throw Scribe.Issue("Could not find uniforms within shader!");
         }
 
-        // for custom float arrays
-        //fixed (float* viewPtr = &view[0]){GL.UniformMatrix4(viewLoc, 1, true, viewPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Issue($"{GL.GetError()}");}}
-        //fixed (float* projPtr = &proj[0]){GL.UniformMatrix4(projLoc, 1, true,  projPtr);if (GL.GetError() != GLEnum.NoError){throw Scribe.Issue($"{GL.GetError()}");}}
         GL.UniformMatrix4(viewLoc, 1, false, &mview.Row1.X);
         GL.UniformMatrix4(projLoc, 1, false, &mproj.Row1.X);
-    }
-
-    // Old projection code
-    public static List<double[]> Project(IEnumerable<Core.Vec> theNode, double xOffset, double yOffset, double zOffset, Node? camera = null)
-    {
-        List<double[]> projectedVerts = new();// double[n.Count][];
-        // These two vectors define the camera
-        camera ??= Ref.Perspective;
-        //Vec3 targV = new Core.Vec((Core.IVec)camera + camera.Heading).ToVec3();
-        //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
-        double targX = camera.X + camera.Heading.X;
-        double targY = camera.Y + camera.Heading.Y;
-        double targZ = camera.Z + camera.Heading.Z;
-        // Matrix magic
-        Matrix4X4<double> view = Matrix4X4.CreateLookAt<double>(
-            new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z),
-            new(targX, targY, targZ),
-            new(0, 1, 0)
-        );
-        Matrix4X4<double> projection = Matrix4X4.CreatePerspectiveFieldOfView<double>(
-            Ref.FOV / 180d * Math.PI,
-            Runes.Globals.winWidth / Runes.Globals.winHeight,
-            0.1, 2000
-        );
-        foreach (Core.Vec v in theNode)
-        {
-            Vector3D<double> worldCoords = new(
-                v.x.Get() + xOffset,
-                v.y.Get() + yOffset,
-                v.z.Get() + zOffset
-            );
-            Vector4D<double> intermediate = Vector4D.Transform(worldCoords, view);
-            Vector4D<double> final = Vector4D.Transform(intermediate, projection);
-            // Format the projected vertices for GLSL
-            projectedVerts.Add(new double[]
-            {
-                final.X/-final.Z,
-                final.Y/-final.Z,
-                -final.Z,
-                1+0*final.W
-            });
-        }
-        return projectedVerts;
-    }
-
-    public static List<double[]> Cull_old(Node n, double xOffset, double yOffset, double zOffset, List<double[]> vertices, int[]? face = null)
-    {
-        List<double[]> clippedVerts = new();
-        // Camera-axis culling
-        int counter = 0;
-        foreach (double[] v in vertices)
-        {
-            // Check to see if the constituent's z-coordinate is out-of-bounds
-            // It is considered OOB when it is not in front of the camera along the axis parallel to the camera
-            bool zInBounds;
-
-            Vector3D<double> absPos;
-            if (face is not null)
-                absPos = new(n[face[counter]].x.Get() + xOffset + n.x.Get(), n[face[counter]].y.Get() + yOffset + n.y.Get(), n[face[counter]].z.Get() + zOffset + n.z.Get());
-            else
-                absPos = new(n[counter].x.Get() + xOffset + n.x.Get(), n[counter].y.Get() + yOffset + n.y.Get(), n[counter].z.Get() + zOffset + n.z.Get());
-
-
-            Vector3D<double> camPos = new(Ref.Perspective.X, Ref.Perspective.Y, Ref.Perspective.Z);
-            // Rotate so that we can compare straight along the axis using a >=
-            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(Ref.Perspective.yaw, -Ref.Perspective.pitch, 0);
-            absPos = Vector3D.Transform(absPos, rotMat);
-            camPos = Vector3D.Transform(camPos, rotMat);
-            zInBounds = absPos.Z - camPos.Z >= 0;
-
-            if (zInBounds)
-            {
-                clippedVerts.Add(v);
-            }
-            else
-            {
-                // Seems to work fine without calculating clipping intersections, so do nothing
-            }
-            counter++;
-        }
-        return clippedVerts;
     }
 }
 
