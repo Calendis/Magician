@@ -35,6 +35,7 @@ public class EqPlotting : Spell
 
     public override void PreLoop()
     {
+        Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         //Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
         //Oper sphereRadiusFour = Val(16).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
         //Var("parameter").Set(0);        
