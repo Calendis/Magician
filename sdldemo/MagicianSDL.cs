@@ -58,7 +58,6 @@ class MagicianSDL
         // Create a texture from the surface
         // Textures are hardware-acclerated, while surfaces use CPU rendering
         //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
-
         while (!done)
         {
             Animate(frames * timeResolution);
