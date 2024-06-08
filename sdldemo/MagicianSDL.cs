@@ -127,7 +127,7 @@ class MagicianSDL
     }
     void CreateWindow()
     {
-        win = SDL_CreateWindow(Runes.App.Title, 0, 0, (int)Runes.Globals.winWidth, (int)Runes.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_OPENGL);
+        win = SDL_CreateWindow(Runes.App.Title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, (int)Runes.Globals.winWidth, (int)Runes.Globals.winHeight, SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_OPENGL);
 
         if (win == IntPtr.Zero)
         {
