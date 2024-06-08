@@ -70,10 +70,7 @@ public static class Renderer
 
         int viewLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "view");
         int projLoc = GL.GetUniformLocation(Shaders.shaders[Shaders.Current].prog, "proj");
-        if (viewLoc == -1 || projLoc == -1)
-        {
-            throw Scribe.Issue("Could not find uniforms within shader!");
-        }
+        if (viewLoc == -1 || projLoc == -1) { throw Scribe.Issue("Could not find uniforms within shader!"); }
 
         GL.UniformMatrix4(viewLoc, 1, false, &mview.Row1.X);
         GL.UniformMatrix4(projLoc, 1, false, &mproj.Row1.X);
@@ -136,10 +133,7 @@ public static class Render
         if (((drawMode & DrawMode.INNER) > 0) && vertices.Count >= 3)
         {
             List<int> ect = EarCut.Triangulate(vertices);
-            if (ect.Count % 3 != 0)
-            {
-                throw Scribe.Issue("Triangulator returned non-triplet vertices");
-            }
+            if (ect.Count % 3 != 0) { throw Scribe.Issue("Triangulator returned non-triplet vertices"); }
             List<int[]> triVertexIndices = new();
             for (int i = 0; i < ect.Count; i += 3)
             {
