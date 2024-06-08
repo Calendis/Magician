@@ -7,16 +7,13 @@ public static class App
 {
     const string name = "Magician";
     const string version = "Alpha 0.1";
-    public static string Title
-    {
-        get => name + " " + version;
-    }
+    public static string Title => name + " " + version;
 }
 
 public static class Globals
 {
-    public static double winWidth = 1200;
-    public static double winHeight = 800;
+    public static double winWidth = 1280;
+    public static double winHeight = 720;
     public static int fontSize = 24;
     public const double defaultTol = 1.4210854715202004E-14;
 
