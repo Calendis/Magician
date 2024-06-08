@@ -19,7 +19,7 @@ public class Shader
         bool fExists = File.Exists(fragmentPath);
         if (!vExists && !fExists)
         {
-            Scribe.Error($"Could not create shader {name}. Must provide at least one of {vertexPath}, {fragmentPath}");
+            throw Scribe.Error($"Could not create shader {name}. Must provide at least one of {vertexPath}, {fragmentPath}");
         }
         if (!vExists)
         {
@@ -87,7 +87,6 @@ public static class Shaders
         if (shaders.ContainsKey(s))
             throw Scribe.Error($"Shader {s} already exists");
 
-
         string vertexShaderSrc = s.VertexSrc;
         string fragmentShaderSrc = s.FragmentSrc;
         // The tuple is placeholder data
@@ -95,24 +94,18 @@ public static class Shaders
         int status;
 
         // Generate vertex shader
-        shaders[s] = (Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader), shaders[s].fragment, shaders[s].prog);
+        shaders[s] = (Renderer.GL.CreateShader(ShaderType.VertexShader), shaders[s].fragment, shaders[s].prog);
         Renderer.GL.ShaderSource(shaders[s].vertex, vertexShaderSrc);
         Renderer.GL.CompileShader(shaders[s].vertex);
         Renderer.GL.GetShader(shaders[s].vertex, GLEnum.CompileStatus, out status);
-        if (status != 1)
-        {
-            throw Scribe.Error($"Compilation error in shader {s.Name}: {Renderer.GL.GetShaderInfoLog(shaders[s].vertex)}\n{s.VertexSrc}");
-        }
+        if (status != 1) { throw Scribe.Error($"Compilation error in shader {s.Name}: {Renderer.GL.GetShaderInfoLog(shaders[s].vertex)}\n{s.VertexSrc}"); }
 
         // Generate fragment shader
-        shaders[s] = (shaders[s].vertex, Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.FragmentShader), shaders[s].prog);
+        shaders[s] = (shaders[s].vertex, Renderer.GL.CreateShader(ShaderType.FragmentShader), shaders[s].prog);
         Renderer.GL.ShaderSource(shaders[s].fragment, fragmentShaderSrc);
         Renderer.GL.CompileShader(shaders[s].fragment);
         Renderer.GL.GetShader(shaders[s].fragment, GLEnum.CompileStatus, out status);
-        if (status != 1)
-        {
-            throw Scribe.Error($"Compilation error in shader {s.Name}: {Renderer.GL.GetShaderInfoLog(shaders[s].fragment)}\n{s.FragmentSrc}");
-        }
+        if (status != 1) { throw Scribe.Error($"Compilation error in shader {s.Name}: {Renderer.GL.GetShaderInfoLog(shaders[s].fragment)}\n{s.FragmentSrc}"); }
 
         // Assemble shader program for use
         shaders[s] = (shaders[s].vertex, shaders[s].fragment, Renderer.GL.CreateProgram());
