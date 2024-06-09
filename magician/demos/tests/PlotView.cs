@@ -21,13 +21,17 @@ public class EqPlotting : Spell
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_A]) { Ref.Perspective.Strafe(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_S]) { Ref.Perspective.Forward(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_D]) { Ref.Perspective.Strafe(walkSpeed); }
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_J]) { Ref.Perspective.RotatedY(-0.05); }
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_L]) { Ref.Perspective.RotatedY(0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_SPACE]) { Ref.Perspective.y.Incr(walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_LSHIFT]) { Ref.Perspective.y.Incr(-walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_J]) { Ref.Perspective.RotatedY(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_L]) { Ref.Perspective.RotatedY(-0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_K]) { Ref.Perspective.RotatedX(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_I]) { Ref.Perspective.RotatedX(-0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_U]) { Ref.Perspective.RotatedZ(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_O]) { Ref.Perspective.RotatedZ(-0.05); }
         // shaders :]
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_I]) { Shaders.Swap(Shaders.Inverse); }
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_O]) { Shaders.Swap(Shaders.Default); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_1]) { Shaders.Swap(Shaders.Inverse); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_0]) { Shaders.Swap(Shaders.Default); }
 
         //Var("parameter").Set(0.5*Math.Sin(Time/2));
         //Origin["myPlot"].Update();
@@ -66,8 +70,8 @@ public class EqPlotting : Spell
         Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
 
         //Implicit sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(75)), 0, 0, 0, 80, 80, 2, new int[]{0,2,1}, (-20, 20, 1), (-20, 20, 1), (-20, 20, 1));
-        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 60, 1, new int[]{0,2,1}, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
-        
+        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 60, 1, new int[] { 0, 2, 1 }, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
+
         Origin["sdfTest"] = sdf.Flagged(DrawMode.INNER);
 
         // Approximate a tanglecube
