@@ -59,8 +59,10 @@ public static class Shaders
     {
         Renderer.GL.BindVertexArray(vao);
         Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        unsafe { Renderer.GL.VertexAttribPointer(0, 3, GLEnum.Float, false, (uint)(3 + 4) * sizeof(float), (void*)0); }
-        unsafe { Renderer.GL.VertexAttribPointer(1, 4, GLEnum.Float, true, (uint)(3 + 4) * sizeof(float), (void*)(3 * sizeof(float))); }
+        // Specify how to read vertex data
+        //gl.BindFragDataLocation()
+        unsafe { Renderer.GL.VertexAttribPointer(0, RDrawData.posLength, GLEnum.Float, false, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)0); }
+        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.posLength, GLEnum.Float, true,  (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
         Renderer.GL.EnableVertexAttribArray(1);
         Renderer.GL.EnableVertexAttribArray(0);
 
@@ -129,20 +131,11 @@ public static class Shaders
         int colLength = dataLens[1];
         uint stride = (uint)dataLens.Sum();
 
-        // Create vertex array object
-        //uint vao = Renderer.GL.GenVertexArray();
-
-        //uint vbo = Renderer.GL.GenBuffer();
-
         // Upload to the VAO
         fixed (float* buf = data)
         {
             Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(data.Length * sizeof(float)), buf, BufferUsageARB.StaticDraw);
         }
-
-        // Specify how to read vertex data
-        //
-        //gl.BindFragDataLocation()
         return (vao, vbo);
     }
 
