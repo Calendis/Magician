@@ -2,6 +2,7 @@ namespace Magician.Paint;
 using Geo;
 using Silk.NET.OpenGL;
 using Silk.NET.Maths;
+
 public static class Renderer
 {
     static SdlContext? sdlContext;
@@ -52,15 +53,17 @@ public static class Renderer
     public static unsafe void PrepareMatrices()
     {
         Node camera = Ref.Perspective;
-        //Vec3 upV = targV.YawPitchRotated(0, Math.PI / 2);
+        //Matrix4X4<double> rot = Matrix4X4.CreateFromYawPitchRoll(camera.yaw, camera.pitch+Math.PI/2, camera.roll);
+        //Scribe.Info(camera.roll);
+        Vector3D<double> upV = Vector3D.Transform(new Vector3D<double>(0, 1, 0), Matrix4X4.CreateRotationZ<double>(camera.roll));
         double targX = camera.X + camera.Heading.X;
         double targY = camera.Y + camera.Heading.Y;
         double targZ = camera.Z + camera.Heading.Z;
 
         Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
-            new((float)Ref.Perspective.X, (float)Ref.Perspective.Y, (float)Ref.Perspective.Z),
+            new((float)camera.X, (float)camera.Y, (float)camera.Z),
             new((float)targX, (float)targY, (float)targZ),
-            new(0, 1, 0)
+            new((float)upV.X, (float)upV.Y, (float)upV.Z)
         );
         Matrix4X4<float> mproj = Matrix4X4.CreatePerspectiveFieldOfView<float>(
             (float)(Ref.FOV / 180f * Math.PI),

@@ -64,7 +64,7 @@ public class Node : Vec3, ICollection<Node>
     {
         get
         {
-            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-yaw, pitch, 0);
+            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
             Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), rotMat);
             return rotated;
         }
@@ -72,6 +72,7 @@ public class Node : Vec3, ICollection<Node>
         {
             pitch = -Math.Asin(-value.Y);
             yaw = -Math.Atan2(value.X, value.Z);
+            roll = Math.Atan2(value.Y, Math.Sqrt(value.X * value.X + value.Z * value.Z));
         }
     }
     double RecursX
@@ -160,18 +161,12 @@ public class Node : Vec3, ICollection<Node>
     {
         get
         {
-            if (i >= Count)
-            {
-                throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
-            }
+            if (i >= Count) { throw new IndexOutOfRangeException($"Tried to get index {i} of {this}"); }
             return constituents[i];
         }
         set
         {
-            if (i >= Count)
-            {
-                throw new IndexOutOfRangeException($"Tried to get index {i} of {this}");
-            }
+            if (i >= Count) { throw new IndexOutOfRangeException($"Tried to get index {i} of {this}"); }
             constituents[i].DisposeAllTextures();
             //Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             constituents[i] = value.Parented(this);
@@ -181,10 +176,7 @@ public class Node : Vec3, ICollection<Node>
     {
         get
         {
-            if (constituentTags.ContainsKey(tag))
-            {
-                return constituentTags[tag];
-            }
+            if (constituentTags.ContainsKey(tag)) { return constituentTags[tag]; }
             throw new KeyNotFoundException($"tag {tag} does not exist in {this}");
         }
         set
@@ -192,7 +184,6 @@ public class Node : Vec3, ICollection<Node>
             // Create new Multi associated with the tag
             if (!constituentTags.ContainsKey(tag))
             {
-                //Scribe.Info($"Creating tag \"{tag}\"");
                 constituentTags.Add(tag, value);
                 Add(value.Tagged(tag));
                 return;
@@ -208,11 +199,7 @@ public class Node : Vec3, ICollection<Node>
     }
 
     protected _SDLTexture? texture;
-    public _SDLTexture Texture
-    {
-        get => texture ?? throw Scribe.Error($"Got null texture of {this}");
-    }
-
+    public _SDLTexture Texture{get => texture ?? throw Scribe.Error($"Got null texture of {this}");}
     protected DrawMode drawMode;
     protected Color col;
 
@@ -350,7 +337,7 @@ public class Node : Vec3, ICollection<Node>
     /* Rotation methods */
     public Node RotatedZ(double theta)
     {
-        roll = (roll + theta) % (2 * Math.PI);
+        roll = (roll + theta);// % (2 * Math.PI);
         return Sub(
             m =>
             m.PhaseXY += theta
@@ -367,7 +354,7 @@ public class Node : Vec3, ICollection<Node>
     }
     public Node RotatedX(double theta)
     {
-        pitch = (pitch + theta) % (2 * Math.PI);
+        pitch = (pitch + theta);// % (2 * Math.PI);
         return Sub(
             m =>
             m.PhaseYZ += theta
@@ -719,10 +706,10 @@ public class Node : Vec3, ICollection<Node>
             return;
         }
 
-        List<double[]> vertices = this.Select(n => new double[]{n.x.Get()+x.Get()+xOffset, n.y.Get()+y.Get()+yOffset, n.z.Get()+z.Get()+zOffset}).ToList();
+        List<double[]> vertices = this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList();
         // No mesh, treat as a single face
         if (faces is null)
-        {            
+        {
             Paint.Render.Polygon(vertices, drawMode, constituents.Select(c => c.Col).ToList(), this);
             texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
             // Draw each constituent recursively
@@ -737,7 +724,7 @@ public class Node : Vec3, ICollection<Node>
             foreach (int[] face in faces.Faces)
             {
                 //Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+xOffset, this[f].y.Get()+yOffset, this[f].z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => this[i].Col).ToList(), this);
-                Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+x.Get()+xOffset, this[f].y.Get()+y.Get()+yOffset, this[f].z.Get()+z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => (Color)new HSLA((double)i*2/Count, 1, 1, 255)).ToList(), this);
+                Paint.Render.Polygon(face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(), drawMode, face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(), this);
             }
             //foreach (Node m in this)
             //{
