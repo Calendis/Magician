@@ -11,6 +11,7 @@ public static class Ref
     //public static List<Multi> AllowedOrphans;
     public static Vec3 DefaultHeading = new(0, 0, -1);
     public static Vec3 DefaultUp = new(0, 1, 0);
+    public static Vec3 DefaultRight = new(1, 0, 0);
     public static double FOV
     {
         get => Perspective.Val;

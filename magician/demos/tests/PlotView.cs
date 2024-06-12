@@ -23,8 +23,8 @@ public class EqPlotting : Spell
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_A]) { Ref.Perspective.Strafe(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_S]) { Ref.Perspective.Forward(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_D]) { Ref.Perspective.Strafe(walkSpeed); }
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_SPACE]) { Ref.Perspective.y.Incr(walkSpeed); }
-        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_LSHIFT]) { Ref.Perspective.y.Incr(-walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_SPACE]) { Ref.Perspective.Lift(walkSpeed); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_LSHIFT]) { Ref.Perspective.Lift(-walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_J]) { Ref.Perspective.RotatedY(0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_L]) { Ref.Perspective.RotatedY(-0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_K]) { Ref.Perspective.RotatedX(0.05); }
@@ -34,7 +34,7 @@ public class EqPlotting : Spell
         // shaders :]
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_1]) { Shaders.Swap(Shaders.Inverse); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_0]) { Shaders.Swap(Shaders.Default); }
-        // move the tanglecube
+        // spin the node around :]
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_Z]) { selected!.RotatedY(0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_X]) { selected!.RotatedX(0.05); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_C]) { selected!.RotatedZ(0.05); }

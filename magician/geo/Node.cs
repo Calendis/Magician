@@ -79,16 +79,7 @@ public class Node : Vec3, ICollection<Node>
     //    }
     //}
     internal Quaternion<double> Rotation = new(0, 0, 0, 1);
-    internal Vector3D<double> Heading
-    {
-        get
-        {
-            Vector3D<double> hV = Vector3D.Transform<double>(new(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
-            return hV;
-            //return new Vector3D<double>(x.Get(), y.Get(), z.Get()) + hV;
-            //return new Vector3D<double>(X, Y, Z) + hV;
-        }
-    }
+    internal Vector3D<double> Heading => Vector3D.Transform(new(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
     // TODO: clean up these methods
     double RecursX
     {
@@ -444,8 +435,17 @@ public class Node : Vec3, ICollection<Node>
     }
     public void Strafe(double amount)
     {
-        Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(-Math.PI / 2, 0, 0);
-        Vector3D<double> rotated = Vector3D.Transform(Heading, rotMat);
+        Vector3D<double> rotated = Vector3D.Transform(new(Ref.DefaultRight.x.Get(), Ref.DefaultRight.y.Get(), Ref.DefaultRight.z.Get()), Rotation);
+        double newX = x.Get() + rotated.X * amount;
+        double newY = y.Get() + rotated.Y * amount;
+        double newZ = z.Get() + rotated.Z * amount;
+        x.Set(newX);
+        y.Set(newY);
+        z.Set(newZ);
+    }
+    public void Lift(double amount)
+    {
+        Vector3D<double> rotated = Vector3D.Transform(new(Ref.DefaultUp.x.Get(), Ref.DefaultUp.y.Get(), Ref.DefaultUp.z.Get()), Rotation);
         double newX = x.Get() + rotated.X * amount;
         double newY = y.Get() + rotated.Y * amount;
         double newZ = z.Get() + rotated.Z * amount;
