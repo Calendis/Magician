@@ -3,6 +3,12 @@ namespace Magician.Paint;
 using System.IO;
 using Silk.NET.OpenGL;
 
+public enum ShaderSource
+{
+    File,
+    Resource,
+}
+
 public class Shader
 {
     string vertexPath;
@@ -10,31 +16,64 @@ public class Shader
     public string VertexSrc;
     public string FragmentSrc;
     public string Name;
-    public Shader(string name, string root, bool auto = false)
+    public Shader(ShaderSource source, string name, string root, bool auto = false)
     {
         Name = name;
-        vertexPath = $"{root}/shaders/{name}.v.glsl";
-        fragmentPath = $"{root}/shaders/{name}.f.glsl";
-        bool vExists = File.Exists(vertexPath);
-        bool fExists = File.Exists(fragmentPath);
-        if (!vExists && !fExists)
+        string? vertexSrc, fragmentSrc;
+        switch (source)
+        {
+            case ShaderSource.File:
+                vertexPath = $"{root}/shaders/{name}.v.glsl";
+                fragmentPath = $"{root}/shaders/{name}.f.glsl";
+
+                vertexSrc = LoadFile(vertexPath);
+                fragmentSrc = LoadFile(fragmentPath);
+
+                break;
+            case ShaderSource.Resource:
+                vertexPath = $"{root}.shaders.{name}.v.glsl";
+                fragmentPath = $"{root}.shaders.{name}.f.glsl";
+
+                vertexSrc = LoadStringResource(vertexPath);
+                fragmentSrc = LoadStringResource(fragmentPath);
+
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+
+        if (vertexSrc == null && fragmentSrc == null)
         {
             throw Scribe.Error($"Could not create shader {name}. Must provide at least one of {vertexPath}, {fragmentPath}");
         }
-        if (!vExists)
-        {
-            vertexPath = "magician/paint/shaders/default.v.glsl";
-        }
-        if (!fExists)
-        {
-            fragmentPath = "magician/paint/shaders/default.f.glsl";
-        }
 
-        VertexSrc = File.ReadAllText(vertexPath);
-        FragmentSrc = File.ReadAllText(fragmentPath);
+        VertexSrc = vertexSrc ?? LoadStringResource("Magician.paint.shaders.default.v.glsl")!;
+        FragmentSrc = fragmentSrc ?? LoadStringResource("Magician.paint.shaders.default.f.glsl")!;
+
+
         if (!auto)
             return;
         Shaders.Generate(this);
+    }
+
+    private static string? LoadStringResource(string path)
+    {
+        using Stream? stream = typeof(Shader).Assembly.GetManifestResourceStream(path);
+        if (stream == null) return null;
+        using StreamReader reader = new(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static string? LoadFile(string path)
+    {
+        try
+        {
+            return File.ReadAllText(path);
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
     }
 }
 
@@ -66,9 +105,9 @@ public static class Shaders
         Renderer.GL.EnableVertexAttribArray(1);
         Renderer.GL.EnableVertexAttribArray(0);
 
-        Default = new Shader("default", "magician/paint", true);
-        Inverse = new Shader("inverse", "magician/paint", true);
-        Cull = new Shader("cull", "magician/paint");
+        Default = new Shader(ShaderSource.Resource, "default", "Magician.paint", true);
+        Inverse = new Shader(ShaderSource.Resource, "inverse", "Magician.paint", true);
+        Cull = new Shader(ShaderSource.Resource, "cull", "Magician.paint");
 
         // Compile the cull shader immediately, as it is common
         //cullV = Renderer.GL.CreateShader(Silk.NET.OpenGL.ShaderType.VertexShader);
