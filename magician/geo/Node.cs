@@ -356,8 +356,6 @@ public class Node : Vec3, ICollection<Node>
         //yaw += yaw > 0 ? 0 : 2 * Math.PI;
         Quaternion<double> yaw = Quaternion<double>.CreateFromYawPitchRoll(theta, 0, 0);
         Rotation *= yaw;
-        // TODO: pretty sure these will still lock.
-        // so camera will work but vertices will not move
         return Sub(
             m =>
             m.PhaseXZ += theta
