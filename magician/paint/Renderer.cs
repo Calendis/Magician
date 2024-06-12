@@ -53,21 +53,12 @@ public static class Renderer
     public static unsafe void PrepareMatrices()
     {
         Node camera = Ref.Perspective;
-        //Matrix4X4<double> rot = Matrix4X4.CreateFromYawPitchRoll(camera.yaw, camera.pitch+Math.PI/2, camera.roll);
-        //Scribe.Info(camera.roll);
-        // Use quaternions to avoid gimbal lock
-        Quaternion<double> qYaw = Quaternion<double>.CreateFromYawPitchRoll(camera.yaw, 0, 0);
-        Quaternion<double> qPitch = Quaternion<double>.CreateFromYawPitchRoll(0, camera.pitch, 0);
-        Quaternion<double> qRoll = Quaternion<double>.CreateFromYawPitchRoll(0, 0, camera.roll);
-        Quaternion<double> rot = qPitch * qRoll * qYaw ;
-        Vector3D<double> defaultUp = new(0, 1, 0);
-        Vector3D<double> defaultHeading = new(0, 0, -1);
-        Vector3D<double> heading = Vector3D.Transform(defaultHeading, rot);
-        Vector3D<double> upV = Vector3D.Transform(defaultUp, rot);
+        double targX = camera.X + camera.Heading.X;
+        double targY = camera.Y + camera.Heading.Y;
+        double targZ = camera.Z + camera.Heading.Z;
         
-        double targX = camera.X + heading.X;
-        double targY = camera.Y + heading.Y;
-        double targZ = camera.Z + heading.Z;
+        Vector3D<double> defaultUp = new(0, 1, 0);
+        Vector3D<double> upV = Vector3D.Transform(defaultUp, camera.Rotation);
 
         Matrix4X4<float> mview = Matrix4X4.CreateLookAt<float>(
             new((float)camera.X, (float)camera.Y, (float)camera.Z),

@@ -9,7 +9,8 @@ public static class Ref
     public static Node Perspective { get; }
     public static Node Undefined { get; internal set; }
     //public static List<Multi> AllowedOrphans;
-    public static Vec3 DefaultHeading = new(0,0,-1);
+    public static Vec3 DefaultHeading = new(0, 0, -1);
+    public static Vec3 DefaultUp = new(0, 1, 0);
     public static double FOV
     {
         get => Perspective.Val;
@@ -99,9 +100,9 @@ public static class Create
             //    new Renderer.Text("3", new RGBA(0xff0000e0), 20).Render()
             //),
             Point(0, -height)
-            //.Textured(
-             //   new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render()
-            //)
+        //.Textured(
+        //   new Renderer.Text("4", new RGBA(0xff0000e0), 20).Render()
+        //)
         ).To(x, y);
     }
 
@@ -179,7 +180,7 @@ public static class Create
         Node tetra = new(x, y, z, Mesh.SimplePyramid,
             Create.RegularPolygon(3, radius)
             .Add(
-            new Node[] { Create.Point(0, 0, Math.Sqrt(3)*radius) }
+            new Node[] { Create.Point(0, 0, Math.Sqrt(3) * radius) }
             ).ToArray()
         );
         return tetra;
