@@ -13,9 +13,11 @@ public class EqPlotting : Spell
     double walkSpeed = 4.0;
     Equation plotTest3d;
     SolvedEquation spt3d;
+    Node? selected;
     public override void Loop()
     {
         Renderer.Clear();
+
 
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_W]) { Ref.Perspective.Forward(walkSpeed); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_A]) { Ref.Perspective.Strafe(-walkSpeed); }
@@ -32,6 +34,10 @@ public class EqPlotting : Spell
         // shaders :]
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_1]) { Shaders.Swap(Shaders.Inverse); }
         if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_0]) { Shaders.Swap(Shaders.Default); }
+        // move the tanglecube
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_Z]) { selected!.RotatedY(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_X]) { selected!.RotatedX(0.05); }
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_C]) { selected!.RotatedZ(0.05); }
 
         //Var("parameter").Set(0.5*Math.Sin(Time/2));
         //Origin["myPlot"].Update();
@@ -39,7 +45,12 @@ public class EqPlotting : Spell
 
     public override void PreLoop()
     {
-        Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
+        Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
+        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 60, 1, new int[] { 0, 2, 1 }, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
+        Origin["sdfTest"] = sdf.Flagged(DrawMode.INNER);
+        selected = Origin["sdfTest"];
+
+        //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         //Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
         //Oper sphereRadiusFour = Val(16).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
         //Var("parameter").Set(0);        
@@ -67,12 +78,7 @@ public class EqPlotting : Spell
         //Node myGeo = new Explicit(parabola, 0, 0, 0, 1, 1, 0, (-50, 50, 5)).Flagged(DrawMode.PLOT);
         //Origin["parabola"] = myGeo;
 
-        Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
-
         //Implicit sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(75)), 0, 0, 0, 80, 80, 2, new int[]{0,2,1}, (-20, 20, 1), (-20, 20, 1), (-20, 20, 1));
-        Implicit sdf = new(sdfTanglecube, 0, 0, 2000, 60, 1, new int[] { 0, 2, 1 }, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
-
-        Origin["sdfTest"] = sdf.Flagged(DrawMode.INNER);
 
         // Approximate a tanglecube
         //Equation tanglecube = new(
