@@ -5,6 +5,8 @@ using Paint;
 
 using System.Collections;
 using Silk.NET.Maths;
+using System.Numerics;
+
 
 [Flags]
 public enum DrawMode : short
@@ -27,7 +29,7 @@ public class Node : Vec3, ICollection<Node>
     protected List<Node> constituents;
     protected Mesh? faces;
     readonly Dictionary<string, Node> constituentTags = new();
-    public double pitch = 0; public double yaw = 0; public double roll = 0;
+    //public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
     //public List<RDrawable> drawables = new();
@@ -60,21 +62,34 @@ public class Node : Vec3, ICollection<Node>
     /*
     *  Positional Properties
     */
-    public Vector3D<double> Heading
+    //internal Vector3D<double> Heading
+    //{
+    //    get
+    //    {
+    //        //Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
+    //        Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
+    //        return rotated;
+    //    }
+    //    // TODO: remove this setter
+    //    set
+    //    {
+    //        pitch = -Math.Asin(-value.Y);
+    //        yaw = -Math.Atan2(value.X, value.Z);
+    //        roll = Math.Atan2(value.Y, Math.Sqrt(value.X * value.X + value.Z * value.Z));
+    //    }
+    //}
+    internal Quaternion<double> Rotation = new(0, 0, 0, 1);
+    internal Vector3D<double> Heading
     {
         get
         {
-            Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
-            Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), rotMat);
-            return rotated;
-        }
-        set
-        {
-            pitch = -Math.Asin(-value.Y);
-            yaw = -Math.Atan2(value.X, value.Z);
-            roll = Math.Atan2(value.Y, Math.Sqrt(value.X * value.X + value.Z * value.Z));
+            Vector3D<double> hV = Vector3D.Transform<double>(new(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
+            return hV;
+            //return new Vector3D<double>(x.Get(), y.Get(), z.Get()) + hV;
+            //return new Vector3D<double>(X, Y, Z) + hV;
         }
     }
+    // TODO: clean up these methods
     double RecursX
     {
         get
@@ -199,7 +214,7 @@ public class Node : Vec3, ICollection<Node>
     }
 
     protected _SDLTexture? texture;
-    public _SDLTexture Texture{get => texture ?? throw Scribe.Error($"Got null texture of {this}");}
+    public _SDLTexture Texture { get => texture ?? throw Scribe.Error($"Got null texture of {this}"); }
     protected DrawMode drawMode;
     protected Color col;
 
@@ -335,18 +350,14 @@ public class Node : Vec3, ICollection<Node>
     }
 
     /* Rotation methods */
-    public Node RotatedZ(double theta)
-    {
-        roll = (roll + theta);// % (2 * Math.PI);
-        return Sub(
-            m =>
-            m.PhaseXY += theta
-        );
-    }
     public Node RotatedY(double theta)
     {
-        yaw = (yaw + theta) % (2 * Math.PI);
-        yaw += yaw > 0 ? 0 : 2 * Math.PI;
+        //yaw = (yaw + theta) % (2 * Math.PI);
+        //yaw += yaw > 0 ? 0 : 2 * Math.PI;
+        Quaternion<double> yaw = Quaternion<double>.CreateFromYawPitchRoll(theta, 0, 0);
+        Rotation *= yaw;
+        // TODO: pretty sure these will still lock.
+        // so camera will work but vertices will not move
         return Sub(
             m =>
             m.PhaseXZ += theta
@@ -354,10 +365,22 @@ public class Node : Vec3, ICollection<Node>
     }
     public Node RotatedX(double theta)
     {
-        pitch = (pitch + theta);// % (2 * Math.PI);
+        //pitch = (pitch + theta);// % (2 * Math.PI);
+        Quaternion<double> pitch = Quaternion<double>.CreateFromYawPitchRoll(0, theta, 0);
+        Rotation *= pitch;
         return Sub(
             m =>
             m.PhaseYZ += theta
+        );
+    }
+    public Node RotatedZ(double theta)
+    {
+        //roll = (roll + theta) % (2 * Math.PI);
+        Quaternion<double> roll = Quaternion<double>.CreateFromYawPitchRoll(0, 0, theta);
+        Rotation *= roll;
+        return Sub(
+            m =>
+            m.PhaseXY += theta
         );
     }
 
@@ -507,7 +530,8 @@ public class Node : Vec3, ICollection<Node>
         }
 
         // headings, internalval, tempx, tempy
-        copy.Heading = Heading;
+        //copy.Heading = Heading;
+        copy.Rotation = new Quaternion<double>(Rotation.X, Rotation.Y, Rotation.Z, Rotation.W);
         copy.Val = Val;
 
         return copy;
