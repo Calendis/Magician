@@ -4,7 +4,6 @@ using Magician.Core.Maps;
 
 public abstract partial class Oper : IRelation
 {
-    // TODO: Maybe put some of these fields/properties behind an interface
     protected readonly Variable solution;
     public IVal Cache => solution;
     public string Name => name;
@@ -44,7 +43,6 @@ public abstract partial class Oper : IRelation
     // Create a new Oper of the same type
     public abstract Oper New(IEnumerable<Oper> pa, IEnumerable<Oper> na);
     public abstract Variable Sol();
-    // TODO: does this really need to be Oper v? Variable is probably fine
     public abstract Oper Degree(Oper v);
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
