@@ -1,5 +1,7 @@
 namespace Magician.Geo;
 using Magician.Core;
+using Silk.NET.Maths;
+
 
 public class Vec3 : Vec
 {
@@ -15,12 +17,12 @@ public class Vec3 : Vec
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
-        set
-        {
-            double mag = XYDist;
-            x.Set(mag * Math.Cos(value));
-            y.Set(mag * Math.Sin(value));
-        }
+        //set
+        //{
+        //    double mag = XYDist;
+        //    x.Set(mag * Math.Cos(value));
+        //    y.Set(mag * Math.Sin(value));
+        //}
     }
     public virtual double PhaseXZ
     {
@@ -30,12 +32,12 @@ public class Vec3 : Vec
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
-        set
-        {
-            double mag = XZDist;
-            x.Set(mag * Math.Cos(value));
-            z.Set(mag * Math.Sin(value));
-        }
+        //set
+        //{
+        //    double mag = XZDist;
+        //    x.Set(mag * Math.Cos(value));
+        //    z.Set(mag * Math.Sin(value));
+        //}
     }
     public virtual double PhaseYZ
     {
@@ -45,12 +47,12 @@ public class Vec3 : Vec
             p = p < 0 ? p + 2 * Math.PI : p;
             return p;
         }
-        set
-        {
-            double mag = YZDist;
-            y.Set(mag * Math.Cos(value));
-            z.Set(mag * Math.Sin(value));
-        }
+        //set
+        //{
+        //    double mag = YZDist;
+        //    y.Set(mag * Math.Cos(value));
+        //    z.Set(mag * Math.Sin(value));
+        //}
     }
 
     public double XYDist
@@ -84,6 +86,30 @@ public class Vec3 : Vec
         cY = z.Get()*a.x.Get()-x.Get()*a.z.Get();
         cZ = x.Get()*a.y.Get()-y.Get()*a.x.Get();
         return new(cX, cY, cZ);
+    }
+    public void RotateX(double theta)
+    {
+        Quaternion<double> rotation = Quaternion<double>.CreateFromAxisAngle(new(1,0,0), theta);
+        Vector3D<double> rotated = Vector3D.Transform<double>(new Vector3D<double>(x.Get(), y.Get(), z.Get()), rotation);
+        x.Set(rotated.X);
+        y.Set(rotated.Y);
+        z.Set(rotated.Z);
+    }
+    public void RotateY(double theta)
+    {
+        Quaternion<double> rotation = Quaternion<double>.CreateFromAxisAngle(new(0,1,0), theta);
+        Vector3D<double> rotated = Vector3D.Transform<double>(new Vector3D<double>(x.Get(), y.Get(), z.Get()), rotation);
+        x.Set(rotated.X);
+        y.Set(rotated.Y);
+        z.Set(rotated.Z);
+    }
+    public void RotateZ(double theta)
+    {
+        Quaternion<double> rotation = Quaternion<double>.CreateFromAxisAngle(new(0,0,1), theta);
+        Vector3D<double> rotated = Vector3D.Transform<double>(new Vector3D<double>(x.Get(), y.Get(), z.Get()), rotation);
+        x.Set(rotated.X);
+        y.Set(rotated.Y);
+        z.Set(rotated.Z);
     }
     public static Vec3 operator +(Vec3 a, Vec3 b)
     {

@@ -341,36 +341,33 @@ public class Node : Vec3, ICollection<Node>
     }
 
     /* Rotation methods */
+    public Node RotatedX(double theta)
+    {
+        //pitch = (pitch + theta);// % (2 * Math.PI);
+        Quaternion<double> pitch = Quaternion<double>.CreateFromYawPitchRoll(0, theta, 0);
+        Rotation *= pitch;
+        Rotation = Quaternion<double>.Normalize(Rotation);
+        foreach (Vec3 v in this) { v.RotateX(theta); }
+        return this;
+    }
     public Node RotatedY(double theta)
     {
         //yaw = (yaw + theta) % (2 * Math.PI);
         //yaw += yaw > 0 ? 0 : 2 * Math.PI;
         Quaternion<double> yaw = Quaternion<double>.CreateFromYawPitchRoll(theta, 0, 0);
         Rotation *= yaw;
-        return Sub(
-            m =>
-            m.PhaseXZ += theta
-        );
-    }
-    public Node RotatedX(double theta)
-    {
-        //pitch = (pitch + theta);// % (2 * Math.PI);
-        Quaternion<double> pitch = Quaternion<double>.CreateFromYawPitchRoll(0, theta, 0);
-        Rotation *= pitch;
-        return Sub(
-            m =>
-            m.PhaseYZ += theta
-        );
+        Rotation = Quaternion<double>.Normalize(Rotation);
+        foreach (Vec3 v in this) { v.RotateY(theta); }
+        return this;
     }
     public Node RotatedZ(double theta)
     {
         //roll = (roll + theta) % (2 * Math.PI);
         Quaternion<double> roll = Quaternion<double>.CreateFromYawPitchRoll(0, 0, theta);
         Rotation *= roll;
-        return Sub(
-            m =>
-            m.PhaseXY += theta
-        );
+        Rotation = Quaternion<double>.Normalize(Rotation);
+        foreach (Vec3 v in this) { v.RotateZ(theta); }
+        return this;
     }
 
     /* Scaling methods */
