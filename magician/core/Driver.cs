@@ -2,6 +2,7 @@ namespace Magician.Core;
 using Maps;
 using Geo;
 
+// TODO: re-think how drivers work: automate vectors using Opers
 public class Driver
 {
     public CoordMode CMode;
@@ -53,10 +54,14 @@ public class Driver
             case CoordMode.POLAR:
                 IVal.Add(X.Invoke(t), DMode == DriverMode.SET ? 0 : Target.Magnitude, xCache);
                 Target.Magnitude = xCache.Get();
-                IVal.Add(Y.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseXY, yCache);
-                Target.PhaseXY = yCache.Get();
-                IVal.Add(Z.Invoke(t), DMode == DriverMode.SET ? 0 : Target.PhaseYZ, zCache);
-                Target.PhaseYZ = zCache.Get();
+
+                IVal yt = Y.Invoke(t);
+                IVal.Add(yt, DMode == DriverMode.SET ? 0 : Target.PhaseXY, yCache);
+                Target.RotatedZ(DMode == DriverMode.SET ? 0 : yt.Get());
+
+                IVal zt = Z.Invoke(t);
+                IVal.Add(zt, DMode == DriverMode.SET ? 0 : Target.PhaseYZ, zCache);
+                Target.RotatedX(DMode == DriverMode.SET ? 0 : zt.Get());
                 break;
             case CoordMode.BRANCHED:
                 // TODO: implement this
