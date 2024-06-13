@@ -349,6 +349,7 @@ public interface IVal : IDimensional<double>
     }
 }
 
+// TODO: make Val a struct, and it only needs to contain two elements max
 public class Val : IVal
 {
     private readonly List<double> vals;
