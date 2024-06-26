@@ -28,6 +28,9 @@ public class Implicit : Node
         {
             throw Scribe.Error("Operator must have exactly 3 inputs");
         }
+        this.x.Set(x);
+        this.y.Set(y);
+        this.z.Set(z);
         NDCounter ndc = new(rangeResos);
         List<(Vec3, Vec3, Vec3, Color)> triangles = new();
         List<Color> colFromCube = new();
