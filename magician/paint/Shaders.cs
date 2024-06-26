@@ -127,13 +127,14 @@ public static class Shaders
     {
         Scribe.WarnIf(dataLens.Length < 2, "incomplete data in PrepareDraw");
         Scribe.WarnIf(dataLens.Length > 2, "unsupported data in PrepareDraw");  // TODO: support more shader data!
-        int posLength = dataLens[0];
-        int colLength = dataLens[1];
-        uint stride = (uint)dataLens.Sum();
+        //int posLength = dataLens[0];
+        //int colLength = dataLens[1];
+        //uint stride = (uint)dataLens.Sum();
 
         // Upload to the VAO
         fixed (float* buf = data)
         {
+            //Scribe.Info($"Buffering {data.Length*sizeof(float)/8} bytes to the GPU...");
             Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(data.Length * sizeof(float)), buf, BufferUsageARB.StaticDraw);
         }
         return (vao, vbo);
