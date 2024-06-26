@@ -33,9 +33,9 @@ public class Node : Vec3, ICollection<Node>
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
     //public List<RDrawable> drawables = new();
-    bool stale = true; // Does the Multi need to be re-rendered? (does nothing so far)
+    internal (int start, int end)? size;
+    internal bool stale = true; // Does the Multi need to be re-rendered?
     List<Driver> drivers = new();
-
     public Node Parent
     {
         get
@@ -62,22 +62,6 @@ public class Node : Vec3, ICollection<Node>
     /*
     *  Positional Properties
     */
-    //internal Vector3D<double> Heading
-    //{
-    //    get
-    //    {
-    //        //Matrix4X4<double> rotMat = Matrix4X4.CreateFromYawPitchRoll(yaw, pitch, roll);
-    //        Vector3D<double> rotated = Vector3D.Transform(new Vector3D<double>(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
-    //        return rotated;
-    //    }
-    //    // TODO: remove this setter
-    //    set
-    //    {
-    //        pitch = -Math.Asin(-value.Y);
-    //        yaw = -Math.Atan2(value.X, value.Z);
-    //        roll = Math.Atan2(value.Y, Math.Sqrt(value.X * value.X + value.Z * value.Z));
-    //    }
-    //}
     internal Quaternion<double> Rotation = new(0, 0, 0, 1);
     internal Vector3D<double> Heading => Vector3D.Transform(new(Ref.DefaultHeading.x.Get(), Ref.DefaultHeading.y.Get(), Ref.DefaultHeading.z.Get()), Rotation);
     // TODO: clean up these methods
@@ -221,10 +205,7 @@ public class Node : Vec3, ICollection<Node>
         this.drawMode = dm;
 
         constituents = new List<Node> { };
-        foreach (Node c in cs)
-        {
-            Add(c);
-        }
+        foreach (Node c in cs) { Add(c); }
     }
 
     // Create a multi and define its position, colour, and drawing properties
@@ -269,7 +250,7 @@ public class Node : Vec3, ICollection<Node>
     public Node Colored(Color c)
     {
         col = c;
-        foreach (Node cst in Constituents)
+        foreach (Node cst in this)
         {
             cst.col = c;
         }
@@ -548,7 +529,7 @@ public class Node : Vec3, ICollection<Node>
         List<double> xs = new List<double>();
         List<double> ys = new List<double>();
         Node c = new Node().To(x.Get(), y.Get(), z.Get());
-        foreach (Node cst in constituents)
+        foreach (Node cst in this)
         {
             bool addMe = true;
             // Check for this position
@@ -713,23 +694,15 @@ public class Node : Vec3, ICollection<Node>
      */
     public virtual void Render(double xOffset, double yOffset, double zOffset)
     {
-        // TODO: implement render cache
-        if (stale)
-        {
-            //Scribe.Info($"cleaning stale");
-            //RDrawable.drawables.RemoveAll(rd => drawables.Contains(rd));
-            //drawables.Clear();
-        }
-        else
-        {
+        if (!stale)
             return;
-        }
 
         List<double[]> vertices = this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList();
         // No mesh, treat as a single face
-        if (faces is null)
+        if (true || faces is null)
         {
-            Paint.Render.Polygon(vertices, drawMode, constituents.Select(c => c.Col).ToList(), this);
+            //Paint.Render.PreCache(this);
+            Paint.Render.Polygon(vertices, this, drawMode, constituents.Select(c => c.Col).ToList(), faces?.Faces);
             texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
             // Draw each constituent recursively
             foreach (Node m in this)
@@ -742,14 +715,21 @@ public class Node : Vec3, ICollection<Node>
         {
             foreach (int[] face in faces.Faces)
             {
-                //Paint.Render.Polygon(face.Select(f => new double[]{this[f].x.Get()+xOffset, this[f].y.Get()+yOffset, this[f].z.Get()+zOffset,}).ToList(),drawMode, face.Select(i => this[i].Col).ToList(), this);
-                Paint.Render.Polygon(face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(), drawMode, face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(), this);
+                Scribe.Info($"vertices in face: {face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList().Count}");
+                //Paint.Render.PreCacheFaces(this);
+                Paint.Render.Polygon(face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(), this, drawMode, face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList());
             }
             //foreach (Node m in this)
             //{
             //    m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
             //}
         }
+    }
+    public void Cache()
+    {
+        foreach (Node n in Reversed()) { n.Cache(); }
+        if (stale)
+            Paint.Render.Cache(this);
     }
 
     string Title()
@@ -774,7 +754,7 @@ public class Node : Vec3, ICollection<Node>
     }
     public string ToString(int depth = 1, bool verbose = false)
     {
-        string s = Title(); ;
+        string s = Title();
 
         string xAbs = X.ToString("F1");
         string xRel = x.Get().ToString("F1");
@@ -784,7 +764,7 @@ public class Node : Vec3, ICollection<Node>
         string zRel = z.Get().ToString("F1");
         s += $" at ({xRel},{yRel},{zRel})rel, ({xAbs},{yAbs},{zAbs})abs";
 
-        foreach (Node m in constituents)
+        foreach (Node m in this)
         {
             s += "\n";
             for (int i = 0; i <= depth; i++)
@@ -853,7 +833,7 @@ public class Node : Vec3, ICollection<Node>
 
     public void Clear()
     {
-        foreach (Node c in constituents)
+        foreach (Node c in this)
         {
             c.DisposeAllTextures();
         }

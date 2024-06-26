@@ -56,7 +56,7 @@ public static class Renderer
         double targX = camera.X + camera.Heading.X;
         double targY = camera.Y + camera.Heading.Y;
         double targZ = camera.Z + camera.Heading.Z;
-        
+
         Vector3D<double> defaultUp = new(0, 1, 0);
         Vector3D<double> upV = Vector3D.Transform(defaultUp, camera.Rotation);
 
@@ -82,9 +82,93 @@ public static class Renderer
 
 public static class Render
 {
-    public static void Polygon(List<double[]> vertices, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, Node? cache = null)
+    public static Stack<(int a, int b)> BufAllocIdxs = new();
+    static Dictionary<Node, List<(int, int)>> previousAllocIdxs = new();
+    static int bufIdx = 0;
+    static int cacheCount = 0;
+
+    public static void Cache(Node n)
+    {
+        Scribe.Info($"Distributing indices to {n}");
+        (int start, int tentativeSize) = BufAllocIdxs.Pop();
+        Scribe.Info($"\tstart, tenative size: ({start}, {tentativeSize})");
+        if (start == 0)
+        {
+            n.size = (start, cacheCount);
+            n.stale = false;
+            Scribe.Info($"\tstart, end: ({start}, {cacheCount})");
+        }
+        else if (tentativeSize == 0)
+        {
+            if (!previousAllocIdxs.ContainsKey(n.Parent))
+            {
+                previousAllocIdxs.Add(n.Parent, new List<(int, int)> { (start, 0) });
+            }
+            else
+            {
+                previousAllocIdxs[n.Parent].Add((start, 0));
+            }
+            //previousAllocIdxs.((start, 0));
+            n.size = (start, start);
+            n.stale = false;
+            Scribe.Info($"\tstart, end: ({start}, {start})");
+        }
+        else if (tentativeSize == previousAllocIdxs[n].Count)
+        {
+            foreach ((int st, int en) in previousAllocIdxs[n])
+            {
+                tentativeSize += en;
+            }
+            previousAllocIdxs[n].Clear();
+            int end = tentativeSize + start;
+            if (!previousAllocIdxs.ContainsKey(n.Parent))
+            {
+                previousAllocIdxs.Add(n.Parent.Parent, new List<(int, int)> { (start, tentativeSize) });
+            }
+            else
+            {
+                previousAllocIdxs[n].Add((start, tentativeSize));
+            }
+            //previousAllocIdxs.Add((start, tentativeEnd));
+            n.size = (start, end);
+            n.stale = false;
+            Scribe.Info($"\tstart, end: ({start}, {end})");
+
+        }
+        else
+        {
+            throw Scribe.Issue($"No match in render cache! start: {start}, tentative size: {tentativeSize}, prevAllocs: {previousAllocIdxs[n.Parent].Count}");
+        }
+        cacheCount++;
+    }
+
+    // TODO: move code from Polygon
+    public static void PreCache()
+    {
+        //
+    }
+    public static void PostCache()
+    {
+        if (BufAllocIdxs.Count != 0) { Scribe.Issue($"Misalignment while caching render! ({BufAllocIdxs.Count} remaining)"); }
+        //BufAllocIdxs.Clear();
+        bufIdx = 0;
+        cacheCount = 0;
+    }
+
+    public static void Polygon(List<double[]> vertices, Node toCache, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, List<int[]>? faces = null)
     {
         cols ??= Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
+        int numConstituents = toCache.Count;
+        // numConstituents is a TENTATIVE value, the lower possible bound of the Node
+        // the proper value will be calculated during the Pop phase, in the Cache function
+        BufAllocIdxs.Push((bufIdx, numConstituents));
+        bufIdx++;
+
+        // If there are faces, rearrange the provided vertices
+        if (faces is not null)
+            throw Scribe.Issue($"TODO: support caching of Nodes with faces");
+
+
         // Render points
         if ((drawMode & DrawMode.POINTS) > 0)
         {

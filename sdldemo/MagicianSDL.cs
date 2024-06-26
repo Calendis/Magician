@@ -1,6 +1,5 @@
 ﻿namespace Magician;
 using Paint;
-using Core.Caster;
 using static Core.Caster.Spellbook;
 using Silk.NET.OpenGL;
 using static SDL2.SDL;
@@ -41,7 +40,7 @@ class MagicianSDL
         //Renderer.SDL.SwapInterval(0);
 
         // Load a spell
-        Prepare(new Demos.DefaultSpell());
+        Prepare(new Demos.Tests.TreeCache());
         Cast();
 
         // Run
@@ -105,8 +104,13 @@ class MagicianSDL
 
             // Draw objects
             Geo.Ref.Origin.Render(0, 0, 0);
+            // Render complete, cache results
+            //Paint.Render.Cache(Geo.Ref.Origin);
+            Geo.Ref.Origin.Cache();
+            Paint.Render.PostCache();
+            if (Paint.Render.BufAllocIdxs.Count != 0) {Scribe.Issue($"Misalignment while caching render! ({Paint.Render.BufAllocIdxs.Count} remaining)");}
             Renderer.DrawAll();
-            Renderer.Drawables.Clear();
+            //Renderer.Drawables.Clear();
 
             // SAVE FRAME TO IMAGE
             //if (Renderer.RControl.saveFrame && frames != stopFrame)
