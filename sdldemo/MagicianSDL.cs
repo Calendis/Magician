@@ -107,8 +107,8 @@ class MagicianSDL
             // Render complete, cache results
             //Paint.Render.Cache(Geo.Ref.Origin);
             Geo.Ref.Origin.Cache();
+            Paint.Render.Distribute();
             Paint.Render.PostCache();
-            if (Paint.Render.BufAllocIdxs.Count != 0) {Scribe.Issue($"Misalignment while caching render! ({Paint.Render.BufAllocIdxs.Count} remaining)");}
             Renderer.DrawAll();
             //Renderer.Drawables.Clear();
 
