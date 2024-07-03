@@ -82,93 +82,86 @@ public static class Renderer
 
 public static class Render
 {
-    public static Stack<(int a, int b)> BufAllocIdxs = new();
-    static Dictionary<Node, List<(int, int)>> previousAllocIdxs = new();
+    public static Stack<(int, Node?)> Depth1stIdxAndParent = new();
+    // Depth1stIdxToNode is filled as Depth1stIdxAndParent is emptied
+    static Dictionary<int, Node> Depth1stIdxToNode = new();
+    static (Dictionary<int, BoxedInt> fromIdx, Dictionary<Node, BoxedInt> fromRef) parentToSpan = (new(), new());
     static int bufIdx = 0;
     static int cacheCount = 0;
 
-    public static void Cache(Node n)
+    internal class BoxedInt
     {
-        Scribe.Info($"Distributing indices to {n}");
-        (int start, int tentativeSize) = BufAllocIdxs.Pop();
-        Scribe.Info($"\tstart, tenative size: ({start}, {tentativeSize})");
-        if (start == 0)
+        int n;
+        internal BoxedInt(int i)
         {
-            n.size = (start, cacheCount);
-            n.stale = false;
-            Scribe.Info($"\tstart, end: ({start}, {cacheCount})");
+            n = i;
         }
-        else if (tentativeSize == 0)
+        internal void Incr(int i)
         {
-            if (!previousAllocIdxs.ContainsKey(n.Parent))
-            {
-                previousAllocIdxs.Add(n.Parent, new List<(int, int)> { (start, 0) });
-            }
-            else
-            {
-                previousAllocIdxs[n.Parent].Add((start, 0));
-            }
-            //previousAllocIdxs.((start, 0));
-            n.size = (start, start);
-            n.stale = false;
-            Scribe.Info($"\tstart, end: ({start}, {start})");
+            n += i;
         }
-        else if (tentativeSize == previousAllocIdxs[n].Count)
+        internal int Get()
         {
-            foreach ((int st, int en) in previousAllocIdxs[n])
-            {
-                tentativeSize += en;
-            }
-            previousAllocIdxs[n].Clear();
-            int end = tentativeSize + start;
-            if (!previousAllocIdxs.ContainsKey(n.Parent))
-            {
-                previousAllocIdxs.Add(n.Parent.Parent, new List<(int, int)> { (start, tentativeSize) });
-            }
-            else
-            {
-                previousAllocIdxs[n].Add((start, tentativeSize));
-            }
-            //previousAllocIdxs.Add((start, tentativeEnd));
-            n.size = (start, end);
-            n.stale = false;
-            Scribe.Info($"\tstart, end: ({start}, {end})");
+            return n;
+        }
+        public override string ToString()
+        {
+            return $"{n}";
+        }
+    }
 
+    public static void PreCache(Node toCache)
+    {
+        Node? parent = toCache == Ref.Origin ? null : toCache.Parent;
+        Depth1stIdxAndParent.Push((bufIdx, parent));
+        BoxedInt bi = new(0);
+        parentToSpan.fromIdx.Add(bufIdx, bi);
+        parentToSpan.fromRef.Add(toCache, bi);
+        bufIdx++;
+    }
+
+    public static void DoCache(Node n)
+    {
+        (int start, Node? parent) = Depth1stIdxAndParent.Pop();
+        if (parent != null)
+        {
+            parentToSpan.fromRef[parent].Incr(parentToSpan.fromIdx[start].Get() + 1);
         }
         else
         {
-            throw Scribe.Issue($"No match in render cache! start: {start}, tentative size: {tentativeSize}, prevAllocs: {previousAllocIdxs[n.Parent].Count}");
+            parentToSpan.fromIdx[0] = new BoxedInt(cacheCount);
         }
+        Depth1stIdxToNode.Add(start, n);
         cacheCount++;
     }
-
-    // TODO: move code from Polygon
-    public static void PreCache()
+    public static void Distribute()
     {
-        //
+        //Scribe.Info("Distributing spans to nodes...");
+        // TODO: also set up a list of non-stale so that Shaders.cs doesn't need to manually look for stale nodes
+        foreach (int k in parentToSpan.fromIdx.Keys)
+        {
+            int span = parentToSpan.fromIdx[k].Get();
+            Depth1stIdxToNode[k].stale = false;
+            Depth1stIdxToNode[k].size = (k, span + k);
+            Scribe.Info($"({k}, {span+k}) -> {Depth1stIdxToNode[k].Title()}");
+        }
+
     }
     public static void PostCache()
     {
-        if (BufAllocIdxs.Count != 0) { Scribe.Issue($"Misalignment while caching render! ({BufAllocIdxs.Count} remaining)"); }
-        //BufAllocIdxs.Clear();
+        if (Depth1stIdxAndParent.Count != 0) { Scribe.Issue($"Misalignment while caching render! ({Depth1stIdxAndParent.Count} remaining)"); }
         bufIdx = 0;
         cacheCount = 0;
+        Depth1stIdxAndParent.Clear();
+        Depth1stIdxToNode.Clear();
+        parentToSpan.fromIdx.Clear();
+        parentToSpan.fromRef.Clear();
     }
 
-    public static void Polygon(List<double[]> vertices, Node toCache, DrawMode drawMode = DrawMode.OUTERP, List<Color>? cols = null, List<int[]>? faces = null)
+    public static void Polygon(List<double[]> vertices, List<Color> cols, DrawMode drawMode = DrawMode.OUTERP)
     {
-        cols ??= Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
-        int numConstituents = toCache.Count;
-        // numConstituents is a TENTATIVE value, the lower possible bound of the Node
-        // the proper value will be calculated during the Pop phase, in the Cache function
-        BufAllocIdxs.Push((bufIdx, numConstituents));
-        bufIdx++;
-
-        // If there are faces, rearrange the provided vertices
-        if (faces is not null)
-            throw Scribe.Issue($"TODO: support caching of Nodes with faces");
-
-
+        //cols = Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
+        //Scribe.Info($"rendering {drawMode} with {vertices.Count} vertices:");
         // Render points
         if ((drawMode & DrawMode.POINTS) > 0)
         {
@@ -274,7 +267,7 @@ public static class Draw
             vertices[dataLength * i + 6] = points[i].rgba[3] / 255f;
         }
 
-        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, [RDrawData.posLength, RDrawData.colLength]);
         Renderer.GL.DrawArrays(GLEnum.Points, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
@@ -304,7 +297,7 @@ public static class Draw
             vertices[dataLength * i + 13] = lines[i].rgba[3] / 255f;
         }
 
-        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, [RDrawData.posLength, RDrawData.colLength]);
         Renderer.GL.DrawArrays(GLEnum.Lines, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
@@ -345,13 +338,13 @@ public static class Draw
             vertices[dataLength * i + 20] = tris[i].rgba2[3] / 255f;
         }
 
-        (uint vao, uint vbo) = Shaders.Prepare(vertices!, new int[] { RDrawData.posLength, RDrawData.colLength });
+        (uint vao, uint vbo) = Shaders.Prepare(vertices!, [RDrawData.posLength, RDrawData.colLength]);
         Renderer.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertices!.Length);
         Shaders.Post(vao, vbo);
     }
 }
 
-public static class RDrawData
+internal static class RDrawData
 {
     internal const int posLength = 3;
     internal const int colLength = 4;
