@@ -27,13 +27,14 @@ public class Node : Vec3, ICollection<Node>
     // The origin will have a null parent
     Node? parent;
     protected List<Node> constituents;
-    protected Mesh? faces;
+    public Mesh? faces;
     readonly Dictionary<string, Node> constituentTags = new();
     //public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
     //public List<RDrawable> drawables = new();
     internal (int start, int end)? size;
+    public (int start, int end) Size => size ?? throw Scribe.Error($"Render {Title} at least once before getting Size");
     internal bool stale = true; // Does the Multi need to be re-rendered?
     List<Driver> drivers = new();
     public Node Parent
@@ -309,6 +310,7 @@ public class Node : Vec3, ICollection<Node>
         }
         return this;
     }
+    // TODO: this is stupid, delete this
     public Node To(IVal mv)
     {
         if (mv.Dims > 3)
@@ -697,42 +699,41 @@ public class Node : Vec3, ICollection<Node>
         if (!stale)
             return;
 
-        List<double[]> vertices = this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList();
-        // No mesh, treat as a single face
-        if (true || faces is null)
+        Paint.Render.PreCache(this);
+        //texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
+        if (faces is null)
         {
-            //Paint.Render.PreCache(this);
-            Paint.Render.Polygon(vertices, this, drawMode, constituents.Select(c => c.Col).ToList(), faces?.Faces);
-            texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
-            // Draw each constituent recursively
-            foreach (Node m in this)
-            {
-                m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-            }
+            Paint.Render.Polygon(
+                this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList(),
+                constituents.Select(c => c.Col).ToList(),
+                drawMode
+            );
         }
-        // Meshed node, render each face
         else
         {
             foreach (int[] face in faces.Faces)
             {
-                Scribe.Info($"vertices in face: {face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList().Count}");
-                //Paint.Render.PreCacheFaces(this);
-                Paint.Render.Polygon(face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(), this, drawMode, face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList());
+                Paint.Render.Polygon(
+                    face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(),
+                    face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(),
+                    drawMode
+                );
             }
-            //foreach (Node m in this)
-            //{
-            //    m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-            //}
+        }
+        foreach (Node m in this)
+        {
+            m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
         }
     }
     public void Cache()
     {
+        if (!stale)
+            return;
         foreach (Node n in Reversed()) { n.Cache(); }
-        if (stale)
-            Paint.Render.Cache(this);
+        Paint.Render.DoCache(this);
     }
 
-    string Title()
+    public string Title()
     {
         string s = "";
         s += Count switch
