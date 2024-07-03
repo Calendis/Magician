@@ -9,13 +9,14 @@ public static class EarCut
         {
             flattened.Add(v[0]);
             flattened.Add(v[1]);
+            flattened.Add(v[2]);
         }
         return Triangulate(flattened.ToArray());
     }
     
     public static List<int> Triangulate(double[] vertices, int[]? holeIndices = null)
     {
-        int dim = 2;
+        int dim = 2+1;
         bool hasHoles = holeIndices != null && holeIndices.Length > 0;
         int outerLen = hasHoles ? holeIndices![0] * dim : vertices.Length;
 
@@ -30,6 +31,9 @@ public static class EarCut
         double maxX = 0;
         double maxY = 0;
         double invSize = double.MinValue;
+        // modification
+        double minZ = 0;
+        double maxZ = 0;
 
         if (hasHoles)
             outerNode = EliminateHoles(vertices, holeIndices, outerNode, dim);
@@ -40,6 +44,8 @@ public static class EarCut
         {
             minX = maxX = vertices[0];
             minY = maxY = vertices[1];
+            // modification:
+            minZ = maxZ = vertices[2];
 
             for (int i = dim; i < outerLen; i += dim)
             {
@@ -53,6 +59,10 @@ public static class EarCut
                     maxX = x;
                 if (y > maxY)
                     maxY = y;
+                // modification
+                double z = vertices[i + 2];
+                if (z > maxZ)
+                    maxZ = z;
             }
 
             // minX, minY and size are later used to transform coords into
