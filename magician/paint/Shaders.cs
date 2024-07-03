@@ -62,7 +62,7 @@ public static class Shaders
         // Specify how to read vertex data
         //gl.BindFragDataLocation()
         unsafe { Renderer.GL.VertexAttribPointer(0, RDrawData.posLength, GLEnum.Float, false, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)0); }
-        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.posLength, GLEnum.Float, true,  (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
+        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.posLength, GLEnum.Float, true, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
         Renderer.GL.EnableVertexAttribArray(1);
         Renderer.GL.EnableVertexAttribArray(0);
 
@@ -130,6 +130,46 @@ public static class Shaders
         //int posLength = dataLens[0];
         //int colLength = dataLens[1];
         //uint stride = (uint)dataLens.Sum();
+
+        // Collect cache info
+        //List<(int start, int end)> rangesToOverwrite = new();
+        //Stack<Geo.Node> nodeTree = new();
+        //nodeTree.Push(Geo.Ref.Origin);
+        //Stack<int> breadths = new();
+        //breadths.Push(0);
+        //while (true)
+        //{
+        //    //Scribe.Info($"{nodeTree.Peek().Title()}[{breadths.Peek()}], {breadths.Count} {nodeTree.Count}");
+        //    if (nodeTree.Peek().Count == 0)
+        //    {
+        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
+        //        breadths.Push(breadths.Pop() + 1);
+        //    }
+        //    else
+        //    {
+        //        breadths.Push(0);
+        //    }
+//
+        //    if (breadths.Peek() >= nodeTree.Peek().Count)
+        //    {
+        //        breadths.Pop(); breadths.Pop();
+        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
+        //    }
+        //    else
+        //    {
+        //        nodeTree.Push(nodeTree.Peek()[breadths.Peek()]);
+        //    }
+        //    if (nodeTree.Count == 1)
+        //    {
+        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
+        //        break;
+        //    }
+        //}
+        //Scribe.Info($"Got cache info");
+        //foreach ((int start, int end) range in rangesToOverwrite)
+        //{
+        //    Scribe.Info($"\t{range}");
+        //}
 
         // Upload to the VAO
         fixed (float* buf = data)
