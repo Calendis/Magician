@@ -1,6 +1,8 @@
 namespace Magician.Paint;
 
 using System.IO;
+using System.Runtime.CompilerServices;
+using Magician.Geo;
 using Silk.NET.OpenGL;
 
 public class Shader
@@ -52,19 +54,45 @@ public static class Shaders
     // Cull shader is always applied
     static Shader Cull;
     static uint cullV;
-    static uint vao = Renderer.GL.GenVertexArray();
-    static uint vbo = Renderer.GL.GenBuffer();
+    internal static List<Node> pointsTodo = new();
+    internal static List<Node> linesTodo = new();
+    internal static List<Node> trisTodo = new();
+    static (uint points, uint lines, uint tris) vao;
+    static (uint points, uint lines, uint tris) vbo;
 
     static Shaders()
     {
-        Renderer.GL.BindVertexArray(vao);
-        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        // Specify how to read vertex data
-        //gl.BindFragDataLocation()
+        vao.points = Renderer.GL.GenVertexArray();
+        vbo.points = Renderer.GL.GenBuffer();
+        Renderer.GL.BindVertexArray(vao.points);
+        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.points);
         unsafe { Renderer.GL.VertexAttribPointer(0, RDrawData.posLength, GLEnum.Float, false, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)0); }
-        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.posLength, GLEnum.Float, true, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
-        Renderer.GL.EnableVertexAttribArray(1);
+        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.colLength, GLEnum.Float, true, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
         Renderer.GL.EnableVertexAttribArray(0);
+        Renderer.GL.EnableVertexAttribArray(1);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+
+        vao.lines = Renderer.GL.GenVertexArray();
+        vbo.lines = Renderer.GL.GenBuffer();
+        Renderer.GL.BindVertexArray(vao.lines);
+        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.lines);
+        unsafe { Renderer.GL.VertexAttribPointer(0, RDrawData.posLength, GLEnum.Float, false, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)0); }
+        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.colLength, GLEnum.Float, true, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
+        Renderer.GL.EnableVertexAttribArray(0);
+        Renderer.GL.EnableVertexAttribArray(1);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+
+        vao.tris = Renderer.GL.GenVertexArray();
+        vbo.tris = Renderer.GL.GenBuffer();
+        Renderer.GL.BindVertexArray(vao.tris);
+        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.tris);
+        unsafe { Renderer.GL.VertexAttribPointer(0, RDrawData.posLength, GLEnum.Float, false, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)0); }
+        unsafe { Renderer.GL.VertexAttribPointer(1, RDrawData.colLength, GLEnum.Float, true, (uint)(RDrawData.posLength + RDrawData.colLength) * sizeof(float), (void*)(3 * sizeof(float))); }
+        Renderer.GL.EnableVertexAttribArray(0);
+        Renderer.GL.EnableVertexAttribArray(1);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+
+        //Renderer.GL.BindFragDataLocation()
 
         Default = new Shader("default", "magician/paint", true);
         Inverse = new Shader("inverse", "magician/paint", true);
@@ -123,61 +151,118 @@ public static class Shaders
     }
 
     // Common code called before gl.DrawArrays
-    internal static unsafe (uint, uint) Prepare(float[] data, int[] dataLens)
+    internal static unsafe (uint vao, uint vbo) PreparePoints(float[] vertices)
     {
-        Scribe.WarnIf(dataLens.Length < 2, "incomplete data in PrepareDraw");
-        Scribe.WarnIf(dataLens.Length > 2, "unsupported data in PrepareDraw");  // TODO: support more shader data!
-        //int posLength = dataLens[0];
-        //int colLength = dataLens[1];
-        //uint stride = (uint)dataLens.Sum();
-
-        // Collect cache info
-        //List<(int start, int end)> rangesToOverwrite = new();
-        //Stack<Geo.Node> nodeTree = new();
-        //nodeTree.Push(Geo.Ref.Origin);
-        //Stack<int> breadths = new();
-        //breadths.Push(0);
-        //while (true)
-        //{
-        //    //Scribe.Info($"{nodeTree.Peek().Title()}[{breadths.Peek()}], {breadths.Count} {nodeTree.Count}");
-        //    if (nodeTree.Peek().Count == 0)
-        //    {
-        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
-        //        breadths.Push(breadths.Pop() + 1);
-        //    }
-        //    else
-        //    {
-        //        breadths.Push(0);
-        //    }
-//
-        //    if (breadths.Peek() >= nodeTree.Peek().Count)
-        //    {
-        //        breadths.Pop(); breadths.Pop();
-        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
-        //    }
-        //    else
-        //    {
-        //        nodeTree.Push(nodeTree.Peek()[breadths.Peek()]);
-        //    }
-        //    if (nodeTree.Count == 1)
-        //    {
-        //        rangesToOverwrite.Add(nodeTree.Pop().Size);
-        //        break;
-        //    }
-        //}
-        //Scribe.Info($"Got cache info");
-        //foreach ((int start, int end) range in rangesToOverwrite)
-        //{
-        //    Scribe.Info($"\t{range}");
-        //}
-
-        // Upload to the VAO
-        fixed (float* buf = data)
+        fixed (float* data = vertices)
         {
-            //Scribe.Info($"Buffering {data.Length*sizeof(float)/8} bytes to the GPU...");
-            Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(data.Length * sizeof(float)), buf, BufferUsageARB.StaticDraw);
+            int c = 0;
+            if (Renderer.pointBufferSize > 0)
+            {
+                foreach (Node n in pointsTodo)
+                {
+                    int numPoints = n.range.ps.end - n.range.ps.start;
+                    Scribe.Info($"buffer points: {numPoints} from {n.Title()} at {RuntimeHelpers.GetHashCode(n)}");
+                    if (numPoints > 0)
+                    {
+                        Renderer.GL.BindVertexArray(vao.points);
+                        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.points);
+                        Renderer.GL.BufferSubData(BufferTargetARB.ArrayBuffer, n.range.ps.start * 7, (nuint)(numPoints * 7), data);
+                    }
+                }
+            }
+            else
+            {
+                foreach (Node n in pointsTodo)
+                {
+                    int numPoints = n.range.ps.end - n.range.ps.start;
+                    c += numPoints;
+                    Scribe.Info($"{n.Title()} from {n.range.ps.start} to {n.range.ps.end}, total size {numPoints}");
+                }
+                nuint allocSize = (nuint)c*sizeof(float)*7;
+                Renderer.GL.BindVertexArray(vao.points);
+                Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.points);
+                Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, allocSize, data, BufferUsageARB.DynamicDraw);
+                Renderer.pointBufferSize = (int)allocSize;
+            }
         }
-        return (vao, vbo);
+        return (vao.points, vbo.points);
+    }
+    internal static unsafe (uint vao, uint vbo) PrepareLines(float[] vertices)
+    {
+        fixed (float* data = vertices)
+        {
+            int c = 0;
+            if (Renderer.lineBufferSize > 0)
+            {
+                foreach (Node n in linesTodo)
+                {
+                    int numLines = n.range.ls.end - n.range.ls.start;
+                    Scribe.Info($"buffer lines: {numLines} from {n.Title()} at {RuntimeHelpers.GetHashCode(n)}");
+                    if (numLines > 0)
+                    {
+                        Renderer.GL.BindVertexArray(vao.lines);
+                        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.lines);
+                        Renderer.GL.BufferSubData(BufferTargetARB.ArrayBuffer, n.range.ls.start * 14, (nuint)(numLines * 14), data);
+                    }
+                }
+            }
+            else
+            {
+                foreach (Node n in linesTodo)
+                {
+                    int numLines = n.range.ls.end - n.range.ls.start;
+                    c += numLines;
+                    Scribe.Info($"{n.Title()} from {n.range.ls.start} to {n.range.ls.end}, total size {numLines}");
+                }
+                nuint allocSize = (nuint)c*sizeof(float)*14;
+                Renderer.GL.BindVertexArray(vao.lines);
+                Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.lines);
+                Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, allocSize, data, BufferUsageARB.DynamicDraw);
+                Renderer.lineBufferSize = (int)allocSize;
+            }
+        }
+        return (vao.lines, vbo.lines);
+    }
+    internal static unsafe (uint vao, uint vbo) PrepareTris(float[] vertices)
+    {
+        fixed (float* data = vertices)
+        {
+            int c = 0;
+            if (Renderer.triBufferSize > 0)
+            {
+                //Scribe.Info($"Got buffer size {Renderer.triBufferSize}");
+                foreach (Node n in trisTodo)
+                {
+                    int numTris = n.range.ts.end - n.range.ts.start;
+                    c += numTris;
+                    Scribe.Warn($"{c*21*sizeof(float)}/{Renderer.triBufferSize}");
+                    if (c*21*sizeof(float) > Renderer.triBufferSize-21*sizeof(float))
+                        throw Scribe.Issue("obo test");
+                    Scribe.Info($"buffer tris: {numTris} from {n.Title()} at {RuntimeHelpers.GetHashCode(n)}");
+                    if (numTris > 0)
+                    {
+                        Renderer.GL.BindVertexArray(vao.tris);
+                        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.tris);
+                        Renderer.GL.BufferSubData(BufferTargetARB.ArrayBuffer, n.range.ts.start * 21, (nuint)(numTris * 21), data);
+                    }
+                }
+            }
+            else
+            {
+                foreach (Node n in trisTodo)
+                {
+                    int numTris = n.range.ts.end - n.range.ts.start;
+                    c += numTris;
+                    Scribe.Info($"{n.Title()} from {n.range.ts.start} to {n.range.ts.end}, total size {numTris}");
+                }
+                nuint allocSize = (nuint)c*sizeof(float)*21;
+                Renderer.GL.BindVertexArray(vao.tris);
+                Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo.tris);
+                Renderer.GL.BufferData(BufferTargetARB.ArrayBuffer, allocSize, data, BufferUsageARB.DynamicDraw);
+                Renderer.triBufferSize = (int)allocSize;
+            }
+        }
+        return (vao.tris, vbo.tris);
     }
 
     internal static void Post(uint vao, uint vbo)

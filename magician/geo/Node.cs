@@ -33,8 +33,10 @@ public class Node : Vec3, ICollection<Node>
     public double Val { get; set; } = 0;
     // Keep references to the rendered RDrawables so they can be removed
     //public List<RDrawable> drawables = new();
-    internal (int start, int end)? size;
-    public (int start, int end) Size => size ?? throw Scribe.Error($"Render {Title} at least once before getting Size");
+    //internal (int start, int end)? size;
+    //public (int start, int end) Size => size ?? throw Scribe.Error($"Must render {Title} at least once before getting Size");
+    public ((int start, int end) ps, (int start, int end) ls, (int start, int end) ts) range;
+
     internal bool stale = true; // Does the Multi need to be re-rendered?
     List<Driver> drivers = new();
     public Node Parent
@@ -327,6 +329,7 @@ public class Node : Vec3, ICollection<Node>
     public Node RotatedX(double theta)
     {
         //pitch = (pitch + theta);// % (2 * Math.PI);
+        stale = false;
         Quaternion<double> pitch = Quaternion<double>.CreateFromYawPitchRoll(0, theta, 0);
         Rotation *= pitch;
         Rotation = Quaternion<double>.Normalize(Rotation);
@@ -335,6 +338,7 @@ public class Node : Vec3, ICollection<Node>
     }
     public Node RotatedY(double theta)
     {
+        stale = false;
         //yaw = (yaw + theta) % (2 * Math.PI);
         //yaw += yaw > 0 ? 0 : 2 * Math.PI;
         Quaternion<double> yaw = Quaternion<double>.CreateFromYawPitchRoll(theta, 0, 0);
@@ -346,6 +350,7 @@ public class Node : Vec3, ICollection<Node>
     public Node RotatedZ(double theta)
     {
         //roll = (roll + theta) % (2 * Math.PI);
+        stale = false;
         Quaternion<double> roll = Quaternion<double>.CreateFromYawPitchRoll(0, 0, theta);
         Rotation *= roll;
         Rotation = Quaternion<double>.Normalize(Rotation);
@@ -696,41 +701,37 @@ public class Node : Vec3, ICollection<Node>
      */
     public virtual void Render(double xOffset, double yOffset, double zOffset)
     {
-        if (!stale)
-            return;
-
-        Paint.Render.PreCache(this);
-        //texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
-        if (faces is null)
+        if (stale)
         {
-            Paint.Render.Polygon(
-                this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList(),
-                constituents.Select(c => c.Col).ToList(),
-                drawMode
-            );
-        }
-        else
-        {
-            foreach (int[] face in faces.Faces)
+            //Paint.Render.PreCache(this);
+            //texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
+            if (faces is null)
             {
                 Paint.Render.Polygon(
-                    face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(),
-                    face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(),
-                    drawMode
+                    this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList(),
+                    constituents.Select(c => c.Col).ToList(),
+                    this
                 );
             }
+            else
+            {
+                foreach (int[] face in faces.Faces)
+                {
+                    Paint.Render.Polygon(
+                        face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(),
+                        face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(),
+                        this, false
+                    );
+                }
+                if ((DrawFlags & DrawMode.POINTS) > 0) { Shaders.pointsTodo.Add(this); }
+                if ((DrawFlags & DrawMode.PLOT) > 0) { Shaders.linesTodo.Add(this); }
+                if (((DrawFlags & DrawMode.INNER) > 0) && Count >= 3) { Shaders.trisTodo.Add(this); }
+            }
+            foreach (Node m in this)
+            {
+                m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
+            }
         }
-        foreach (Node m in this)
-        {
-            m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-        }
-    }
-    public void Cache()
-    {
-        if (!stale)
-            return;
-        foreach (Node n in Reversed()) { n.Cache(); }
-        Paint.Render.DoCache(this);
     }
 
     public string Title()

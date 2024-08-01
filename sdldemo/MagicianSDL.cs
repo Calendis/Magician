@@ -40,7 +40,7 @@ class MagicianSDL
         //Renderer.SDL.SwapInterval(0);
 
         // Load a spell
-        Prepare(new Demos.Tests.TreeCache());
+        Prepare(new Demos.Tests.EqPlotting());
         Cast();
 
         // Run
@@ -106,10 +106,10 @@ class MagicianSDL
             Geo.Ref.Origin.Render(0, 0, 0);
             // Render complete, cache results
             //Paint.Render.Cache(Geo.Ref.Origin);
-            Geo.Ref.Origin.Cache();
-            Paint.Render.Distribute();
-            Paint.Render.PostCache();
+            //Geo.Ref.Origin.Cache();
+            //Paint.Render.Distribute();
             Renderer.DrawAll();
+            Paint.Render.PostRender();
             //Renderer.Drawables.Clear();
 
             // SAVE FRAME TO IMAGE
