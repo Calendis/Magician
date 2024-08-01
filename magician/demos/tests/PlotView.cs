@@ -45,14 +45,11 @@ public class EqPlotting : Spell
 
     public override void PreLoop()
     {
-        // Let's make a lot of tanglecubes
-        for (int i = 0; i < 1; i++)
-        {
-            Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
-            Implicit sdf = new(sdfTanglecube, i*610 % 2500, 0, -50, 75, 1, new int[] { 0, 2, 1 }, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
-            Origin.Add(sdf.Flagged(DrawMode.INNER));
-            //selected = Origin["sdfTest"];
-        }
+        Oper sdfTanglecube = Var("x").Pow(Val(4)).Plus(Var("y").Pow(Val(4))).Plus(Var("z").Pow(Val(4))).Divide(Val(2)).Plus(Val(60)).Minus(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Mult(Val(8)));
+        Implicit sdf = new(sdfTanglecube, 610, 0, -50, 75, 1, new int[] { 0, 2, 1 }, (-5, 5, 0.5), (-5, 5, 0.5), (-5, 5, 0.5));
+        sdf.Flagged(DrawMode.INNER);
+        Origin["tanglecube"] = sdf;
+        selected = sdf;
 
         //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
         //Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
