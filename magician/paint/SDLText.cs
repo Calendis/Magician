@@ -77,7 +77,7 @@ public class Text : IDisposable
             {
             }
             // Close the font
-            TTF_CloseFont(font);
+            //TTF_CloseFont(font);
             font = IntPtr.Zero;
             disposed = true;
         }
