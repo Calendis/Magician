@@ -12,6 +12,7 @@ public static class Ref
     public static Vec3 DefaultHeading = new(0, 0, -1);
     public static Vec3 DefaultUp = new(0, 1, 0);
     public static Vec3 DefaultRight = new(1, 0, 0);
+    internal static Node placeholderOrigin = new Node().Tagged("Placeholder Origin").Parented(null);
     public static double FOV
     {
         get => Perspective.Val;
@@ -19,7 +20,8 @@ public static class Ref
     }
     static Ref()
     {
-        Origin = new Node().Tagged("Placeholder Origin");
+        //Origin = new Node().Tagged("Placeholder Origin");
+        Origin = placeholderOrigin;
         // TODO: find out why -399 works here... something to do with FOV
         Perspective = new Node(0, 0, 399).Parented(null);
         FOV = 90;
