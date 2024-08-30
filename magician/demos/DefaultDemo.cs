@@ -20,7 +20,6 @@ public class DefaultSpell : Spell
 
         /* Multi-line text */
         Origin["paragraph1"] = new UI.RichParagraph(0, 0, HSLA.RandomVisible(), 16, UI.Justification.CENTRE,
-
             $"{UI.TFS.RGB(255, 0, 0)}Rich paragraph{UI.TFS.Back} now supports",
             $"{UI.TFS.RGB(255, 128, 0)}HTML-style{UI.TFS.RGB(255, 255, 0)} nesting,",
             $"{UI.TFS.Back}because {UI.TFS.Back}why{new UI.TextFormatSetting(HSLA.RandomVisible(), 12)} not{UI.TFS.Back}?",
@@ -28,7 +27,7 @@ public class DefaultSpell : Spell
         );
 
         Origin["my star"] = Create.Star(-200, -250, HSLA.RandomVisible(), 10, 40, 140).Flagged(DrawMode.INNER)
-        .Driven(m => 0, th => 0+spin, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT)  // spins the star
+        //.Driven(m => 0, th => 0+spin/4, ph => 0, CoordMode.POLAR, DriverMode.INCR, TargetMode.DIRECT)  // spins the star
         ;
         mo = new Interactive.Sensor.MouseOver(Origin["my star"]);
 
@@ -53,9 +52,12 @@ public class DefaultSpell : Spell
 
     public override void Loop()
     {
+        if (Events.scans[SDL2.SDL.SDL_Scancode.SDL_SCANCODE_E]) { Scribe.Info($"\n{Origin["my star"].range}\n{Origin["hex grid"][0].range}\n{Origin["bg"][0].range}"); }
+        
         Paint.Renderer.Clear();
         Origin["btn"].Update();
-        Origin["my star"].Update();
+        //Origin["my star"].Update();
+        Origin["my star"].RotatedZ(0.002);
         Origin["my star"].Colored(new RGBA(0, mo!.Evaluate().Get()*255, 255, 255));
 
         Origin["myMulti"].AddFiltered(b.Paint(Events.Click ? 1 : 0, new Node().Flagged(DrawMode.POINTS)));
@@ -118,7 +120,9 @@ public class DefaultSpell : Spell
         {
             if (Origin["myMulti"].Count >= 3)
             {
-                Origin[$"savMyMulti"].Add(Origin["myMulti"].Copy().Colored(HSLA.RandomVisible()));
+                Node cp = Origin["myMulti"].Copy().Colored(HSLA.RandomVisible());
+                Origin[$"savMyMulti"].Add(cp);
+                Origin["savMyMulti"].MODIFY(true);
                 Origin["myMulti"].Clear();
             }
         }
