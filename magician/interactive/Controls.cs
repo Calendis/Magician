@@ -78,10 +78,10 @@ public class Menu1D : Node
     public Action ControlAction { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     // Custom draw behaviour for menus
-    public override void Render(double xOffset, double yOffset, double zOffset)
-    {
-        base.Render(xOffset, yOffset, zOffset);
-    }
+    //public override void Render(double xOffset, double yOffset, double zOffset)
+    //{
+    //    base.Render(xOffset, yOffset, zOffset);
+    //}
 }
 
 public abstract class Draggable : Clickable
