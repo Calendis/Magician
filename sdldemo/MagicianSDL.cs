@@ -22,7 +22,7 @@ class MagicianSDL
 
         magicianSDL.InitSDL();
         magicianSDL.CreateWindow();
-        SDL2.SDL_ttf.TTF_Init();
+        //SDL2.SDL_ttf.TTF_Init();
         Paint.Text.FallbackFontPath = "magician/ui/assets/fonts/Space_Mono/SpaceMono-Regular.ttf";
 
         // Create a Silk.Net context
@@ -40,7 +40,7 @@ class MagicianSDL
         //Renderer.SDL.SwapInterval(0);
 
         // Load a spell
-        Prepare(new Demos.Tests.EqPlotting());
+        Prepare(new Demos.DefaultSpell());
         Cast();
 
         // Run
@@ -59,8 +59,6 @@ class MagicianSDL
         //SDLGlobals.renderedTexture = SDL_CreateTexture(SDLGlobals.renderer, SDL_PIXELFORMAT_RGBA8888, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, Data.Globals.winWidth, Data.Globals.winHeight);
         while (!done)
         {
-            Animate(frames * timeResolution);
-
             // Event handling
             while (SDL_PollEvent(out SDL_Event sdlEvent) != 0)
             {
@@ -89,37 +87,19 @@ class MagicianSDL
             // Draw things
             if (frames != stopFrame)
             {
-                Render();
+                if (Renderer.Render)
+                {
+                    // gl won't be null here, and if it is, it's not my fault
+                    Renderer.GL.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
+                    Animate(frames * timeResolution);
+                }
+                if (Renderer.Display)
+                {
+                    SDL_GL_SwapWindow(win);
+                }
+                frames++;
             }
         }
-    }
-
-    // Renders each frame to a texture and displays the texture
-    void Render()
-    {
-        if (Renderer.Render)
-        {
-            // gl won't be null here, and if it is, it's not my fault
-            Renderer.GL.Clear((uint)(GLEnum.ColorBufferBit | GLEnum.DepthBufferBit));
-
-            // Draw objects
-            Geo.Ref.Origin.Render(0, 0, 0);
-            // Render complete, cache results
-            //Paint.Render.Cache(Geo.Ref.Origin);
-            //Geo.Ref.Origin.Cache();
-            //Paint.Render.Distribute();
-            Renderer.DrawAll();
-            Paint.Render.PostRender();
-            //Renderer.Drawables.Clear();
-
-            // SAVE FRAME TO IMAGE
-            //if (Renderer.RControl.saveFrame && frames != stopFrame)
-        }
-        if (Renderer.Display)
-        {
-            SDL_GL_SwapWindow(win);
-        }
-        frames++;
     }
 
     void InitSDL()
