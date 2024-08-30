@@ -30,6 +30,7 @@ public class Driver
 
     public void Drive(double t)
     {
+        Target.MODIFY();
         if (TMode == TargetMode.SUB)
         {
             TMode = TargetMode.DIRECT;
