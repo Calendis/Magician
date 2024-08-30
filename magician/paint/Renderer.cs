@@ -2,25 +2,20 @@ namespace Magician.Paint;
 using Geo;
 using Silk.NET.OpenGL;
 using Silk.NET.Maths;
+using System.Collections;
+using Magician.Core.Caster;
 
 public static class Renderer
 {
     static SdlContext? sdlContext;
     static GL? gl;
     static bool saveFrame = false;
-    readonly static List<(byte[], float[])> points = new();
-    //// TODO: support second colour for lines
-    readonly static List<(byte[], float[], float[])> lines = new();
-    readonly static List<(byte[], byte[], byte[], float[], float[], float[])> tris = new();
     public static GL GL { get => gl ?? throw Scribe.Error("Null GL renderer"); set => gl = value; }
     public static SdlContext SDL { get => sdlContext ?? throw Scribe.Error("Null SDL context"); set => sdlContext = value; }
     public static bool Render { get; set; }
     public static bool Display { get; set; }
-    //internal static bool pointsRenderedAtLeastOnce = false;
     internal static int pointBufferSize = 0;
-    //internal static bool linesRenderedAtLeastOnce = false;
     internal static int lineBufferSize = 0;
-    //internal static bool trisRenderedAtLeastOnce = false;
     internal static int triBufferSize = 0;
 
     public static void Clear()
@@ -35,25 +30,48 @@ public static class Renderer
         gl.ClearColor((float)c.R / 255f, (float)c.G / 255f, (float)c.B / 255f, (float)c.A / 255f);
         gl.Clear(ClearBufferMask.ColorBufferBit);
     }
-    public static void DrawAll()
-    {
-        //Scribe.Info($"DrawAll: ({points.Count}, {lines.Count}, {tris.Count})");
-        PrepareMatrices();
-        Draw.Points(points);
-        Draw.Lines(lines);
-        Draw.Triangles(tris);
-    }
 
     public static class Drawables
     {
-        internal static void Add(params (byte[], float[])[] ps) { points.AddRange(ps); }
-        internal static void Add(params (byte[], float[], float[])[] ls) { lines.AddRange(ls); }
-        internal static void Add(params (byte[], byte[], byte[], float[], float[], float[])[] ts) { tris.AddRange(ts); }
+        readonly internal static Dictionary<Node, List<(byte[], float[])>> points = new();
+        readonly internal static Dictionary<Node, List<(byte[], float[], float[])>> lines = new();
+        readonly internal static Dictionary<Node, List<(byte[], byte[], byte[], float[], float[], float[])>> tris = new();
+        public static (List<Node> ps, List<Node> ls, List<Node> ts) Todo = (new(), new(), new());
+        internal static void Add(Node n, params (byte[], float[])[] ps) { if (points.ContainsKey(n)) { points[n].AddRange(ps); } else { points.Add(n, ps.ToList()); } }
+        internal static void Add(Node n, params (byte[], float[], float[])[] ls) { if (lines.ContainsKey(n)) { lines[n].AddRange(ls); } else { lines.Add(n, ls.ToList()); } }
+        internal static void Add(Node n, params (byte[], byte[], byte[], float[], float[], float[])[] ts) { if (tris.ContainsKey(n)) { tris[n].AddRange(ts); } else { tris.Add(n, ts.ToList()); } }
+
         public static void Clear()
         {
             points.Clear();
             lines.Clear();
             tris.Clear();
+        }
+        public static void DrawAll()
+        {
+            PrepareMatrices();
+            int total = 0;
+
+            foreach (Node n in Todo.ts) { Draw.Triangles(n); }
+            foreach (Node n in tris.Keys) { total += tris[n].Count * 21; }
+            GL.BindVertexArray(Shaders.vao.tris);
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, Shaders.vbo.tris);
+            GL.DrawArrays(GLEnum.Triangles, 0, (uint)total);
+            total = 0;
+
+            foreach (Node n in Todo.ls) { Draw.Lines(n); }
+            foreach (Node n in lines.Keys) { total += lines[n].Count * 14; }
+            GL.BindVertexArray(Shaders.vao.lines);
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, Shaders.vbo.lines);
+            GL.DrawArrays(GLEnum.Lines, 0, (uint)total);
+            total = 0;
+
+            foreach (Node n in Todo.ps) { Draw.Points(n); }
+            foreach (Node n in points.Keys) { total += points[n].Count * 7; }
+            GL.BindVertexArray(Shaders.vao.points);
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, Shaders.vbo.points);
+            GL.DrawArrays(GLEnum.Points, 0, (uint)total);
+            total = 0;
         }
     }
 
@@ -89,80 +107,111 @@ public static class Renderer
 
 public static class Render
 {
-    internal class BoxedInt
+    internal static List<Node> traverseKeys = new();
+    internal static List<List<Node>> traverseValues = new();
+    //internal static Dictionary<Node, List<Node>> traverse = new();
+    internal static Dictionary<Node, (int ps, int ls, int ts)> nodeToSize = new();
+    //internal static Dictionary<Node, (int ps, int ls, int ts)> parentToWriteHead = new();
+    //internal static Dictionary<Node, (int ps, int ls, int ts)> nodeToStart = new();
+
+
+    public static void StaleAll(Node? n = null)
     {
-        int n;
-        internal BoxedInt(int i)
+        if (n == null)
+            n = Ref.Origin;
+        foreach (Node c in n)
         {
-            n = i;
+            StaleAll(c);
         }
-        internal void Incr(int i)
-        {
-            n += i;
-        }
-        internal int Get()
-        {
-            return n;
-        }
-        public override string ToString()
-        {
-            return $"{n}";
-        }
+        n.stale = true;
     }
 
-    public static void PostRender()
+    public static void CacheRender()
     {
-        pointsGenerated = 0;
-        linesGenerated = 0;
-        trianglesGenerated = 0;
-        lastSeen = null;
-        Shaders.pointsTodo.Clear();
-        Shaders.linesTodo.Clear();
-        Shaders.trisTodo.Clear();
-    }
+        (int ps, int ls, int ts) writeHead = nodeToSize[Ref.Origin];
+        int i = 0;
+        foreach (Node k in traverseKeys)
+        {
+            List<Node> breadth = traverseValues[i++];
 
-    static int pointsGenerated = 0;
-    static int linesGenerated = 0;
-    static int trianglesGenerated = 0;
-    static Node? lastSeen = null;
-    // In Polygon, we can now see the latest todo node in Shaders
-    public static void Polygon(List<double[]> vertices, List<Color> cols, Node n, bool add = false)
+            foreach (Node n in breadth)
+            {
+                //Scribe.Info($"Traverse {n.Title()}");
+                if (n.Parent != k)
+                {
+                    throw Scribe.Issue($"Key error in CacheRender: {n} != {k}. The render tree is not being traversed correctly");
+                }
+                int ps, ls, ts;
+                if (nodeToSize.ContainsKey(n))
+                {
+                    ps = nodeToSize[n].ps;
+                    ls = nodeToSize[n].ls;
+                    ts = nodeToSize[n].ts;
+                }
+                // TODO: why does this happen
+                else
+                {
+                    //Scribe.Warn($"{n} not found");
+                    ps = 0; ls = 0; ts = 0;
+                }
+
+                if (n.resized)
+                {
+                    Scribe.Info($"resizing {n.Title()}");
+                    Console.WriteLine($"\tbefore: {n.range}");
+                    n.range = (
+                        (writeHead.ps, ps + writeHead.ps),
+                        (writeHead.ls, ls + writeHead.ls),
+                        (writeHead.ts, ts + writeHead.ts)
+                    );
+                    Console.WriteLine($"\tafter: {n.range}");
+                    n.resized = false;
+                }
+                writeHead = (writeHead.ps + ps, writeHead.ls + ls, writeHead.ts + ts);
+                //writeHead = (writeHead.ps + n.range.ps.end, writeHead.ls + n.range.ls.end, writeHead.ts + n.range.ts.end);
+            }
+        }
+        //nodeToSize.Clear();
+        traverseKeys.Clear();
+        traverseValues.Clear();
+    }
+    // TODO: write a description for this very important function
+    public static void Polygon(List<double[]> vertices, List<Color> cols, Node n, bool markTodo, bool isFace = false)
     {
-        n.stale = false;
         //Scribe.Info($"In Polygon, we see Node {n}");
         //cols = Enumerable.Range(0, vertices.Count).Select(n => Runes.Col.UIDefault.FG).ToList();
         //Scribe.Info($"rendering {drawMode} with {vertices.Count} vertices:");
-        // Render points
+
+        int numPoints = 0;
         if ((n.DrawFlags & DrawMode.POINTS) > 0)
         {
-            int numPoints = vertices.Count;
+            numPoints = vertices.Count;
+            if (numPoints > 0 && markTodo)
+            {
+                Renderer.Drawables.Todo.ls.Add(n);
+            }
             (byte[], float[])[] rPointArray = new (byte[], float[])[numPoints];
 
             for (int i = 0; i < numPoints; i++)
             {
                 rPointArray[i] = ([(byte)cols[i].R, (byte)cols[i].G, (byte)cols[i].B, (byte)cols[i].A], [(float)vertices[i][0], (float)vertices[i][1], (float)vertices[i][2]]);
             }
-            if (lastSeen != n)
-            {
-                n.range.ps = (pointsGenerated, numPoints + pointsGenerated);
-            }
-            else
-            {
-                n.range.ps = (n.range.ps.start, numPoints + pointsGenerated);
-            }
-            Renderer.Drawables.Add(rPointArray);
-            pointsGenerated += numPoints;
-            if (add)
-                Shaders.pointsTodo.Add(n);
+            Renderer.Drawables.Add(n, rPointArray);
+            //pointsGenerated += numPoints;
         }
 
         // Render lines and add geometry to array
+        int numLines = 0;
         if ((n.DrawFlags & DrawMode.PLOT) > 0)
         {
             bool connected = (n.DrawFlags & DrawMode.CONNECTINGLINE) > 0 && vertices.Count >= 3;
-            int numLines = vertices.Count - (connected ? 0 : 1);
-            if (numLines < 1)
+            numLines = vertices.Count - (connected ? 0 : 1);
+            if (numLines < 0)
                 return;
+            if (numLines > 0 && markTodo)
+            {
+                Renderer.Drawables.Todo.ls.Add(n);
+            }
 
             (byte[], float[], float[])[] rLineArray = new (byte[], float[], float[])[numLines];
             //RLines rLines;
@@ -188,21 +237,12 @@ public static class Render
                 rLineArray[^1] = ([(byte)subr, (byte)subg, (byte)subb, (byte)suba], [(float)pLast[0], (float)pLast[1], (float)pLast[2]], [(float)pFirst[0], (float)pFirst[1], (float)pFirst[2]]);
             }
             // TODO: can that cause a render bug for non-connected? (the last slot is empty)
-            if (lastSeen != n)
-            {
-                n.range.ls = (linesGenerated, numLines + linesGenerated);
-            }
-            else
-            {
-                n.range.ls = (n.range.ls.start, numLines + linesGenerated);
-            }
-            Renderer.Drawables.Add(rLineArray);
-            linesGenerated += numLines;
-            if (add)
-                Shaders.linesTodo.Add(n);
+            Renderer.Drawables.Add(n, rLineArray);
+            //linesGenerated += numLines;
         }
 
         // If the flag is set, and there are at least 3 constituents, fill the shape
+        int numTris = 0;
         if (((n.DrawFlags & DrawMode.INNER) > 0) && vertices.Count >= 3)
         {
             List<int> ect = EarCut.Triangulate(vertices);
@@ -213,10 +253,14 @@ public static class Render
                 triVertexIndices.Add([ect[i], ect[i + 1], ect[i + 2]]);
             }
 
-            int numTriangles = triVertexIndices.Count;
-            (byte[], byte[], byte[], float[], float[], float[])[] rTriArray = new (byte[], byte[], byte[], float[], float[], float[])[numTriangles];
+            numTris = triVertexIndices.Count;
+            if (numTris > 0 && markTodo)
+            {
+                Renderer.Drawables.Todo.ts.Add(n);
+            }
+            (byte[], byte[], byte[], float[], float[], float[])[] rTriArray = new (byte[], byte[], byte[], float[], float[], float[])[numTris];
 
-            for (int i = 0; i < numTriangles; i++)
+            for (int i = 0; i < numTris; i++)
             {
                 int[] vertexIndices = triVertexIndices[i];
                 int tri0 = vertexIndices[0];
@@ -232,27 +276,35 @@ public static class Render
                     [(float)vertices[tri2][0], (float)vertices[tri2][1], (float)vertices[tri2][2]]
                 );
             }
-            if (lastSeen != n)
+
+            Renderer.Drawables.Add(n, rTriArray);
+            //trianglesGenerated += numTris;
+        }
+        if (nodeToSize.ContainsKey(n))
+        {
+            if (isFace)
             {
-                n.range.ts = (trianglesGenerated, numTriangles + trianglesGenerated);
+                nodeToSize[n] = (nodeToSize[n].ps + numPoints, nodeToSize[n].ls + numLines, nodeToSize[n].ts + numTris);
             }
             else
             {
-                n.range.ts = (n.range.ts.start, numTriangles + trianglesGenerated);
+                nodeToSize[n] = (numPoints, numLines, numTris);
             }
-            Renderer.Drawables.Add(rTriArray);
-            trianglesGenerated += numTriangles;
-            if (add)
-                Shaders.trisTodo.Add(n);
         }
-        lastSeen = n;
+        else
+        {
+            //Scribe.Info($"Adding {n.Title()}...");
+            nodeToSize.Add(n, (numPoints, numLines, numTris));
+        }
+        //lastSeen = n;
     }
 }
 
 public static class Draw
 {
-    public static void Points(List<(byte[] rgba, float[] pos)> points)
+    public static void Points(Node n)
     {
+        List<(byte[] rgba, float[] pos)> points = Renderer.Drawables.points[n];
         int dataLength = RDrawData.posLength + RDrawData.colLength;
         float[] vertices;
 
@@ -273,14 +325,50 @@ public static class Draw
         }
 
         //var buffers = Shaders.Prepare(vertices!, [RDrawData.posLength, RDrawData.colLength]);
-        var pointBuf = Shaders.PreparePoints(vertices!);
-        Renderer.GL.BindVertexArray(pointBuf.vao);
-        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, pointBuf.vbo);
-        Renderer.GL.DrawArrays(GLEnum.Points, 0, (uint)vertices!.Length);
-        Shaders.Post(pointBuf.vao, pointBuf.vbo);
+        if (Renderer.pointBufferSize == 0)
+        {
+            int c = 0;
+            List<(byte[] col, float[] pos)> accumulatedVerts = new();
+            foreach (Node k in Renderer.Drawables.points.Keys)
+            {
+                int numPoints = k.range.ps.end - k.range.ps.start;
+                int np2 = Renderer.Drawables.points[k].Count;
+                if (numPoints != np2)
+                    throw Scribe.Issue($"Cache data mismatch");
+                c += numPoints;
+                foreach ((byte[] col, float[] pos) point in Renderer.Drawables.points[k])
+                {
+                    accumulatedVerts.Add(point);
+                }
+                Scribe.Info($"points {k.Title()} from {k.range.ps.start} to {k.range.ps.end}, total size {numPoints}");
+
+            }
+            float[] allVertices = new float[c * 7];
+            int i = 0;
+            foreach ((byte[] col, float[] pos) point in accumulatedVerts)
+            {
+                allVertices[7 * i + 0] = point.pos[0];
+                allVertices[7 * i + 1] = point.pos[1];
+                allVertices[7 * i + 2] = point.pos[2];
+
+                allVertices[7 * i + 3] = point.col[0] / 255f;
+                allVertices[7 * i + 4] = point.col[1] / 255f;
+                allVertices[7 * i + 5] = point.col[2] / 255f;
+                allVertices[7 * i + 6] = point.col[3] / 255f;
+                i++;
+            }
+            Shaders.InitPBuf(allVertices);
+            Renderer.pointBufferSize = allVertices.Length * sizeof(float);
+        }
+        Shaders.PreparePoints(vertices!, n);
+        //Renderer.GL.BindVertexArray(Shaders.vao.points);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, Shaders.vbo.points);
+        //Renderer.GL.DrawArrays(GLEnum.Points, 0, (uint)vertices!.Length);
+        Shaders.Post(Shaders.vao.points, Shaders.vbo.points);
     }
-    public static void Lines(List<(byte[] rgba, float[] p0, float[] p1)> lines)
+    public static void Lines(Node n)
     {
+        List<(byte[] rgba, float[] p0, float[] p1)> lines = Renderer.Drawables.lines[n];
         int dataLength = 2 * (RDrawData.posLength + RDrawData.colLength);
         float[] vertices;
 
@@ -296,6 +384,7 @@ public static class Draw
             vertices[dataLength * i + 8] = lines[i].p1[1];
             vertices[dataLength * i + 9] = lines[i].p1[2];
 
+            // TODO: support the other line colour
             vertices[dataLength * i + 3] = lines[i].rgba[0] / 255f;
             vertices[dataLength * i + 4] = lines[i].rgba[1] / 255f;
             vertices[dataLength * i + 5] = lines[i].rgba[2] / 255f;
@@ -307,14 +396,55 @@ public static class Draw
         }
 
         //var buffers = Shaders.Prepare(vertices!, [RDrawData.posLength * 2, RDrawData.colLength * 2]);
-        var lineBuf = Shaders.PrepareLines(vertices!);
-        Renderer.GL.BindVertexArray(lineBuf.vao);
-        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineBuf.vbo);
-        Renderer.GL.DrawArrays(GLEnum.Lines, 0, (uint)vertices!.Length);
+        if (Renderer.lineBufferSize == 0)
+        {
+            int c = 0;
+            List<(byte[], float[], float[])> accumulatedLines = new();
+            foreach (Node k in Renderer.Drawables.lines.Keys)
+            {
+                int numLines2 = k.range.ls.end - k.range.ls.start;
+                if (numLines2 != Renderer.Drawables.lines[k].Count)
+                    throw Scribe.Issue("Line cache data mismatch");
+                c += Renderer.Drawables.lines[k].Count;
+                foreach ((byte[], float[], float[]) line in Renderer.Drawables.lines[k])
+                {
+                    accumulatedLines.Add(line);
+                }
+            }
+            float[] allVertices = new float[c * 14];
+            int i = 0;
+            foreach ((byte[] col, float[] p0, float[] p1) line in accumulatedLines)
+            {
+                allVertices[14 * i + 0] = line.p0[0];
+                allVertices[14 * i + 1] = line.p0[1];
+                allVertices[14 * i + 2] = line.p0[2];
+                allVertices[14 * i + 7] = line.p1[0];
+                allVertices[14 * i + 8] = line.p1[1];
+                allVertices[14 * i + 9] = line.p1[2];
+
+                allVertices[14 * i + 3] = line.col[0];
+                allVertices[14 * i + 4] = line.col[1];
+                allVertices[14 * i + 5] = line.col[2];
+                allVertices[14 * i + 6] = line.col[3];
+                allVertices[14 * i + 10] = line.col[0];
+                allVertices[14 * i + 11] = line.col[1];
+                allVertices[14 * i + 12] = line.col[2];
+                allVertices[14 * i + 13] = line.col[3];
+                i++;
+            }
+            Shaders.InitLBuf(allVertices);
+            Renderer.lineBufferSize = allVertices.Length * sizeof(float);
+        }
+        var lineBuf = Shaders.PrepareLines(vertices!, n);
+        //Renderer.GL.BindVertexArray(lineBuf.vao);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineBuf.vbo);
+        //Renderer.GL.DrawArrays(GLEnum.Lines, 0, (uint)vertices!.Length);
         Shaders.Post(lineBuf.vao, lineBuf.vbo);
     }
-    public static void Triangles(List<(byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2)> tris)
+    //public static void Triangles(List<(byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2)> tris)
+    public static void Triangles(Node n)
     {
+        List<(byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2)> tris = Renderer.Drawables.tris[n];
         int dataLength = 3 * (RDrawData.posLength + RDrawData.colLength);
         float[] vertices;
 
@@ -352,10 +482,53 @@ public static class Draw
         }
 
         //var buffers = Shaders.Prepare(vertices!, [RDrawData.posLength * 3, RDrawData.colLength * 3]);
-        var triBuf = Shaders.PrepareTris(vertices!);
-        Renderer.GL.BindVertexArray(triBuf.vao);
-        Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, triBuf.vbo);
-        Renderer.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertices!.Length);
+        if (Renderer.triBufferSize == 0)
+        {
+            int c = 0;
+            List<(byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2)> accumulatedTris = new();
+            foreach (Node k in Renderer.Drawables.tris.Keys)
+            {
+                c += Renderer.Drawables.tris[k].Count;
+                foreach ((byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2) tri in Renderer.Drawables.tris[k])
+                {
+                    accumulatedTris.Add(tri);
+                }
+            }
+            float[] allTris = new float[c * 21];
+            int i = 0;
+            foreach ((byte[] rgba0, byte[] rgba1, byte[] rgba2, float[] p0, float[] p1, float[] p2) tri in accumulatedTris)
+            {
+                allTris[21 * i + 0] = tri.p0[0];
+                allTris[21 * i + 1] = tri.p0[1];
+                allTris[21 * i + 2] = tri.p0[2];
+                allTris[21 * i + 7] = tri.p1[0];
+                allTris[21 * i + 8] = tri.p1[1];
+                allTris[21 * i + 9] = tri.p1[2];
+                allTris[21 * i + 14] = tri.p2[0];
+                allTris[21 * i + 15] = tri.p2[1];
+                allTris[21 * i + 16] = tri.p2[2];
+
+                allTris[21 * i + 3] = tri.rgba0[0] / 255f;
+                allTris[21 * i + 4] = tri.rgba0[1] / 255f;
+                allTris[21 * i + 5] = tri.rgba0[2] / 255f;
+                allTris[21 * i + 6] = tri.rgba0[3] / 255f;
+                allTris[21 * i + 10] = tri.rgba1[0] / 255f;
+                allTris[21 * i + 11] = tri.rgba1[1] / 255f;
+                allTris[21 * i + 12] = tri.rgba1[2] / 255f;
+                allTris[21 * i + 13] = tri.rgba1[3] / 255f;
+                allTris[21 * i + 17] = tri.rgba2[0] / 255f;
+                allTris[21 * i + 18] = tri.rgba2[1] / 255f;
+                allTris[21 * i + 19] = tri.rgba2[2] / 255f;
+                allTris[21 * i + 20] = tri.rgba2[3] / 255f;
+                i++;
+            }
+            Shaders.InitTBuf(allTris);
+            Renderer.triBufferSize = allTris.Length * sizeof(float);
+        }
+        var triBuf = Shaders.PrepareTris(vertices!, n);
+        //Renderer.GL.BindVertexArray(triBuf.vao);
+        //Renderer.GL.BindBuffer(BufferTargetARB.ArrayBuffer, triBuf.vbo);
+        //Renderer.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertices!.Length);
         Shaders.Post(triBuf.vao, triBuf.vbo);
     }
 }
