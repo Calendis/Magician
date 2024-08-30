@@ -5,7 +5,6 @@ using Paint;
 
 using System.Collections;
 using Silk.NET.Maths;
-using System.Numerics;
 
 
 [Flags]
@@ -29,16 +28,12 @@ public class Node : Vec3, ICollection<Node>
     protected List<Node> constituents;
     public Mesh? faces;
     readonly Dictionary<string, Node> constituentTags = new();
-    //public double pitch = 0; public double yaw = 0; public double roll = 0;
     public double Val { get; set; } = 0;
-    // Keep references to the rendered RDrawables so they can be removed
-    //public List<RDrawable> drawables = new();
-    //internal (int start, int end)? size;
-    //public (int start, int end) Size => size ?? throw Scribe.Error($"Must render {Title} at least once before getting Size");
+    //internal (bool ps, bool ls, bool ts) cachedRange = (false, false, false);
     public ((int start, int end) ps, (int start, int end) ls, (int start, int end) ts) range;
-
     internal bool stale = true; // Does the Multi need to be re-rendered?
-    List<Driver> drivers = new();
+    internal bool resized = true;
+    List<Driver> drivers = [];
     public Node Parent
     {
         get
@@ -47,7 +42,7 @@ public class Node : Vec3, ICollection<Node>
             {
                 if (this == Ref.Origin)
                     throw Scribe.Error($"Cannot get parent of origin");
-                throw Scribe.Error($"Orphan detected");
+                throw Scribe.Error($"Orphan detected {Title()}");
             }
             return parent;
         }
@@ -161,8 +156,9 @@ public class Node : Vec3, ICollection<Node>
         {
             if (i >= Count) { throw new IndexOutOfRangeException($"Tried to get index {i} of {this}"); }
             constituents[i].DisposeAllTextures();
-            //Renderer.Drawables.RemoveAll(rd => drawables.Contains(rd));
             constituents[i] = value.Parented(this);
+            //this[i].MODIFY();
+            MODIFY();
         }
     }
     public Node this[string tag]
@@ -230,6 +226,7 @@ public class Node : Vec3, ICollection<Node>
 
     public Node Become(Node m)
     {
+        MODIFY();
         Clear();
         foreach (Node c in m)
         {
@@ -250,15 +247,6 @@ public class Node : Vec3, ICollection<Node>
 
 
     /* Colour methods */
-    public Node Colored(Color c)
-    {
-        col = c;
-        foreach (Node cst in this)
-        {
-            cst.col = c;
-        }
-        return this;
-    }
     public Node R(double r)
     {
         Col.R = r;
@@ -295,15 +283,49 @@ public class Node : Vec3, ICollection<Node>
         return this;
     }
 
+    internal void MODIFY(bool resize = false, bool sw = false)
+    {
+        stale = true;
+        if (resize)
+            resized = true;
+        //parent?.MODIFY(resize);
+        if (Renderer.Drawables.points.ContainsKey(this)) { Renderer.Drawables.points[this].Clear(); }
+        if (Renderer.Drawables.lines.ContainsKey(this)) { Renderer.Drawables.lines[this].Clear(); }
+        if (Renderer.Drawables.tris.ContainsKey(this)) { Renderer.Drawables.tris[this].Clear(); }
+        if (resize)
+        {
+            //range.ps.start = 0;
+            //range.ps.end = 0;
+            //range.ls.start = 0;
+            //range.ls.end = 0;
+            //range.ts.start = 0;
+            //range.ts.end = 0;
+            if (this != Ref.Origin && this != Ref.placeholderOrigin && !sw)
+            {
+                Parent.MODIFY(true);
+            }
+            else
+            {
+                foreach (Node c in this)
+                {
+                    c.MODIFY(true, true);
+                }
+            }
+        }
+    }
+    /* Begin modify methods */
     public Node Translated(double xOffset, double yOffset, double zOffset = 0)
     {
+        MODIFY();
         IVal.Add(x, xOffset, x);
         IVal.Add(y, yOffset, y);
         IVal.Add(z, zOffset, z);
         return this;
     }
+    // TODO: At, instead
     public Node To(double x, double y, double? z = null)
     {
+        MODIFY();
         this.x.Set(x);
         this.y.Set(y);
         if (z != null)
@@ -315,6 +337,7 @@ public class Node : Vec3, ICollection<Node>
     // TODO: this is stupid, delete this
     public Node To(IVal mv)
     {
+        MODIFY();
         if (mv.Dims > 3)
             throw Scribe.Error($"Could not move Multi to {mv}");
         double[] pos = new double[3];
@@ -328,8 +351,8 @@ public class Node : Vec3, ICollection<Node>
     /* Rotation methods */
     public Node RotatedX(double theta)
     {
+        MODIFY();
         //pitch = (pitch + theta);// % (2 * Math.PI);
-        stale = false;
         Quaternion<double> pitch = Quaternion<double>.CreateFromYawPitchRoll(0, theta, 0);
         Rotation *= pitch;
         Rotation = Quaternion<double>.Normalize(Rotation);
@@ -338,7 +361,7 @@ public class Node : Vec3, ICollection<Node>
     }
     public Node RotatedY(double theta)
     {
-        stale = false;
+        MODIFY();
         //yaw = (yaw + theta) % (2 * Math.PI);
         //yaw += yaw > 0 ? 0 : 2 * Math.PI;
         Quaternion<double> yaw = Quaternion<double>.CreateFromYawPitchRoll(theta, 0, 0);
@@ -349,8 +372,8 @@ public class Node : Vec3, ICollection<Node>
     }
     public Node RotatedZ(double theta)
     {
+        MODIFY();
         //roll = (roll + theta) % (2 * Math.PI);
-        stale = false;
         Quaternion<double> roll = Quaternion<double>.CreateFromYawPitchRoll(0, 0, theta);
         Rotation *= roll;
         Rotation = Quaternion<double>.Normalize(Rotation);
@@ -361,9 +384,85 @@ public class Node : Vec3, ICollection<Node>
     /* Scaling methods */
     public Node Scaled(double mag)
     {
+        MODIFY();
         throw Scribe.Issue("TODO: re-implement scaling");
         //return this;
     }
+
+    public void Add(Node item)
+    {
+        MODIFY(true);
+        if (item == this)
+        {
+            throw Scribe.Error($"A Multi may not have itself as a consituent. Offending Multi: {this}, belonging to {Parent}");
+        }
+        if (item == Parent)
+        {
+            throw Scribe.Error("A Multi may not have its parent as a constituent!");
+        }
+        item.parent = this;
+        constituents.Add(item);
+    }
+    public Node Add(params Node[] items)
+    {
+        MODIFY();
+        foreach (Node m in items)
+        {
+            Add(m);
+        }
+        return this;
+    }
+    public void AddFiltered(Node m, string filter = "empty paint")
+    {
+        MODIFY();
+        if (m.Tag == filter)
+        {
+            return;
+        }
+        // If the Multi has a tag, add it through the tag system
+        if (m.Tag != "")
+        {
+            this[m.Tag] = m;
+            return;
+        }
+        Add(m);
+    }
+
+    public void Clear()
+    {
+        foreach (Node c in this)
+        {
+            c.DisposeAllTextures();
+        }
+        constituents.Clear();
+        MODIFY(true);
+        // TODO: make sure this definitely works
+        //range.ps.start = 0;
+        range.ps.end = 0;
+        //range.ls.start = 0;
+        range.ls.end = 0;
+        //range.ts.start = 0;
+        range.ts.end = 0;
+    }
+    public virtual void Update()
+    {
+        foreach (Driver d in drivers)
+        {
+            //MODIFY();
+            d.Drive(0);
+        }
+    }
+    public Node Colored(Color c)
+    {
+        MODIFY();
+        col = c;
+        foreach (Node cst in this)
+        {
+            cst.col = c;
+        }
+        return this;
+    }
+    /* End modify methods */
 
     public static void _Texture(Node m, Paint._SDLTexture t)
     {
@@ -382,14 +481,6 @@ public class Node : Vec3, ICollection<Node>
     {
         _Texture(this, t);
         return this;
-    }
-
-    public virtual void Update()
-    {
-        foreach (Driver d in drivers)
-        {
-            d.Drive(0);
-        }
     }
 
     /*
@@ -531,6 +622,7 @@ public class Node : Vec3, ICollection<Node>
         return Parent[$"{tag}_paste{x}{y}"];
     }
 
+    // TODO: probably delete this
     public Node Unique()
     {
         List<double> xs = new List<double>();
@@ -699,38 +791,55 @@ public class Node : Vec3, ICollection<Node>
     /* 
         Renders the Multi's geometry. The DrawFlags will affect the draw behahviour, (filled, lines, points)
      */
-    public virtual void Render(double xOffset, double yOffset, double zOffset)
+    public virtual void Render(double xOffset, double yOffset, double zOffset, int depth, int breadth, int immediateAscendents)
     {
+        Paint.Render.traverseKeys.Add(this);
+        Paint.Render.traverseValues.Add(new());
+        int il = Paint.Render.traverseValues.Count - 1;
+        foreach (Node ct in this)
+        {
+            Paint.Render.traverseValues[il].Add(ct);
+        }
         if (stale)
         {
-            //Paint.Render.PreCache(this);
+            //Scribe.Info($"{Title()} is stale!");
             //texture?.Draw(XCartesian(xOffset), YCartesian(yOffset));
             if (faces is null)
             {
                 Paint.Render.Polygon(
                     this.Select(n => new double[] { n.x.Get() + x.Get() + xOffset, n.y.Get() + y.Get() + yOffset, n.z.Get() + z.Get() + zOffset }).ToList(),
                     constituents.Select(c => c.Col).ToList(),
-                    this
+                    this, true
                 );
+                stale = false;
+                //Paint.Render.traversed.Add(this);
+                //if ((DrawFlags & DrawMode.POINTS) > 0) { Renderer.Drawables.Todo.ps.Add(this); }
+                //if ((DrawFlags & DrawMode.PLOT) > 0) { Renderer.Drawables.Todo.ls.Add(this); }
+                //if (((DrawFlags & DrawMode.INNER) > 0) && Count >= 3) { Renderer.Drawables.Todo.ts.Add(this); }
             }
             else
             {
+                bool add = true;
                 foreach (int[] face in faces.Faces)
                 {
                     Paint.Render.Polygon(
                         face.Select(f => new double[] { this[f].x.Get() + x.Get() + xOffset, this[f].y.Get() + y.Get() + yOffset, this[f].z.Get() + z.Get() + zOffset, }).ToList(),
                         face.Select(i => (Color)new HSLA((double)i * 2 / Count, 1, 1, 255)).ToList(),
-                        this, false
+                        this, add, true
                     );
+                    add = false;
                 }
-                if ((DrawFlags & DrawMode.POINTS) > 0) { Shaders.pointsTodo.Add(this); }
-                if ((DrawFlags & DrawMode.PLOT) > 0) { Shaders.linesTodo.Add(this); }
-                if (((DrawFlags & DrawMode.INNER) > 0) && Count >= 3) { Shaders.trisTodo.Add(this); }
+                stale = false;
+                //Paint.Render.traversed.Add(this);
+                //if ((DrawFlags & DrawMode.POINTS) > 0) { Renderer.Drawables.Todo.ps.Add(this); }
+                //if ((DrawFlags & DrawMode.PLOT) > 0) { Renderer.Drawables.Todo.ls.Add(this); }
+                //if (((DrawFlags & DrawMode.INNER) > 0) && Count >= 3) { Renderer.Drawables.Todo.ts.Add(this); }
             }
-            foreach (Node m in this)
-            {
-                m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get());
-            }
+        }
+        int c = 0;
+        foreach (Node m in this)
+        {
+            m.Render(xOffset + x.Get(), yOffset + y.Get(), zOffset + z.Get(), depth + 1, c++, parent == null ? 0 : parent.Count);
         }
     }
 
@@ -797,50 +906,6 @@ public class Node : Vec3, ICollection<Node>
         return ((IEnumerable)constituents).GetEnumerator();
     }
 
-    public void Add(Node item)
-    {
-        if (item == this)
-        {
-            throw Scribe.Error($"A Multi may not have itself as a consituent. Offending Multi: {this}, belonging to {Parent}");
-        }
-        if (item == Parent)
-        {
-            throw Scribe.Error("A Multi may not have its parent as a constituent!");
-        }
-        item.parent = this;
-        constituents.Add(item);
-    }
-    public Node Add(params Node[] items)
-    {
-        foreach (Node m in items)
-        {
-            Add(m);
-        }
-        return this;
-    }
-    public void AddFiltered(Node m, string filter = "empty paint")
-    {
-        if (m.Tag == filter)
-        {
-            return;
-        }
-        // If the Multi has a tag, add it through the tag system
-        if (m.Tag != "")
-        {
-            this[m.Tag] = m;
-            return;
-        }
-        Add(m);
-    }
-
-    public void Clear()
-    {
-        foreach (Node c in this)
-        {
-            c.DisposeAllTextures();
-        }
-        constituents.Clear();
-    }
 
     public bool Contains(Node item)
     {
