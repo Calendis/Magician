@@ -46,6 +46,8 @@ public class RuledAxes
 
         // Add spacers to the horizontal axis
         int horizSpacers = (int)(Runes.Globals.winWidth / horizSpacing);
+        double vertSubdivSpacing = vertSpacing / vertSubdivs;
+        double horizSubdivSpacing = horizSpacing / horizSubdivs;
         for (int i = 0; i < horizSpacers; i++)
         {
             Paint.Text tx = new Paint.Text($"{(int)(i * hSp - Runes.Globals.winWidth / 2)}", Runes.Col.UIDefault.FG, Runes.Globals.fontSize);
@@ -62,7 +64,6 @@ public class RuledAxes
 
 
             // Add smaller perpendicular subdividers
-            double horizSubdivSpacing = horizSpacing / horizSubdivs;
             for (int j = 0; j < horizSubdivs; j++)
             {
                 Node horizSubdiv = Line(
@@ -76,11 +77,10 @@ public class RuledAxes
             if (i % 2 != 0) { continue; }
             gridLines.Add(
                 Line(
-                    Point(i * horizSpacing - Runes.Globals.winWidth / 2, -Runes.Globals.winHeight),
-                    Point(i * horizSpacing - Runes.Globals.winWidth / 2, Runes.Globals.winHeight),
+                    Point(i * horizSpacing - Runes.Globals.winWidth / 2, -Runes.Globals.winWidth),
+                    Point(i * horizSpacing - Runes.Globals.winWidth / 2, Runes.Globals.winWidth),
                     Runes.Col.UIDefault[1]
-                )
-            );
+            ));
         }
 
         // Add spacers to the vertical axis
@@ -95,7 +95,7 @@ public class RuledAxes
 
 
             // Add smaller perpendicular subdividers
-            double vertSubdivSpacing = vertSpacing / vertSubdivs;
+            //double vertSubdivSpacing = vertSpacing / vertSubdivs;
             for (int j = 0; j < vertSubdivs; j++)
             {
                 Node vertSubdiv = Line(
@@ -107,15 +107,12 @@ public class RuledAxes
 
             // Horizontal grid lines
             if (i % 2 != 0) { continue; }
-            Node l = Line(
+            gridLines.Add(
+                Line(
                     Point(-Runes.Globals.winWidth, i * vertSpacing - Runes.Globals.winHeight / 2),
                     Point(Runes.Globals.winWidth, i * vertSpacing - Runes.Globals.winHeight / 2),
                     Runes.Col.UIDefault[1]
-            );
-
-            gridLines.Add(
-                l
-            );
+            ));
         }
     }
 
