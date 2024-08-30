@@ -2,6 +2,9 @@
     The static Spellcaster is the outer layer of the Magician library. It is responsible for managing
     Spells, which are views of 3D (or 2D) Geometry, represented by Multis
  */
+using Magician.Geo;
+using Magician.Paint;
+
 namespace Magician.Core.Caster
 {
     public static class Spellbook
@@ -27,6 +30,7 @@ namespace Magician.Core.Caster
         {
             delta = false;
             idx = toSwitchTo;
+            Renderer.Drawables.Clear();
         }
 
         public static void Clean()
@@ -43,20 +47,23 @@ namespace Magician.Core.Caster
             delta = true;
             CurrentSpell.Time = 0;
             // Sets the static Origin reference to point to our prepared Spell
-            Geo.Ref.Origin = Spells[toSwitchTo].Origin;
+            Ref.Origin = Spells[toSwitchTo].Origin;
+            Render.nodeToSize.Clear();
+            Render.StaleAll();
+            Renderer.pointBufferSize = 0;
+            Renderer.lineBufferSize = 0;
+            Renderer.triBufferSize = 0;
             Spells[toSwitchTo].PreLoop();
             Scribe.Info($"Readied {s}");
         }
 
         public static void Animate(double time)
         {
-            if (delta)
-            {
-                // Spell is prepared and locked, now it can be cast
-                return;
-            }
+            // Spell is locked
+            if (delta) { return; }
             CurrentSpell.Time = time;
             CurrentSpell.Loop();
+            CurrentSpell.Render();
         }
     }
 }
