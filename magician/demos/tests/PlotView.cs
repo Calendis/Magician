@@ -63,7 +63,7 @@ public class EqPlotting : Spell
         //selected = Origin["myrect"];
 
         //Origin["bg"] = new UI.RuledAxes(100, 10, 100, 10).Render();
-        //Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
+        Oper plot = Var("x").Mult(Val(2)).Pow(Val(2)).Plus(Var("z").Mult(Val(3)).Pow(Val(2))).Mult(Var("parameter"));
         //Oper sphereRadiusFour = Val(16).Minus(Var("x").Pow(Val(2))).Minus(Var("z").Pow(Val(2))).Root(Val(2));
         //Var("parameter").Set(0);        
         //Origin["myPlot"] = new Implicit(
@@ -86,9 +86,9 @@ public class EqPlotting : Spell
         //    (-radius, radius, radius / 20), (-radius, radius, radius / 20)
         //).Flagged(DrawMode.OUTER);
 
-        //Oper parabola = Var("x").Pow(Val(2));
-        //Node myGeo = new Explicit(parabola, 0, 0, 0, 1, 1, 0, (-50, 50, 5)).Flagged(DrawMode.PLOT);
-        //Origin["parabola"] = myGeo;
+        Oper parabola = Var("x").Pow(Val(2));
+        Node myGeo = new Explicit(parabola, 0, 0, 0, 1, 1, 0, (-50, 50, 5)).Flagged(DrawMode.PLOT);
+        Origin["parabola"] = myGeo;
 
         //Implicit sdf = new(Var("x").Pow(Val(2)).Plus(Var("y").Pow(Val(2))).Plus(Var("z").Pow(Val(2))).Minus(Val(75)), 0, 0, 0, 80, 80, 2, new int[]{0,2,1}, (-20, 20, 1), (-20, 20, 1), (-20, 20, 1));
 
