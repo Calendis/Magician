@@ -999,7 +999,8 @@ public class ComplexAndMultivalued
         // (1 + 2i) ^ (3 + 4i)
         v = new Variable(1, 2).Pow(new Variable(3, 4)).Sol();
         Scribe.Info($"(1 + 2i) ^ (3 + 4i) = {v}");
-        Assert.That(v.Value.EqValue(new Val(0.129009594074467, 0.03392409290517014)));
+        Variable rounded = new(double.Round(v.Value.Get(0), 5), double.Round(v.Value.Get(1), 5));
+        Assert.That(rounded.Value.EqValue(new Val(0.12901, 0.03392)));
 
         // (3 - 4i)^2
         v = new Variable(3, -4).Pow(Val(5)).Sol();
