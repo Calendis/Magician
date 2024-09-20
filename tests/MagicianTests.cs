@@ -1148,3 +1148,16 @@ public class Calculus
         Scribe.Info($"{der0.Canonical()}, {der1.Canonical()}");
     }
 }
+
+public class Parser
+{
+    [Test]
+    public void ParseSimple()
+    {
+        Oper o0 = Parse("3+5");
+        Oper o1 = Parse("1+2+3");
+        Oper o2 = Parse("3+5*2");
+        Oper o3 = Parse("2*5+3");
+        //
+    }
+}

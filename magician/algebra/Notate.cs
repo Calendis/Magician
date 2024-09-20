@@ -23,6 +23,13 @@ public static class Notate
         return new Variable(v);
     }
 
+    public static Oper Parse(string s)
+    {
+        List<Token> tokens = Tokenize(s);
+        Oper o = ParseExpression(tokens.ToArray());
+        return o;
+    }
+
     internal class Token
     {
         internal enum TokenKind
@@ -44,6 +51,10 @@ public static class Notate
         {
             kind = tk;
             name = s;
+        }
+        public override string ToString()
+        {
+            return $"{kind}\"{name}\"";
         }
     }
 
@@ -139,95 +150,101 @@ public static class Notate
 
     internal static Oper ParseExpression(Token[] tokens)
     {
-        // A sparse array of tokens for every precedence level, called the precedence "tape"
-        Dictionary<int, Dictionary<int, Token>> precedenceTape = new();
+        Stack<OperBuilder> branches = new();
+        //OperBuilder currentBranch = new();
         for (int i = 0; i < tokens.Length; i++)
         {
-            Token current = tokens[i];
-            int p = kindToPrecedence[current.kind];
-            precedenceTape.TryAdd(p, new Dictionary<int, Token>());
-            precedenceTape[p].Add(i, current);
-        }
-        // Divide the tape tracks into labeled regions
-        List<(Token, (int, int))>[] precedenceToRegions = new List<(Token, (int, int))>[precedenceTape.Keys.Count];
-        int[] precedenceToLast = new int[precedenceTape.Keys.Count];
-        Token? rightHandRegion = null;
-        for (int i = 0; i < tokens.Length; i++)
-        {
-            Token current = tokens[i];
-            int p = kindToPrecedence[current.kind];
-            // Create a region from the current token
-            precedenceToRegions[p].Add((rightHandRegion == null ? current : (Token)rightHandRegion, (precedenceToLast[p], precedenceToLast[p] + i)));
-            precedenceToLast[p] = precedenceToLast[p] + i;  // is this right?
-            rightHandRegion = current;
-        }
-        // Combine the tracks
-        int[] trackIndices = new int[precedenceTape.Keys.Count];
-        OperBuilder branches = new OperBuilder();
-        for (int i = 0; i < tokens.Length; i++)
-        {
-            int j = 0;
-            List<(Token, (int, int))> currentRegions = trackIndices.Select(trkIdx => precedenceToRegions[j++][trkIdx]).ToList();
-            //OperBuilder[] branches = new OperBuilder[precedenceTape.Keys.Count];
-            //OperBuilder branches = new OperBuilder();//[precedenceTape.Keys.Count];
-            Stack<(Token t, int precedence)> precedences = new();
-            foreach ((Token t, (int start, int end) span) region in currentRegions)
+            Token t = tokens[i];
+
+            switch (t.kind)
             {
-                if (i >= region.span.start && i <= region.span.end)
-                {
-                    trackIndices[kindToPrecedence[region.t.kind]]++;
-                    precedences.Push((region.t, kindToPrecedence[region.t.kind]));
-                }
-            }
-            // The lower precedences encompass the higher ones
-            OperBuilder previousBranch = new OperBuilder();
-            for (int k = 0; k < precedences.Count; k++)
-            {
-                (Token t, int p) = precedences.Pop();
-                switch (t.kind)
-                {
-                    case Token.TokenKind.SYMBOL:
-                    case Token.TokenKind.NUMBER:
-                    case Token.TokenKind.PLUS:
-                    case Token.TokenKind.MINUS:
-                    case Token.TokenKind.TIMES:
-                    case Token.TokenKind.DIVIDEDBY:
-                    case Token.TokenKind.EXPONENT:
-                        Oper newOp = OperBuilder.FromToken(t.kind, t.name);
-                        if (branches.IsEmpty)
+                case Token.TokenKind.SYMBOL:
+                case Token.TokenKind.NUMBER:
+                case Token.TokenKind.PLUS:
+                case Token.TokenKind.MINUS:
+                case Token.TokenKind.TIMES:
+                case Token.TokenKind.DIVIDEDBY:
+                case Token.TokenKind.EXPONENT:
+                    Oper newOp = OperBuilder.FromToken(t.kind, t.name);
+                    OperBuilder branch;
+                    OperBuilder previousBranch;
+                    if (branches.Count == 0)
+                    {
+                        branches.Push(new(newOp, t.kind));
+                        previousBranch = new();
+                    }
+                    else
+                    {
+                        previousBranch = branches.Peek();
+                        branches.Push(new(newOp, t.kind));
+                    }
+                    branch = branches.Peek();
+
+                    // No previous, do nothing
+                    if (branches.Count == 1)
+                    {
+                        //
+                    }
+                    // The operator matches exactly, so associate
+                    else if (previousBranch.Kind == branch.Kind)
+                    {
+                        previousBranch.AddArg(branch.Current);
+                        branches.Pop();
+                    }
+                    // Precedence rises, so steal the last argument
+                    else if (kindToPrecedence[previousBranch.Kind] < kindToPrecedence[branch.Kind])
+                    {
+                        if (previousBranch.Current.AllArgs.Count > 0)
                         {
-                            branches = new(newOp, t.kind);
+                            branch.AddArg(previousBranch.PopArg());
+                            previousBranch.AddArg(branch.Current);
+                            //branches.Pop();
                         }
                         else
                         {
-                            // Add the symbol to the current operator
-                            if (kindToPrecedence[t.kind] < kindToPrecedence[previousBranch.Kind])
-                            {
-                                branches.AddArg(newOp);
-                            }
-                            // Supercede this branch
-                            else
-                            {
-                                OperBuilder ob = new(newOp, t.kind);
-                                ob.AddArg(branches.Current);
-                                branches = ob;
-                            }
+                            branch.AddArg(previousBranch.Current);
+                            OperBuilder b = branch;
+                            branches.Pop(); branches.Pop();
+                            branches.Push(b);
                         }
-                        previousBranch = branches;
-                        break;
-                    case Token.TokenKind.LEFTPAREN:
-                        throw Scribe.Issue($"Unresolved leftparen in parser");
-                    case Token.TokenKind.RIGHTPAREN:
-                        throw Scribe.Issue($"Unresolved rightparen in parser");
-                    default:
-                        throw Scribe.Issue($"Unresolved token in parser");
-                }
+                        //previousBranch.AddArg(branch.Current);
+                        //branches.Pop();
+                    }
+                    // Precedence falls, so append and pop
+                    else if (kindToPrecedence[previousBranch.Kind] >= kindToPrecedence[branch.Kind])
+                    {
+                        if (kindToPrecedence[branches.Peek().Kind] == 0)
+                        {
+                            previousBranch.AddArg(branch.Current);
+                            branches.Pop();
+                        }
+                        else
+                        {
+                            branch.AddArg(previousBranch.Current);
+                            OperBuilder b = branch;
+                            branches.Pop(); branches.Pop();
+                            branches.Push(b);
+                        }
+                    }
+                    break;
+                case Token.TokenKind.LEFTPAREN:
+                    throw Scribe.Issue($"Unresolved leftparen in parser");
+                case Token.TokenKind.RIGHTPAREN:
+                    throw Scribe.Issue($"Unresolved rightparen in parser");
+                default:
+                    throw Scribe.Issue($"Unresolved token in parser");
             }
         }
 
-        return branches.Current;
+        if (branches.Count < 1)
+        {
+            throw Scribe.Issue($"Parser finished in unresolved state {branches.Count}");
+        }
+        List<OperBuilder> bl = branches.ToList();
+        return bl[bl.Count - 1].Current;
     }
 }
+
 static class MathCache
 {
     public static Dictionary<string, Variable> freeVars = new();
