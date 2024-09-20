@@ -16,16 +16,54 @@ internal struct OperBuilder
 
     public void AddArg(Oper o)
     {
+        if (o.GetType() == Current.GetType())
+        {
+            switch (k)
+            {
+                case Notate.Token.TokenKind.MINUS:
+                case Notate.Token.TokenKind.DIVIDEDBY:
+                    Current.negArgs.AddRange(o.negArgs);
+                    break;
+                default:
+                    Current.posArgs.AddRange(o.posArgs);
+                    break;
+            }
+        }
+        else
+        {
+            switch (k)
+            {
+                case Notate.Token.TokenKind.MINUS:
+                case Notate.Token.TokenKind.DIVIDEDBY:
+                    Current.negArgs.Add(o);
+                    break;
+                default:
+                    Current.posArgs.Add(o);
+                    break;
+            }
+        }
+    }
+
+    public Oper PopArg()
+    {
         switch (k)
         {
             case Notate.Token.TokenKind.MINUS:
             case Notate.Token.TokenKind.DIVIDEDBY:
-                Current.negArgs.Add(o);
-                break;
+                Oper n = Current.negArgs[Current.negArgs.Count-1];
+                Current.negArgs.RemoveAt(Current.negArgs.Count-1);
+                return n;
             default:
-                Current.posArgs.Add(o);
-                break;
+                Oper p = Current.posArgs[Current.posArgs.Count-1];
+                Current.posArgs.RemoveAt(Current.posArgs.Count-1);
+                return p;
         }
+    }
+
+
+    public override string ToString()
+    {
+        return $"({current},{k})";
     }
 
     public static Oper FromToken(Notate.Token.TokenKind tk, string data)
