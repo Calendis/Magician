@@ -1154,12 +1154,12 @@ public class Parser
     [Test]
     public void ParseSimple()
     {
-        //Oper o0 = Parse("3+5");
-        //Oper o1 = Parse("1+2+3");
+        Oper o0 = Parse("3+5");
+        Oper o1 = Parse("1+2+3");
         Oper o2 = Parse("3+5*2");
-        //Oper o3 = Parse("2*5+3");
-        //Oper o4 = Parse("x+1");
-        //Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
+        Oper o3 = Parse("2*5+3");
+        Oper o4 = Parse("x+1");
+        Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
 
     }
 
