@@ -130,7 +130,16 @@ public static class Notate
             }
             else if (currentChar == ' ')
             {
-                i++; continue;
+                if (multiChar > 0)
+                {
+                    string s = new(runningToken.ToArray());
+                    if (multiChar == Token.RunningTokenState.NUMBER)
+                        tokens.Add(new(Token.TokenKind.NUMBER, s));
+                    else
+                        tokens.Add(new(Token.TokenKind.SYMBOL, s));
+                    runningToken.Clear();
+                    multiChar = 0;
+                }
             }
             else
             {
@@ -183,10 +192,7 @@ public static class Notate
                         // If this is the first operator, just push it
                         if (branches.Count == 0)
                         {
-                            if (arg == null)
-                            {
-                                throw Scribe.Issue($"Null argument in initial op");
-                            }
+                            if (arg == null) { throw Scribe.Issue($"Null argument in initial op"); }
                             branches.Push(newOp);
                             branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             op = null;
@@ -194,10 +200,7 @@ public static class Notate
                         // Precedence drop, eat the argument and become the current branch
                         else if (kindToPrecedence[branches.Peek().Kind] > kindToPrecedence[op.kind])
                         {
-                            if (arg == null)
-                            {
-                                throw Scribe.Issue($"Null argument in drop");
-                            }
+                            if (arg == null) { throw Scribe.Issue($"Null argument in drop"); }
                             branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             List<OperBuilder> brl = branches.ToList();
                             newOp.AddArg(brl[brl.Count - 1].Current);
@@ -208,10 +211,7 @@ public static class Notate
                         // Precedece climb, append and push
                         else if (kindToPrecedence[branches.Peek().Kind] < kindToPrecedence[op.kind])
                         {
-                            if (arg == null)
-                            {
-                                throw Scribe.Issue($"Null argument in climb");
-                            }
+                            if (arg == null) { throw Scribe.Issue($"Null argument in climb"); }
                             newOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             branches.Peek().AddArg(newOp.Current);
                             branches.Push(newOp);
@@ -231,12 +231,10 @@ public static class Notate
 
                         if (kindToPrecedence[t.kind] == 0)
                         {
-                            //newOp.AddArg(OperBuilder.FromToken(t.kind, t.name));
                             arg = t;
                         }
                         else
                         {
-                            //throw Scribe.Error($"Expected symbol or number, got {t}");
                             op = t;
                             arg = null;
                         }
