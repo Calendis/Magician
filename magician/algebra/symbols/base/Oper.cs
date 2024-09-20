@@ -56,11 +56,8 @@ public abstract partial class Oper : IRelation
         // base ctor, which is called before that property can be set
         if (!(this is Variable && (new string(name.Take(8).ToArray()) == "constant") || name == "undefined"))
         {
-            //Scribe.Info($"Creating an Operlayers for {this}");
             OperLayers ol = new(this, Variable.Undefined);
-            //OperLayerMgr.LayerLock.Push(this);
             AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
-            //AssociatedVars = OperLayerMgr.GetAssociates(this);
         }
         if (this is not Variable)
         {
