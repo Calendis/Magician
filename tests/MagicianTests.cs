@@ -1026,22 +1026,22 @@ public class ComplexAndMultivalued
             switch (n)
             {
                 case 1:
-                Assert.That(rootsOfUnity.Value.Get(), Is.EqualTo(1));
-                Assert.That(rootsOfUnity is not Multivalue);
-                break;
+                    Assert.That(rootsOfUnity.Value.Get(), Is.EqualTo(1));
+                    Assert.That(rootsOfUnity is not Multivalue);
+                    break;
                 default:
-                Assert.That(rootsOfUnity is Multivalue);
-                Multivalue m = (Multivalue)rootsOfUnity;
-                List<Val> roots = Enumerable.Range(0, n).Select(k =>
-                    new Val(Alg.Numeric.Trig.Cos(2*Math.PI*k/n), Alg.Numeric.Trig.Sin(2*Math.PI*k/n))
-                ).ToList();
-                Assert.That(roots, Has.Count.EqualTo(m.All.Length));
-                // compare the kth nth roots of unity to our multivalue
-                for (int k = 0; k < roots.Count; k++)
-                {
-                    Assert.That(m.All[k].EqValue(roots[k]));
-                }
-                break;
+                    Assert.That(rootsOfUnity is Multivalue);
+                    Multivalue m = (Multivalue)rootsOfUnity;
+                    List<Val> roots = Enumerable.Range(0, n).Select(k =>
+                        new Val(Alg.Numeric.Trig.Cos(2 * Math.PI * k / n), Alg.Numeric.Trig.Sin(2 * Math.PI * k / n))
+                    ).ToList();
+                    Assert.That(roots, Has.Count.EqualTo(m.All.Length));
+                    // compare the kth nth roots of unity to our multivalue
+                    for (int k = 0; k < roots.Count; k++)
+                    {
+                        Assert.That(m.All[k].EqValue(roots[k]));
+                    }
+                    break;
             }
         }
     }
@@ -1158,6 +1158,15 @@ public class Parser
         Oper o1 = Parse("1+2+3");
         Oper o2 = Parse("3+5*2");
         Oper o3 = Parse("2*5+3");
-        //
+        Oper o4 = Parse("x+1");
+        Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
+    }
+
+    [Test]
+    public void ParseMalformed()
+    {
+        //Oper o0 = Parse("3 + 5    + 7");
+        //Oper o1 = Parse("+3 5");
+        Oper o2 = Parse("+1+2+3");
     }
 }
