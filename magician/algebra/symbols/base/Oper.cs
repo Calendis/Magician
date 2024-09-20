@@ -47,30 +47,26 @@ public abstract partial class Oper : IRelation
 
     protected Oper(string name, IEnumerable<Oper> posa, IEnumerable<Oper> nega)
     {
-        //if (InstantiationAssociator.TryLock(this))
-        //{
-        //    Scribe.Info($"Locked {Name} {this}");
-        //}
         this.name = name;
         posArgs = posa.ToList();
         negArgs = nega.ToList();
+        
         // Collect the data
-        //if (InstantiationAssociator.TryUnlock(this))
-        //{
-        //    Scribe.Info($"Unlocked {Name} {this}, collecting data...");
-        //    OperLayers ol = new(this, Variable.Undefined);
-        //}
-        //OperLayers ol = new(this, Variable.Undefined);
         // This is a hack, but it works. Normally I would check the found property of the Variable, but this is the
         // base ctor, which is called before that property can be set
         if (!(this is Variable && (new string(name.Take(8).ToArray()) == "constant") || name == "undefined"))
         {
+            //Scribe.Info($"Creating an Operlayers for {this}");
             OperLayers ol = new(this, Variable.Undefined);
+            //OperLayerMgr.LayerLock.Push(this);
             AssociatedVars = ol.GetInfo(0, 0).assocArgs.Distinct().ToList();
+            //AssociatedVars = OperLayerMgr.GetAssociates(this);
         }
-        //AssociatedVars.Sort((v0, v1) => v0.Name[0] < v1.Name[0] ? 1 : v0.Name[0] > v1.Name[0] ? -1 : 0);
         if (this is not Variable)
+        {
             solution = new("sol", double.NaN);
+            //solution = new("undefinedo");
+        }
     }
     // Alternating form ctor. Handy in some cases
     protected Oper(string name, params Oper[] cstArgs) : this(name, cstArgs.Where((o, i) => i % 2 == 0).ToList(), cstArgs.Where((o, i) => i % 2 == 1).ToList()) { }
