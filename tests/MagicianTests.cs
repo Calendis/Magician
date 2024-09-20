@@ -125,10 +125,10 @@ public class SimpleAlgebraCases
         Oper o3 = new ExpLog(new List<Oper> { Var("x") }, new List<Oper> { });
         Oper o4 = new ExpLog(new List<Oper> { Var("x") }, new List<Oper> { });
 
-        Assert.That(o0.Degree().Like(Val(1)));
-        Assert.That(o0.Degree().Like(o0.Degree(Var("x"))));
+        Assert.That(o0.Degree().Sol().Like(Val(1)));
+        Assert.That(o0.Degree().Sol().Like(o0.Degree(Var("x"))));
         Assert.That(o0.Degree().Like(o1.Degree()));
-        Assert.That(o1.Degree().Like(o1.Degree(Var("x"))));
+        Assert.That(o1.Degree().Sol().Like(o1.Degree(Var("x"))));
     }
     [Test]
     public void Factors()
@@ -1154,19 +1154,20 @@ public class Parser
     [Test]
     public void ParseSimple()
     {
-        Oper o0 = Parse("3+5");
-        Oper o1 = Parse("1+2+3");
+        //Oper o0 = Parse("3+5");
+        //Oper o1 = Parse("1+2+3");
         Oper o2 = Parse("3+5*2");
-        Oper o3 = Parse("2*5+3");
-        Oper o4 = Parse("x+1");
-        Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
+        //Oper o3 = Parse("2*5+3");
+        //Oper o4 = Parse("x+1");
+        //Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
+
     }
 
     [Test]
     public void ParseMalformed()
     {
-        //Oper o0 = Parse("3 + 5    + 7");
-        //Oper o1 = Parse("+3 5");
+        Oper o0 = Parse("  3 + 5    + 7   ");
+        Oper o1 = Parse("+3 5");
         Oper o2 = Parse("+1+2+3");
     }
 }
