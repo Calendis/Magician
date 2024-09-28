@@ -1157,9 +1157,19 @@ public class Parser
         Oper o0 = Parse("3+5");
         Oper o1 = Parse("1+2+3");
         Oper o2 = Parse("3+5*2");
+        Oper o2b = Parse("3+5*2^4");
         Oper o3 = Parse("2*5+3");
         Oper o4 = Parse("x+1");
         Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
+        Oper o5b = Parse("1*2*3*4+5*6+7*8+9");
+        Oper o6 = Parse("3-5");
+        Oper o7 = Parse("1+2-3");
+        Oper o7b = Parse("1+2-3+4-5+6-7+8-9");
+        Oper o8 = Parse("1-2*x");
+        Oper o8b = Parse("2*3-4");
+        Oper o9 = Parse("1-2*3-4*5");
+        Oper ox = Parse("1-2-3-4*5-6*7-8*9");
+        Oper oy = Parse("1+2-3*4+5/6^7-8*9");
 
     }
 
