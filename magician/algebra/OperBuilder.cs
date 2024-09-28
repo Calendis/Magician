@@ -1,5 +1,6 @@
 namespace Magician.Alg;
 using Magician.Alg.Symbols;
+using Magician.Core;
 
 internal struct OperBuilder
 {
@@ -14,52 +15,37 @@ internal struct OperBuilder
         k = tk;
     }
 
-    public void AddArg(Oper o)
+    public void AddArg(Oper o, bool forcePositive=false)
     {
-        if (o.GetType() == Current.GetType())
+        switch (k)
         {
-            switch (k)
-            {
-                case Notate.Token.TokenKind.MINUS:
-                case Notate.Token.TokenKind.DIVIDEDBY:
-                    Current.negArgs.AddRange(o.negArgs);
-                    break;
-                default:
-                    Current.posArgs.AddRange(o.posArgs);
-                    break;
-            }
-        }
-        else
-        {
-            switch (k)
-            {
-                case Notate.Token.TokenKind.MINUS:
-                case Notate.Token.TokenKind.DIVIDEDBY:
+            case Notate.Token.TokenKind.MINUS:
+            case Notate.Token.TokenKind.DIVIDEDBY:
+                if (!forcePositive)
                     Current.negArgs.Add(o);
-                    break;
-                default:
+                else
                     Current.posArgs.Add(o);
-                    break;
-            }
+                break;
+            default:
+                Current.posArgs.Add(o);
+                break;
         }
     }
-
     public Oper PopArg()
     {
         switch (k)
         {
             case Notate.Token.TokenKind.MINUS:
             case Notate.Token.TokenKind.DIVIDEDBY:
-                Oper n = Current.negArgs[Current.negArgs.Count-1];
-                Current.negArgs.RemoveAt(Current.negArgs.Count-1);
-                return n;
+                Oper o = Current.negArgs[Current.negArgs.Count - 1];
+                Current.negArgs.RemoveAt(Current.negArgs.Count - 1);
+                return o;
             default:
-                Oper p = Current.posArgs[Current.posArgs.Count-1];
-                Current.posArgs.RemoveAt(Current.posArgs.Count-1);
+                Oper p = Current.posArgs[Current.posArgs.Count - 1];
+                Current.posArgs.RemoveAt(Current.posArgs.Count - 1);
                 return p;
         }
     }
-
 
     public override string ToString()
     {
@@ -71,7 +57,7 @@ internal struct OperBuilder
         switch (tk)
         {
             case Notate.Token.TokenKind.SYMBOL:
-                return new Variable(data);
+                return Notate.Var(data);
             case Notate.Token.TokenKind.NUMBER:
                 double num;
                 bool isInt = int.TryParse(data, out int n);

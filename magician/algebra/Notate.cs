@@ -27,7 +27,7 @@ public static class Notate
     {
         List<Token> tokens = Tokenize(s);
         Oper o = ParseExpression(tokens.ToArray());
-        return o;
+        return o.Copy();
     }
 
     internal class Token
@@ -54,7 +54,7 @@ public static class Notate
         }
         public override string ToString()
         {
-            return $"{kind}\"{name}\"";
+            return $"{kind.GetType().Name}\"{name}\"";
         }
     }
 
@@ -166,7 +166,8 @@ public static class Notate
         Stack<OperBuilder> branches = new();
         bool primed = false;  // Primed to create an Oper object
         Token? arg = null;
-        Token? op = null;
+        Token? op = new(Token.TokenKind.PLUS, "+");  // The implicit plus sign
+        Token? lastOp = null;
         for (int i = 0; i < tokens.Length; i++)
         {
             bool climb = false;
@@ -187,7 +188,6 @@ public static class Notate
                             throw Scribe.Issue($"null operator in parser");
 
                         OperBuilder newOp = new(OperBuilder.FromToken(op.kind, op.name), op.kind);
-                        //OperBuilder? lastOp = branches.Count > 0 ? branches.Peek() : null;
 
                         // If this is the first operator, just push it
                         if (branches.Count == 0)
@@ -195,38 +195,43 @@ public static class Notate
                             if (arg == null) { throw Scribe.Issue($"Null argument in initial op"); }
                             branches.Push(newOp);
                             branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
-                            op = null;
+                            lastOp = op == null ? lastOp : op;; op = null;
                         }
                         // Precedence drop, eat the argument and become the current branch
                         else if (kindToPrecedence[branches.Peek().Kind] > kindToPrecedence[op.kind])
                         {
                             if (arg == null) { throw Scribe.Issue($"Null argument in drop"); }
-                            branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             List<OperBuilder> brl = branches.ToList();
-                            newOp.AddArg(brl[brl.Count - 1].Current);
+                            newOp.AddArg(brl[brl.Count - 1].Current, true);
+                            newOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             branches.Clear();
                             branches.Push(newOp);
-                            op = null;
+
+                            lastOp = op == null ? lastOp : op;; op = null;
                         }
-                        // Precedece climb, append and push
+                        // Precedence climb: steal the last argument, append and push
                         else if (kindToPrecedence[branches.Peek().Kind] < kindToPrecedence[op.kind])
                         {
                             if (arg == null) { throw Scribe.Issue($"Null argument in climb"); }
+                            Oper stolen = branches.Peek().PopArg();
+                            newOp.AddArg(stolen);
                             newOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             branches.Peek().AddArg(newOp.Current);
                             branches.Push(newOp);
-                            op = null;
+
+                            lastOp = op == null ? lastOp : op;; op = null;
                             climb = true;
                         }
                         else
                         {
                             if (arg == null)
                             {
-                                throw Scribe.Issue($"Null argument in climb");
+                                throw Scribe.Issue($"Null argument in similar");
                             }
                             newOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             branches.Peek().AddArg(newOp.Current);
-                            op = null;
+
+                            lastOp = op == null ? lastOp : op;; op = null;
                         }
 
                         if (kindToPrecedence[t.kind] == 0)
@@ -235,7 +240,8 @@ public static class Notate
                         }
                         else
                         {
-                            op = t;
+
+                            lastOp = op == null ? lastOp : op;; op = t;
                             arg = null;
                         }
                     }
@@ -243,7 +249,7 @@ public static class Notate
                     {
                         if (kindToPrecedence[t.kind] > 0)
                         {
-                            op = t;
+                            lastOp = op == null ? lastOp : op;; op = t;
                         }
                         else if (arg == null && !climb)
                         {
@@ -254,8 +260,8 @@ public static class Notate
                             throw Scribe.Issue($"Unsupported operation");
                         }
                     }
-
                     primed = op != null && arg != null;
+
                     //last = t;
                     break;
                 case Token.TokenKind.LEFTPAREN:
@@ -271,10 +277,35 @@ public static class Notate
         {
             throw Scribe.Issue($"Parser finished in unresolved state {branches.Count}");
         }
+        lastOp = op == null ? lastOp : op;
         // Absorb the final argument
         if (arg != null)
-            branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
+        {
+            if (lastOp == null)
+                throw Scribe.Issue("null last op");
+            OperBuilder finalOp = new(OperBuilder.FromToken(lastOp.kind, lastOp.name), lastOp.kind);
 
+            if (kindToPrecedence[branches.Peek().Kind] > kindToPrecedence[lastOp.kind])
+            {
+                List<OperBuilder> brl = branches.ToList();
+                finalOp.AddArg(brl[brl.Count-1].Current, true);
+                finalOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
+                branches.Clear();
+                branches.Push(finalOp);
+            }
+            else if (kindToPrecedence[branches.Peek().Kind] < kindToPrecedence[lastOp.kind])
+            {
+                Oper stolen = branches.Peek().PopArg();
+                finalOp.AddArg(stolen);
+                finalOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
+                branches.Peek().AddArg(finalOp.Current);
+            }
+            else
+            {
+                finalOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
+                branches.Peek().AddArg(finalOp.Current);
+            }
+        }
         List<OperBuilder> bl = branches.ToList();
         return bl[bl.Count - 1].Current;
     }
