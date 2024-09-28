@@ -126,7 +126,13 @@ public abstract partial class Oper : IRelation
     }
 
     // Deep-copies an Oper. Unknown variables always share an instance, however (see Variable.Copy)
-    public virtual Oper Copy() { return New(posArgs.Select((o, i) => o.Copy()).ToList(), negArgs.Select((o, i) => o.Copy()).ToList()); }
+    public virtual Oper Copy()
+    {
+        return New(
+            posArgs.Select((o, i) => o.Copy()).ToList(),
+            negArgs.Select((o, i) => o.Copy()).ToList()
+        );
+    }
 
     // Perform basic simplifications on this Oper
     public abstract void ReduceOuter();
