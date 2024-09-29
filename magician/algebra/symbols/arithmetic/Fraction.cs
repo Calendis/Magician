@@ -1,7 +1,9 @@
 namespace Magician.Alg.Symbols;
 using Core;
+using Magician.Alg.Symbols.Commonfuncs;
 
 // Fraction objects represent multiplication and division operations with any number of arguments
+
 public class Fraction : Arithmetic
 {
     protected override int Identity => 1;
@@ -197,10 +199,19 @@ public class Fraction : Arithmetic
         return new(posArgs.Concat(negArgs.Select(na => na.Pow(new Variable(-1)))).ToArray());
     }
 
+    // TODO: this function is pretty bad, potentially rewrite it
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)
     {
         Oper ABbar;
-        if (!(aPositive ^ bPositive))
+        if (AB is ExpLog && AB.posArgs.Count == 2 && AB.posArgs[1] is Min)
+        {
+            return axis.Pow(AB.posArgs[1].posArgs[1].Plus(AB.posArgs[1].posArgs[0]));
+        }
+        else if (A is ExpLog && B is ExpLog && A.posArgs.Count == 2 && B.posArgs.Count == 2 && A.negArgs.Count == 0 && B.negArgs.Count == 0 && A.posArgs[0].Like(B.posArgs[0]))
+        {
+            return A.posArgs[0].Pow(A.posArgs[1].Plus(B.posArgs[1]));
+        }
+        else if (!(aPositive ^ bPositive))
             ABbar = A.Degree(AB).Plus(B.Degree(AB));
         else if (aPositive)
             ABbar = A.Degree(AB).Minus(B.Degree(AB));

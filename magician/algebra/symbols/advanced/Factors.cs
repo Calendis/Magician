@@ -9,7 +9,8 @@ public class FactorMap
         OperLike ol = new();
         foreach (Oper factor in fs)
         {
-            Oper fc = factor.Copy().SimplifiedAll();
+            Oper fc = factor.Trim().Copy().SimplifiedAll();
+            // TODO: is this really necessary?
             fc.Reduce(2);
             fc.Combine(null, 2);
             fc.Reduce(2);

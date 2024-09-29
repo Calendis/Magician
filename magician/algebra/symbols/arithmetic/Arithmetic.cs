@@ -73,7 +73,7 @@ public abstract class Arithmetic : Invertable
 
                     A.Reduce(3);
                     B.Reduce(3);
-                    Oper AB = A.Trim().CommonFactors(B.Trim());
+                    Oper AB = A.Trim().CommonSymbolicFactors(B.Trim());
                     AB.Reduce(2);
                     AB = AB.Trim();
 

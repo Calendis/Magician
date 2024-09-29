@@ -27,7 +27,10 @@ public static class Notate
     {
         List<Token> tokens = Tokenize(s);
         Oper o = ParseExpression(tokens.ToArray());
-        return o.Copy();
+        // This Oper is in a weird state until we copy it
+        Oper c = o.Copy();
+        c.Reduce();
+        return c.Trim();
     }
 
     internal class Token

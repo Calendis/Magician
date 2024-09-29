@@ -348,7 +348,7 @@ public abstract partial class Oper : IRelation
     //public virtual Fraction Factors(){return new Fraction(new ExpLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
     public virtual FactorMap Factors() => new(this);
 
-    public Oper CommonFactors(Oper o) => Factors().Common(o.Factors()).ToFraction();
+    public Oper CommonSymbolicFactors(Oper o) => Factors().Common(o.Factors()).ToFraction();
 
     public static bool operator <(Oper o0, Oper o1)
     {
