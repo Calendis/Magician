@@ -219,7 +219,7 @@ public class SimpleAlgebraCases
         cf = i0.CommonFactors(i1);
         cf.Reduce();
         Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        //Assert.That(LegacyForm.Shed(cf).Like(Val(1).Divide(Var("x"))));
+        //Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
         // alternate quad-invquad intersection
         i0 = Var("x").Pow(Val(-2));
         i1 = Var("x").Pow(Val(2));
@@ -925,6 +925,12 @@ public class AdvancedAlgebraCases
         //Scribe.Info(s.Evaluate(1));
         //Scribe.Info(s.Evaluate(0));
     }
+
+    [Test]
+    public void PowerLaws()
+    {
+        Oper a = Parse("x^n*x^k");
+    }
 }
 
 public class ComplexAndMultivalued
@@ -1154,22 +1160,23 @@ public class Parser
     [Test]
     public void ParseSimple()
     {
-        Oper o0 = Parse("3+5");
-        Oper o1 = Parse("1+2+3");
-        Oper o2 = Parse("3+5*2");
-        Oper o2b = Parse("3+5*2^4");
-        Oper o3 = Parse("2*5+3");
-        Oper o4 = Parse("x+1");
-        Oper o5 = Parse("1+2+3+4*5+6*7+8*9");
-        Oper o5b = Parse("1*2*3*4+5*6+7*8+9");
-        Oper o6 = Parse("3-5");
-        Oper o7 = Parse("1+2-3");
-        Oper o7b = Parse("1+2-3+4-5+6-7+8-9");
-        Oper o8 = Parse("1-2*x");
-        Oper o8b = Parse("2*3-4");
-        Oper o9 = Parse("1-2*3-4*5");
-        Oper ox = Parse("1-2-3-4*5-6*7-8*9");
-        Oper oy = Parse("1+2-3*4+5/6^7-8*9");
+        Assert.That(Parse("3+5").Evaluate(new double[]{}).EqValue(8));
+        Assert.That(Parse("1+2+3").Evaluate(new double[]{}).EqValue(6));
+        Assert.That(Parse("3+5*2").Evaluate(new double[]{}).EqValue(13));
+        Assert.That(Parse("3+5*2^4").Evaluate(new double[]{}).EqValue(83));
+        Assert.That(Parse("2*5+3").Evaluate(new double[]{}).EqValue(13));
+        Assert.That(Parse("x+1").Evaluate(5).EqValue(6));
+        Assert.That(Parse("1+2+3+4*5+6*7+8*9").Evaluate(new double[]{}).EqValue(140));
+        Assert.That(Parse("1*2*3*4+5*6+7*8+9").Evaluate(new double[]{}).EqValue(119));
+        Assert.That(Parse("3-5").Evaluate(new double[]{}).EqValue(-2));
+        Assert.That(Parse("1+2-3").Evaluate(new double[]{}).EqValue(0));
+        Assert.That(Parse("1+2-3+4-5+6-7+8-9").Evaluate(new double[]{}).EqValue(-3));
+        Assert.That(Parse("1-2*x").Evaluate(4).EqValue(-7));
+        Assert.That(Parse("2*3-4").Evaluate(new double[]{}).EqValue(2));
+        Assert.That(Parse("1-2*3-4*5").Evaluate(new double[]{}).EqValue(-25));
+        Assert.That(Parse("1-2-3-4*5-6*7-8*9").Evaluate(new double[]{}).EqValue(-138));
+        Assert.That(double.Round(Parse("1+2-3*4+5/6^7-8*9").Evaluate(new double[]{}).Get(), 4) == -81);
+        Oper o0 = Parse("2/x");
 
     }
 
