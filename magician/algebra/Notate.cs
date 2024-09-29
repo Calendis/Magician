@@ -172,6 +172,7 @@ public static class Notate
         {
             bool climb = false;
             Token t = tokens[i];
+            //bool isVar = kindToPrecedence[t.kind] == 0;
             switch (t.kind)
             {
                 case Token.TokenKind.SYMBOL:
@@ -194,7 +195,7 @@ public static class Notate
                         {
                             if (arg == null) { throw Scribe.Issue($"Null argument in initial op"); }
                             branches.Push(newOp);
-                            branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name));
+                            branches.Peek().AddArg(OperBuilder.FromToken(arg.kind, arg.name), true);
                             lastOp = op == null ? lastOp : op;; op = null;
                         }
                         // Precedence drop, eat the argument and become the current branch
@@ -214,7 +215,7 @@ public static class Notate
                         {
                             if (arg == null) { throw Scribe.Issue($"Null argument in climb"); }
                             Oper stolen = branches.Peek().PopArg();
-                            newOp.AddArg(stolen);
+                            newOp.AddArg(stolen, true);
                             newOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                             branches.Peek().AddArg(newOp.Current);
                             branches.Push(newOp);
@@ -296,7 +297,7 @@ public static class Notate
             else if (kindToPrecedence[branches.Peek().Kind] < kindToPrecedence[lastOp.kind])
             {
                 Oper stolen = branches.Peek().PopArg();
-                finalOp.AddArg(stolen);
+                finalOp.AddArg(stolen, true);
                 finalOp.AddArg(OperBuilder.FromToken(arg.kind, arg.name));
                 branches.Peek().AddArg(finalOp.Current);
             }
