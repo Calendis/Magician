@@ -36,7 +36,7 @@ public abstract class Arithmetic : Invertable
         if (posArgs.Count == 0)
             posArgs.Add(new Variable((int)Identity));
     }
-    internal void Combine(Variable? axis)
+    public void Combine(Variable? axis)
     {
         //Scribe.Info($"Combinin' {this}...");
         if (AllArgs.Count < 2)
