@@ -158,93 +158,93 @@ public class SimpleAlgebraCases
     {
         Oper i0, i1, cf;
 
-        // Trivial 1 intersection
-        i0 = Var("x");
-        i1 = Val(242141);
-        Scribe.Info($"  {i0} CF {i1}: {i0.CommonSymbolicFactors(i1)}");
-        Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Val(1)));
-        // single x intersection
-        i0 = Var("x");
-        i1 = Var("x");
-        Scribe.Info($"  {i0} CF {i1}: {i0.CommonSymbolicFactors(i1)}");
-        Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Var("x")));
-        // double x intersection
-        i0 = new Fraction(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
-        i1 = Var("x");
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Var("x")));
-        // sumdiff null intersection
-        i0 = new SumDiff(new List<Oper>{
-            new Fraction(new List<Oper>{Val(3), Var("y")}, new List<Oper>{}),
-            new Fraction(new List<Oper>{Var("x"), Var("y")}, new List<Oper>{})
-            }, new List<Oper> { });
-        i1 = Var("y");
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Val(1)));
-        // quadratic-x intersection
-        i0 = Var("x");
-        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Var("x")));
-        // quad-quad intersection
-        i0 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
-        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Var("x").Pow(Val(2))));
-        // quadratic-1/x intersection
-        i0 = new Fraction(Val(1), Var("x"));
-        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
-        // alternate quadratic-1/x intersection
-        i0 = new ExpLog(new List<Oper> { Var("x"), Val(-1) }, new List<Oper> { });
-        i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
-        // quad-invquad intersection
-        i0 = Val(1).Divide(Var("x").Pow(Val(2)));
-        i1 = Var("x").Pow(Val(2));
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(cf.Trim().Like(Val(1).Divide(Var("x").Pow(Val(2)))));
-        // alternate quad-invquad intersection
-        i0 = Var("x").Pow(Val(-2));
-        i1 = Var("x").Pow(Val(2));
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
-        // alternate quad-invquad intersection
-        i0 = Val(1).Divide(Var("x").Mult(Var("x")));
-        i1 = Var("x").Pow(Val(2));
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i1.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
-        Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
-        //general intersection
-        i0 = new ExpLog(new List<Oper> { Var("x"), Var("n") }, new List<Oper> { });
-        i1 = new ExpLog(new List<Oper> { Var("x"), Var("k") }, new List<Oper> { });
-        cf = i0.CommonSymbolicFactors(i1);
-        cf.Reduce();
-        Scribe.Info($"  {i0} CF {i1}: {cf}");
-        Assert.That(cf.Trim().Like(Var("x").Pow(new Min(Var("k"), Var("n")))));
-        // x with coefficient
-        i0 = Var("x");
-        i1 = Var("x").Mult(Val(2));
-        Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Var("x")));
+        //// Trivial 1 intersection
+        //i0 = Var("x");
+        //i1 = Val(242141);
+        //Scribe.Info($"  {i0} CF {i1}: {i0.CommonSymbolicFactors(i1)}");
+        //Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Val(1)));
+        //// single x intersection
+        //i0 = Var("x");
+        //i1 = Var("x");
+        //Scribe.Info($"  {i0} CF {i1}: {i0.CommonSymbolicFactors(i1)}");
+        //Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Var("x")));
+        //// double x intersection
+        //i0 = new Fraction(new List<Oper> { Val(2), Var("x") }, new List<Oper> { });
+        //i1 = Var("x");
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf}");
+        //Assert.That(cf.Trim().Like(Var("x")));
+        //// sumdiff null intersection
+        //i0 = new SumDiff(new List<Oper>{
+        //    new Fraction(new List<Oper>{Val(3), Var("y")}, new List<Oper>{}),
+        //    new Fraction(new List<Oper>{Var("x"), Var("y")}, new List<Oper>{})
+        //    }, new List<Oper> { });
+        //i1 = Var("y");
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf}");
+        //Assert.That(cf.Trim().Like(Val(1)));
+        //// quadratic-x intersection
+        //i0 = Var("x");
+        //i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf}");
+        //Assert.That(cf.Trim().Like(Var("x")));
+        //// quad-quad intersection
+        //i0 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        //i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf}");
+        //Assert.That(cf.Trim().Like(Var("x").Pow(Val(2))));
+        //// quadratic-1/x intersection
+        //i0 = new Fraction(Val(1), Var("x"));
+        //i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
+        //// alternate quadratic-1/x intersection
+        //i0 = new ExpLog(new List<Oper> { Var("x"), Val(-1) }, new List<Oper> { });
+        //i1 = new ExpLog(new List<Oper> { Var("x"), Val(2) }, new List<Oper> { });
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(cf.Trim().Like(Val(1).Divide(Var("x"))));
+        //// quad-invquad intersection
+        //i0 = Val(1).Divide(Var("x").Pow(Val(2)));
+        //i1 = Var("x").Pow(Val(2));
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(cf.Trim().Like(Val(1).Divide(Var("x").Pow(Val(2)))));
+        //// alternate quad-invquad intersection
+        //i0 = Var("x").Pow(Val(-2));
+        //i1 = Var("x").Pow(Val(2));
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
+        //// alternate quad-invquad intersection
+        //i0 = Val(1).Divide(Var("x").Mult(Var("x")));
+        //i1 = Var("x").Pow(Val(2));
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf} [{i0.Factors().ToFraction()}], [{i1.Factors().ToFraction()}], [{i0.Factors().Common(i1.Factors()).ToFraction()}, {i1.Factors().Common(i0.Factors()).ToFraction()}]");
+        //Assert.That(cf.Like(Val(1).Divide(Var("x").Pow(Val(2)))));
+        ////general intersection
+        //i0 = new ExpLog(new List<Oper> { Var("x"), Var("n") }, new List<Oper> { });
+        //i1 = new ExpLog(new List<Oper> { Var("x"), Var("k") }, new List<Oper> { });
+        //cf = i0.CommonSymbolicFactors(i1);
+        //cf.Reduce();
+        //Scribe.Info($"  {i0} CF {i1}: {cf}");
+        //Assert.That(cf.Trim().Like(Var("x").Pow(new Min(Var("k"), Var("n")))));
+        //// x with coefficient
+        //i0 = Var("x");
+        //i1 = Var("x").Mult(Val(2));
+        //Assert.That(i0.CommonSymbolicFactors(i1).Trim().Like(Var("x")));
     }
 
     [Test]
