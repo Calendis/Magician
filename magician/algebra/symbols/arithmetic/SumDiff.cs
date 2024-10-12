@@ -72,6 +72,76 @@ public class SumDiff : Arithmetic
         return combined;
     }
 
+    public override void CombineOuter(Variable? axis = null)
+    {
+        (Oper, Oper, int idx1, int idx2)[] handshakes = new (Oper, Oper, int, int)[AllArgs.Count * (AllArgs.Count - 1)];
+        int c = 0;
+        for (int i = 0; i < AllArgs.Count-1; i++)
+            for (int j = i; j < AllArgs.Count-1; j++)
+                handshakes[c++] = (AllArgs[i], AllArgs[j], i < posArgs.Count ? i : posArgs.Count-1-i, j < posArgs.Count ? j : posArgs.Count-1-j);
+                //handshakes[c++] = (AllArgs[i], AllArgs[j], !(i < AllArgs.Count ^ j < AllArgs.Count));
+
+        foreach ((Oper o, Oper p, int oIdx, int pIdx) handshake in handshakes)
+        {
+            // Find common determined factors
+            //(List<Oper> oFacs, List<Oper> pFacs) = ([], []);
+            //(List<Oper>, List<Oper>) commonDeterminedFactors = (handshake.o.Factors().Item1.Intersect(handshake.p.Factors().Item1).Where(a => a.IsDetermined).ToList(), handshake.o.Factors().Item2.Intersect(handshake.p.Factors().Item2).Where(a => a.IsDetermined).ToList());
+            (List<Oper>, List<Oper>) commonFactors = (handshake.o.Factors().Item1.Intersect(handshake.p.Factors().Item1).ToList(), handshake.o.Factors().Item2.Intersect(handshake.p.Factors().Item2).ToList());
+            if (commonFactors.Item1.Count == 0 && commonFactors.Item1.Count == 0)
+            {
+                continue;
+            }
+            Fraction ffacs = new Fraction(commonFactors.Item1, commonFactors.Item2);
+            Oper oCommon = ffacs.Divide(handshake.o);
+            Oper pCommon = ffacs.Divide(handshake.p);
+            oCommon.Reduce(1);
+            pCommon.Reduce(1);
+            // When simplifying a SumDiff, we only factor out constants
+            // TODO: unless there is a defined axis, then we may factor it
+            if (oCommon.IsDetermined && pCommon.IsDetermined)
+            {
+                Oper summedCommonFactors = oCommon.Plus(pCommon);
+                // TODO: we need to include the polarity of both terms so we know which args list to remove from
+                // we could just check. It will lead to odd behaviour if an Oper contains copies but that shouldn't happen
+                if (handshake.oIdx < 0)
+                {
+                    negArgs.RemoveAt(1-handshake.oIdx);
+                }
+                else
+                {
+                    posArgs.RemoveAt(handshake.oIdx);
+                }
+                if (handshake.pIdx < 0)
+                {
+                    negArgs.RemoveAt(1-handshake.pIdx);
+                }
+                else
+                {
+                    posArgs.RemoveAt(handshake.pIdx);
+                }
+                
+                bool positive = !(handshake.oIdx >= 0 ^ handshake.pIdx >= 0);
+                (bool oiPos, bool piPos) = (handshake.oIdx >= 0, handshake.pIdx >= 0);
+                (int posOi, int posPi) = (oiPos ? handshake.oIdx : 1 - handshake.oIdx, piPos ? handshake.pIdx : 1 - handshake.pIdx);
+                if (positive)
+                {
+                    posArgs.Insert(Math.Min(posOi, posPi), summedCommonFactors);
+                }
+                else
+                {
+                    negArgs.Insert(Math.Min(posOi, posPi), summedCommonFactors);
+                }
+                
+            }
+            // TODO: account for axis
+            else
+            {
+                //
+            }
+
+        }
+    }
+
     public override string ToString()
     {
         if (AllArgs.Count == 0)

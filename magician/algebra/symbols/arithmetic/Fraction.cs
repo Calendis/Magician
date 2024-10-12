@@ -47,7 +47,7 @@ public class Fraction : Arithmetic
         }
         base.ReduceOuter();
     }
-    internal override void CombineOuter(Variable? axis = null)
+    public override void CombineOuter(Variable? axis = null)
     {
         base.CombineOuter(axis);
         //BalanceDegree(axis);
@@ -194,10 +194,10 @@ public class Fraction : Arithmetic
         sd.ReduceOuter();
         return sd.Trim();
     }
-    public override FactorMap Factors()
-    {
-        return new(posArgs.Concat(negArgs.Select(na => na.Pow(new Variable(-1)))).ToArray());
-    }
+    //public override FactorMap Factors()
+    //{
+    //    return new(posArgs.Concat(negArgs.Select(na => na.Pow(new Variable(-1)))).ToArray());
+    //}
 
     // TODO: this function is pretty bad, potentially rewrite it
     protected override Oper Handshake(Variable axis, Oper A, Oper B, Oper AB, bool aPositive, bool bPositive)

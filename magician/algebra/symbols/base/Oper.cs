@@ -140,6 +140,7 @@ public abstract partial class Oper : IRelation
     /* TODO: eventually make the void simplification/reduction methods internal. */
     /*       They modify state in a way that's safe inside the algebra solver,   */
     /*       but not necessarily otherwise. Returning a new Oper is always safe. */
+    // TODO: Reduce -> ReduceOuter, ReduceOuter -> Reduce
     public void Reduce(int depth = -1)
     {
         if (depth == 0)
@@ -152,7 +153,7 @@ public abstract partial class Oper : IRelation
         ReduceOuter();
     }
     // Perform advanced simplifications on this Oper
-    internal virtual void CombineOuter(Variable? axis = null) { ReduceOuter(); }
+    public virtual void CombineOuter(Variable? axis = null) { ReduceOuter(); }
     // Perform advanced simplifications on this Oper, recursively
     public void Combine(Variable? axis = null, int depth = 1)  // TODO: default should be -1
     {
@@ -346,9 +347,53 @@ public abstract partial class Oper : IRelation
 
     // TODO: in the future, this could have a type form like Fraction(n->PowTowRootLog, n->PowTowRootLog)
     //public virtual Fraction Factors(){return new Fraction(new ExpLog(new List<Oper>{Copy(), new Variable(1)}, new List<Oper>{}));}
-    public virtual FactorMap Factors() => new(this);
+    //public virtual FactorMap Factors() => new(this);
+    public (List<Oper>, List<Oper>) Factors(Variable? axis = null)
+    {
+        //Dictionary<Variable, Int16> variables = new();
+        //Dictionary<Oper, List<Oper>> factors = new();
+        switch (this)
+        {
+            case SumDiff:
+            int c = 0;
+            List<(List<Oper>, List<Oper>)> allFactors = new();
+            foreach (Oper a in AllArgs)
+            {
+                bool pos = c++ < posArgs.Count;
+                allFactors.Add(a.Factors());
+            }
+            bool firstDone = false;
+            (HashSet<Oper>, HashSet<Oper>) runningCommonFactors = (new(), new());
+            foreach ((List<Oper>, List<Oper>) posNegFactors in allFactors)
+            {
+                if (!firstDone)
+                {
+                    runningCommonFactors = (posNegFactors.Item1.ToHashSet(), posNegFactors.Item2.ToHashSet());
+                    firstDone = true;
+                }
+                else
+                {
+                    runningCommonFactors = (runningCommonFactors.Item1.Intersect(posNegFactors.Item1).ToHashSet(), runningCommonFactors.Item2.Intersect(posNegFactors.Item2).ToHashSet());
+                }
+            }
+            return (runningCommonFactors.Item1.ToList(), runningCommonFactors.Item2.ToList());
+            case Fraction:
+            List<(List<Oper>, List<Oper>)> allFactors2 = AllArgs.Select(a => a.Factors()).ToList();
+            return (allFactors2.SelectMany(a => a.Item1).ToList(), allFactors2.SelectMany(a => a.Item2).ToList());
+            default:
+            return ([this], []);
+            //Notate.Var($"{this}1").Set(1);
+            //variables.TryAdd(Notate.Var($"{this}1"), 0);  // this is only a Dictionary so I can use TryAdd
+            //factors.TryAdd(Notate.Var($"{this}1"), new());
+            //factors[Notate.Var($"{this}1")].Add(this);
+            // Clear the variables
+            //variables.Keys.Select(v => MathCache.freeVars.Remove(v.Name));
+            //break;
+        }
+        //return factors;
+    }
 
-    public Oper CommonSymbolicFactors(Oper o) => Factors().Common(o.Factors()).ToFraction();
+    //public Oper CommonSymbolicFactors(Oper o) => Factors().Common(o.Factors()).ToFraction();
 
     public static bool operator <(Oper o0, Oper o1)
     {
